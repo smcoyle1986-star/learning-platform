@@ -1,3 +1,5 @@
+"use client";
+
 import AIToolsSection from "@/components/AIToolsSection";
 import { useFadeInOnScroll } from "@/components/useFadeInOnScroll";
 
