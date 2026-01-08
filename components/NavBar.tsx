@@ -24,13 +24,6 @@ export default function NavBar() {
           </Link>
 
           <Link
-            href="/classroom"
-            className="text-sm hover:underline"
-          >
-            Classroom
-          </Link>
-
-          <Link
             href="/printables"
             className="text-sm hover:underline"
           >
