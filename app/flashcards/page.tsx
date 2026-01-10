@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, Sparkles, X } from "lucide-react";
 
@@ -23,6 +23,19 @@ export default function FlashcardsPage() {
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
+  useEffect(() => {
+  const savedTray = localStorage.getItem("classbloom-lesson-tray");
+  if (savedTray) {
+    setLessonTray(JSON.parse(savedTray));
+  }
+}, []);
+useEffect(() => {
+  localStorage.setItem(
+    "classbloom-lesson-tray",
+    JSON.stringify(lessonTray)
+  );
+}, [lessonTray]);
+
 
   const grades = ["1", "2", "3", "4", "5", "6"];
   const levels = ["1 - Beginner", "2 - Intermediate", "3 - Advanced"];
@@ -44,8 +57,10 @@ export default function FlashcardsPage() {
   };
 
   const clearLessonTray = () => {
-    setLessonTray([]);
-  };
+  setLessonTray([]);
+  localStorage.removeItem("classbloom-lesson-tray");
+};
+
 
   // Toggle functions for filters
   const toggleKindergarten = () => {
@@ -92,12 +107,16 @@ export default function FlashcardsPage() {
 
           {/* Classroom mode */}
           <div className="flex-shrink-0">
-            <Link
-              href="/flashcards/classroom"
-              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
-            >
-             Classroom Mode
-            </Link>
+            <button
+  onClick={() => {
+    localStorage.setItem("lessonTray", JSON.stringify(lessonTray));
+    window.location.href = "/flashcards/classroom";
+  }}
+  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
+>
+  Classroom Mode
+</button>
+
           </div>
         </div>
       </header>
@@ -139,33 +158,40 @@ export default function FlashcardsPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
-        {/* Search + AI */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search vocabulary (e.g. food, verbs, animals)"
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-          </div>
+      {/* Search + AI */}
+<div className="mb-8">
+  <div className="flex items-center gap-3 max-w-4xl">
+    {/* Search input */}
+    <div className="relative flex-1">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search vocabulary (e.g. food, verbs, animals)"
+        className="w-full pl-12 pr-4 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+      />
+    </div>
 
-          <button
-            onClick={handleSearch}
-            className="px-6 py-3 rounded-xl bg-[var(--color-primary)] text-white font-medium hover:opacity-90"
-          >
-            Search
-          </button>
+    {/* Search button */}
+    <button
+      onClick={handleSearch}
+      className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 whitespace-nowrap"
+    >
+      Search
+    </button>
 
-          <button
-            type="button"
-            className="px-6 py-3 rounded-xl bg-[var(--color-bg-soft)] border border-black/10 flex items-center gap-2 hover:bg-white"
-          >
-            <Sparkles size={18} />
-            AI Generate
-          </button>
-        </div>
+    {/* AI Generate button */}
+    <button
+      type="button"
+      className="px-4 py-2 rounded-lg bg-[var(--color-bg-soft)] border border-black/10 text-sm flex items-center gap-2 hover:bg-white whitespace-nowrap"
+    >
+      <Sparkles size={16} />
+      AI Generate
+    </button>
+  </div>
+</div>
+
+
 
         {/* Filters */}
         <div className="flex gap-3 mb-10 flex-wrap">
