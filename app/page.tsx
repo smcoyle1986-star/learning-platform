@@ -15,11 +15,6 @@ const FEATURE_CARDS = [
     href: "/flashcards",
   },
   {
-    title: "Classroom Mode",
-    desc: "Teacher-controlled screens for group learning and games.",
-    href: "/classroom",
-  },
-  {
     title: "Printable Resources",
     desc: "Generate printable flashcards and worksheets in one click.",
     href: "/printables",
@@ -85,6 +80,42 @@ export default function HomePage() {
             View Features
           </a>
         </div>
+{/* --- Who is this for --- */}
+<section className="max-w-5xl mx-auto px-6 py-24 text-center">
+  <h3 className="text-3xl font-bold mb-6">
+    Built for real classrooms
+  </h3>
+
+  <p className="text-lg text-[var(--color-text-muted)] max-w-2xl mx-auto">
+    Designed for teachers and students learning English through
+    visual, interactive, and classroom-friendly tools.
+  </p>
+</section>
+{/* --- How it works --- */}
+<section className="max-w-6xl mx-auto px-6 py-24">
+  <div className="grid md:grid-cols-3 gap-12 text-center">
+    <div>
+      <h4 className="text-xl font-semibold mb-2">Choose vocabulary</h4>
+      <p className="text-[var(--color-text-muted)]">
+        Browse themed word lists with pictures and audio.
+      </p>
+    </div>
+
+    <div>
+      <h4 className="text-xl font-semibold mb-2">Practice together</h4>
+      <p className="text-[var(--color-text-muted)]">
+        Use flashcards, games, and classroom modes.
+      </p>
+    </div>
+
+    <div>
+      <h4 className="text-xl font-semibold mb-2">Extend learning</h4>
+      <p className="text-[var(--color-text-muted)]">
+        Print worksheets or assign practice at home.
+      </p>
+    </div>
+  </div>
+</section>
 
         {/* Features */}
         <section
@@ -134,6 +165,9 @@ export default function HomePage() {
           </Link>
         </section>
       </main>
+      <footer className="border-t border-black/10 py-10 text-center text-sm text-[var(--color-text-muted)]">
+        © {new Date().getFullYear()} ClassBloom. Built for teachers.
+      </footer>
     </div>
   );
 }
