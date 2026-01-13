@@ -10,11 +10,12 @@ import {
 } from "lucide-react";
 
 type Card = {
-  id: number;
+  id: string;   // ✅ must match Flashcards
   word: string;
   image: string;
   type: string;
 };
+
 
 export default function ClassroomMode() {
   const [cards, setCards] = useState<Card[]>([]);
@@ -22,13 +23,17 @@ export default function ClassroomMode() {
 const [autoPlay, setAutoPlay] = useState(false);
 const [intervalMs, setIntervalMs] = useState(4000);
 const [fade, setFade] = useState(true);
+const [direction, setDirection] = useState<"next" | "prev">("next");
+const [touchStartX, setTouchStartX] = useState<number | null>(null);
+const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
+
   useEffect(() => {
-    const stored = localStorage.getItem("lessonTray");
+   const stored = localStorage.getItem("classbloom-lesson-tray");
     if (stored) {
       setCards(JSON.parse(stored));
     }
   }, []);
-  useEffect(() => {
+ useEffect(() => {
   if (!autoPlay || cards.length === 0) return;
 
   const timer = setInterval(() => {
@@ -38,9 +43,25 @@ const [fade, setFade] = useState(true);
   return () => clearInterval(timer);
 }, [autoPlay, intervalMs, cards.length]);
 
+  useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      nextCard();
+    }
+    if (e.key === "ArrowLeft") {
+      prevCard();
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+}, [cards.length]);
+
+
   const nextCard = () => {
   setFade(false);
   setTimeout(() => {
+  setDirection("next");
     setIndex((prev) => (prev + 1) % cards.length);
     setFade(true);
   }, 200);
@@ -49,6 +70,7 @@ const [fade, setFade] = useState(true);
 const prevCard = () => {
   setFade(false);
   setTimeout(() => {
+  setDirection("prev");
     setIndex((prev) => (prev - 1 + cards.length) % cards.length);
     setFade(true);
   }, 200);
@@ -67,6 +89,31 @@ const prevCard = () => {
       document.exitFullscreen();
     }
   };
+  const handleTouchStart = (e: React.TouchEvent) => {
+  setTouchStartX(e.touches[0].clientX);
+};
+
+const handleTouchMove = (e: React.TouchEvent) => {
+  setTouchCurrentX(e.touches[0].clientX);
+};
+
+const handleTouchEnd = () => {
+  if (touchStartX === null || touchCurrentX === null) return;
+
+  const diff = touchStartX - touchCurrentX;
+  const threshold = 60; // swipe sensitivity
+
+  if (diff > threshold) {
+    // swipe left → next
+    nextCard();
+  } else if (diff < -threshold) {
+    // swipe right → previous
+    prevCard();
+  }
+
+  setTouchStartX(null);
+  setTouchCurrentX(null);
+};
 
   if (cards.length === 0) {
   return (
@@ -92,11 +139,13 @@ const prevCard = () => {
     <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col justify-between p-6">
 
       {/* Header controls */}
-      <div className="w-full flex justify-between items-center">
+      <div className="sticky top-0 z-50
+                w-full flex justify-between items-center px-6 py-3">
         <div className="flex gap-3">
           <button
             onClick={toggleFullscreen}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg
+ flex items-center gap-2"
           >
             <Maximize size={18} />
             Full Screen
@@ -104,7 +153,8 @@ const prevCard = () => {
 
           <button
             onClick={shuffleCards}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg
+ flex items-center gap-2"
           >
             <Shuffle size={18} />
             Shuffle
@@ -112,7 +162,8 @@ const prevCard = () => {
           <button
   onClick={() => setAutoPlay((prev) => !prev)}
   className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm
-             hover:opacity-90 hover:scale-[1.03] transition-all"
+             hover:opacity-90 shadow-md hover:shadow-lg
+ hover:scale-[1.03] transition-all"
 >
   {autoPlay ? "Pause Auto-Play" : "Auto-Play"}
 </button>
@@ -124,7 +175,8 @@ const prevCard = () => {
     )
   }
   className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm
-             hover:opacity-90 hover:scale-[1.03] transition-all"
+             hover:opacity-90 shadow-md hover:shadow-lg
+ hover:scale-[1.03] transition-all"
 >
   Speed: {intervalMs === 2500 ? "Fast" : intervalMs === 6000 ? "Slow" : "Normal"}
 </button>
@@ -132,22 +184,34 @@ const prevCard = () => {
         </div>
 
         <button
-          onClick={() => (window.location.href = "/flashcards")}
-          className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 flex items-center gap-2"
-        >
-          <X size={18} />
-          Exit
-        </button>
+  onClick={() => {
+    localStorage.setItem("classbloom-lesson-tray",
+      JSON.stringify(cards));
+    window.location.href = "/flashcards";
+  }}
+  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm"
+>
+  <X size={18} />
+  Exit
+</button>
       </div>
 
       {/* Flashcard */}
-     <div
+   <div
   onClick={nextCard}
-  className={`cursor-pointer mx-auto mt-10 bg-white rounded-3xl shadow-2xl
-              border-[10px] border-gray-300 w-full max-w-5xl aspect-[16/9]
-              flex flex-col justify-center items-center p-10
-              transition-all duration-500 ease-in-out
-              ${fade ? "opacity-100" : "opacity-0"}`}
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}
+  key={index}
+  className={`cursor-pointer mx-auto my-8 bg-white rounded-3xl shadow-2xl
+    border-[10px] border-gray-300 w-full max-w-5xl aspect-[16/9]
+    flex flex-col justify-center items-center p-10
+    transition-all duration-300 ease-out
+    ${
+      direction === "next"
+        ? "animate-slide-left"
+        : "animate-slide-right"
+    }`}
 >
         {/* Image area */}
         <div className="w-full flex-1 bg-gray-100 rounded-2xl mb-8 flex items-center justify-center text-gray-400 text-xl">
