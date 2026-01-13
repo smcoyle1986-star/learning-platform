@@ -26,6 +26,9 @@ const [fade, setFade] = useState(true);
 const [direction, setDirection] = useState<"next" | "prev">("next");
 const [touchStartX, setTouchStartX] = useState<number | null>(null);
 const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
+const formatWord = (word: string) =>
+  word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 
   useEffect(() => {
    const stored = localStorage.getItem("classbloom-lesson-tray");
@@ -220,7 +223,7 @@ const handleTouchEnd = () => {
 
         {/* Vocabulary word */}
         <div className="text-7xl md:text-8xl font-extrabold tracking-wide capitalize">
-          {card.word}
+          <h2>{formatWord(card.word)}</h2>
         </div>
       </div>
 

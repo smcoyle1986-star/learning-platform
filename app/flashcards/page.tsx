@@ -27,6 +27,8 @@ export default function FlashcardsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedTray, setLastSavedTray] = useState<Card[]>([]);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
+  const formatWord = (word: string) =>
+  word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 useEffect(() => {
   const savedTray = localStorage.getItem("classbloom-lesson-tray");
@@ -205,10 +207,10 @@ const isInLessonTray = (id: string) => {
   {/* Render each card in the lesson tray */}
   {lessonTray.map((card) => (
     <div
-      key={card.id}
+      key={card.id }
       className="relative px-3 py-2 rounded-lg border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap"
       >
-      {card.word}
+      <span className="text-xs">{formatWord(card.word)}</span>
       <button
         onClick={() => removeFromLessonTray(card.id)}
         className="absolute -top-0 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
