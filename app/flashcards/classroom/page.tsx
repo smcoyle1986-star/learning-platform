@@ -28,14 +28,42 @@ const [touchStartX, setTouchStartX] = useState<number | null>(null);
 const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
 const formatWord = (word: string) =>
   word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const handleExit = () => {
+  // ✅ ALWAYS save lesson tray first (no behavior change)
+  localStorage.setItem(
+    "classbloom-lesson-tray",
+    JSON.stringify(cards)
+  );
+
+  // ✅ Check where we came from
+  const params = new URLSearchParams(window.location.search);
+  const from = params.get("from");
+
+  if (from === "dashboard") {
+    window.location.href = "/dashboard";
+  } else {
+    // Default / existing behavior
+    window.location.href = "/flashcards";
+  }
+};
+
 
 
   useEffect(() => {
-   const stored = localStorage.getItem("classbloom-lesson-tray");
-    if (stored) {
-      setCards(JSON.parse(stored));
+  const stored = localStorage.getItem("classbloom-lesson-tray");
+
+  if (!stored || stored === "undefined") return;
+
+  try {
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed)) {
+      setCards(parsed);
     }
-  }, []);
+  } catch (e) {
+    console.error("Invalid lesson tray data", e);
+  }
+}, []);
+
  useEffect(() => {
   if (!autoPlay || cards.length === 0) return;
 
@@ -126,11 +154,11 @@ const handleTouchEnd = () => {
       </p>
 
       <button
-        onClick={() => (window.location.href = "/flashcards")}
+        onClick={handleExit}
         className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white text-base font-semibold
                    hover:opacity-90 hover:scale-[1.03] transition-all"
       >
-        ← Back to Flashcards
+        Go Back
       </button>
     </div>
   );
@@ -187,16 +215,13 @@ const handleTouchEnd = () => {
         </div>
 
         <button
-  onClick={() => {
-    localStorage.setItem("classbloom-lesson-tray",
-      JSON.stringify(cards));
-    window.location.href = "/flashcards";
-  }}
+  onClick={handleExit}
   className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm"
 >
   <X size={18} />
   Exit
 </button>
+
       </div>
 
       {/* Flashcard */}
