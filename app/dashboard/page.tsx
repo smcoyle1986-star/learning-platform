@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Play, Edit, Trash2 } from "lucide-react";
+import { Play, Edit, Trash2, Printer } from "lucide-react";
 
 type Lesson = {
   id: string | number;
@@ -15,6 +15,14 @@ type Lesson = {
 
 const STORAGE_KEY = "classbloom-saved-lessons";
 const RECENT_LIMIT = 8;
+
+/*
+  DashboardPage
+  - Preserves all existing functions, features, and localStorage behavior.
+  - Adds a Print button to each lesson card in Recently Used and Saved Lessons.
+  - Print button: writes the lesson.cards to "classbloom-lesson-tray" and navigates to /printables?from=dashboard
+  - Buttons match site styling and spacing; cards kept roomy to avoid crowding.
+*/
 
 export default function DashboardPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -67,7 +75,7 @@ export default function DashboardPage() {
   }, [lessons]);
 
   /* ----------------------------------
-     Actions
+     Actions (preserved behavior)
   -----------------------------------*/
   const enterClassroom = (lesson: Lesson) => {
     const updated = lessons.map((l) =>
@@ -94,6 +102,20 @@ export default function DashboardPage() {
     const filtered = lessons.filter((l) => l.id !== lessonId);
     setLessons(filtered);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  };
+
+  // NEW: Print lesson — writes to lesson tray and navigates to printables
+  const printLesson = (e: React.MouseEvent, lesson: Lesson) => {
+    e.stopPropagation();
+    try {
+      localStorage.setItem(
+        "classbloom-lesson-tray",
+        JSON.stringify(lesson.cards ?? [])
+      );
+    } catch (err) {
+      console.error("Failed to set lesson tray for printing:", err);
+    }
+    window.location.href = "/printables?from=dashboard";
   };
 
   /* ----------------------------------
@@ -174,7 +196,7 @@ export default function DashboardPage() {
                       )
                     }
                     className={`
-            min-w-[280px] bg-white rounded-2xl p-5 transition cursor-pointer relative
+            min-w-[300px] bg-white rounded-2xl p-5 transition cursor-pointer relative
             ${
               selectedSetId === idStr
                 ? "border-2 border-blue-700 shadow-md"
@@ -197,6 +219,7 @@ export default function DashboardPage() {
                 hover:shadow-md
                 transition
               "
+                        title="Preview"
                       >
                         ☰
                       </button>
@@ -214,8 +237,24 @@ export default function DashboardPage() {
                 hover:shadow-md
                 transition
               "
+                        title="Edit"
                       >
-                        ✏️
+                        <Edit size={14} />
+                      </button>
+
+                      {/* PRINT */}
+                      <button
+                        onClick={(e) => printLesson(e, lesson)}
+                        className="
+                p-2 rounded-lg
+                border border-black/10
+                bg-white
+                hover:shadow-md
+                transition
+              "
+                        title="Print"
+                      >
+                        <Printer size={14} />
                       </button>
 
                       {/* DELETE */}
@@ -233,12 +272,13 @@ export default function DashboardPage() {
                 hover:shadow-md
                 transition
               "
+                        title="Delete"
                       >
-                        🗑️
+                        <Trash2 size={14} />
                       </button>
                     </div>
 
-                    <h3 className="font-semibold mb-1">{lesson.name}</h3>
+                    <h3 className="font-semibold mb-1 text-lg">{lesson.name}</h3>
 
                     <p className="text-xs text-[var(--color-text-muted)] mb-1">
                       {lesson.cards?.length ?? 0} cards
@@ -246,24 +286,30 @@ export default function DashboardPage() {
 
                     <p className="text-xs text-[var(--color-text-muted)] mb-4">
                       Last used:{" "}
-                      {new Date(lesson.lastUsed ?? 0).toLocaleDateString()}
+                      {lesson.lastUsed ? new Date(lesson.lastUsed).toLocaleDateString() : "—"}
                     </p>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
 
-                        // ✅ IMPORTANT: put cards where classroom expects them
-                        localStorage.setItem(
-                          "classbloom-lesson-tray",
-                          JSON.stringify(lesson.cards ?? [])
-                        );
+                          localStorage.setItem(
+                            "classbloom-lesson-tray",
+                            JSON.stringify(lesson.cards ?? [])
+                          );
 
-                        window.location.href =
-                          "/flashcards/classroom?from=dashboard";
-                      }}
-                      className="
-    w-full flex items-center justify-center gap-2
+                          // optional: update counts in-memory and persist
+                          const updated = lessons.map(l =>
+                            l.id === lesson.id ? { ...l, useCount: (l.useCount ?? 0) + 1, lastUsed: Date.now() } : l
+                          );
+                          setLessons(updated);
+                          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+                          window.location.href = "/flashcards/classroom?from=dashboard";
+                        }}
+                        className="
+    flex-1 flex items-center justify-center gap-2
     px-3 py-2 rounded-lg
     bg-green-400 text-green-900
     text-sm
@@ -271,10 +317,20 @@ export default function DashboardPage() {
     hover:shadow-md
     transition
   "
-                    >
-                      <Play size={14} />
-                      Enter Classroom
-                    </button>
+                      >
+                        <Play size={14} />
+                        Enter Classroom
+                      </button>
+
+                      {/* Secondary small Print button (visible under the main action too, keeps spacing clear) */}
+                      <button
+                        onClick={(e) => printLesson(e, lesson)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 bg-white text-sm hover:shadow-md transition"
+                      >
+                        <Printer size={14} />
+                        Print
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -283,80 +339,173 @@ export default function DashboardPage() {
         </section>
 
         {/* SAVED LESSONS */}
-        <section>
-          <h2 className="text-xl font-semibold mb-6">Saved Lessons</h2>
+       <section>
+  <h2 className="text-xl font-semibold mb-6">Saved Lessons</h2>
 
-          {popularLessons.length === 0 ? (
-            <div className="text-center py-20 text-[var(--color-text-muted)]">
-              <p className="text-lg mb-3">You haven’t saved any lessons yet.</p>
-              <Link
-                href="/flashcards"
-                className="text-blue-600 font-medium hover:underline"
-              >
-                Create your first lesson
-              </Link>
+  {popularLessons.length === 0 ? (
+    <div className="text-center py-20 text-[var(--color-text-muted)]">
+      <p className="text-lg mb-3">You haven’t saved any lessons yet.</p>
+      <Link
+        href="/flashcards"
+        className="text-blue-600 font-medium hover:underline"
+      >
+        Create your first lesson
+      </Link>
+    </div>
+  ) : (
+    // Scrollable wrapper: limits visible area so up to ~12 cards are shown at once.
+    <div
+      className="overflow-y-auto"
+      style={{ maxHeight: "calc(12 * 8rem)" }}
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
+        {popularLessons.map((lesson) => {
+          const idStr = String(lesson.id);
+          return (
+            <div
+              key={lesson.id}
+              onClick={() =>
+                setSelectedSetId(selectedSetId === idStr ? null : idStr)
+              }
+              className={`
+                bg-white rounded-2xl p-5 transition cursor-pointer relative
+                ${
+                  selectedSetId === idStr
+                    ? "border-2 border-blue-700 shadow-md"
+                    : "border shadow-sm hover:shadow-md"
+                }
+              `}
+            >
+              {/* TOP ACTIONS (match Recently Used cards) */}
+              <div className="absolute top-3 right-3 flex gap-2">
+                {/* PREVIEW */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPreviewLesson(lesson);
+                  }}
+                  className="
+                    p-2 rounded-lg
+                    border border-black/10
+                    bg-white
+                    hover:shadow-md
+                    transition
+                  "
+                  title="Preview"
+                >
+                  ☰
+                </button>
+
+                {/* EDIT */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    editLesson(lesson);
+                  }}
+                  className="
+                    p-2 rounded-lg
+                    border border-black/10
+                    bg-white
+                    hover:shadow-md
+                    transition
+                  "
+                  title="Edit"
+                >
+                  <Edit size={14} />
+                </button>
+
+                {/* PRINT */}
+                <button
+                  onClick={(e) => printLesson(e, lesson)}
+                  className="
+                    p-2 rounded-lg
+                    border border-black/10
+                    bg-white
+                    hover:shadow-md
+                    transition
+                  "
+                  title="Print"
+                >
+                  <Printer size={14} />
+                </button>
+
+                {/* DELETE */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteLesson(lesson.id);
+                  }}
+                  className="
+                    p-2 rounded-lg
+                    border border-red-200
+                    bg-white
+                    text-red-600
+                    hover:bg-red-50
+                    hover:shadow-md
+                    transition
+                  "
+                  title="Delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
+              <h3 className="font-semibold text-lg mb-1">{lesson.name}</h3>
+
+              <p className="text-xs text-[var(--color-text-muted)] mb-4">
+                {lesson.cards?.length ?? 0} cards · Used {lesson.useCount ?? 0}{" "}
+                times
+              </p>
+
+              {/* Full-width Enter Classroom + small Print button to the right */}
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    localStorage.setItem(
+                      "classbloom-lesson-tray",
+                      JSON.stringify(lesson.cards ?? [])
+                    );
+
+                    // optional: update counts in-memory and persist
+                    const updated = lessons.map(l =>
+                      l.id === lesson.id ? { ...l, useCount: (l.useCount ?? 0) + 1, lastUsed: Date.now() } : l
+                    );
+                    setLessons(updated);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+                    window.location.href = "/flashcards/classroom?from=dashboard";
+                  }}
+                  className="
+                    flex-1 flex items-center justify-center gap-2
+                    px-3 py-2 rounded-lg
+                    bg-green-400 text-green-900
+                    text-sm
+                    hover:bg-green-600
+                    hover:shadow-md
+                    transition
+                  "
+                >
+                  <Play size={14} />
+                  Enter Classroom
+                </button>
+
+                <button
+                  onClick={(e) => printLesson(e, lesson)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-black/10 bg-white text-sm hover:shadow-md transition"
+                >
+                  <Printer size={14} />
+                  Print
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {popularLessons.map((lesson) => {
-                const idStr = String(lesson.id);
-                return (
-                  <div
-                    key={lesson.id}
-                    onClick={() =>
-                      setSelectedSetId(selectedSetId === idStr ? null : idStr)
-                    }
-                    className={`
-    bg-white rounded-2xl p-5 shadow-sm transition cursor-pointer
-    ${
-      selectedSetId === idStr
-        ? "border-2 border-blue-700"
-        : "border hover:shadow-lg"
-    }
-  `}
-                  >
-                    <h3 className="font-semibold text-lg mb-1">
-                      {lesson.name}
-                    </h3>
-
-                    <p className="text-xs text-[var(--color-text-muted)] mb-4">
-                      {lesson.cards?.length ?? 0} cards · Used{" "}
-                      {lesson.useCount ?? 0} times
-                    </p>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => enterClassroom(lesson)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-400 text-green-900
-      text-sm
-      hover:bg-green-600
-      hover:shadow-md
-      transition"
-                      >
-                        <Play size={14} />
-                        Enter
-                      </button>
-
-                      <button
-                        onClick={() => editLesson(lesson)}
-                        className="px-3 py-2 rounded-lg border border-black/10 hover:bg-gray-50 transition"
-                      >
-                        <Edit size={14} />
-                      </button>
-
-                      <button
-                        onClick={() => deleteLesson(lesson.id)}
-                        className="px-3 py-2 rounded-lg border border-black/10 hover:bg-red-50 transition"
-                      >
-                        <Trash2 size={14} className="text-red-500" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</section>
 
         {previewLesson && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
