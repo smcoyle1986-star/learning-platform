@@ -32,6 +32,9 @@ export default function LessonsPage() {
       "classbloom-lesson-tray",
       JSON.stringify(lesson.cards)
     );
+    // notify other pages that the lesson tray was updated
+    window.dispatchEvent(new Event("lesson-tray-updated"));
+
     localStorage.setItem(
       "classbloom-last-saved-tray",
       JSON.stringify(lesson.cards)

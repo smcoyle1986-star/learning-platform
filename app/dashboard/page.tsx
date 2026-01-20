@@ -94,6 +94,11 @@ export default function DashboardPage() {
       "classbloom-lesson-tray",
       JSON.stringify(lesson.cards ?? [])
     );
+    try {
+      window.dispatchEvent(new Event("lesson-tray-updated"));
+    } catch (e) {
+      /* ignore */
+    }
 
     window.location.href = "/flashcards";
   };
@@ -112,6 +117,11 @@ export default function DashboardPage() {
         "classbloom-lesson-tray",
         JSON.stringify(lesson.cards ?? [])
       );
+      try {
+        window.dispatchEvent(new Event("lesson-tray-updated"));
+      } catch (err) {
+        /* ignore */
+      }
     } catch (err) {
       console.error("Failed to set lesson tray for printing:", err);
     }
@@ -242,9 +252,27 @@ export default function DashboardPage() {
                         <Edit size={14} />
                       </button>
 
-                      {/* PRINT */}
+                      {/* Games (redirect) */}
                       <button
-                        onClick={(e) => printLesson(e, lesson)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          try {
+                            const cardsToCopy = lesson.cards ?? [];
+                            localStorage.setItem(
+                              "classbloom-lesson-tray",
+                              JSON.stringify(cardsToCopy)
+                            );
+                            try {
+                              window.dispatchEvent(new Event("lesson-tray-updated"));
+                            } catch (err) {
+                              /* ignore */
+                            }
+                          } catch (err) {
+                            console.error("Failed to prepare lesson tray for games:", err);
+                          }
+                          // navigate to games landing
+                          window.location.href = "/games";
+                        }}
                         className="
                 p-2 rounded-lg
                 border border-black/10
@@ -252,9 +280,30 @@ export default function DashboardPage() {
                 hover:shadow-md
                 transition
               "
-                        title="Print"
+                        title="Games"
+                        aria-label="Open Games"
                       >
-                        <Printer size={14} />
+                        {/* inline gamepad SVG (keeps same visual size as previous icon) */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          focusable="false"
+                        >
+                          <path d="M6 12c0-1.333-.667-2-2-2S2 10.667 2 12s.667 2 2 2 2-.667 2-2z" />
+                          <path d="M22 12c0-1.333-.667-2-2-2s-2 .667-2 2 .667 2 2 2 2-.667 2-2z" />
+                          <path d="M4.5 12h15a3.5 3.5 0 0 1 3.5 3.5V17a3.5 3.5 0 0 1-3.5 3.5H4.5A3.5 3.5 0 0 1 1 17v-1.5A3.5 3.5 0 0 1 4.5 12z" />
+                          <path d="M9 15v.01" />
+                          <path d="M12 13v4" />
+                          <path d="M15 15v.01" />
+                        </svg>
                       </button>
 
                       {/* DELETE */}
@@ -298,6 +347,11 @@ export default function DashboardPage() {
                             "classbloom-lesson-tray",
                             JSON.stringify(lesson.cards ?? [])
                           );
+                          try {
+                            window.dispatchEvent(new Event("lesson-tray-updated"));
+                          } catch (err) {
+                            /* ignore */
+                          }
 
                           // optional: update counts in-memory and persist
                           const updated = lessons.map(l =>
@@ -414,9 +468,27 @@ export default function DashboardPage() {
                   <Edit size={14} />
                 </button>
 
-                {/* PRINT */}
+               {/* Games (dashboard-aware, compact icon button - design matches previous small action buttons) */}
                 <button
-                  onClick={(e) => printLesson(e, lesson)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      const cardsToCopy = lesson.cards ?? [];
+                      localStorage.setItem(
+                        "classbloom-lesson-tray",
+                        JSON.stringify(cardsToCopy)
+                      );
+                      try {
+                        window.dispatchEvent(new Event("lesson-tray-updated"));
+                      } catch (err) {
+                        /* ignore */
+                      }
+                    } catch (err) {
+                      console.error("Failed to prepare lesson tray for games:", err);
+                    }
+                    // Navigate to games landing
+                    window.location.href = "/games";
+                  }}
                   className="
                     p-2 rounded-lg
                     border border-black/10
@@ -424,9 +496,30 @@ export default function DashboardPage() {
                     hover:shadow-md
                     transition
                   "
-                  title="Print"
+                  title="Games"
+                  aria-label="Open Games"
                 >
-                  <Printer size={14} />
+                  {/* inline gamepad SVG (keeps same visual size as previous icon) */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M6 12c0-1.333-.667-2-2-2S2 10.667 2 12s.667 2 2 2 2-.667 2-2z" />
+                    <path d="M22 12c0-1.333-.667-2-2-2s-2 .667-2 2 .667 2 2 2 2-.667 2-2z" />
+                    <path d="M4.5 12h15a3.5 3.5 0 0 1 3.5 3.5V17a3.5 3.5 0 0 1-3.5 3.5H4.5A3.5 3.5 0 0 1 1 17v-1.5A3.5 3.5 0 0 1 4.5 12z" />
+                    <path d="M9 15v.01" />
+                    <path d="M12 13v4" />
+                    <path d="M15 15v.01" />
+                  </svg>
                 </button>
 
                 {/* DELETE */}
@@ -467,6 +560,11 @@ export default function DashboardPage() {
                       "classbloom-lesson-tray",
                       JSON.stringify(lesson.cards ?? [])
                     );
+                    try {
+                      window.dispatchEvent(new Event("lesson-tray-updated"));
+                    } catch (err) {
+                      /* ignore */
+                    }
 
                     // optional: update counts in-memory and persist
                     const updated = lessons.map(l =>

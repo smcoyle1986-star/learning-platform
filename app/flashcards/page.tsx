@@ -115,7 +115,17 @@ export default function FlashcardsPage() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray));
+    try {
+      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray));
+      // notify other pages that the tray updated
+      try {
+        window.dispatchEvent(new Event("lesson-tray-updated"));
+      } catch (e) {
+        /* ignore in restricted environments */
+      }
+    } catch (e) {
+      console.warn("Failed to persist lesson tray:", e);
+    }
   }, [lessonTray]);
 
   // Track unsaved changes
@@ -376,6 +386,11 @@ export default function FlashcardsPage() {
   function clearLessonTray() {
     setLessonTray([]);
     localStorage.removeItem("classbloom-lesson-tray");
+    try {
+      window.dispatchEvent(new Event("lesson-tray-updated"));
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   /* ---------------------------
@@ -631,6 +646,20 @@ export default function FlashcardsPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Games (new) */}
+<button
+  onClick={() => (window.location.href = "/games")}
+  className="
+    px-4 py-2 rounded-lg
+    bg-green-200 text-green-900
+    text-sm
+    hover:bg-green-300
+    hover:shadow-md
+    transition
+  "
+>
+  Games
+</button>
             {/* Dashboard */}
             <button
               onClick={() => (window.location.href = "/dashboard")}
@@ -709,6 +738,11 @@ export default function FlashcardsPage() {
               try {
                 // ensure the tray is persisted (your existing effect also keeps this in sync)
                 localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray || []));
+                try {
+                  window.dispatchEvent(new Event("lesson-tray-updated"));
+                } catch (err) {
+                  /* ignore */
+                }
               } catch (err) {
                 console.error("Failed to set lesson tray for printing:", err);
               }

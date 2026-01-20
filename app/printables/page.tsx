@@ -272,7 +272,7 @@ export default function PrintablesPage() {
   }
 
   /* ---------------------------
-     Main render: options (left) + center: tray (shorter, NOT sticky) + preview (large, scrollable single-page view)
+     Main render: options (left) + center: tray (shorter, NOT sticky) + preview (large, scrollable single-page-at-a-time) 
      --------------------------- */
 
   return (
