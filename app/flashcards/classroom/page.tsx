@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,92 +20,91 @@ type Card = {
 export default function ClassroomMode() {
   const [cards, setCards] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
-const [autoPlay, setAutoPlay] = useState(false);
-const [intervalMs, setIntervalMs] = useState(4000);
-const [fade, setFade] = useState(true);
-const [direction, setDirection] = useState<"next" | "prev">("next");
-const [touchStartX, setTouchStartX] = useState<number | null>(null);
-const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
-const formatWord = (word: string) =>
-  word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-const handleExit = () => {
-  // ✅ ALWAYS save lesson tray first (no behavior change)
-  localStorage.setItem(
-    "classbloom-lesson-tray",
-    JSON.stringify(cards)
-  );
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [intervalMs, setIntervalMs] = useState(4000);
+  const [fade, setFade] = useState(true);
+  const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
 
-  // ✅ Check where we came from
-  const params = new URLSearchParams(window.location.search);
-  const from = params.get("from");
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const cardContainerRef = useRef<HTMLDivElement | null>(null);
 
-  if (from === "dashboard") {
-    window.location.href = "/dashboard";
-  } else {
-    // Default / existing behavior
-    window.location.href = "/flashcards";
-  }
-};
+  const [cardAvailableHeight, setCardAvailableHeight] = useState<number | null>(null);
 
+  const formatWord = (word: string) =>
+    word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const handleExit = () => {
+    // ✅ ALWAYS save lesson tray first (no behavior change)
+    localStorage.setItem(
+      "classbloom-lesson-tray",
+      JSON.stringify(cards)
+    );
 
+    // ✅ Check where we came from
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
 
-  useEffect(() => {
-  const stored = localStorage.getItem("classbloom-lesson-tray");
-
-  if (!stored || stored === "undefined") return;
-
-  try {
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed)) {
-      setCards(parsed);
-    }
-  } catch (e) {
-    console.error("Invalid lesson tray data", e);
-  }
-}, []);
-
- useEffect(() => {
-  if (!autoPlay || cards.length === 0) return;
-
-  const timer = setInterval(() => {
-    nextCard();
-  }, intervalMs);
-
-  return () => clearInterval(timer);
-}, [autoPlay, intervalMs, cards.length]);
-
-  useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "ArrowRight") {
-      nextCard();
-    }
-    if (e.key === "ArrowLeft") {
-      prevCard();
+    if (from === "dashboard") {
+      window.location.href = "/dashboard";
+    } else {
+      // Default / existing behavior
+      window.location.href = "/flashcards";
     }
   };
 
-  window.addEventListener("keydown", handleKeyDown);
-  return () => window.removeEventListener("keydown", handleKeyDown);
-}, [cards.length]);
+  useEffect(() => {
+    const stored = localStorage.getItem("classbloom-lesson-tray");
+    if (!stored || stored === "undefined") return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setCards(parsed);
+      }
+    } catch (e) {
+      console.error("Invalid lesson tray data", e);
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!autoPlay || cards.length === 0) return;
+    const timer = setInterval(() => {
+      nextCard();
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [autoPlay, intervalMs, cards.length]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        nextCard();
+      }
+      if (e.key === "ArrowLeft") {
+        prevCard();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cards.length]);
 
   const nextCard = () => {
-  setFade(false);
-  setTimeout(() => {
-  setDirection("next");
-    setIndex((prev) => (prev + 1) % cards.length);
-    setFade(true);
-  }, 200);
-};
+    setFade(false);
+    setTimeout(() => {
+      setDirection("next");
+      setIndex((prev) => (prev + 1) % cards.length);
+      setFade(true);
+    }, 200);
+  };
 
-const prevCard = () => {
-  setFade(false);
-  setTimeout(() => {
-  setDirection("prev");
-    setIndex((prev) => (prev - 1 + cards.length) % cards.length);
-    setFade(true);
-  }, 200);
-};
+  const prevCard = () => {
+    setFade(false);
+    setTimeout(() => {
+      setDirection("prev");
+      setIndex((prev) => (prev - 1 + cards.length) % cards.length);
+      setFade(true);
+    }, 200);
+  };
 
   const shuffleCards = () => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
@@ -113,6 +112,7 @@ const prevCard = () => {
     setIndex(0);
   };
 
+  // fullscreen toggle unchanged (still uses document.documentElement)
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
@@ -120,153 +120,277 @@ const prevCard = () => {
       document.exitFullscreen();
     }
   };
-  const handleTouchStart = (e: React.TouchEvent) => {
-  setTouchStartX(e.touches[0].clientX);
-};
 
-const handleTouchMove = (e: React.TouchEvent) => {
-  setTouchCurrentX(e.touches[0].clientX);
-};
-
-const handleTouchEnd = () => {
-  if (touchStartX === null || touchCurrentX === null) return;
-
-  const diff = touchStartX - touchCurrentX;
-  const threshold = 60; // swipe sensitivity
-
-  if (diff > threshold) {
-    // swipe left → next
-    nextCard();
-  } else if (diff < -threshold) {
-    // swipe right → previous
-    prevCard();
+  // measure header + bottom controls and compute available height for the card
+  function recomputeAvailableCardHeight() {
+    const headerH = headerRef.current?.offsetHeight ?? 0;
+    const bottomH = bottomRef.current?.offsetHeight ?? 0;
+    const topBottomGap = 48; // a little breathing room
+    const available = Math.max(200, window.innerHeight - headerH - bottomH - topBottomGap);
+    setCardAvailableHeight(available);
   }
 
-  setTouchStartX(null);
-  setTouchCurrentX(null);
-};
+  useLayoutEffect(() => {
+    // recompute when entering/exiting fullscreen or on resize
+    recomputeAvailableCardHeight();
+    function onResize() {
+      recomputeAvailableCardHeight();
+    }
+    window.addEventListener("resize", onResize);
+    document.addEventListener("fullscreenchange", recomputeAvailableCardHeight);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("fullscreenchange", recomputeAvailableCardHeight);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // touch handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchCurrentX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchCurrentX === null) return;
+    const diff = touchStartX - touchCurrentX;
+    const threshold = 60; // swipe sensitivity
+    if (diff > threshold) {
+      // swipe left → next
+      nextCard();
+    } else if (diff < -threshold) {
+      // swipe right → previous
+      prevCard();
+    }
+    setTouchStartX(null);
+    setTouchCurrentX(null);
+  };
+
+  // -------------------
+  // New: settings for flashcard display modes + reveal toggle
+  // -------------------
+  type DisplayMode = "image+text" | "image" | "text";
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("image+text");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // reveal toggles used for image-only and text-only modes:
+  // - when displayMode === "image": revealToggle determines whether text is shown below image
+  // - when displayMode === "text": revealToggle determines whether image is shown below the text (text moves down)
+  const [revealToggle, setRevealToggle] = useState(false);
+
+  // reset reveal when index or mode changes
+  useEffect(() => {
+    setRevealToggle(false);
+  }, [index, displayMode]);
+
+  // Card click behavior updated:
+  // - image+text: advance on click
+  // - image: clicking toggles text under image (revealToggle)
+  // - text: clicking toggles image shown below text; second click hides image and recenters text
+  const handleCardClick = () => {
+    if (displayMode === "image+text") {
+      nextCard();
+    } else {
+      setRevealToggle((v) => !v);
+    }
+  };
 
   if (cards.length === 0) {
-  return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col items-center justify-center gap-6">
-      <p className="text-xl text-[var(--color-text-muted)]">
-        No lesson loaded
-      </p>
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col items-center justify-center gap-6">
+        <p className="text-xl text-[var(--color-text-muted)]">
+          No lesson loaded
+        </p>
 
-      <button
-        onClick={handleExit}
-        className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white text-base font-semibold
-                   hover:opacity-90 hover:scale-[1.03] transition-all"
-      >
-        Go Back
-      </button>
-    </div>
-  );
-}
+        <button
+          onClick={handleExit}
+          className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white text-base font-semibold
+                     hover:opacity-90 hover:scale-[1.03] transition-all"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   const card = cards[index];
+  const inFullscreen = !!document.fullscreenElement;
+
+  // determine inline styles for the card container when fullscreen:
+  const cardStyle: React.CSSProperties = {};
+  if (inFullscreen && cardAvailableHeight) {
+    // Use that available height and make the card take most of it.
+    // Keep a small space for card margins/controls inside the card wrapper.
+    cardStyle.height = `${cardAvailableHeight}px`;
+    cardStyle.maxWidth = "calc(100vw - 48px)";
+    cardStyle.padding = "24px";
+  } else {
+    cardStyle.height = undefined;
+    cardStyle.maxWidth = undefined;
+    cardStyle.padding = undefined;
+  }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col justify-between p-6">
-
+    <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col justify-between">
       {/* Header controls */}
-      <div className="sticky top-0 z-50
-                w-full flex justify-between items-center px-6 py-3">
-        <div className="flex gap-3">
+      <div
+        ref={headerRef}
+        className="sticky top-0 z-50 w-full flex justify-between items-center px-6 py-3 bg-transparent"
+      >
+        <div className="flex gap-3 items-center">
+          {/* Settings button placed where Full Screen used to be */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((s) => !s)}
+              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg flex items-center gap-2"
+            >
+              Settings
+            </button>
+
+            {settingsOpen && (
+              // align dropdown to the left edge of the button to avoid overflowing the viewport
+              <div className="absolute left-0 mt-2 min-w-[160px] rounded-lg bg-white border shadow-lg p-1 z-50">
+                <div className="flex flex-col gap-1">
+                  <button
+                    className={`text-left px-3 py-2 rounded ${displayMode === "image+text" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    onClick={() => { setDisplayMode("image+text"); setSettingsOpen(false); }}
+                  >
+                    Image + Text
+                  </button>
+                  <button
+                    className={`text-left px-3 py-2 rounded ${displayMode === "image" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    onClick={() => { setDisplayMode("image"); setSettingsOpen(false); }}
+                  >
+                    Image only
+                  </button>
+                  <button
+                    className={`text-left px-3 py-2 rounded ${displayMode === "text" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    onClick={() => { setDisplayMode("text"); setSettingsOpen(false); }}
+                  >
+                    Text only
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={shuffleCards}
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg flex items-center gap-2"
+          >
+            <Shuffle size={18} />
+            Shuffle
+          </button>
+
+          <button
+            onClick={() => setAutoPlay((prev) => !prev)}
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
+          >
+            {autoPlay ? "Pause Auto-Play" : "Auto-Play"}
+          </button>
+
+          <button
+            onClick={() =>
+              setIntervalMs((prev) =>
+                prev === 4000 ? 2500 : prev === 2500 ? 6000 : 4000
+              )
+            }
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
+          >
+            Speed: {intervalMs === 2500 ? "Fast" : intervalMs === 6000 ? "Slow" : "Normal"}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Full Screen moved next to Exit as requested */}
           <button
             onClick={toggleFullscreen}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg
- flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm flex items-center gap-2"
           >
             <Maximize size={18} />
             Full Screen
           </button>
 
           <button
-            onClick={shuffleCards}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg
- flex items-center gap-2"
+            onClick={handleExit}
+            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm flex items-center gap-2"
           >
-            <Shuffle size={18} />
-            Shuffle
+            <X size={18} />
+            Exit
           </button>
-          <button
-  onClick={() => setAutoPlay((prev) => !prev)}
-  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm
-             hover:opacity-90 shadow-md hover:shadow-lg
- hover:scale-[1.03] transition-all"
->
-  {autoPlay ? "Pause Auto-Play" : "Auto-Play"}
-</button>
-
-<button
-  onClick={() =>
-    setIntervalMs((prev) =>
-      prev === 4000 ? 2500 : prev === 2500 ? 6000 : 4000
-    )
-  }
-  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm
-             hover:opacity-90 shadow-md hover:shadow-lg
- hover:scale-[1.03] transition-all"
->
-  Speed: {intervalMs === 2500 ? "Fast" : intervalMs === 6000 ? "Slow" : "Normal"}
-</button>
-
         </div>
-
-        <button
-  onClick={handleExit}
-  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm"
->
-  <X size={18} />
-  Exit
-</button>
-
       </div>
 
       {/* Flashcard */}
-   <div
-  onClick={nextCard}
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
-  key={index}
-  className={`cursor-pointer mx-auto my-8 bg-white rounded-3xl shadow-2xl
-    border-[10px] border-gray-300 w-full max-w-5xl aspect-[16/9]
-    flex flex-col justify-center items-center p-10
-    transition-all duration-300 ease-out
-    ${
-      direction === "next"
-        ? "animate-slide-left"
-        : "animate-slide-right"
-    }`}
->
-        {/* Image area */}
-        <div className="w-full flex-1 bg-gray-100 rounded-2xl mb-8 flex items-center justify-center text-gray-400 text-xl">
-          image
-        </div>
+      <div
+        // card container: when fullscreen we use measured height; otherwise we use aspect ratio via classes
+        ref={cardContainerRef}
+        onClick={handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        key={index}
+        className={`cursor-pointer mx-auto my-6 bg-white rounded-3xl shadow-2xl border-[10px] border-gray-300 w-full
+          ${inFullscreen ? "max-w-none" : "max-w-5xl aspect-[16/9]"} transition-all duration-300 ease-out`}
+        style={{ ...cardStyle }}
+      >
+        {/* Conditional rendering for text-only centered mode */}
+        {displayMode === "text" && !revealToggle ? (
+          // centered text (no image visible)
+          <div className="w-full h-full flex items-center justify-center">
+            <h2 className="text-7xl md:text-8xl font-extrabold tracking-wide capitalize">{formatWord(card.word)}</h2>
+          </div>
+        ) : (
+          // Normal layout: image area on top, text area below
+          <div className="w-full h-full flex flex-col justify-center items-center">
+            {/* Image area */}
+            <div className={`w-full ${inFullscreen ? "flex-1" : "flex-1"} bg-gray-100 rounded-2xl mb-6 flex items-center justify-center text-gray-400 text-xl overflow-hidden`}>
+              <div className="w-full h-full flex items-center justify-center">
+                {(displayMode === "image+text") ||
+                 (displayMode === "image") ||
+                 (displayMode === "text" && revealToggle) ? (
+                  <img src={card.image || "/placeholder.png"} alt={card.word} className="object-contain w-full h-full" />
+                ) : (
+                  <div className="text-2xl text-gray-400"> </div>
+                )}
+              </div>
+            </div>
 
-        {/* Vocabulary word */}
-        <div className="text-7xl md:text-8xl font-extrabold tracking-wide capitalize">
-          <h2>{formatWord(card.word)}</h2>
-        </div>
+            {/* Vocabulary word area */}
+            <div className={`${displayMode === "text" && revealToggle ? "mt-2" : ""} flex items-center justify-center w-full`}>
+              {(
+                displayMode === "image+text"
+                || (displayMode === "image" && revealToggle)
+                || (displayMode === "text") // in text mode, when revealToggle true we still show text (moved down); when false handled above
+              ) && (
+                <h2 className={`text-7xl md:text-8xl font-extrabold tracking-wide capitalize ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
+                  {formatWord(card.word)}
+                </h2>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom navigation */}
-      <div className="w-full flex flex-col items-center gap-6 mt-8">
-        <div className="flex items-center gap-10">
+      {/* Bottom navigation - ensure visible in fullscreen by measuring height above */}
+      <div ref={bottomRef} className="w-full flex flex-col items-center gap-6 px-6 pb-6">
+        <div className="flex items-center gap-6">
           <button
             onClick={prevCard}
-            className="p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
+            className="p-4 md:p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
           >
-            <ArrowLeft size={36} />
+            <ArrowLeft size={28} />
           </button>
 
           <button
             onClick={nextCard}
-            className="p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
+            className="p-4 md:p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
           >
-            <ArrowRight size={36} />
+            <ArrowRight size={28} />
           </button>
         </div>
 

@@ -112,11 +112,12 @@ export function GameEngine({ cards, onExit }: GameEngineProps) {
 const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] = [
   { title: "Image Reveal", id: "image-reveal", subtitle: "Reveal parts of the picture", image: "/games/placeholders/image-reveal.png" },
   { title: "KaBoom!", id: "kaboom", subtitle: "Avoid the bombs and score points", image: "/games/placeholders/kaboom.png" },
+  { title: "Spin and Speak", id: "spin-and-speak", subtitle: "Spin the Wheel for fun", image: "/games/placeholders/word-race.png" },
   { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions", image: "/games/placeholders/yes-or-no.png" },
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/placeholders/four-corners.png" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/placeholders/memory-flip.png" },
-  { title: "What’s Missing?", id: "whats-missing", subtitle: "Spot the missing item", image: "/games/placeholders/whats-missing.png" },
-  { title: "Word Race", id: "word-race", subtitle: "Fast-paced vocabulary race", image: "/games/placeholders/word-race.png" },
+  { title: "Mine Sweeper", id: "mine-sweeper", subtitle: "Clear the mines, win points!", image: "/games/placeholders/mine-sweeper.png" },
+ 
   { title: "Freeze & Guess", id: "freeze-and-guess", subtitle: "Freeze frames and guess", image: "/games/placeholders/freeze-and-guess.png" },
   { title: "Odd One Out", id: "odd-one-out", subtitle: "Find the odd card", image: "/games/placeholders/odd-one-out.png" },
   { title: "Build the Set", id: "build-the-set", subtitle: "Assemble a set of cards", image: "/games/placeholders/build-the-set.png" },

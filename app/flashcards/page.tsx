@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Search, Sparkles, X, ChevronDown, Printer } from "lucide-react";
-import { getNouns } from "@/lib/supabase/nouns";
-import { Noun } from "@/lib/types";
+import { Search, X, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 function rankResults<T extends { lemma: string; theme?: string }>(
@@ -34,32 +32,6 @@ type NounRow = {
   lemma: string;
   image_id: string | null;
 };
-
-// 🔍 Table-specific search helpers (safe to add)
-async function searchNounsByQuery(
-  supabaseClient: any,
-  query: string
-): Promise<Card[]> {
-  const searchTerm = query.trim().toLowerCase();
-  if (!searchTerm) return [];
-
-  const { data, error } = await supabaseClient
-    .from("nouns")
-    .select("id, lemma, image_id")
-    .or(`lemma.ilike.%${searchTerm}%,themes.cs.{${searchTerm}}`);
-
-  if (error) {
-    console.error("Noun search failed:", error);
-    return [];
-  }
-
-  return (data || []).map((row: NounRow) => ({
-    id: row.id,
-    word: row.lemma,
-    image: row.image_id ?? "/placeholder.png",
-    type: "noun",
-  }));
-}
 
 export type Card = {
   id: string; // UUID or identifier
@@ -97,6 +69,31 @@ export default function FlashcardsPage() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // --- popularity counts state (persisted in localStorage) ---
+  const POP_KEY = "classbloom-card-select-counts";
+  const [cardCounts, setCardCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POP_KEY);
+      if (raw) setCardCounts(JSON.parse(raw));
+    } catch (e) {
+      console.warn("Failed to load card counts:", e);
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(POP_KEY, JSON.stringify(cardCounts));
+    } catch (e) {
+      /* ignore */
+    }
+  }, [cardCounts]);
+
+  // Drag-and-drop state for lesson tray reordering & refs for FLIP animation
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const trayItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const prevRectsRef = useRef<Record<string, DOMRect>>({});
 
   useEffect(() => {
     // Auto-search when a theme is selected (no Enter key needed)
@@ -169,10 +166,9 @@ export default function FlashcardsPage() {
     noun: [
       "food",
       "places",
-      "alphabet",
-      "animals_baby",
-      "animals_land",
-      "animals_sea",
+      "animals baby",
+      "animals land",
+      "animals sea",
       "body",
       "classroom",
       "clothes",
@@ -182,6 +178,7 @@ export default function FlashcardsPage() {
       "fruit",
       "furniture",
       "health",
+      "holidays",
       "jobs",
       "nature",
       "numbers",
@@ -206,6 +203,7 @@ export default function FlashcardsPage() {
       "colors",
     ],
     phonics: [
+      "alphabet",
       "short a",
       "short e",
       "short i",
@@ -231,7 +229,39 @@ export default function FlashcardsPage() {
    }`;
 
   /* ---------------------------
-     Hoisted functions
+     Utility helpers
+     --------------------------- */
+
+  // Score for query tie-breaker (stability + ranking): lower is better
+  function scoreForCard(card: Card, rawQuery: string) {
+    const q = (rawQuery || "").toLowerCase();
+    const lemma = (card.word || "").toLowerCase();
+    if (!q) return 999;
+    if (lemma === q) return 0;
+    if (lemma.startsWith(q)) return 1;
+    if (lemma.includes(q)) return 2;
+    return 3;
+  }
+
+  // Stable popularity sort that uses scoreForCard as tie-breaker and finally the card.word
+  function sortByPopularity(cards: Card[], rawQuery = "") {
+    return [...cards].sort((a, b) => {
+      const ca = cardCounts[a.id] ?? 0;
+      const cb = cardCounts[b.id] ?? 0;
+      if (cb !== ca) return cb - ca; // higher popularity first
+
+      // tie-break with ranking by query relevance
+      const sa = scoreForCard(a, rawQuery);
+      const sb = scoreForCard(b, rawQuery);
+      if (sa !== sb) return sa - sb;
+
+      // final deterministic tie-breaker
+      return a.word.localeCompare(b.word);
+    });
+  }
+
+  /* ---------------------------
+     Search helpers
      --------------------------- */
 
   async function handleSearch() {
@@ -239,7 +269,7 @@ export default function FlashcardsPage() {
       const raw = query.trim().toLowerCase();
       const normalized = raw.replace(/\s+/g, "_");
 
-      // 🧠 Allow theme-only or query searches
+      // Allow theme-only or query searches
       if (!raw && !activeTheme) return;
 
       if (activeWordType === "noun") {
@@ -250,10 +280,10 @@ export default function FlashcardsPage() {
           .select("id, lemma, image_id, themes");
 
         if (activeTheme) {
-          // 🎯 Theme search only
+          // Theme search only
           queryBuilder.contains("themes", [activeTheme]);
         } else if (raw) {
-          // 🔤 Word search
+          // Word search
           queryBuilder.or(`lemma.ilike.%${raw}%,themes.cs.{${raw}}`);
         }
 
@@ -268,11 +298,10 @@ export default function FlashcardsPage() {
           type: "noun",
         }));
 
-        setResults(cards);
+        setResults(sortByPopularity(cards, raw));
         return;
       }
 
-      // 🔒 Future tables (placeholders)
       if (activeWordType === "verb") {
         const { data, error } = await supabase
           .from("verbs")
@@ -292,7 +321,7 @@ export default function FlashcardsPage() {
           type: "verb",
         }));
 
-        setResults(cards);
+        setResults(sortByPopularity(cards, raw));
         return;
       }
 
@@ -315,7 +344,7 @@ export default function FlashcardsPage() {
           type: "adjective",
         }));
 
-        setResults(cards);
+        setResults(sortByPopularity(cards, raw));
         return;
       }
 
@@ -340,7 +369,7 @@ export default function FlashcardsPage() {
           type: "phonics",
         }));
 
-        setResults(cards);
+        setResults(sortByPopularity(cards, raw));
         return;
       }
 
@@ -363,7 +392,7 @@ export default function FlashcardsPage() {
           type: "preposition",
         }));
 
-        setResults(cards);
+        setResults(sortByPopularity(cards, raw));
         return;
       }
     } catch (err) {
@@ -371,12 +400,29 @@ export default function FlashcardsPage() {
     }
   }
 
+  /* ---------------------------
+     Lesson tray manipulation (toggling + drag reorder + keyboard + animated FLIP)
+     --------------------------- */
+
+  function incrementCardCount(cardId: string) {
+    setCardCounts((prevCounts) => {
+      const next = { ...(prevCounts || {}) };
+      next[cardId] = (next[cardId] ?? 0) + 1;
+      return next;
+    });
+  }
+
   function toggleLessonTrayCard(card: Card) {
-    setLessonTray((prev) =>
-      prev.some((c) => c.id === card.id)
-        ? prev.filter((c) => c.id !== card.id)
-        : [...prev, card]
-    );
+    setLessonTray((prev) => {
+      const exists = prev.some((c) => c.id === card.id);
+      if (exists) {
+        return prev.filter((c) => c.id !== card.id);
+      } else {
+        // increment popularity count for this card when teacher picks it
+        incrementCardCount(card.id);
+        return [...prev, card];
+      }
+    });
   }
 
   function removeFromLessonTray(id: string) {
@@ -393,8 +439,143 @@ export default function FlashcardsPage() {
     }
   }
 
+  // FLIP helpers for smooth reorder animation
+  function captureRects() {
+    const map: Record<string, DOMRect> = {};
+    lessonTray.forEach((card) => {
+      const el = trayItemRefs.current[card.id];
+      if (el) map[card.id] = el.getBoundingClientRect();
+    });
+    return map;
+  }
+
+  function animateFlip(oldRects: Record<string, DOMRect>, newRects: Record<string, DOMRect>) {
+    Object.keys(newRects).forEach((id) => {
+      const el = trayItemRefs.current[id];
+      const oldRect = oldRects[id];
+      const newRect = newRects[id];
+      if (!el || !oldRect || !newRect) return;
+
+      const dx = oldRect.left - newRect.left;
+      const dy = oldRect.top - newRect.top;
+      if (dx === 0 && dy === 0) return;
+
+      // apply transform to invert movement, then transition to none
+      el.style.transition = "none";
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      // force reflow
+      void el.offsetWidth;
+      el.style.transition = "transform 260ms cubic-bezier(.2,.9,.3,1)";
+      el.style.transform = "";
+      const cleanup = () => {
+        el.style.transition = "";
+        el.style.transform = "";
+        el.removeEventListener("transitionend", cleanup);
+      };
+      el.addEventListener("transitionend", cleanup);
+      // fallback cleanup
+      setTimeout(cleanup, 350);
+    });
+  }
+
+  function reorderWithAnimation(from: number, to: number) {
+    if (from === to) return;
+    // capture old rects
+    const oldRects = captureRects();
+
+    // compute new order synchronously
+    setLessonTray((prev) => {
+      const copy = [...prev];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+
+    // animate on next frames after DOM updates
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const newRects: Record<string, DOMRect> = {};
+        // gather current DOM rects from refs (they are updated after setLessonTray)
+        Object.keys(trayItemRefs.current).forEach((id) => {
+          const el = trayItemRefs.current[id];
+          if (el) newRects[id] = el.getBoundingClientRect();
+        });
+        animateFlip(oldRects, newRects);
+      });
+    });
+  }
+
+  // Drag handlers
+  function onDragStart(e: React.DragEvent, index: number) {
+    setDraggedIndex(index);
+    // store rects in case we want them later
+    prevRectsRef.current = captureRects();
+    try {
+      e.dataTransfer.setData("text/plain", String(index));
+      // show copy cursor
+      e.dataTransfer.effectAllowed = "move";
+    } catch {}
+  }
+
+  function onDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }
+
+  function onDrop(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    const from =
+      draggedIndex ??
+      parseInt(e.dataTransfer.getData("text/plain") || "-1", 10);
+    const to = index;
+    if (from < 0 || to < 0 || from === to) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Use animated reorder
+    reorderWithAnimation(from, to);
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
+
+  function onDragEnd() {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
+
+  // Keyboard accessibility: focus + ArrowLeft/ArrowRight to reorder
+  function onTrayItemKeyDown(e: React.KeyboardEvent, index: number) {
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (index > 0) {
+        reorderWithAnimation(index, index - 1);
+        // focus the moved element after slight delay
+        setTimeout(() => {
+          const movedId = lessonTray[index - 1]?.id;
+          trayItemRefs.current[movedId ?? ""]?.focus();
+        }, 260);
+      }
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      if (index < lessonTray.length - 1) {
+        reorderWithAnimation(index, index + 1);
+        setTimeout(() => {
+          const movedId = lessonTray[index + 1]?.id;
+          trayItemRefs.current[movedId ?? ""]?.focus();
+        }, 260);
+      }
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      const id = lessonTray[index]?.id;
+      if (id) removeFromLessonTray(id);
+    }
+  }
+
   /* ---------------------------
-     Supabase save/replace handlers (with localStorage update for Dashboard)
+     Supabase save/replace handlers (unchanged except local cache updates already present)
      --------------------------- */
 
   async function handleSaveLesson() {
@@ -459,7 +640,7 @@ export default function FlashcardsPage() {
         if (cardsErr) throw cardsErr;
       }
 
-      // --- NEW: update localStorage so Dashboard sees this immediately ---
+      // update localStorage so Dashboard sees this immediately
       try {
         const raw = localStorage.getItem(STORAGE_KEY) || "[]";
         const parsed = JSON.parse(raw);
@@ -478,7 +659,6 @@ export default function FlashcardsPage() {
       } catch (e) {
         console.warn("Failed to update local saved-lessons cache:", e);
       }
-      // ---------------------------------------------------------------
 
       // UI updates
       setLastSavedTray([...lessonTray]);
@@ -494,13 +674,11 @@ export default function FlashcardsPage() {
 
   async function replaceLesson() {
     try {
-      // Make sure we have an existing lesson_set id to replace
       if (!existingLessonId) {
         setShowReplaceConfirm(false);
         return;
       }
 
-      // Ensure user is authenticated (defensive)
       const userResult = await supabase.auth.getUser();
       const user = (userResult as any)?.data?.user ?? null;
       const userErr = (userResult as any)?.error ?? null;
@@ -509,7 +687,6 @@ export default function FlashcardsPage() {
         return;
       }
 
-      // Delete existing cards for that lesson_set
       const { error: delErr } = await supabase
         .from("cards")
         .delete()
@@ -517,7 +694,6 @@ export default function FlashcardsPage() {
 
       if (delErr) throw delErr;
 
-      // Insert new cards for the lesson_set
       if (lessonTray.length > 0) {
         const cardsToInsert = lessonTray.map((card, idx) => ({
           lesson_set_id: existingLessonId,
@@ -530,7 +706,6 @@ export default function FlashcardsPage() {
         if (insertCardsErr) throw insertCardsErr;
       }
 
-      // Update lesson_set metadata (name + last_used)
       const { error: updateErr } = await supabase
         .from("lesson_sets")
         .update({
@@ -541,13 +716,12 @@ export default function FlashcardsPage() {
 
       if (updateErr) throw updateErr;
 
-      // --- NEW: update localStorage so Dashboard reflects replacement ---
+      // update local cache
       try {
         const raw = localStorage.getItem(STORAGE_KEY) || "[]";
         const parsed = JSON.parse(raw);
         const savedLessons = Array.isArray(parsed) ? parsed : [];
 
-        // explicit type allows createdAt to be string or undefined
         const newEntry: {
           id: string;
           name: string;
@@ -564,17 +738,14 @@ export default function FlashcardsPage() {
           useCount: 0,
         };
 
-        // Find by id first
         const idx = savedLessons.findIndex(
           (s: any) => String(s.id) === String(existingLessonId)
         );
         if (idx !== -1) {
-          // Preserve existing createdAt if present
           newEntry.createdAt =
             savedLessons[idx].createdAt ?? new Date().toISOString();
           savedLessons[idx] = { ...savedLessons[idx], ...newEntry };
         } else {
-          // Fallback: match by name (case-insensitive)
           const nameIdx = savedLessons.findIndex(
             (s: any) =>
               String(s.name).toLowerCase() ===
@@ -585,7 +756,6 @@ export default function FlashcardsPage() {
               savedLessons[nameIdx].createdAt ?? new Date().toISOString();
             savedLessons[nameIdx] = { ...savedLessons[nameIdx], ...newEntry };
           } else {
-            // Not found locally — prepend new
             newEntry.createdAt = new Date().toISOString();
             savedLessons.unshift(newEntry);
           }
@@ -595,13 +765,10 @@ export default function FlashcardsPage() {
       } catch (e) {
         console.warn("Failed to update local saved-lessons cache on replace:", e);
       }
-      // ---------------------------------------------------------------
 
-      // Close confirm UI and modal
       setShowReplaceConfirm(false);
       setExistingLessonId(null);
 
-      // UI updates
       setLastSavedTray([...lessonTray]);
       setShowSavedIndicator(true);
       setTimeout(() => setShowSavedIndicator(false), 2000);
@@ -622,6 +789,30 @@ export default function FlashcardsPage() {
   }
 
   /* ---------------------------
+     Close dropdown when clicking outside
+     --------------------------- */
+  useEffect(() => {
+    function onDocMouseDown(e: MouseEvent) {
+      if (!openDropdown) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) {
+        setOpenDropdown(null);
+        return;
+      }
+
+      const inDropdown = target.closest(`[data-dropdown-type="${openDropdown}"]`);
+      const inBtn = target.closest(`[data-dropdown-btn="${openDropdown}"]`);
+
+      if (!inDropdown && !inBtn) {
+        setOpenDropdown(null);
+      }
+    }
+
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [openDropdown]);
+
+  /* ---------------------------
      Render
      --------------------------- */
 
@@ -630,15 +821,10 @@ export default function FlashcardsPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Brand */}
-          <Link
-            href="/"
-            className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
-          >
+          <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
             ClassBloom
           </Link>
 
-          {/* Center: Flashcards (centered and black) */}
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <nav className="flex items-center text-4xl font-bold text-black">
               Flashcards
@@ -646,44 +832,23 @@ export default function FlashcardsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Games (new) */}
-<button
-  onClick={() => (window.location.href = "/games")}
-  className="
-    px-4 py-2 rounded-lg
-    bg-green-200 text-green-900
-    text-sm
-    hover:bg-green-300
-    hover:shadow-md
-    transition
-  "
->
-  Games
-</button>
-            {/* Dashboard */}
+            <button
+              onClick={() => (window.location.href = "/games")}
+              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+            >
+              Games
+            </button>
+
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="
-      px-4 py-2 rounded-lg
-      bg-green-200 text-green-900
-      text-sm
-      hover:bg-green-300
-      hover:shadow-md
-      transition
-    "
+              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
             >
               Dashboard
             </button>
 
-            {/* Classroom */}
             <button
               onClick={() => (window.location.href = "/flashcards/classroom")}
-              className="px-4 py-2 rounded-lg
-      bg-green-400 text-green-900
-      text-sm
-      hover:bg-green-600
-      hover:shadow-md
-      transition"
+              className="px-4 py-2 rounded-lg bg-green-400 text-green-900 text-sm hover:bg-green-600 hover:shadow-md transition"
             >
               Classroom
             </button>
@@ -692,94 +857,102 @@ export default function FlashcardsPage() {
       </header>
 
       {/* Lesson Tray (sticky) */}
-<section className="sticky top-[72px] z-40 bg-white border-b border-black/5">
-  <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2">
-    {/* Row 1: Lesson Tray cards (scrollable) */}
-    <div className="flex items-center gap-3 overflow-x-auto scroll-smooth">
-      {/* If the lesson tray is empty */}
-      {lessonTray.length === 0 && (
-        <div className="px-4 py-2 rounded-lg border border-dashed border-black/20 text-sm text-[var(--color-text-muted)] whitespace-nowrap">
-          Click flashcards to add
+      <section className="sticky top-[72px] z-40 bg-white border-b border-black/5">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2">
+          {/* Row 1: Lesson Tray cards (scrollable) */}
+          <div className="flex items-center gap-3 overflow-x-auto scroll-smooth">
+            {lessonTray.length === 0 && (
+              <div className="px-4 py-2 rounded-lg border border-dashed border-black/20 text-sm text-[var(--color-text-muted)] whitespace-nowrap">
+                Click flashcards to add
+              </div>
+            )}
+
+            {lessonTray.map((card, idx) => (
+              <div
+                key={card.id}
+                ref={(el) => { trayItemRefs.current[card.id] = el; }}
+                draggable
+                onDragStart={(e) => onDragStart(e, idx)}
+                onDragOver={(e) => onDragOver(e, idx)}
+                onDrop={(e) => onDrop(e, idx)}
+                onDragEnd={onDragEnd}
+                tabIndex={0}
+                onKeyDown={(e) => onTrayItemKeyDown(e, idx)}
+                aria-label={`Tray card ${formatWord(card.word)} — position ${idx + 1}`}
+                role="button"
+                className={`relative px-3 py-2 rounded-lg border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
+                  ${draggedIndex === idx ? "opacity-60 scale-95 cursor-grabbing" : "cursor-grab"}
+                  ${dragOverIndex === idx && draggedIndex !== null ? "ring-2 ring-dashed ring-[var(--color-primary)]" : ""}`}
+                title={`${formatWord(card.word)} — use Left/Right to move, Delete to remove`}
+              >
+                <span className="text-xs">{formatWord(card.word)}</span>
+                <button
+                  onClick={() => removeFromLessonTray(card.id)}
+                  className="absolute -top-0 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
+                  aria-label={`Remove ${formatWord(card.word)} from tray`}
+                >
+                  <X size={12} className="text-red-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Row 2: Save / Print / Remove / Unsaved/Saved indicators */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {lessonTray.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowSaveModal(true)}
+                  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition-all"
+                >
+                  Save To Dashboard
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray || []));
+                      try {
+                        window.dispatchEvent(new Event("lesson-tray-updated"));
+                      } catch (err) {
+                        /* ignore */
+                      }
+                    } catch (err) {
+                      console.error("Failed to set lesson tray for printing:", err);
+                    }
+                    window.location.href = "/printables?from=flashcards";
+                  }}
+                  className="px-4 py-2 rounded-lg bg-white text-blue-700 border border-black/10 text-sm hover:bg-blue-50 transition flex items-center gap-2"
+                  title="Print lesson"
+                >
+                  <Printer size={16} />
+                  Print
+                </button>
+
+                <button
+                  onClick={clearLessonTray}
+                  className="px-3 py-2 rounded-lg text-sm text-red-600 border border-red-200 hover:bg-red-50"
+                >
+                  Remove all
+                </button>
+              </>
+            )}
+
+            {showSavedIndicator && (
+              <span className="text-sm text-green-600 font-medium animate-pulse">
+                Saved!
+              </span>
+            )}
+          </div>
         </div>
-      )}
-
-      {/* Render each card in the lesson tray */}
-      {lessonTray.map((card) => (
-        <div
-          key={card.id}
-          className="relative px-3 py-2 rounded-lg border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap"
-        >
-          <span className="text-xs">{formatWord(card.word)}</span>
-          <button
-            onClick={() => removeFromLessonTray(card.id)}
-            className="absolute -top-0 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
-          >
-            <X size={12} className="text-red-500" />
-          </button>
-        </div>
-      ))}
-    </div>
-
-    {/* Row 2: Save / Print / Remove / Unsaved/Saved indicators */}
-    <div className="flex items-center gap-3 flex-wrap">
-      {lessonTray.length > 0 && (
-        <>
-          <button
-            onClick={() => setShowSaveModal(true)}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition-all"
-          >
-            Save To Dashboard
-          </button>
-
-          {/* Print button (new) */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              try {
-                // ensure the tray is persisted (your existing effect also keeps this in sync)
-                localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray || []));
-                try {
-                  window.dispatchEvent(new Event("lesson-tray-updated"));
-                } catch (err) {
-                  /* ignore */
-                }
-              } catch (err) {
-                console.error("Failed to set lesson tray for printing:", err);
-              }
-              // navigate to printables; it will read the same localStorage key
-              window.location.href = "/printables?from=flashcards";
-            }}
-            className="px-4 py-2 rounded-lg bg-white text-blue-700 border border-black/10 text-sm hover:bg-blue-50 transition flex items-center gap-2"
-            title="Print lesson"
-          >
-            <Printer size={16} />
-            Print
-          </button>
-
-          <button
-            onClick={clearLessonTray}
-            className="px-3 py-2 rounded-lg text-sm text-red-600 border border-red-200 hover:bg-red-50"
-          >
-            Remove all
-          </button>
-        </>
-      )}
-
-      {showSavedIndicator && (
-        <span className="text-sm text-green-600 font-medium animate-pulse">
-          Saved!
-        </span>
-      )}
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
         {/* Search + AI */}
         <div className="mb-8">
           <div className="flex items-center gap-3 max-w-4xl">
-            {/* Search input */}
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -824,7 +997,7 @@ export default function FlashcardsPage() {
             const isSelectedType = activeWordType === type;
 
             return (
-              <div key={type} className="relative">
+              <div key={type} className="relative" data-dropdown-type={type}>
                 {/* Main type button */}
                 <button
                   className={wordTypeButton(isSelectedType)}
@@ -833,24 +1006,21 @@ export default function FlashcardsPage() {
                     setActiveWordType(type);
                     setActiveTheme(null);
                   }}
+                  data-dropdown-btn={type}
                 >
                   {activeWordType === type && activeTheme ? activeTheme : type}
                 </button>
 
                 {/* Theme dropdown */}
                 {openDropdown === type && (
-                  <div className="absolute z-50 mt-2 w-48 rounded-xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain">
+                  <div className="absolute z-50 mt-2 w-48 rounded-xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain" data-dropdown-type={type}>
                     {THEMES[type].map((theme) => (
                       <button
                         key={theme}
                         onClick={() => {
-                          // Use updater function to ensure state is updated before search
                           setActiveTheme(theme);
                           setActiveWordType(type);
-
                           setOpenDropdown(null);
-
-                          // Schedule search on next tick
                           setTimeout(() => {
                             handleSearch();
                           }, 0);
@@ -871,7 +1041,7 @@ export default function FlashcardsPage() {
         {/* Empty State */}
         {results.length === 0 && (
           <div className="text-center py-24 text-[var(--color-text-muted)]">
-            <p className="text-lg mb-2">Selecte a tab to load flashcards</p>
+            <p className="text-lg mb-2">Select a tab to load flashcards</p>
           </div>
         )}
 
@@ -913,57 +1083,30 @@ export default function FlashcardsPage() {
         {showSaveModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6">
-              {/* Modal title */}
               <h2 className="text-lg font-semibold mb-4">Save To Dashboard</h2>
 
-              {/* Lesson name input */}
               <input
                 type="text"
                 value={lessonName}
                 onChange={(e) => setLessonName(e.target.value)}
                 placeholder="Enter lesson name"
-                className="
-          w-full mb-5 px-3 py-2
-          rounded-lg
-          border border-black/10
-          focus:outline-none
-          focus:ring-2 focus:ring-[var(--color-primary)]
-        "
+                className="w-full mb-5 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               />
 
-              {/* Buttons — YOUR CODE (unchanged) */}
               <div className="flex justify-end gap-3">
-                {/* Cancel */}
                 <button
                   onClick={() => {
                     setLessonName("");
                     setShowSaveModal(false);
                   }}
-                  className="
-            px-4 py-2
-            rounded-lg
-            border border-black/10
-            bg-[var(--color-bg-soft)]
-            text-sm
-            hover:bg-white
-            transition
-          "
+                  className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
                 >
                   Cancel
                 </button>
 
-                {/* Save */}
                 <button
                   onClick={handleSaveLesson}
-                  className="
-            px-4 py-2
-            rounded-lg
-            bg-[var(--color-primary)]
-            text-white
-            text-sm
-            hover:opacity-90
-            transition
-          "
+                  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
                 >
                   Save Lesson
                 </button>
@@ -985,31 +1128,14 @@ export default function FlashcardsPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowReplaceConfirm(false)}
-                  className="
-            px-4 py-2
-            rounded-lg
-            border border-black/10
-            bg-[var(--color-bg-soft)]
-            text-sm
-            hover:bg-white
-            transition
-          "
+                  className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
                 >
                   Change name
                 </button>
 
                 <button
                   onClick={replaceLesson}
-                  className="
-            px-4 py-2
-            rounded-lg
-            bg-[var(--color-primary)]
-            text-white
-            text-sm
-            hover:opacity-90
-            transition
-          "
-
+                  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
                 >
                   Replace
                 </button>

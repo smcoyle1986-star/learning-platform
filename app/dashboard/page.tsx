@@ -167,18 +167,18 @@ export default function DashboardPage() {
 
             {/* Classroom */}
             <button
-              onClick={() =>
-                (window.location.href = "/flashcards/classroom?from=dashboard")
-              }
-              className="px-4 py-2 rounded-lg
-      bg-green-400 text-green-900
-      text-sm
-      hover:bg-green-600
-      hover:shadow-md
-      transition"
-            >
-              Classroom
-            </button>
+  onClick={() => (window.location.href = "/games")}
+  className="
+    px-4 py-2 rounded-lg
+    bg-green-200 text-green-900
+    text-sm
+    hover:bg-green-300
+    hover:shadow-md
+    transition
+  "
+>
+  Games
+</button>
           </div>
         </div>
       </header>

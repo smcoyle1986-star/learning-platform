@@ -281,6 +281,39 @@ export default function CardRevealPage() {
     setTimeout(() => playTone(980, 0.12, "triangle", 0.06), 60);
   }
 
+  // Music for Card Reveal (different theme than KaBoom)
+  const [musicOn, setMusicOn] = useState(false);
+  const musicIntervalRef = useRef<number | null>(null);
+  const musicStepRef = useRef(0);
+  const musicGainRef = useRef(0.035);
+
+  function startRevealMusic() {
+    if (musicIntervalRef.current) return;
+    const melody = [523, 587, 659, 784, 659, 587]; // simple upbeat loop (C5..)
+    musicStepRef.current = 0;
+    musicIntervalRef.current = window.setInterval(() => {
+      const f = melody[musicStepRef.current % melody.length];
+      playTone(f, 0.22, "sawtooth", musicGainRef.current);
+      musicStepRef.current++;
+    }, 300);
+  }
+  function stopRevealMusic() {
+    if (musicIntervalRef.current) {
+      clearInterval(musicIntervalRef.current);
+      musicIntervalRef.current = null;
+    }
+  }
+  function toggleRevealMusic() {
+    // user gesture required; create context if needed
+    getAudioCtx();
+    setMusicOn((on) => {
+      const willOn = !on;
+      if (willOn) startRevealMusic();
+      else stopRevealMusic();
+      return willOn;
+    });
+  }
+
   // Modified removeRandomTile uses ref already
   function removeRandomTile() {
     const remainingIndexes = tilesRemovedRef.current
@@ -394,6 +427,31 @@ export default function CardRevealPage() {
   }
   function adjustScore(id: string, delta: number) {
     setTeams((s) => s.map((t) => (t.id === id ? { ...t, score: Math.max(0, t.score + delta) } : t)));
+  }
+
+  // Reset game (restore original tray) — shown when all cards used / winner shown
+  function resetGame() {
+    try {
+      const raw = originalTrayRawRef.current;
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const normalized: GameCard[] = Array.isArray(parsed)
+        ? parsed.map((c: any) => ({
+            id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
+            word: String(c.word ?? c.text ?? ""),
+            image: c.image ?? c.image_id ?? c.img ?? null,
+          }))
+        : [];
+      const shuffled = shuffleArray(normalized);
+      setGameTray(shuffled);
+      gameTrayRef.current = shuffled;
+      setCurrentIndex(0);
+      setShowWinner(false);
+      setTilesRemoved(Array.from({ length: TOTAL_TILES }).map(() => false));
+      setImageRevealed(false);
+    } catch (e) {
+      console.error("Failed to reset game tray:", e);
+    }
   }
 
   // winner computation
@@ -539,6 +597,9 @@ export default function CardRevealPage() {
   // helper: are any tiles remaining?
   const tilesRemaining = tilesRemoved.some((t) => !t);
 
+  // patchwork colors array (used when no image)
+  const PATCH_COLORS = ["#fde68a", "#fca5a5", "#c7d2fe", "#bbf7d0", "#fbcfe8", "#fee2b3", "#dbeafe", "#d1fae5"];
+
   return (
     <div ref={containerRef} className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
       {/* Header unchanged */}
@@ -555,6 +616,11 @@ export default function CardRevealPage() {
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
 
+            {/* Music toggle (Card Reveal theme, different from KaBoom) */}
+            <button onClick={toggleRevealMusic} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">
+              {musicOn ? "Music: On" : "Music: Off"}
+            </button>
+
             {!isFullscreen && (
               <button onClick={() => {
                 try {
@@ -564,13 +630,24 @@ export default function CardRevealPage() {
                   }
                 } catch {}
                 router.push("/games");
-              }} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white text-sm flex items-center gap-2">
+              }} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white flex items-center gap-2">
                 <Play size={14} /> Exit
               </button>
             )}
           </div>
         </div>
       </header>
+
+      {/* Fullscreen exit button */}
+      {isFullscreen && (
+        <button
+          onClick={exitFullscreen}
+          className="fixed top-4 right-4 z-[9999] rounded-md bg-white/90 px-3 py-2 shadow-lg border border-black/10"
+          title="Exit fullscreen"
+        >
+          Exit Fullscreen
+        </button>
+      )}
 
       {/* Compact scoreboard */}
       <div className={`pt-[68px] max-w-7xl mx-auto px-4`}>
@@ -584,6 +661,10 @@ export default function CardRevealPage() {
               <button onClick={addTeam} disabled={teams.length >= 6} title="Add team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">+</button>
               <button onClick={removeLastTeam} disabled={teams.length <= 2} title="Remove last team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">−</button>
               <button onClick={() => setTeams((s) => s.map((t) => ({ ...t, score: 0 })))} title="Reset scores" className="p-1.5 rounded-md bg-white border border-black/10 text-sm">⟲</button>
+              {/* Reset game button - visible when all cards have been used (showWinner or no cards) */}
+              {(showWinner || gameTray.length === 0) && (
+                <button onClick={resetGame} title="Reset game" className="p-1.5 rounded-md bg-white border border-black/10 text-sm ml-1">Reset Game</button>
+              )}
             </div>
           </div>
 
@@ -630,19 +711,25 @@ export default function CardRevealPage() {
 
         {/* Team boxes: up to 6 per row; show full "Team 1" label and move score next to it */}
         <div className="mb-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {teams.map((team, idx) => (
-            <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between ${activeTeamIndex === idx ? "ring-2 ring-[var(--color-primary)]" : ""}`}>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{team.name}</div>
-              </div>
+          {teams.map((team, idx) => {
+            const isActive = idx === activeTeamIndex;
+            return (
+              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between ${isActive ? "ring-2 ring-[var(--color-primary)]" : ""}`}>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">{team.name}</div>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <div className="text-xl font-bold w-10 text-center">{team.score}</div>
-                <button onClick={() => adjustScore(team.id, -1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">−</button>
-                <button onClick={() => adjustScore(team.id, +1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">+</button>
+                <div className="flex items-center gap-2">
+                  {/* Active team's score is larger and pulses */}
+                  <div className={`${isActive ? "text-3xl md:text-4xl font-extrabold active-score" : "text-xl font-bold"} w-12 text-center`}>
+                    {team.score}
+                  </div>
+                  <button onClick={() => adjustScore(team.id, -1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">−</button>
+                  <button onClick={() => adjustScore(team.id, +1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">+</button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -665,8 +752,8 @@ export default function CardRevealPage() {
                   const isGlowing = i === glowingIndex && !tilesRemoved[i];
                   const isUrgentTile = urgent && !tilesRemoved[i];
                   const hasImage = !!currentCard?.image;
-                  // pastel green for site
-                  const pastelGreen = "#dff7e6"; // light pastel green
+                  // patchwork color selected deterministically by index
+                  const color = PATCH_COLORS[i % PATCH_COLORS.length];
                   return (
                     <div
                       key={i}
@@ -686,7 +773,7 @@ export default function CardRevealPage() {
                           width: "100%",
                           height: "100%",
                           backgroundImage: hasImage ? `url("${currentCard?.image}")` : undefined,
-                          backgroundColor: hasImage ? "rgba(215,247,225,0.10)" : (tilesRemoved[i] ? "transparent" : pastelGreen),
+                          backgroundColor: hasImage ? "rgba(215,247,225,0.10)" : (tilesRemoved[i] ? "transparent" : color),
                           backgroundBlendMode: hasImage ? "overlay" : undefined,
                           backgroundSize: hasImage ? `${TILES_COLS * 100}% ${TILES_ROWS * 100}%` : undefined,
                           backgroundPosition: hasImage ? `${((i % TILES_COLS) / Math.max(1, TILES_COLS - 1)) * 100}% ${(Math.floor(i / TILES_COLS) / Math.max(1, TILES_ROWS - 1)) * 100}%` : undefined,
@@ -760,7 +847,7 @@ export default function CardRevealPage() {
       <style>{`
         body { --color-primary: #2563eb; }
         .bg-[var(--Color-bg-main)] { background-color: #f8fafc; }
-        .bg-[var(--Color-bg-soft)] { background-color: #f3f4f6; }
+        .bg-[var(--color-bg-soft)] { background-color: #f3f4f6; }
 
         /* Dramatic countdown style */
         .countdown-big {
@@ -813,6 +900,14 @@ export default function CardRevealPage() {
         /* image reveal fade */
         .image-covered { opacity: 0.94; transition: opacity 450ms ease-in; }
         .image-revealed { opacity: 1; transition: opacity 600ms ease-in; }
+
+        /* active score pulse */
+        @keyframes active-pulse {
+          0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+          50% { transform: scale(1.08); filter: drop-shadow(0 8px 24px rgba(37,99,235,0.18)); }
+          100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }
+        }
+        .active-score { animation: active-pulse 1200ms ease-in-out infinite; }
 
         @media (min-width: 768px) {
           .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
