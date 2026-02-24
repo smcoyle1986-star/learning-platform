@@ -23,10 +23,8 @@ type Player = 1 | 2;
 type Cell = 0 | Player;
 type AiLevel = "none" | "easy" | "medium" | "hard";
 
-const CBUTTON =
-  "inline-flex items-center gap-2 px-3 py-2 rounded bg-green-600 text-white font-semibold shadow hover:brightness-90 active:scale-95 transition-transform";
-const RBUTTON =
-  "inline-flex items-center gap-2 px-3 py-2 rounded bg-red-500 text-white font-semibold shadow hover:brightness-90 active:scale-95 transition-transform";
+const CBUTTON = "btn btn-secondary px-3 py-1";
+const RBUTTON = "btn btn-secondary px-3 py-1";
 
 function createEmptyBoard(rows: number, cols: number): Cell[][] {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell));
@@ -671,7 +669,9 @@ export default function ConnectFourPage() {
                     key={`num-${ci}`}
                     onClick={() => handleColumnClick(ci)}
                     onDoubleClick={() => handleColumnClick(ci)}
-                    className={`py-2 rounded font-bold border ${ci === cursorCol ? "bg-blue-600 text-white" : "bg-white text-black"}`}
+                    className={`py-2 rounded font-bold border ${
+                      ci === cursorCol ? "bg-[var(--color-accent)] text-white" : "bg-white text-black"
+                    }`}
                   >
                     {ci + 1}
                   </button>
@@ -835,10 +835,10 @@ export default function ConnectFourPage() {
                   <div>
                     <div className="text-sm font-medium mb-2">Opponent</div>
                     <div className="flex gap-2 mb-3">
-                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "none" ? "bg-green-600 text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "none"} onChange={() => { setAiLevel("none"); setAiPlaysAs(2); }} />Human</label>
-                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "easy" ? "bg-green-600 text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "easy"} onChange={() => { setAiLevel("easy"); setAiPlaysAs(2); }} />AI Easy</label>
-                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "medium" ? "bg-green-600 text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "medium"} onChange={() => { setAiLevel("medium"); setAiPlaysAs(2); }} />AI Medium</label>
-                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "hard" ? "bg-green-600 text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "hard"} onChange={() => { setAiLevel("hard"); setAiPlaysAs(2); }} />AI Hard</label>
+                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "none" ? "bg-[var(--color-accent)] text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "none"} onChange={() => { setAiLevel("none"); setAiPlaysAs(2); }} />Human</label>
+                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "easy" ? "bg-[var(--color-accent)] text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "easy"} onChange={() => { setAiLevel("easy"); setAiPlaysAs(2); }} />AI Easy</label>
+                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "medium" ? "bg-[var(--color-accent)] text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "medium"} onChange={() => { setAiLevel("medium"); setAiPlaysAs(2); }} />AI Medium</label>
+                      <label className={`px-3 py-1 rounded border cursor-pointer ${aiLevel === "hard" ? "bg-[var(--color-accent)] text-white" : "bg-white"}`}><input type="radio" name="ai" hidden checked={aiLevel === "hard"} onChange={() => { setAiLevel("hard"); setAiPlaysAs(2); }} />AI Hard</label>
                     </div>
 
                     <div className="mt-3">

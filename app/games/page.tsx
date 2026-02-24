@@ -95,10 +95,7 @@ export function GameEngine({ cards, onExit }: GameEngineProps) {
       </div>
 
       <div className="mt-6 text-right">
-        <button
-          onClick={onExit}
-          className="px-4 py-2 rounded-lg bg-green-400 text-green-900 text-sm hover:bg-green-600 hover:shadow-md transition"
-        >
+        <button onClick={onExit} className="btn btn-secondary px-3 py-1 text-sm">
           Exit Game
         </button>
       </div>
@@ -116,11 +113,7 @@ const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] 
   { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions", image: "/games/placeholders/yes-or-no.png" },
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/placeholders/four-corners.png" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/placeholders/memory-flip.png" },
-  { title: "Mine Sweeper", id: "mine-sweeper", subtitle: "Clear the mines, win points!", image: "/games/placeholders/mine-sweeper.png" },
- 
-  { title: "Freeze & Guess", id: "freeze-and-guess", subtitle: "Freeze frames and guess", image: "/games/placeholders/freeze-and-guess.png" },
-  { title: "Odd One Out", id: "odd-one-out", subtitle: "Find the odd card", image: "/games/placeholders/odd-one-out.png" },
-  { title: "Build the Set", id: "build-the-set", subtitle: "Assemble a set of cards", image: "/games/placeholders/build-the-set.png" },
+  { title: "Connect Four", id: "connect-four", subtitle: "Connect for tokens in a line to win!", image: "/games/placeholders/connect-four.png" },
 ];
 
 /* -------------------------
@@ -262,14 +255,14 @@ export default function GamesLandingPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => (window.location.href = "/flashcards")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Flashcards
             </button>
 
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="px-4 py-2 rounded-lg bg-white text-green-900 text-sm border border-green-200 hover:bg-green-50 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Dashboard
             </button>
@@ -317,16 +310,16 @@ export default function GamesLandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-xl font-semibold mb-6">Games</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {GAMES.map((g) => (
-              <div key={g.id} className="bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md transition">
-                <div className="h-40 rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 mb-4 flex items-center justify-center">
+              <div key={g.id} className="bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md transition flex flex-col">
+                <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 mb-4 flex items-center justify-center">
                   {/* Illustration placeholder */}
                   <img src={g.image ?? "/placeholder.png"} alt={g.title} className="w-full h-full object-cover" />
                 </div>
 
-                <div className="flex items-start justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
                     <h3 className="text-lg font-semibold">{g.title}</h3>
                     {g.subtitle && <p className="text-sm text-[var(--color-text-muted)] mt-1">{g.subtitle}</p>}
                   </div>
@@ -334,7 +327,7 @@ export default function GamesLandingPage() {
                   <div className="ml-4 flex-shrink-0">
                     <button
                       onClick={() => enterGame(g.id)}
-                      className="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition flex items-center gap-2"
+                      className="btn btn-primary px-3 py-2 text-sm flex items-center gap-2"
                     >
                       <Play size={14} />
                       Enter

@@ -456,14 +456,19 @@ export default function FourCornersPage() {
           <div className="text-xl font-bold">Four Corners</div>
 
           <div className="flex items-center gap-2">
-            <button onClick={resetAll} className="px-3 py-1 rounded bg-white border">Reset game</button>
-            <button onClick={() => audio.toggleMusic()} className={`px-3 py-1 rounded ${audio.musicOn ? "bg-green-500 text-white" : "bg-white border"}`}>{audio.musicOn ? "Music On" : "Music Off"}</button>
-            <button onClick={() => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }} className="px-3 py-1 rounded bg-white border"><Maximize size={16} /></button>
+            <button onClick={resetAll} className="btn btn-secondary px-3 py-1">Reset game</button>
+            <button
+              onClick={() => audio.toggleMusic()}
+              className={`btn px-3 py-1 ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
+            >
+              {audio.musicOn ? "Music On" : "Music Off"}
+            </button>
+            <button onClick={() => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }} className="btn btn-secondary px-3 py-1"><Maximize size={16} /></button>
 
             {/* Exit game button: changed to green to match site */}
-            <button onClick={() => router.push("/games")} className="px-3 py-1 rounded bg-green-600 text-white flex items-center gap-2"><Play size={14} /> Exit</button>
+            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2"><Play size={14} /> Exit</button>
 
-            <button onClick={() => setSettingsOpen(true)} className="px-3 py-1 rounded bg-white border">Settings</button>
+            <button onClick={() => setSettingsOpen(true)} className="btn btn-secondary px-3 py-1">Settings</button>
           </div>
         </div>
       </header>
@@ -475,8 +480,8 @@ export default function FourCornersPage() {
               <h2 className="text-2xl font-bold mb-3">No cards selected</h2>
               <p className="text-sm text-gray-600 mb-6">Please add cards to the lesson tray before starting this game.</p>
               <div className="flex justify-center gap-3">
-                <button onClick={() => router.push("/flashcards")} className="px-4 py-2 rounded-lg bg-green-600 text-white">Go to Flashcards</button>
-                <button onClick={() => router.push("/dashboard")} className="px-4 py-2 rounded-lg bg-white border">Return to Dashboard</button>
+                <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1">Go to Flashcards</button>
+                <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1">Return to Dashboard</button>
               </div>
             </div>
           </div>
@@ -503,7 +508,7 @@ export default function FourCornersPage() {
             {/* center overlay */}
             <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", zIndex: 40 }}>
               {phase === "idle" && (
-                <motion.button onClick={() => { setPhase("countdown"); startCountdown(); startSpotlight(); audio.playStart(); }} whileTap={{ scale: 0.96 }} className="bg-green-500 text-black rounded-full px-10 py-5 font-extrabold shadow-lg" style={{ fontSize: 28 }}>
+                <motion.button onClick={() => { setPhase("countdown"); startCountdown(); startSpotlight(); audio.playStart(); }} whileTap={{ scale: 0.96 }} className="btn btn-primary rounded-full px-10 py-5 font-extrabold shadow-lg" style={{ fontSize: 28 }}>
                   Start
                 </motion.button>
               )}
@@ -525,7 +530,7 @@ export default function FourCornersPage() {
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: 420, height: 420, borderRadius: 999, background: "radial-gradient(circle at 30% 30%, rgba(255,200,0,0.95), rgba(255,80,0,0.9) 40%, rgba(80,0,0,0.85) 70%)", boxShadow: "0 20px 80px rgba(0,0,0,0.6)" }} />
                   <div className="mt-4 text-3xl font-extrabold text-white">BOOM!</div>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="mt-4 bg-black text-white px-6 py-2 rounded font-semibold">Next</motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="btn btn-secondary mt-4 px-6 py-2 font-semibold">Next</motion.button>
                 </div>
               )}
 
@@ -538,7 +543,7 @@ export default function FourCornersPage() {
                       <div style={{ fontSize: 44, fontWeight: 900 }}>{tray[currentFlashcardIndex].word}</div>
                     </div>
                   )}
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="mt-4 bg-black text-white px-6 py-2 rounded font-semibold">Next</motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="btn btn-secondary mt-4 px-6 py-2 font-semibold">Next</motion.button>
                 </motion.div>
               )}
             </div>
@@ -570,8 +575,8 @@ export default function FourCornersPage() {
             <div className="text-3xl font-extrabold mb-2">Congratulations — you survived!</div>
             <div className="text-sm text-gray-600 mb-6">All flashcards used or all quarters eliminated.</div>
             <div className="flex items-center justify-center gap-4">
-              <button onClick={() => { setUsedIndices([]); setEliminated([false,false,false,false]); setPhase("idle"); }} className="px-4 py-2 bg-green-600 text-white rounded">Play again</button>
-              <button onClick={() => router.push("/games")} className="px-4 py-2 bg-white border rounded">Return to Games</button>
+              <button onClick={() => { setUsedIndices([]); setEliminated([false,false,false,false]); setPhase("idle"); }} className="btn btn-primary px-4 py-2">Play again</button>
+              <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1">Return to Games</button>
             </div>
           </motion.div>
         </div>

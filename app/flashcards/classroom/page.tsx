@@ -8,6 +8,9 @@ import {
   Maximize,
   X,
 } from "lucide-react";
+import ClassroomCanvas from "@/components/classroom/ClassroomCanvas";
+import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
+
 
 type Card = {
   id: string;   // ✅ must match Flashcards
@@ -30,6 +33,12 @@ export default function ClassroomMode() {
   const headerRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
+  const drawingsRef = useRef<Map<string, string>>(new Map());
+
+  // allow "none" to disable drawing so toolbar is always clickable
+  const [tool, setTool] = useState<"pen" | "eraser" | "none">("none");
+  const [color, setColor] = useState("#000000");
+  const [size, setSize] = useState(8);
 
   const [cardAvailableHeight, setCardAvailableHeight] = useState<number | null>(null);
 
@@ -207,8 +216,7 @@ export default function ClassroomMode() {
 
         <button
           onClick={handleExit}
-          className="px-6 py-3 rounded-lg bg-[var(--color-primary)] text-white text-base font-semibold
-                     hover:opacity-90 hover:scale-[1.03] transition-all"
+          className="btn btn-primary px-6 py-3 text-base font-semibold hover:scale-[1.03]"
         >
           Go Back
         </button>
@@ -217,6 +225,7 @@ export default function ClassroomMode() {
   }
 
   const card = cards[index];
+  const cardKey = String(card?.id ?? index);
   const inFullscreen = !!document.fullscreenElement;
 
   // determine inline styles for the card container when fullscreen:
@@ -241,38 +250,70 @@ export default function ClassroomMode() {
         className="sticky top-0 z-50 w-full flex justify-between items-center px-6 py-3 bg-transparent"
       >
         <div className="flex gap-3 items-center">
-          {/* Settings button placed where Full Screen used to be */}
+          {/* Settings button */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setSettingsOpen((s) => !s)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg flex items-center gap-2"
+              className="btn btn-secondary px-4 py-2 flex items-center gap-2"
             >
               Settings
             </button>
 
             {settingsOpen && (
-              // align dropdown to the left edge of the button to avoid overflowing the viewport
-              <div className="absolute left-0 mt-2 min-w-[160px] rounded-lg bg-white border shadow-lg p-1 z-50">
-                <div className="flex flex-col gap-1">
+              // updated dropdown: include display mode + autoplay and speed
+              <div className="absolute left-0 mt-2 min-w-[220px] rounded-lg bg-white border shadow-lg p-3 z-50">
+                <div className="flex flex-col gap-2">
+                  <div className="text-xs text-[var(--color-text-muted)]">Display</div>
                   <button
-                    className={`text-left px-3 py-2 rounded ${displayMode === "image+text" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    className={`btn px-3 py-2 text-left ${
+                      displayMode === "image+text" ? "btn-primary" : "btn-secondary"
+                    }`}
                     onClick={() => { setDisplayMode("image+text"); setSettingsOpen(false); }}
                   >
                     Image + Text
                   </button>
                   <button
-                    className={`text-left px-3 py-2 rounded ${displayMode === "image" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    className={`btn px-3 py-2 text-left ${
+                      displayMode === "image" ? "btn-primary" : "btn-secondary"
+                    }`}
                     onClick={() => { setDisplayMode("image"); setSettingsOpen(false); }}
                   >
                     Image only
                   </button>
                   <button
-                    className={`text-left px-3 py-2 rounded ${displayMode === "text" ? "bg-green-600 text-white" : "hover:bg-gray-100"}`}
+                    className={`btn px-3 py-2 text-left ${
+                      displayMode === "text" ? "btn-primary" : "btn-secondary"
+                    }`}
                     onClick={() => { setDisplayMode("text"); setSettingsOpen(false); }}
                   >
                     Text only
                   </button>
+
+                  <hr className="my-2 border-t border-black/5" />
+
+                  <div className="text-xs text-[var(--color-text-muted)]">Playback</div>
+                  <button
+                    onClick={() => { setAutoPlay((p) => !p); }}
+                    className={`btn px-3 py-2 text-left ${
+                      autoPlay ? "btn-primary" : "btn-secondary"
+                    }`}
+                  >
+                    {autoPlay ? "Pause Auto-Play" : "Enable Auto-Play"}
+                  </button>
+
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="text-xs text-[var(--color-text-muted)]">Speed</div>
+                    <select
+                      value={intervalMs}
+                      onChange={(e) => setIntervalMs(Number(e.target.value))}
+                      className="ml-auto bg-white border rounded px-2 py-1 text-sm"
+                    >
+                      <option value={2500}>Fast</option>
+                      <option value={4000}>Normal</option>
+                      <option value={6000}>Slow</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
@@ -280,36 +321,38 @@ export default function ClassroomMode() {
 
           <button
             onClick={shuffleCards}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg flex items-center gap-2"
+            className="btn btn-secondary px-4 py-2 flex items-center gap-2"
           >
             <Shuffle size={18} />
             Shuffle
           </button>
 
-          <button
-            onClick={() => setAutoPlay((prev) => !prev)}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
-          >
-            {autoPlay ? "Pause Auto-Play" : "Auto-Play"}
-          </button>
-
-          <button
-            onClick={() =>
-              setIntervalMs((prev) =>
-                prev === 4000 ? 2500 : prev === 2500 ? 6000 : 4000
-              )
-            }
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
-          >
-            Speed: {intervalMs === 2500 ? "Fast" : intervalMs === 6000 ? "Slow" : "Normal"}
-          </button>
+          {/* Toolbar moved here (replaces the old Auto-Play + Speed buttons) */}
+          <div className="ml-2">
+            <ClassroomToolbar
+              orientation="horizontal"
+              tool={tool}
+              setTool={setTool}
+              color={color}
+              setColor={setColor}
+              size={size}
+              setSize={setSize}
+              clearCanvas={() => {
+                const canvas = document.querySelector("canvas");
+                if (!canvas) return;
+                const ctx = canvas.getContext("2d")!;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawingsRef.current.delete(cardKey);
+              }}
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Full Screen moved next to Exit as requested */}
           <button
             onClick={toggleFullscreen}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm flex items-center gap-2"
+            className="btn btn-secondary px-4 py-2 flex items-center gap-2"
           >
             <Maximize size={18} />
             Full Screen
@@ -317,7 +360,7 @@ export default function ClassroomMode() {
 
           <button
             onClick={handleExit}
-            className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm flex items-center gap-2"
+            className="btn btn-secondary px-4 py-2 flex items-center gap-2"
           >
             <X size={18} />
             Exit
@@ -348,8 +391,8 @@ export default function ClassroomMode() {
           // Normal layout: image area on top, text area below
           <div className="w-full h-full flex flex-col justify-center items-center">
             {/* Image area */}
-            <div className={`w-full ${inFullscreen ? "flex-1" : "flex-1"} bg-gray-100 rounded-2xl mb-6 flex items-center justify-center text-gray-400 text-xl overflow-hidden`}>
-              <div className="w-full h-full flex items-center justify-center">
+            <div className={`w-full ${inFullscreen ? "flex-1" : "flex-1"} bg-gray-100 rounded-2xl mb-6 flex items-center justify-center text-gray-400 text-xl overflow-hidden relative`}>
+              <div className="w-full h-full flex items-center justify-center relative">
                 {(displayMode === "image+text") ||
                  (displayMode === "image") ||
                  (displayMode === "text" && revealToggle) ? (
@@ -357,6 +400,24 @@ export default function ClassroomMode() {
                 ) : (
                   <div className="text-2xl text-gray-400"> </div>
                 )}
+
+                {/* Classroom canvas overlay for drawings (covers image area) */}
+                {/* keep a click-stopper wrapper so clicks inside canvas don't advance the card */}
+                <div
+                  className="absolute inset-0"
+                  onClick={(e) => {
+                    // prevent clicks inside the canvas from advancing the card
+                    e.stopPropagation();
+                  }}
+                >
+                  <ClassroomCanvas
+                    cardKey={cardKey}
+                    tool={tool}
+                    color={color}
+                    size={size}
+                    drawingsRef={drawingsRef}
+                  />
+                </div>
               </div>
             </div>
 
@@ -381,14 +442,14 @@ export default function ClassroomMode() {
         <div className="flex items-center gap-6">
           <button
             onClick={prevCard}
-            className="p-4 md:p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
+            className="btn btn-primary p-4 md:p-5"
           >
             <ArrowLeft size={28} />
           </button>
 
           <button
             onClick={nextCard}
-            className="p-4 md:p-5 rounded-full bg-[var(--color-primary)] text-white hover:opacity-90"
+            className="btn btn-primary p-4 md:p-5"
           >
             <ArrowRight size={28} />
           </button>

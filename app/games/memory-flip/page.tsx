@@ -500,22 +500,25 @@ export default function MemoryFlipPage() {
         </a>
         <div style={{ fontWeight: 800, fontSize: 18 }}>Memory Flip</div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={toggleFullscreen} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+          <button onClick={toggleFullscreen} className="btn btn-secondary p-2">
             <Maximize size={14} />
           </button>
-          <button onClick={toggleMusic} style={{ padding: "8px 10px", borderRadius: 8, background: musicOn ? "#10b981" : "white", color: musicOn ? "white" : "black", border: "1px solid rgba(0,0,0,0.06)" }}>
+          <button
+            onClick={toggleMusic}
+            className={`btn px-3 py-1 ${musicOn ? "btn-primary" : "btn-secondary"}`}
+          >
             {musicOn ? "Music On" : "Music Off"}
           </button>
-          <button onClick={resetGame} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+          <button onClick={resetGame} className="btn btn-secondary px-3 py-1">
             Reset game
           </button>
           {/* Exit game button changed to site green */}
-          <button onClick={() => router.push("/games")} style={{ padding: "8px 10px", borderRadius: 8, background: "#10b981", color: "white" }}>
+          <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1">
             Return
           </button>
 
           <div style={{ position: "relative" }}>
-            <button onClick={() => setSettingsOpen((s) => !s)} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <button onClick={() => setSettingsOpen((s) => !s)} className="btn btn-secondary px-3 py-1">
               Settings ▾
             </button>
 
@@ -525,8 +528,12 @@ export default function MemoryFlipPage() {
                   <div style={{ fontWeight: 700 }}>Grid size</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                     {[8, 12, 16, 20].map((n) => (
-                      <button key={n} onClick={() => setGridSize(n)} style={{ padding: 8, borderRadius: 8, background: gridSize === n ? "#111827" : "white", color: gridSize === n ? "white" : "black" }}>
-                        {n} cards ({n / 2} pairs)
+                      <button
+                        key={n}
+                        onClick={() => setGridSize(n)}
+                        className={`btn px-2 py-2 ${gridSize === n ? "btn-primary" : "btn-secondary"}`}
+                      >
+                        {n} cards
                       </button>
                     ))}
                   </div>
@@ -539,19 +546,28 @@ export default function MemoryFlipPage() {
 
                   <div style={{ marginTop: 12, fontWeight: 700 }}>Game style</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button onClick={() => setGameStyle("image-image")} style={{ padding: 8, borderRadius: 8, background: gameStyle === "image-image" ? "#111827" : "white", color: gameStyle === "image-image" ? "white" : "black" }}>
+                    <button
+                      onClick={() => setGameStyle("image-image")}
+                      className={`btn px-2 py-2 ${gameStyle === "image-image" ? "btn-primary" : "btn-secondary"}`}
+                    >
                       Image - Image
                     </button>
-                    <button onClick={() => setGameStyle("text-text")} style={{ padding: 8, borderRadius: 8, background: gameStyle === "text-text" ? "#111827" : "white", color: gameStyle === "text-text" ? "white" : "black" }}>
+                    <button
+                      onClick={() => setGameStyle("text-text")}
+                      className={`btn px-2 py-2 ${gameStyle === "text-text" ? "btn-primary" : "btn-secondary"}`}
+                    >
                       Text - Text
                     </button>
-                    <button onClick={() => setGameStyle("image-text")} style={{ padding: 8, borderRadius: 8, background: gameStyle === "image-text" ? "#111827" : "white", color: gameStyle === "image-text" ? "white" : "black" }}>
+                    <button
+                      onClick={() => setGameStyle("image-text")}
+                      className={`btn px-2 py-2 ${gameStyle === "image-text" ? "btn-primary" : "btn-secondary"}`}
+                    >
                       Image - Text
                     </button>
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-                    <button onClick={() => setSettingsOpen(false)} style={{ padding: "8px 12px", borderRadius: 8, background: "#111827", color: "white" }}>
+                    <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-2">
                       Done
                     </button>
                   </div>
@@ -569,10 +585,10 @@ export default function MemoryFlipPage() {
             <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>No cards selected</h2>
             <p style={{ color: "#6b7280", marginBottom: 18 }}>There are no cards in the lesson tray. Add cards in Flashcards or choose a saved lesson in Dashboard before starting the game.</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button onClick={() => router.push("/flashcards")} style={{ padding: "10px 16px", borderRadius: 10, background: "#10b981", color: "white", fontWeight: 700 }}>
+              <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1">
                 Go to Flashcards
               </button>
-              <button onClick={() => router.push("/dashboard")} style={{ padding: "10px 16px", borderRadius: 10, background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+              <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1">
                 Return to Dashboard
               </button>
             </div>
@@ -589,13 +605,20 @@ export default function MemoryFlipPage() {
               </div>
             ))}
             <div style={{ marginLeft: "auto" }}>
-              <button onClick={() => setTeams((t) => t.map((p, i) => ({ ...p, name: `Team ${i + 1}` })))} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+              <button
+                onClick={() => setTeams((t) => t.map((p, i) => ({ ...p, name: `Team ${i + 1}` })))}
+                className="btn btn-secondary px-3 py-2"
+              >
                 Rename default
               </button>
-              <button onClick={addTeam} disabled={teams.length >= 6} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)", marginLeft: 8 }}>
+              <button
+                onClick={addTeam}
+                disabled={teams.length >= 6}
+                className="btn btn-secondary px-3 py-2 ml-2"
+              >
                 Add team
               </button>
-              <button onClick={resetScores} style={{ padding: "8px 10px", borderRadius: 8, background: "white", border: "1px solid rgba(0,0,0,0.06)", marginLeft: 8 }}>
+              <button onClick={resetScores} className="btn btn-secondary px-3 py-2 ml-2">
                 Reset scores
               </button>
             </div>

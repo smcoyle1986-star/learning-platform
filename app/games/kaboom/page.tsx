@@ -679,15 +679,22 @@ export default function KaBoomPage() {
               <h1 className="text-2xl font-bold text-black">KaBoom!</h1>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={toggleFullscreen} className="p-2 rounded-md bg-white text-green-900 border border-black/10" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+              <button
+                onClick={toggleFullscreen}
+                className="btn btn-secondary p-2"
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </button>
               {/* Header music toggles built-in 8-bit theme */}
-              <button onClick={toggleThemeMusic} className={`px-2 py-1 rounded-md bg-white border border-black/10 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
+              <button
+                onClick={toggleThemeMusic}
+                className={`btn btn-secondary px-2 py-1 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
+              >
                 Music
               </button>
               {!isFullscreen && (
-                <button onClick={() => router.push("/games")} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white text-sm flex items-center gap-2">
+                <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
                   <Play size={14} /> Exit
                 </button>
               )}
@@ -700,8 +707,8 @@ export default function KaBoomPage() {
             <h2 className="text-lg font-semibold mb-2">No cards selected</h2>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">Add cards from Flashcards or choose a saved set in Dashboard then open Games → KaBoom!.</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={() => router.push("/flashcards")} className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300">Go to Flashcards</button>
-              <button onClick={() => router.push("/dashboard")} className="px-4 py-2 rounded-lg bg-white text-gray-800 border border-black/10 text-sm hover:shadow-md">Return to Dashboard</button>
+              <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1 text-sm">Go to Flashcards</button>
+              <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to Dashboard</button>
             </div>
           </div>
         </main>
@@ -724,12 +731,19 @@ export default function KaBoomPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={toggleFullscreen} className="p-2 rounded-md bg-white text-green-900 border border-black/10" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+            <button
+              onClick={toggleFullscreen}
+              className="btn btn-secondary p-2"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
 
             {/* Header music toggles built-in 8-bit theme */}
-            <button onClick={toggleThemeMusic} className={`px-2 py-1 rounded-md bg-white border border-black/10 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
+            <button
+              onClick={toggleThemeMusic}
+              className={`btn btn-secondary px-2 py-1 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
+            >
               Music
             </button>
 
@@ -742,7 +756,7 @@ export default function KaBoomPage() {
                   }
                 } catch {}
                 router.push("/games");
-              }} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white text-sm flex items-center gap-2">
+              }} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
                 <Play size={14} /> Exit
               </button>
             )}
@@ -754,7 +768,7 @@ export default function KaBoomPage() {
       {isFullscreen && (
         <button
           onClick={exitFullscreen}
-          className="fixed top-4 right-4 z-[9999] rounded-md bg-white/90 px-3 py-2 shadow-lg border border-black/10"
+          className="btn btn-secondary fixed top-4 right-4 z-[9999] px-3 py-2 shadow-lg"
           title="Exit fullscreen"
         >
           Exit
@@ -770,11 +784,11 @@ export default function KaBoomPage() {
               <div className="text-sm text-[var(--color-text-muted)]">Teams</div>
 
               <div className="flex items-center gap-1 ml-2">
-                <button onClick={addTeam} disabled={teams.length >= 6} title="Add team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">+</button>
-                <button onClick={removeLastTeam} disabled={teams.length <= 2} title="Remove last team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">−</button>
-                <button onClick={() => setTeams((s) => s.map((t) => ({ ...t, score: 0 })))} title="Reset scores" className="p-1.5 rounded-md bg-white border border-black/10 text-sm">⟲</button>
+                <button onClick={addTeam} disabled={teams.length >= 6} title="Add team" className="btn btn-secondary p-1.5 text-sm disabled:opacity-50">+</button>
+                <button onClick={removeLastTeam} disabled={teams.length <= 2} title="Remove last team" className="btn btn-secondary p-1.5 text-sm disabled:opacity-50">−</button>
+                <button onClick={() => setTeams((s) => s.map((t) => ({ ...t, score: 0 })))} title="Reset scores" className="btn btn-secondary p-1.5 text-sm">⟲</button>
                 {!tilesRemaining && (
-                  <button onClick={resetGame} title="Reset game" className="p-1.5 rounded-md bg-white border border-black/10 text-sm ml-1">Reset Game</button>
+                  <button onClick={resetGame} title="Reset game" className="btn btn-secondary p-1.5 text-sm ml-1">Reset Game</button>
                 )}
               </div>
             </div>
@@ -783,7 +797,7 @@ export default function KaBoomPage() {
               <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-white text-sm">
                 <div className="text-xs text-[var(--color-text-muted)]">Active</div>
                 <div className="font-semibold">{teams[activeTeamIndex]?.name}</div>
-                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse ml-2" />
+                <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse ml-2" />
               </div>
 
               {/* Grid selector (kept visible here for quick access) */}
@@ -793,7 +807,7 @@ export default function KaBoomPage() {
                   <button
                     key={n}
                     onClick={() => setGridCount(n)}
-                    className={`px-2 py-0.5 text-xs rounded ${gridCount === n ? "bg-[var(--color-primary)] text-white" : "bg-transparent text-black"}`}
+                    className={`px-2 py-0.5 text-xs rounded ${gridCount === n ? "bg-[var(--color-accent)] text-white" : "bg-transparent text-black"}`}
                     title={`${n}x${n}`}
                   >
                     {n}x{n}
@@ -804,13 +818,13 @@ export default function KaBoomPage() {
               {/* Settings dropdown - hidden when fullscreen per user request */}
               {!isFullscreen && (
                 <div className="relative">
-                  <button
-                    onClick={() => setSettingsOpen((s) => !s)}
-                    className="ml-3 px-3 py-1 rounded-md bg-white border border-black/10 text-sm"
-                    title="Settings"
-                  >
-                    Settings
-                  </button>
+                    <button
+                      onClick={() => setSettingsOpen((s) => !s)}
+                      className="btn btn-secondary ml-3 px-3 py-1 text-sm"
+                      title="Settings"
+                    >
+                      Settings
+                    </button>
 
                   {settingsOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white border rounded-md shadow-lg p-3 z-60 text-sm">
@@ -837,7 +851,7 @@ export default function KaBoomPage() {
                       </div>
 
                       <div className="mt-3 text-right">
-                        <button onClick={() => setSettingsOpen(false)} className="px-3 py-1 rounded bg-gray-100 text-sm">Close</button>
+                        <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1 text-sm">Close</button>
                       </div>
                     </div>
                   )}
@@ -852,7 +866,7 @@ export default function KaBoomPage() {
             {teams.map((team, idx) => {
               const isActive = idx === activeTeamIndex;
               return (
-                <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-primary)]" : ""}`}>
+                <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-accent)]" : ""}`}>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold">{team.name}</div>
                   </div>
@@ -861,8 +875,8 @@ export default function KaBoomPage() {
                     <div className={`${isActive ? "text-3xl md:text-4xl font-extrabold active-score" : "text-xl font-bold"} w-16 text-center`}>
                       {team.score}
                     </div>
-                    <button onClick={() => adjustScore(team.id, -1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">−</button>
-                    <button onClick={() => adjustScore(team.id, +1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">+</button>
+                    <button onClick={() => adjustScore(team.id, -1)} className="btn btn-secondary px-2 py-1 text-sm">−</button>
+                    <button onClick={() => adjustScore(team.id, +1)} className="btn btn-secondary px-2 py-1 text-sm">+</button>
                   </div>
                 </div>
               );
@@ -875,10 +889,8 @@ export default function KaBoomPage() {
               <button
                 onClick={() => startRandomHighlightSequence(true)}
                 disabled={!tilesRemaining || specialRemoveActive}
-                className={`inline-flex items-center gap-2 md:gap-3 text-center px-3 py-2 rounded-md text-sm font-semibold shadow-md transition ${
-                  !tilesRemaining || specialRemoveActive
-                    ? "bg-white/60 text-gray-400 border border-black/5 cursor-not-allowed"
-                    : "bg-[var(--color-primary)] text-white hover:scale-105"
+                className={`btn btn-primary inline-flex items-center gap-2 md:gap-3 text-center px-3 py-2 text-sm font-semibold shadow-md transition ${
+                  !tilesRemaining || specialRemoveActive ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
                 }`}
                 title="Randomly pick a tile for the active team (5s highlight)"
               >
@@ -897,10 +909,8 @@ export default function KaBoomPage() {
           <button
             onClick={() => startRandomHighlightSequence(true)}
             disabled={!tilesRemaining || specialRemoveActive}
-            className={`inline-flex items-center gap-2 md:gap-3 text-center px-3 py-2 rounded-md text-sm font-semibold shadow-md transition ${
-              !tilesRemaining || specialRemoveActive
-                ? "bg-white/60 text-gray-400 border border-black/5 cursor-not-allowed"
-                : "bg-[var(--color-primary)] text-white hover:scale-105"
+            className={`btn btn-primary inline-flex items-center gap-2 md:gap-3 text-center px-3 py-2 text-sm font-semibold shadow-md transition ${
+              !tilesRemaining || specialRemoveActive ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
             }`}
             title="Randomly pick a tile for the active team (5s highlight)"
           >

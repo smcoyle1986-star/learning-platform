@@ -514,8 +514,8 @@ export default function YesOrNoPage() {
         <h1 className="text-3xl font-bold mb-4">Yes or No</h1>
         <p className="text-lg text-gray-700 mb-6">No cards found in your lesson tray.</p>
         <div className="flex gap-3">
-          <button onClick={() => (window.location.href = "/flashcards")} className="px-4 py-2 rounded bg-[var(--color-primary)] text-white">Go to Flashcards</button>
-          <button onClick={() => (window.location.href = "/dashboard")} className="px-4 py-2 rounded bg-white border">Return to Dashboard</button>
+          <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-primary px-3 py-1">Go to Flashcards</button>
+          <button onClick={() => (window.location.href = "/dashboard")} className="btn btn-secondary px-3 py-1">Return to Dashboard</button>
         </div>
       </div>
     );
@@ -532,10 +532,14 @@ export default function YesOrNoPage() {
           <a href="/" className="text-2xl font-extrabold text-blue-600">ClassBloom</a>
           <div className="text-xl font-bold">Yes or No</div>
           <div className="flex items-center gap-2">
-            <button onClick={toggleFullscreen} className="p-2 rounded-md bg-white border shadow-sm" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+            <button
+              onClick={toggleFullscreen}
+              className="btn btn-secondary p-2"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
-            <button onClick={() => router.push("/games")} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white flex items-center gap-2">
+            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
               <Play size={14} /> Exit
             </button>
           </div>
@@ -550,10 +554,10 @@ export default function YesOrNoPage() {
             <div className="text-sm text-gray-600">Teams</div>
 
             <div className="flex items-center gap-1 ml-3">
-              <button onClick={addTeam} disabled={teams.length >= 6} className="p-1.5 rounded-md bg-white border text-sm">+</button>
-              <button onClick={() => setTeams((s) => s.slice(0, Math.max(2, s.length - 1)))} disabled={teams.length <= 2} className="p-1.5 rounded-md bg-white border text-sm">−</button>
-              <button onClick={resetScores} className="p-1.5 rounded-md bg-white border text-sm">Reset scores</button>
-              <button onClick={() => resetGame(true)} className="p-1.5 rounded-md bg-white border text-sm">Reset game</button>
+              <button onClick={addTeam} disabled={teams.length >= 6} className="btn btn-secondary p-1.5 text-sm">+</button>
+              <button onClick={() => setTeams((s) => s.slice(0, Math.max(2, s.length - 1)))} disabled={teams.length <= 2} className="btn btn-secondary p-1.5 text-sm">−</button>
+              <button onClick={resetScores} className="btn btn-secondary p-1.5 text-sm">Reset scores</button>
+              <button onClick={() => resetGame(true)} className="btn btn-secondary p-1.5 text-sm">Reset game</button>
             </div>
           </div>
 
@@ -561,7 +565,7 @@ export default function YesOrNoPage() {
             <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-white text-sm">
               <div className="text-xs text-gray-500">Active</div>
               <div className="font-semibold">{teams[activeTeamIndex]?.name}</div>
-              <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse ml-2" />
+              <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse ml-2" />
             </div>
 
             {/* Timer selector */}
@@ -569,12 +573,20 @@ export default function YesOrNoPage() {
               <div className="text-xs text-gray-500 mr-2">Timer</div>
               <div className="flex gap-1">
                 {TIMER_OPTIONS.map((t) => (
-                  <button key={t} onClick={() => setTurnLength(t)} className={`px-2 py-0.5 text-xs rounded ${turnLength === t ? "bg-[var(--color-primary)] text-white" : "bg-transparent"}`}>{t}s</button>
+                  <button
+                    key={t}
+                    onClick={() => setTurnLength(t)}
+                    className={`px-2 py-0.5 text-xs rounded ${turnLength === t ? "bg-[var(--color-accent)] text-white" : "bg-transparent"}`}
+                  >
+                    {t}s
+                  </button>
                 ))}
               </div>
             </div>
 
-            <button onClick={() => toggleMusic()} className={`px-3 py-1 rounded-md ${musicOn ? "bg-green-500 text-white" : "bg-white border"}`}>{musicOn ? "Music: On" : "Music: Off"}</button>
+            <button onClick={() => toggleMusic()} className={`btn px-3 py-1 ${musicOn ? "btn-primary" : "btn-secondary"}`}>
+              {musicOn ? "Music: On" : "Music: Off"}
+            </button>
           </div>
         </div>
 
@@ -583,7 +595,7 @@ export default function YesOrNoPage() {
           {teams.map((team, idx) => {
             const isActive = idx === activeTeamIndex;
             return (
-              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-primary)] bg-[rgba(37,99,235,0.04)]" : "bg-white"}`}>
+              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-accent)]" : "bg-white"}`}>
                 <div>
                   <div className="text-sm font-semibold">{team.name}</div>
                 </div>
@@ -597,21 +609,21 @@ export default function YesOrNoPage() {
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => { setGlobalMode("sentence"); setMixMode(false); }}
-            className={`px-3 py-1 rounded ${globalMode === "sentence" && !mixMode ? "bg-[var(--color-primary)] text-white animate-pulse" : "bg-white border"}`}
+            className={`btn px-3 py-1 ${globalMode === "sentence" && !mixMode ? "btn-primary animate-pulse" : "btn-secondary"}`}
           >
             Sentence
           </button>
 
           <button
             onClick={() => { setGlobalMode("vocab"); setMixMode(false); }}
-            className={`px-3 py-1 rounded ${globalMode === "vocab" && !mixMode ? "bg-[var(--color-primary)] text-white animate-pulse" : "bg-white border"}`}
+            className={`btn px-3 py-1 ${globalMode === "vocab" && !mixMode ? "btn-primary animate-pulse" : "btn-secondary"}`}
           >
             Vocabulary
           </button>
 
           <button
             onClick={toggleMix}
-            className={`px-3 py-1 rounded ${mixMode ? "bg-[var(--color-primary)] text-white animate-pulse" : "bg-white border"}`}
+            className={`btn px-3 py-1 ${mixMode ? "btn-primary animate-pulse" : "btn-secondary"}`}
           >
             Mix
           </button>
@@ -634,7 +646,7 @@ export default function YesOrNoPage() {
             <button
               onClick={prevIndex}
               aria-label="Previous"
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white border rounded-full w-12 h-12 flex items-center justify-center shadow"
+              className="btn btn-secondary absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center shadow"
             >
               ◀
             </button>
@@ -643,7 +655,7 @@ export default function YesOrNoPage() {
             <button
               onClick={nextIndex}
               aria-label="Next"
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white border rounded-full w-12 h-12 flex items-center justify-center shadow"
+              className="btn btn-secondary absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center shadow"
             >
               ▶
             </button>
@@ -678,7 +690,7 @@ export default function YesOrNoPage() {
             {/* Start Game button (visible when modal closed and not started) */}
             {!gameStarted && !sentencesModalOpen && currentCardIndex !== null && (
               <div className="mt-6">
-                <button onClick={handleStartGameClick} className="px-6 py-3 bg-green-600 text-white rounded-lg text-lg shadow">Start Game</button>
+                <button onClick={handleStartGameClick} className="btn btn-primary px-6 py-3 text-lg shadow">Start Game</button>
               </div>
             )}
 
@@ -687,7 +699,9 @@ export default function YesOrNoPage() {
               <button
                 onClick={() => handleYesNo(true)}
                 disabled={roundPhase !== "timing"}
-                className={`px-12 py-4 rounded-xl text-2xl font-bold shadow-lg transform transition-all ${roundPhase !== "timing" ? "bg-green-300 text-white opacity-60 cursor-not-allowed" : "bg-green-600 text-white hover:scale-105 active:scale-95"}`}
+                className={`btn btn-primary px-12 py-4 text-2xl font-bold shadow-lg transform transition-all ${
+                  roundPhase !== "timing" ? "opacity-60 cursor-not-allowed" : "hover:scale-105 active:scale-95"
+                }`}
               >
                 Yes
               </button>
@@ -695,7 +709,9 @@ export default function YesOrNoPage() {
               <button
                 onClick={() => handleYesNo(false)}
                 disabled={roundPhase !== "timing"}
-                className={`px-12 py-4 rounded-xl text-2xl font-bold shadow-lg transform transition-all ${roundPhase !== "timing" ? "bg-red-300 text-white opacity-60 cursor-not-allowed" : "bg-red-600 text-white hover:scale-105 active:scale-95"}`}
+                className={`btn btn-secondary px-12 py-4 text-2xl font-bold shadow-lg transform transition-all ${
+                  roundPhase !== "timing" ? "opacity-60 cursor-not-allowed" : "hover:scale-105 active:scale-95"
+                }`}
               >
                 No
               </button>
@@ -812,7 +828,7 @@ export default function YesOrNoPage() {
             <h2 className="text-3xl font-extrabold">🎉 Winner!</h2>
             <p className="mt-3 text-xl">{winnerTeam.name} wins with {winnerTeam.score} points</p>
             <div className="mt-6 flex justify-center gap-3">
-              <button onClick={() => { setWinnerOpen(false); router.push("/games"); }} className="px-4 py-2 rounded bg-[var(--color-primary)] text-white">Return to Games</button>
+              <button onClick={() => { setWinnerOpen(false); router.push("/games"); }} className="btn btn-secondary px-3 py-1">Return to Games</button>
             </div>
           </div>
         </div>

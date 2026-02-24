@@ -57,7 +57,7 @@ export default function LessonsPage() {
         <h1 className="text-4xl font-extrabold">Saved Lessons</h1>
         <Link
           href="/flashcards"
-          className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
+          className="btn btn-primary px-4 py-2"
         >
           Back to Flashcards
         </Link>
@@ -84,14 +84,14 @@ export default function LessonsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => loadLesson(lesson)}
-                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
+                className="btn btn-primary px-4 py-2"
               >
                 Load
               </button>
 
               <button
                 onClick={() => deleteLesson(lesson.id)}
-                className="px-4 py-2 rounded-lg border border-red-300 text-red-600 text-sm hover:bg-red-50"
+                className="btn btn-secondary px-4 py-2 text-sm"
               >
                 Delete
               </button>

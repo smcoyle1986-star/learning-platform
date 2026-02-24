@@ -2,6 +2,47 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { saveWorksheetClient } from "@/lib/ai/saveWorksheetClient";
+import { saveAiSetClient } from "@/lib/ai/saveAiClient";
+
+/* Small reusable Save button (calls client helper) */
+function SaveAiSetButton({
+  defaultPrompt = "Generate 8 simple animal words (word only)",
+  defaultTitle = "AI Set",
+}: {
+  defaultPrompt?: string;
+  defaultTitle?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const result = await saveAiSetClient({
+        title: defaultTitle,
+        prompt: defaultPrompt,
+      });
+      alert("Saved AI set: " + result.id);
+      // Optionally: redirect to flashcards or open dashboard
+      // window.location.href = "/dashboard";
+    } catch (err: any) {
+      console.error("Save failed:", err);
+      alert("Save failed: " + (err?.message || "unknown"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="px-4 py-2 rounded bg-[var(--color-primary)] text-white"
+    >
+      {loading ? "Saving…" : "Save AI Set"}
+    </button>
+  );
+}
 
 /* Types */
 type Mode = "cards" | "worksheets";
@@ -450,7 +491,7 @@ export default function SmartFormsPageClient() {
       }
       return `<li>${i + 1}. ${escapeHtml(String(text))}</li>`;
     });
-    return `<!doctype html><html><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Inter, system-ui, sans-serif;padding:20px;color:#0f172a}h1{color:#0f4fff}</style></head><body><h1>${escapeHtml(title)}</h1><p>Difficulty: ${escapeHtml(options.difficulty || "A1")}</p><ol>${rows.join("\n")}</ol><footer style="margin-top:24px;color:#64748b;font-size:12px">Made with Bloom AI</footer></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:Inter, system-ui, sans-serif;padding:20px;color:#0f172a}h1{color:#2f3a2f}</style></head><body><h1>${escapeHtml(title)}</h1><p>Difficulty: ${escapeHtml(options.difficulty || "A1")}</p><ol>${rows.join("\n")}</ol><footer style="margin-top:24px;color:#64748b;font-size:12px">Made with Bloom AI</footer></body></html>`;
   }
 
   function escapeHtml(s: string) {
@@ -478,35 +519,35 @@ export default function SmartFormsPageClient() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => (window.location.href = "/games")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Games
             </button>
 
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Dashboard
             </button>
 
             <button
               onClick={() => (window.location.href = "/flashcards/classroom")}
-              className="px-4 py-2 rounded-lg bg-green-400 text-green-900 text-sm hover:bg-green-600 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Classroom
             </button>
 
             <button
               onClick={() => (window.location.href = "/flashcards")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Flashcards
             </button>
 
             <button
               onClick={() => (window.location.href = "/printables")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
+              className="btn btn-secondary"
             >
               Printables
             </button>
@@ -519,8 +560,18 @@ export default function SmartFormsPageClient() {
 
         <div className="flex items-center justify-center mb-6">
           <div className="inline-flex rounded-full bg-gray-200 p-1">
-            <button onClick={() => setMode("cards")} className={`px-6 py-2 rounded-full ${mode === "cards" ? "bg-green-600 text-white" : "bg-transparent text-slate-700"}`}>Smart Cards</button>
-            <button onClick={() => setMode("worksheets")} className={`px-6 py-2 rounded-full ${mode === "worksheets" ? "bg-green-600 text-white" : "bg-transparent text-slate-700"}`}>Worksheets</button>
+            <button
+              onClick={() => setMode("cards")}
+              className={`btn px-6 py-2 ${mode === "cards" ? "btn-primary" : "btn-secondary"}`}
+            >
+              Smart Cards
+            </button>
+            <button
+              onClick={() => setMode("worksheets")}
+              className={`btn px-6 py-2 ${mode === "worksheets" ? "btn-primary" : "btn-secondary"}`}
+            >
+              Worksheets
+            </button>
           </div>
         </div>
 
@@ -528,7 +579,15 @@ export default function SmartFormsPageClient() {
           <aside className="col-span-4 bg-white border rounded-lg p-4 shadow-sm">
             <div className="mb-3 flex gap-2">
               {(["noun", "verb", "adjective", "modals"] as const).map((t) => (
-                <button key={t} onClick={() => setActiveTab(t)} className={`px-3 py-2 rounded ${activeTab === t ? "bg-blue-600 text-white" : "bg-gray-100"}`}>{t[0].toUpperCase() + t.slice(1)}</button>
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  className={`btn px-3 py-2 rounded ${
+                    activeTab === t ? "btn-primary" : "btn-secondary"
+                  }`}
+                >
+                  {t[0].toUpperCase() + t.slice(1)}
+                </button>
               ))}
             </div>
 
@@ -537,9 +596,30 @@ export default function SmartFormsPageClient() {
                 <div>
                   <div className="text-sm font-medium mb-2">Noun options</div>
                   <div className="flex gap-2">
-                    <button onClick={() => setNounOption("singular")} className={`px-3 py-2 rounded ${nounOption === "singular" ? "bg-green-600 text-white" : "bg-gray-100"}`}>Singular</button>
-                    <button onClick={() => setNounOption("plural")} className={`px-3 py-2 rounded ${nounOption === "plural" ? "bg-green-600 text-white" : "bg-gray-100"}`}>Plural</button>
-                    <button onClick={() => setNounOption("mix")} className={`px-3 py-2 rounded ${nounOption === "mix" ? "bg-green-600 text-white" : "bg-gray-100"}`}>Mix</button>
+                    <button
+                      onClick={() => setNounOption("singular")}
+                      className={`btn px-3 py-2 rounded ${
+                        nounOption === "singular" ? "btn-primary" : "btn-secondary"
+                      }`}
+                    >
+                      Singular
+                    </button>
+                    <button
+                      onClick={() => setNounOption("plural")}
+                      className={`btn px-3 py-2 rounded ${
+                        nounOption === "plural" ? "btn-primary" : "btn-secondary"
+                      }`}
+                    >
+                      Plural
+                    </button>
+                    <button
+                      onClick={() => setNounOption("mix")}
+                      className={`btn px-3 py-2 rounded ${
+                        nounOption === "mix" ? "btn-primary" : "btn-secondary"
+                      }`}
+                    >
+                      Mix
+                    </button>
                   </div>
                 </div>
               )}
@@ -549,7 +629,15 @@ export default function SmartFormsPageClient() {
                   <div className="text-sm font-medium mb-2">Verb options</div>
                   <div className="flex flex-wrap gap-2 mb-2">
                     {(["third", "third-mixed", "past", "continuous", "perfect"] as VerbOption[]).map((opt) => (
-                      <button key={opt} onClick={() => setVerbOption(opt)} className={`px-3 py-2 rounded ${verbOption === opt ? "bg-green-600 text-white" : "bg-gray-100"}`}>{opt.replace("-", " ")}</button>
+                      <button
+                        key={opt}
+                        onClick={() => setVerbOption(opt)}
+                        className={`btn px-3 py-2 rounded ${
+                          verbOption === opt ? "btn-primary" : "btn-secondary"
+                        }`}
+                      >
+                        {opt.replace("-", " ")}
+                      </button>
                     ))}
                   </div>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={includeNegatives} onChange={(e) => setIncludeNegatives(e.target.checked)} /> Include negative forms</label>
@@ -561,7 +649,15 @@ export default function SmartFormsPageClient() {
                   <div className="text-sm font-medium mb-2">Adjective options</div>
                   <div className="flex gap-2">
                     {(["base", "comparative", "superlative", "mixed"] as AdjOption[]).map((o) => (
-                      <button key={o} onClick={() => setAdjOption(o)} className={`px-3 py-2 rounded ${adjOption === o ? "bg-green-600 text-white" : "bg-gray-100"}`}>{o}</button>
+                      <button
+                        key={o}
+                        onClick={() => setAdjOption(o)}
+                        className={`btn px-3 py-2 rounded ${
+                          adjOption === o ? "btn-primary" : "btn-secondary"
+                        }`}
+                      >
+                        {o}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -585,7 +681,15 @@ export default function SmartFormsPageClient() {
                 <div className="text-sm font-medium mb-2">Difficulty (CEFR)</div>
                 <div className="flex gap-2 flex-wrap mb-3">
                   {(["A1", "A2", "B1", "B2"] as const).map((d) => (
-                    <button key={d} onClick={() => setCefr(d)} className={`px-3 py-1 rounded ${cefr === d ? "bg-green-600 text-white" : "bg-gray-100"}`}>{d}</button>
+                    <button
+                      key={d}
+                      onClick={() => setCefr(d)}
+                      className={`btn px-3 py-1 rounded ${
+                        cefr === d ? "btn-primary" : "btn-secondary"
+                      }`}
+                    >
+                      {d}
+                    </button>
                   ))}
                 </div>
                 <div className="text-sm font-medium mb-2">Worksheet types</div>
@@ -604,7 +708,13 @@ export default function SmartFormsPageClient() {
                 {trayCards.map((c, idx) => (
                   <div key={c.id} draggable onDragStart={(e) => onDragStart(e, idx)} onDragOver={onDragOver} onDrop={(e) => onDropThumbnail(e, idx)} className="relative border rounded p-2 flex items-center justify-center bg-white">
                     <div className="text-xs text-center">{c.lemma}</div>
-                    <button title="Remove" onClick={() => removeThumbnail(idx)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">×</button>
+                    <button
+                      title="Remove"
+                      onClick={() => removeThumbnail(idx)}
+                      className="btn btn-secondary absolute -top-2 -right-2 w-6 h-6 p-0 text-xs flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                    >
+                      ×
+                    </button>
                   </div>
                 ))}
               </div>
@@ -618,18 +728,108 @@ export default function SmartFormsPageClient() {
               <div className="flex gap-3 items-center">
                 {mode === "cards" && (
                   <>
-                    <button onClick={applyAiToCards} disabled={applyingAI} className="px-3 py-2 bg-yellow-600 text-white rounded">{applyingAI ? "Applying…" : "Apply AI"}</button>
-                    <button onClick={undoAi} className="px-3 py-2 bg-gray-100 rounded">Undo AI</button>
-                    <button onClick={completeApplyToTray} className="px-3 py-2 bg-green-600 text-white rounded">Complete</button>
-                    <button onClick={() => { const n = prompt("Set name", `Bloom AI Set ${new Date().toLocaleDateString()}`); if (n) saveAiSet(n); }} className="px-3 py-2 bg-blue-600 text-white rounded">Save set</button>
+                    <button
+                      onClick={applyAiToCards}
+                      disabled={applyingAI}
+                      className="btn btn-primary px-3 py-2 disabled:opacity-60"
+                    >
+                      {applyingAI ? "Applying…" : "Apply AI"}
+                    </button>
+                    <button onClick={undoAi} className="btn btn-secondary px-3 py-2">
+                      Undo AI
+                    </button>
+                    <button onClick={completeApplyToTray} className="btn btn-primary px-3 py-2">
+                      Complete
+                    </button>
+
+                    <button
+  onClick={async () => {
+    const n = prompt("Set name", `Bloom AI Set ${new Date().toLocaleDateString()}`);
+    if (!n) return;
+    try {
+      const cardsToSave = previewCards.length > 0 ? previewCards : trayCards;
+      if (!cardsToSave || cardsToSave.length === 0) {
+        alert("No cards to save — add cards to the tray or apply AI first.");
+        return;
+      }
+      await saveAiSetClient({ title: n, prompt: "", cards: cardsToSave });
+      alert("AI set saved");
+    } catch (e: any) {
+      alert("Save failed: " + (e?.message || e));
+    }
+  }}
+  className="btn btn-primary px-3 py-2"
+>
+  Save set
+</button>
                   </>
                 )}
 
                 {mode === "worksheets" && (
                   <>
-                    <button onClick={generateWorksheet} disabled={loadingWorksheet} className="px-3 py-2 bg-yellow-600 text-white rounded">{loadingWorksheet ? "Generating…" : "Send to AI"}</button>
-                    <button onClick={() => { const n = prompt("Worksheet name", `Worksheet ${new Date().toLocaleDateString()}`); if (n) saveWorksheet(n); }} className="px-3 py-2 bg-blue-600 text-white rounded">Save worksheet</button>
-                    <button onClick={() => { if (!worksheetHtml) { showToast("No worksheet to print", "error"); return; } const blob = new Blob([worksheetHtml], { type: "text/html" }); const url = URL.createObjectURL(blob); window.open(url, "_blank"); }} className="px-3 py-2 bg-green-600 text-white rounded">Send to Printables</button>
+                    <button
+                      onClick={generateWorksheet}
+                      disabled={loadingWorksheet}
+                      className="btn btn-primary px-3 py-2 disabled:opacity-60"
+                    >
+                      {loadingWorksheet ? "Generating…" : "Send to AI"}
+                    </button>
+
+                    /* Replace the existing "Save worksheet" button in your SmartForms page with this block.
+   It collects the current CEFR, selected worksheet types, and filters and sends them to
+   the saveWorksheetClient helper above. Paste this over the current Save worksheet button. */
+
+<button
+  onClick={async () => {
+    const n = prompt("Worksheet name", `Worksheet ${new Date().toLocaleDateString()}`);
+    if (!n) return;
+    try {
+      const types = Object.keys(worksheetTypes).filter((k) => worksheetTypes[k]);
+      const filters = {
+        nounOption,
+        verbOption,
+        adjOption,
+        modalOptions,
+        negative: includeNegatives,
+        // include any other filters/state you want preserved
+      };
+      // Optionally include generated HTML if available
+      const content = worksheetHtml ?? null;
+      // Optionally include the cards used
+      const cards = trayCards;
+
+      await saveWorksheetClient({
+        title: n,
+        cefr_level: cefr,
+        worksheet_types: types,
+        filters,
+        content,
+        cards,
+      });
+      alert("Worksheet saved");
+    } catch (e: any) {
+      alert("Save failed: " + (e?.message || e));
+    }
+  }}
+  className="btn btn-primary px-3 py-2"
+>
+  Save worksheet
+</button>
+
+                    <button
+                      onClick={() => {
+                        if (!worksheetHtml) {
+                          showToast("No worksheet to print", "error");
+                          return;
+                        }
+                        const blob = new Blob([worksheetHtml], { type: "text/html" });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, "_blank");
+                      }}
+                      className="btn btn-primary px-3 py-2"
+                    >
+                      Send to Printables
+                    </button>
                   </>
                 )}
               </div>

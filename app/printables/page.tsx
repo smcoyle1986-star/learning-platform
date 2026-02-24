@@ -132,8 +132,12 @@ export default function PrintablesPage() {
     return (
       <button
         onClick={() => toggleCardsPerPage(n)}
-        className={`px-3 py-2 rounded-lg border transition-shadow text-sm font-semibold w-full text-left
-          ${active ? "bg-blue-700 text-white shadow-md" : "bg-white text-gray-800 hover:shadow-lg"}`}
+        className={`btn rounded-lg px-3 py-2 text-sm font-semibold w-full text-left border transition-shadow
+          ${
+            active
+              ? "bg-[var(--color-accent)] text-white border-transparent shadow-md"
+              : "btn-secondary text-[var(--color-text-main)] hover:shadow-lg"
+          }`}
         aria-pressed={active}
       >
         {n} card{n > 1 ? "s" : ""}
@@ -230,14 +234,14 @@ export default function PrintablesPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => (window.location.href = "/flashcards")}
-                className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300"
+                className="btn btn-secondary"
               >
                 Return to Flashcards
               </button>
 
               <button
                 onClick={() => (window.location.href = "/dashboard")}
-                className="px-4 py-2 rounded-lg bg-white text-green-900 text-sm border border-green-200 hover:bg-green-50"
+                className="btn btn-secondary"
               >
                 Return to Dashboard
               </button>
@@ -254,13 +258,13 @@ export default function PrintablesPage() {
             <div className="mt-6 flex justify-center gap-3">
               <button
                 onClick={() => (window.location.href = "/flashcards")}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white"
+                className="btn btn-primary"
               >
                 Go to Flashcards
               </button>
               <button
                 onClick={() => (window.location.href = "/dashboard")}
-                className="px-4 py-2 rounded-lg bg-green-200 text-green-900"
+                className="btn btn-primary"
               >
                 Go to Dashboard
               </button>
@@ -291,14 +295,14 @@ export default function PrintablesPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => (window.location.href = "/flashcards")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300"
+              className="btn btn-secondary"
             >
               Return to Flashcards
             </button>
 
             <button
               onClick={() => (window.location.href = "/dashboard")}
-              className="px-4 py-2 rounded-lg bg-white text-green-900 text-sm border border-green-200 hover:bg-green-50"
+              className="btn btn-secondary"
             >
               Return to Dashboard
             </button>
@@ -354,9 +358,7 @@ export default function PrintablesPage() {
               <button
                 onClick={handlePrintNow}
                 disabled={printing}
-                className={`px-4 py-3 rounded-lg text-white font-semibold transition ${
-                  printing ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-                }`}
+                className={`btn btn-primary w-full py-3 ${printing ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 {printing ? "Printing…" : "Print Now"}
               </button>
@@ -364,9 +366,7 @@ export default function PrintablesPage() {
               <button
                 onClick={handleExportPdf}
                 disabled={exporting}
-                className={`px-4 py-3 rounded-lg text-white font-semibold transition ${
-                  exporting ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                className={`btn btn-primary w-full py-3 ${exporting ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 {exporting ? "Generating PDF…" : "Export PDF"}
               </button>

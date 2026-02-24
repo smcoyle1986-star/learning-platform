@@ -413,6 +413,13 @@ export default function SpinAndSpeakPage() {
   const wheelIdleSize = 280;
   const wheelMaxSpinning = isFullscreen ? "min(78vw,560px)" : "min(68vw,460px)";
 
+  // --- SAFE image handling: compute currentCard & imgSrc so we never pass empty string to <img src=...>
+  const currentCard = currentCardIndex !== null && tray[currentCardIndex] ? tray[currentCardIndex] : null;
+  const imgSrc =
+    currentCard && typeof currentCard.image === "string" && currentCard.image.trim().length > 0
+      ? currentCard.image.trim()
+      : null;
+
   return (
     <div className="min-h-screen bg-[hsl(140,40%,95%)] text-black antialiased"> {/* pastel green background */}
       {/* Header */}
@@ -421,11 +428,15 @@ export default function SpinAndSpeakPage() {
           <a href="/" className="text-2xl font-extrabold text-blue-600">ClassBloom</a>
           <div className="text-xl font-bold">Spin & Speak</div>
           <div className="flex items-center gap-2">
-            <button onClick={toggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"} className="p-2 rounded-md bg-white border shadow-sm">
+            <button
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              className="btn btn-secondary p-2"
+            >
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
             {/* Exit button uses site green */}
-            <button onClick={() => router.push("/games")} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white flex items-center gap-2">
+            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
               <Play size={14} /> Exit
             </button>
           </div>
@@ -499,7 +510,9 @@ export default function SpinAndSpeakPage() {
               <button
                 onClick={() => spinWheel(true)}
                 disabled={spinning || timerActive || showPopup || tray.length === 0}
-                className={`px-6 py-3 rounded-full text-lg font-bold shadow-2xl transition ${spinning || timerActive || showPopup || tray.length === 0 ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-red-500 text-white hover:scale-105"}`}
+                className={`btn btn-primary px-6 py-3 text-lg font-bold shadow-2xl transition ${
+                  spinning || timerActive || showPopup || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
+                }`}
               >
                 SPIN
               </button>
@@ -511,9 +524,9 @@ export default function SpinAndSpeakPage() {
           {/* Center card */}
           <section className="w-1/3 flex flex-col items-center justify-center">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md h-80 md:h-96 flex items-center justify-center overflow-hidden">
-              {currentCardIndex !== null && tray[currentCardIndex] ? (
-                tray[currentCardIndex].image ? (
-                  <img src={tray[currentCardIndex].image} alt={tray[currentCardIndex].word} className="object-cover w-full h-full" />
+              {currentCard ? (
+                imgSrc ? (
+                  <img src={imgSrc} alt={currentCard.word ?? ""} className="object-cover w-full h-full" />
                 ) : (
                   <div className="text-2xl text-gray-400">No image</div>
                 )
@@ -523,7 +536,7 @@ export default function SpinAndSpeakPage() {
             </div>
 
             <div className="text-4xl font-extrabold text-center mt-4">
-              {currentCardIndex !== null && tray[currentCardIndex] ? tray[currentCardIndex].word : "—"}
+              {currentCard ? currentCard.word : "—"}
             </div>
 
             {showPopup && landedSegment && (
@@ -541,12 +554,16 @@ export default function SpinAndSpeakPage() {
 
               {timerActive && (
                 <div className="flex items-center gap-4">
-                  <button onClick={onCorrect} className="px-6 py-2 rounded-md bg-green-500 text-white font-bold shadow">✅ Correct</button>
-                  <button onClick={onPass} className="px-6 py-2 rounded-md bg-white text-red-600 border border-red-200 font-semibold shadow">❌ Pass</button>
+                  <button onClick={onCorrect} className="btn btn-primary px-6 py-2 font-bold shadow">✅ Correct</button>
+                  <button onClick={onPass} className="btn btn-secondary px-6 py-2 font-semibold shadow">❌ Pass</button>
                 </div>
               )}
 
-              {timerActive && <button onClick={teacherEndTimerEarly} className="mt-2 px-3 py-1 rounded bg-yellow-400">End Early</button>}
+              {timerActive && (
+                <button onClick={teacherEndTimerEarly} className="btn btn-secondary mt-2 px-3 py-1">
+                  End Early
+                </button>
+              )}
             </div>
           </section>
 
@@ -556,8 +573,8 @@ export default function SpinAndSpeakPage() {
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">Teams</div>
                 <div className="flex items-center gap-2">
-                  <button onClick={addTeam} className="px-2 py-1 bg-white border rounded">＋</button>
-                  <button onClick={() => resetGame(true)} className="px-2 py-1 bg-white border rounded">Reset Game</button>
+                  <button onClick={addTeam} className="btn btn-secondary px-2 py-1">＋</button>
+                  <button onClick={() => resetGame(true)} className="btn btn-secondary px-2 py-1">Reset Game</button>
                 </div>
               </div>
 
@@ -572,8 +589,8 @@ export default function SpinAndSpeakPage() {
                       <div className="flex items-center gap-2">
                         <div className={`${isActive ? "text-3xl font-extrabold active-score" : "text-xl font-bold"}`}>{team.score}</div>
                         <div className="flex gap-1">
-                          <button onClick={() => adjustScore(team.id, -1)} className="px-2 py-1 bg-white border rounded">−</button>
-                          <button onClick={() => adjustScore(team.id, +1)} className="px-2 py-1 bg-white border rounded">+</button>
+                          <button onClick={() => adjustScore(team.id, -1)} className="btn btn-secondary px-2 py-1">−</button>
+                          <button onClick={() => adjustScore(team.id, +1)} className="btn btn-secondary px-2 py-1">+</button>
                         </div>
                       </div>
                     </div>
@@ -586,15 +603,28 @@ export default function SpinAndSpeakPage() {
                   <div className="text-sm text-gray-600">Timer</div>
                   <div className="flex gap-2">
                     {TIMER_OPTIONS.map((t) => (
-                      <button key={t} onClick={() => setTurnLength(t)} className={`px-2 py-1 rounded ${turnLength === t ? "bg-indigo-600 text-white" : "bg-white border"}`}>{t}s</button>
+                      <button
+                        key={t}
+                        onClick={() => setTurnLength(t)}
+                        className={`btn px-2 py-1 ${turnLength === t ? "btn-primary" : "btn-secondary"}`}
+                      >
+                        {t}s
+                      </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <button onClick={toggleMusic} className={`px-3 py-1 rounded ${musicOn ? "bg-green-500 text-white" : "bg-white border"}`}>{musicOn ? "Music: On" : "Music: Off"}</button>
-                    <button onClick={() => resetGame(false)} className="px-3 py-1 rounded bg-white border">Reset Turn</button>
+                    <button
+                      onClick={toggleMusic}
+                      className={`btn px-3 py-1 ${musicOn ? "btn-primary" : "btn-secondary"}`}
+                    >
+                      {musicOn ? "Music: On" : "Music: Off"}
+                    </button>
+                    <button onClick={() => resetGame(false)} className="btn btn-secondary px-3 py-1">
+                      Reset Turn
+                    </button>
                   </div>
 
                   <div className="text-sm text-gray-500">Cards: {tray.length}</div>
@@ -607,8 +637,8 @@ export default function SpinAndSpeakPage() {
                 <div className="text-xl font-extrabold">🏆 {winnerTeam.name} Wins!</div>
                 <div className="mt-2 text-sm text-gray-600">Great speaking, everyone!</div>
                 <div className="mt-3 flex justify-center gap-2">
-                  <button onClick={() => { setWinnerModalOpen(false); resetGame(true); }} className="px-4 py-2 bg-indigo-600 text-white rounded">Play Again</button>
-                  <button onClick={() => { setWinnerModalOpen(false); router.push("/games"); }} className="px-4 py-2 bg-white border rounded">Exit</button>
+                  <button onClick={() => { setWinnerModalOpen(false); resetGame(true); }} className="btn btn-primary px-3 py-1">Play Again</button>
+                  <button onClick={() => { setWinnerModalOpen(false); router.push("/games"); }} className="btn btn-secondary px-3 py-1">Exit</button>
                 </div>
                 <div className="pointer-events-none mt-4 flex justify-center gap-2">
                   <div className="w-3 h-6 bg-pink-400 animate-fall" />

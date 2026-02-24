@@ -77,7 +77,7 @@ function GameEngine({ cards, onExit }: GameEngineProps) {
       </div>
 
       <div className="mt-6 text-right">
-        <button onClick={onExit} className="px-4 py-2 rounded-lg bg-green-400 text-green-900 text-sm hover:bg-green-600 hover:shadow-md transition">
+        <button onClick={onExit} className="btn btn-secondary px-3 py-1 text-sm">
           Exit Game
         </button>
       </div>
@@ -196,10 +196,16 @@ export default function GamePage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button onClick={() => (window.location.href = "/flashcards")} className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition">
+              <button
+                onClick={() => (window.location.href = "/flashcards")}
+                className="btn btn-secondary px-3 py-1"
+              >
                 Return to Flashcards
               </button>
-              <button onClick={() => (window.location.href = "/dashboard")} className="px-4 py-2 rounded-lg bg-white text-green-900 text-sm border border-green-200 hover:bg-green-50 hover:shadow-md transition">
+              <button
+                onClick={() => (window.location.href = "/dashboard")}
+                className="btn btn-secondary px-3 py-1"
+              >
                 Return to Dashboard
               </button>
             </div>
@@ -212,7 +218,9 @@ export default function GamePage() {
             <p className="text-sm text-[var(--color-text-muted)] mt-2">This game ID is not recognized. Return to the games list.</p>
 
             <div className="mt-4">
-              <button onClick={() => router.push("/games")} className="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90">Back to Games</button>
+              <button onClick={() => router.push("/games")} className="btn btn-primary px-3 py-2 text-sm">
+                Back to Games
+              </button>
             </div>
           </div>
         </main>
@@ -234,10 +242,16 @@ export default function GamePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => (window.location.href = "/flashcards")} className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition">
+            <button
+              onClick={() => (window.location.href = "/flashcards")}
+              className="btn btn-secondary px-3 py-1"
+            >
               Return to Flashcards
             </button>
-            <button onClick={() => (window.location.href = "/dashboard")} className="px-4 py-2 rounded-lg bg-white text-green-900 text-sm border border-green-200 hover:bg-green-50 hover:shadow-md transition">
+            <button
+              onClick={() => (window.location.href = "/dashboard")}
+              className="btn btn-secondary px-3 py-1"
+            >
               Return to Dashboard
             </button>
           </div>

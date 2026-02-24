@@ -563,11 +563,15 @@ export default function CardRevealPage() {
               <h1 className="text-2xl font-bold text-black">Card Reveal</h1>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={toggleFullscreen} className="p-2 rounded-md bg-white text-green-900 border border-black/10" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+              <button
+                onClick={toggleFullscreen}
+                className="btn btn-secondary p-2"
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
                 {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
               </button>
               {!isFullscreen && (
-                <button onClick={() => router.push("/games")} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white text-sm flex items-center gap-2">
+                <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
                   <Play size={14} /> Exit
                 </button>
               )}
@@ -580,8 +584,8 @@ export default function CardRevealPage() {
             <h2 className="text-lg font-semibold mb-2">No cards selected</h2>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">Add cards from Flashcards or choose a saved set in Dashboard then open Games → Card Reveal.</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={() => router.push("/flashcards")} className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300">Go to Flashcards</button>
-              <button onClick={() => router.push("/dashboard")} className="px-4 py-2 rounded-lg bg-white text-gray-800 border border-black/10 text-sm hover:shadow-md">Return to Dashboard</button>
+              <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1 text-sm">Go to Flashcards</button>
+              <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to Dashboard</button>
             </div>
           </div>
         </main>
@@ -612,12 +616,16 @@ export default function CardRevealPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={toggleFullscreen} className="p-2 rounded-md bg-white text-green-900 border border-black/10" title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+            <button
+              onClick={toggleFullscreen}
+              className="btn btn-secondary p-2"
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
               {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
             </button>
 
             {/* Music toggle (Card Reveal theme, different from KaBoom) */}
-            <button onClick={toggleRevealMusic} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">
+            <button onClick={toggleRevealMusic} className="btn btn-secondary px-2 py-1 text-sm">
               {musicOn ? "Music: On" : "Music: Off"}
             </button>
 
@@ -630,7 +638,7 @@ export default function CardRevealPage() {
                   }
                 } catch {}
                 router.push("/games");
-              }} className="px-3 py-1 rounded-md bg-[var(--color-primary)] text-white flex items-center gap-2">
+              }} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
                 <Play size={14} /> Exit
               </button>
             )}
@@ -642,7 +650,7 @@ export default function CardRevealPage() {
       {isFullscreen && (
         <button
           onClick={exitFullscreen}
-          className="fixed top-4 right-4 z-[9999] rounded-md bg-white/90 px-3 py-2 shadow-lg border border-black/10"
+          className="btn btn-secondary fixed top-4 right-4 z-[9999] px-3 py-2 shadow-lg"
           title="Exit fullscreen"
         >
           Exit Fullscreen
@@ -658,12 +666,12 @@ export default function CardRevealPage() {
 
             {/* Add / Remove last / Reset */}
             <div className="flex items-center gap-1 ml-2">
-              <button onClick={addTeam} disabled={teams.length >= 6} title="Add team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">+</button>
-              <button onClick={removeLastTeam} disabled={teams.length <= 2} title="Remove last team" className="p-1.5 rounded-md bg-white border border-black/10 text-sm disabled:opacity-50">−</button>
-              <button onClick={() => setTeams((s) => s.map((t) => ({ ...t, score: 0 })))} title="Reset scores" className="p-1.5 rounded-md bg-white border border-black/10 text-sm">⟲</button>
+              <button onClick={addTeam} disabled={teams.length >= 6} title="Add team" className="btn btn-secondary p-1.5 text-sm disabled:opacity-50">+</button>
+              <button onClick={removeLastTeam} disabled={teams.length <= 2} title="Remove last team" className="btn btn-secondary p-1.5 text-sm disabled:opacity-50">−</button>
+              <button onClick={() => setTeams((s) => s.map((t) => ({ ...t, score: 0 })))} title="Reset scores" className="btn btn-secondary p-1.5 text-sm">⟲</button>
               {/* Reset game button - visible when all cards have been used (showWinner or no cards) */}
               {(showWinner || gameTray.length === 0) && (
-                <button onClick={resetGame} title="Reset game" className="p-1.5 rounded-md bg-white border border-black/10 text-sm ml-1">Reset Game</button>
+                <button onClick={resetGame} title="Reset game" className="btn btn-secondary p-1.5 text-sm ml-1">Reset Game</button>
               )}
             </div>
           </div>
@@ -673,7 +681,7 @@ export default function CardRevealPage() {
             <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-white text-sm">
               <div className="text-xs text-[var(--color-text-muted)]">Active</div>
               <div className="font-semibold">{teams[activeTeamIndex]?.name}</div>
-              <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse ml-2" />
+              <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse ml-2" />
             </div>
 
             {/* Dramatic countdown timer (bigger / animated) */}
@@ -696,7 +704,7 @@ export default function CardRevealPage() {
                       setTurnTimerSeconds(opt);
                       setTimerSeconds((prev) => (prev !== null ? opt : prev));
                     }}
-                    className={`px-2 py-0.5 text-xs rounded ${turnTimerSeconds === opt ? "bg-[var(--color-primary)] text-white" : "bg-transparent text-black"}`}
+                    className={`px-2 py-0.5 text-xs rounded ${turnTimerSeconds === opt ? "bg-[var(--color-accent)] text-white" : "bg-transparent text-black"}`}
                     title={`${opt}s`}
                   >
                     {opt}s
@@ -714,7 +722,7 @@ export default function CardRevealPage() {
           {teams.map((team, idx) => {
             const isActive = idx === activeTeamIndex;
             return (
-              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between ${isActive ? "ring-2 ring-[var(--color-primary)]" : ""}`}>
+              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between ${isActive ? "ring-2 ring-[var(--color-accent)]" : ""}`}>
                 <div className="min-w-0">
                   <div className="text-sm font-semibold">{team.name}</div>
                 </div>
@@ -724,8 +732,8 @@ export default function CardRevealPage() {
                   <div className={`${isActive ? "text-3xl md:text-4xl font-extrabold active-score" : "text-xl font-bold"} w-12 text-center`}>
                     {team.score}
                   </div>
-                  <button onClick={() => adjustScore(team.id, -1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">−</button>
-                  <button onClick={() => adjustScore(team.id, +1)} className="px-2 py-1 rounded-md bg-white border border-black/10 text-sm">+</button>
+                  <button onClick={() => adjustScore(team.id, -1)} className="btn btn-secondary px-2 py-1 text-sm">−</button>
+                  <button onClick={() => adjustScore(team.id, +1)} className="btn btn-secondary px-2 py-1 text-sm">+</button>
                 </div>
               </div>
             );
@@ -807,7 +815,7 @@ export default function CardRevealPage() {
                       e.stopPropagation();
                       startRandomRemoveSequence();
                     }}
-                    className="pointer-events-auto px-8 py-5 rounded-full bg-red-600 text-white text-2xl font-bold shadow-2xl transform hover:scale-105 transition"
+                    className="btn btn-primary pointer-events-auto px-8 py-5 text-2xl font-bold shadow-2xl transform hover:scale-105 transition"
                     title="Remove a tile (random)"
                   >
                     Remove Tile
@@ -820,14 +828,14 @@ export default function CardRevealPage() {
                 <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-4 z-60 pointer-events-auto">
                   <button
                     onClick={handlePass}
-                    className="px-4 py-2 rounded-md bg-white text-red-600 border border-red-200 text-lg shadow-sm"
+                    className="btn btn-secondary px-4 py-2 text-lg shadow-sm"
                     title="Pass (X)"
                   >
                     ❌
                   </button>
                   <button
                     onClick={handleCorrect}
-                    className="px-4 py-2 rounded-md bg-green-400 text-green-900 text-lg shadow-sm"
+                    className="btn btn-primary px-4 py-2 text-lg shadow-sm"
                     title="Correct (O)"
                   >
                     ⭕

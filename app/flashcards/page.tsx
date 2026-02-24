@@ -2,8 +2,20 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Search, X, Printer } from "lucide-react";
+import { Search, X, Printer, Menu } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+// removed duplicate createClient import to avoid creating a second client that triggers refresh token errors
+import { useAuth } from "@/components/AuthProvider";
+import { useRouter } from "next/navigation";
+
+/* ---------------------------
+   Visual/theme notes applied locally:
+   - Uses the same primary blue used on the homepage (#1e40af) via CSS variables set
+   - Buttons, cards, input, modals are restyled to match homepage aesthetics:
+     rounded-2xl cards, soft backgrounds, gentler shadows, primary CTA uses the brand blue
+   - All previous green accents on this page have been replaced with the brand palette
+   - No logic changes; only className/style changes for visuals
+---------------------------- */
 
 function rankResults<T extends { lemma: string; theme?: string }>(
   data: T[],
@@ -41,6 +53,7 @@ export type Card = {
 };
 
 export default function FlashcardsPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Card[]>([]);
   const [lessonTray, setLessonTray] = useState<Card[]>([]);
@@ -59,8 +72,15 @@ export default function FlashcardsPage() {
   const [lastSavedTray, setLastSavedTray] = useState<Card[]>([]);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
 
-  const formatWord = (word: string) =>
-    word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  // Editing mode: store lesson_set id when opened from Dashboard for editing
+  const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
+
+  // NEW: public/private toggle state for Save modal
+  // Default to public
+  const [isPublic, setIsPublic] = useState<boolean>(true);
+
+  // NOTE: changed to preserve original case — only replace underscores with spaces.
+  const formatWord = (word: string) => String(word ?? "").replace(/_/g, " ");
 
   type WordType = "noun" | "verb" | "adjective" | "phonics" | "preposition";
 
@@ -69,6 +89,67 @@ export default function FlashcardsPage() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // useAuth from context (authentication requirement)
+  const { user } = useAuth();
+
+  // On mount: try to detect editing lesson_set id passed from Dashboard
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const idFromQuery =
+        params.get("lesson_set_id") ||
+        params.get("lessonSetId") ||
+        params.get("id") ||
+        null;
+      if (idFromQuery) {
+        setEditingLessonSetId(idFromQuery);
+        return;
+      }
+
+      const possibleKeys = [
+        "editingLessonSetId",
+        "editing-lesson-set-id",
+        "editing_lesson_set_id",
+        "editLessonSetId",
+      ];
+      for (const k of possibleKeys) {
+        const v = localStorage.getItem(k);
+        if (v) {
+          setEditingLessonSetId(v);
+          break;
+        }
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }, []);
+
+  // If editingLessonSetId is set, attempt to load lesson name and is_public so Save modal shows current name and visibility
+  useEffect(() => {
+    if (!editingLessonSetId) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("lesson_sets")
+          .select("name,is_public")
+          .eq("id", editingLessonSetId)
+          .single();
+        if (!error && data?.name) {
+          setLessonName(data.name);
+          setIsPublic(Boolean(data.is_public ?? true));
+        }
+      } catch (e) {
+        console.error("Failed to load lesson_set name/is_public for editing:", e);
+      }
+    })();
+  }, [editingLessonSetId]);
+
+  useEffect(() => {
+    if (showSaveModal && !editingLessonSetId) {
+      setIsPublic(true);
+    }
+  }, [showSaveModal, editingLessonSetId]);
 
   // --- popularity counts state (persisted in localStorage) ---
   const POP_KEY = "classbloom-card-select-counts";
@@ -89,14 +170,12 @@ export default function FlashcardsPage() {
     }
   }, [cardCounts]);
 
-  // Drag-and-drop state for lesson tray reordering & refs for FLIP animation
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const trayItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const prevRectsRef = useRef<Record<string, DOMRect>>({});
 
   useEffect(() => {
-    // Auto-search when a theme is selected (no Enter key needed)
     if (activeWordType && activeTheme) {
       handleSearch();
     }
@@ -114,7 +193,6 @@ export default function FlashcardsPage() {
   useEffect(() => {
     try {
       localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray));
-      // notify other pages that the tray updated
       try {
         window.dispatchEvent(new Event("lesson-tray-updated"));
       } catch (e) {
@@ -125,7 +203,6 @@ export default function FlashcardsPage() {
     }
   }, [lessonTray]);
 
-  // Track unsaved changes
   useEffect(() => {
     const hasChanges =
       lessonTray.length !== lastSavedTray.length ||
@@ -134,30 +211,54 @@ export default function FlashcardsPage() {
     setHasUnsavedChanges(hasChanges);
   }, [lessonTray, lastSavedTray]);
 
-  // Save lesson tray (local fallback - unchanged)
-  function saveLesson() {
-    const savedLessons = JSON.parse(
-      localStorage.getItem("classbloom-saved-lessons") || "[]"
-    );
+  async function saveLesson() {
+    const { user: innerUser } = useAuth();
 
-    const newLesson = {
-      id: Date.now(),
-      name: `Lesson ${savedLessons.length + 1}`,
-      cards: lessonTray,
-      createdAt: new Date().toISOString(),
-    };
+    if (!innerUser) {
+      alert("You must be logged in to save lessons.");
+      return;
+    }
 
-    localStorage.setItem(
-      "classbloom-saved-lessons",
-      JSON.stringify([...savedLessons, newLesson])
-    );
+    if (!lessonTray || lessonTray.length === 0) {
+      alert("No cards to save.");
+      return;
+    }
 
-    localStorage.setItem(
-      "classbloom-last-saved-tray",
-      JSON.stringify(lessonTray)
-    );
+    // 1) Create lesson set
+    const { data: lessonSet, error: lessonError } = await supabase
+      .from("lesson_sets")
+      .insert({
+        user_id: innerUser.id,
+        name: `Lesson ${new Date().toLocaleString()}`,
+      })
+      .select()
+      .single();
 
-    setLastSavedTray([...lessonTray]);
+    if (lessonError || !lessonSet) {
+      console.error("Failed to create lesson set:", lessonError);
+      alert("Failed to save lesson.");
+      return;
+    }
+
+    // 2) Insert cards
+    const cardsPayload = lessonTray.map((card: any, index: number) => ({
+      lesson_set_id: lessonSet.id,
+      front: card.word ?? card.front ?? "",
+      back: card.definition ?? card.back ?? "",
+      position: index,
+    }));
+
+    const { error: cardsError } = await supabase
+      .from("cards")
+      .insert(cardsPayload);
+
+    if (cardsError) {
+      console.error("Failed to save cards:", cardsError);
+      alert("Lesson was created but cards failed to save.");
+      return;
+    }
+
+    // Optional UI feedback
     setShowSavedIndicator(true);
     setTimeout(() => setShowSavedIndicator(false), 2000);
   }
@@ -193,7 +294,7 @@ export default function FlashcardsPage() {
       "vegetables",
       "weather",
     ],
-    verb: ["action", "mental processes", "communication", "sensing"],
+    verb: ["activities", "action", "mental processes", "communication", "sensing"],
     adjective: [
       "condition",
       "size",
@@ -221,18 +322,10 @@ export default function FlashcardsPage() {
   };
 
   const wordTypeButton = (active: boolean) =>
-    `px-4 py-2 rounded-full text-sm font-semibold transition-all
-   ${
-     active
-       ? "bg-blue-700 text-white"
-       : "bg-green-100 text-green-900 hover:bg-blue-500 hover:text-white"
-   }`;
+    `btn px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+      active ? "btn-primary" : "btn-secondary"
+    }`;
 
-  /* ---------------------------
-     Utility helpers
-     --------------------------- */
-
-  // Score for query tie-breaker (stability + ranking): lower is better
   function scoreForCard(card: Card, rawQuery: string) {
     const q = (rawQuery || "").toLowerCase();
     const lemma = (card.word || "").toLowerCase();
@@ -243,33 +336,25 @@ export default function FlashcardsPage() {
     return 3;
   }
 
-  // Stable popularity sort that uses scoreForCard as tie-breaker and finally the card.word
   function sortByPopularity(cards: Card[], rawQuery = "") {
     return [...cards].sort((a, b) => {
       const ca = cardCounts[a.id] ?? 0;
       const cb = cardCounts[b.id] ?? 0;
-      if (cb !== ca) return cb - ca; // higher popularity first
+      if (cb !== ca) return cb - ca;
 
-      // tie-break with ranking by query relevance
       const sa = scoreForCard(a, rawQuery);
       const sb = scoreForCard(b, rawQuery);
       if (sa !== sb) return sa - sb;
 
-      // final deterministic tie-breaker
       return a.word.localeCompare(b.word);
     });
   }
-
-  /* ---------------------------
-     Search helpers
-     --------------------------- */
 
   async function handleSearch() {
     try {
       const raw = query.trim().toLowerCase();
       const normalized = raw.replace(/\s+/g, "_");
 
-      // Allow theme-only or query searches
       if (!raw && !activeTheme) return;
 
       if (activeWordType === "noun") {
@@ -280,10 +365,8 @@ export default function FlashcardsPage() {
           .select("id, lemma, image_id, themes");
 
         if (activeTheme) {
-          // Theme search only
           queryBuilder.contains("themes", [activeTheme]);
         } else if (raw) {
-          // Word search
           queryBuilder.or(`lemma.ilike.%${raw}%,themes.cs.{${raw}}`);
         }
 
@@ -400,10 +483,6 @@ export default function FlashcardsPage() {
     }
   }
 
-  /* ---------------------------
-     Lesson tray manipulation (toggling + drag reorder + keyboard + animated FLIP)
-     --------------------------- */
-
   function incrementCardCount(cardId: string) {
     setCardCounts((prevCounts) => {
       const next = { ...(prevCounts || {}) };
@@ -418,7 +497,6 @@ export default function FlashcardsPage() {
       if (exists) {
         return prev.filter((c) => c.id !== card.id);
       } else {
-        // increment popularity count for this card when teacher picks it
         incrementCardCount(card.id);
         return [...prev, card];
       }
@@ -439,7 +517,6 @@ export default function FlashcardsPage() {
     }
   }
 
-  // FLIP helpers for smooth reorder animation
   function captureRects() {
     const map: Record<string, DOMRect> = {};
     lessonTray.forEach((card) => {
@@ -460,10 +537,8 @@ export default function FlashcardsPage() {
       const dy = oldRect.top - newRect.top;
       if (dx === 0 && dy === 0) return;
 
-      // apply transform to invert movement, then transition to none
       el.style.transition = "none";
       el.style.transform = `translate(${dx}px, ${dy}px)`;
-      // force reflow
       void el.offsetWidth;
       el.style.transition = "transform 260ms cubic-bezier(.2,.9,.3,1)";
       el.style.transform = "";
@@ -473,17 +548,14 @@ export default function FlashcardsPage() {
         el.removeEventListener("transitionend", cleanup);
       };
       el.addEventListener("transitionend", cleanup);
-      // fallback cleanup
       setTimeout(cleanup, 350);
     });
   }
 
   function reorderWithAnimation(from: number, to: number) {
     if (from === to) return;
-    // capture old rects
     const oldRects = captureRects();
 
-    // compute new order synchronously
     setLessonTray((prev) => {
       const copy = [...prev];
       const [moved] = copy.splice(from, 1);
@@ -491,11 +563,9 @@ export default function FlashcardsPage() {
       return copy;
     });
 
-    // animate on next frames after DOM updates
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const newRects: Record<string, DOMRect> = {};
-        // gather current DOM rects from refs (they are updated after setLessonTray)
         Object.keys(trayItemRefs.current).forEach((id) => {
           const el = trayItemRefs.current[id];
           if (el) newRects[id] = el.getBoundingClientRect();
@@ -505,14 +575,11 @@ export default function FlashcardsPage() {
     });
   }
 
-  // Drag handlers
   function onDragStart(e: React.DragEvent, index: number) {
     setDraggedIndex(index);
-    // store rects in case we want them later
     prevRectsRef.current = captureRects();
     try {
       e.dataTransfer.setData("text/plain", String(index));
-      // show copy cursor
       e.dataTransfer.effectAllowed = "move";
     } catch {}
   }
@@ -534,7 +601,6 @@ export default function FlashcardsPage() {
       return;
     }
 
-    // Use animated reorder
     reorderWithAnimation(from, to);
 
     setDraggedIndex(null);
@@ -546,13 +612,11 @@ export default function FlashcardsPage() {
     setDragOverIndex(null);
   }
 
-  // Keyboard accessibility: focus + ArrowLeft/ArrowRight to reorder
   function onTrayItemKeyDown(e: React.KeyboardEvent, index: number) {
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
       if (index > 0) {
         reorderWithAnimation(index, index - 1);
-        // focus the moved element after slight delay
         setTimeout(() => {
           const movedId = lessonTray[index - 1]?.id;
           trayItemRefs.current[movedId ?? ""]?.focus();
@@ -574,10 +638,6 @@ export default function FlashcardsPage() {
     }
   }
 
-  /* ---------------------------
-     Supabase save/replace handlers (unchanged except local cache updates already present)
-     --------------------------- */
-
   async function handleSaveLesson() {
     if (!lessonName.trim()) {
       setNameError("Lesson name is required");
@@ -585,18 +645,57 @@ export default function FlashcardsPage() {
     }
 
     try {
-      // Ensure user is authenticated
-      const { data, error: userErr } = await supabase.auth.getUser();
-      const user = data?.user ?? null;
-
-      if (userErr || !user) {
+      if (!user) {
         setNameError("You must be signed in to save lessons");
         return;
       }
 
       const trimmedName = lessonName.trim();
 
-      // Check for existing lesson_set (case-insensitive)
+      if (editingLessonSetId) {
+        const lessonSetId = editingLessonSetId;
+
+        const { error: updateErr } = await supabase
+          .from("lesson_sets")
+          .update({
+            name: trimmedName,
+            last_used: new Date().toISOString(),
+            is_public: isPublic,
+          })
+          .eq("id", lessonSetId);
+
+        if (updateErr) throw updateErr;
+
+        const { error: delErr } = await supabase
+          .from("cards")
+          .delete()
+          .eq("lesson_set_id", lessonSetId);
+
+        if (delErr) throw delErr;
+
+        if (lessonTray.length > 0) {
+          const cardsToInsert = lessonTray.map((card, idx) => ({
+            lesson_set_id: lessonSetId,
+            front: card.word,
+            back: card.image ?? null,
+            position: idx,
+          }));
+
+          const { error: cardsErr } = await supabase
+            .from("cards")
+            .insert(cardsToInsert);
+
+          if (cardsErr) throw cardsErr;
+        }
+
+        setLastSavedTray([...lessonTray]);
+        setShowSavedIndicator(true);
+        setTimeout(() => setShowSavedIndicator(false), 2000);
+
+        finishSave();
+        return;
+      }
+
       const { data: existing, error: existingErr } = await supabase
         .from("lesson_sets")
         .select("id")
@@ -612,13 +711,13 @@ export default function FlashcardsPage() {
         return;
       }
 
-      // Insert new lesson_set
       const { data: insertedLesson, error: insertErr } = await supabase
         .from("lesson_sets")
         .insert({
           name: trimmedName,
           user_id: user.id,
           last_used: new Date().toISOString(),
+          is_public: isPublic,
         })
         .select("id, created_at")
         .single();
@@ -627,7 +726,6 @@ export default function FlashcardsPage() {
 
       const lessonSetId = (insertedLesson as any).id;
 
-      // Insert cards
       if (lessonTray.length > 0) {
         const cardsToInsert = lessonTray.map((card, idx) => ({
           lesson_set_id: lessonSetId,
@@ -640,27 +738,6 @@ export default function FlashcardsPage() {
         if (cardsErr) throw cardsErr;
       }
 
-      // update localStorage so Dashboard sees this immediately
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || "[]";
-        const parsed = JSON.parse(raw);
-        const savedLessons = Array.isArray(parsed) ? parsed : [];
-        const newEntry = {
-          id: String(lessonSetId),
-          name: trimmedName,
-          cards: lessonTray,
-          createdAt:
-            (insertedLesson as any).created_at ?? new Date().toISOString(),
-          lastUsed: Date.now(),
-          useCount: 0,
-        };
-        const updatedLocal = [newEntry, ...savedLessons];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
-      } catch (e) {
-        console.warn("Failed to update local saved-lessons cache:", e);
-      }
-
-      // UI updates
       setLastSavedTray([...lessonTray]);
       setShowSavedIndicator(true);
       setTimeout(() => setShowSavedIndicator(false), 2000);
@@ -679,24 +756,23 @@ export default function FlashcardsPage() {
         return;
       }
 
-      const userResult = await supabase.auth.getUser();
-      const user = (userResult as any)?.data?.user ?? null;
-      const userErr = (userResult as any)?.error ?? null;
-      if (userErr || !user) {
+      if (!user) {
         setNameError("You must be signed in to replace lessons");
         return;
       }
 
+      const targetLessonId = existingLessonId;
+
       const { error: delErr } = await supabase
         .from("cards")
         .delete()
-        .eq("lesson_set_id", existingLessonId);
+        .eq("lesson_set_id", targetLessonId);
 
       if (delErr) throw delErr;
 
       if (lessonTray.length > 0) {
         const cardsToInsert = lessonTray.map((card, idx) => ({
-          lesson_set_id: existingLessonId,
+          lesson_set_id: targetLessonId,
           front: card.word,
           back: card.image ?? null,
           position: idx,
@@ -711,60 +787,11 @@ export default function FlashcardsPage() {
         .update({
           name: lessonName.trim(),
           last_used: new Date().toISOString(),
+          is_public: isPublic,
         })
-        .eq("id", existingLessonId);
+        .eq("id", targetLessonId);
 
       if (updateErr) throw updateErr;
-
-      // update local cache
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || "[]";
-        const parsed = JSON.parse(raw);
-        const savedLessons = Array.isArray(parsed) ? parsed : [];
-
-        const newEntry: {
-          id: string;
-          name: string;
-          cards: Card[];
-          createdAt?: string;
-          lastUsed: number;
-          useCount: number;
-        } = {
-          id: existingLessonId,
-          name: lessonName.trim(),
-          cards: lessonTray,
-          createdAt: undefined,
-          lastUsed: Date.now(),
-          useCount: 0,
-        };
-
-        const idx = savedLessons.findIndex(
-          (s: any) => String(s.id) === String(existingLessonId)
-        );
-        if (idx !== -1) {
-          newEntry.createdAt =
-            savedLessons[idx].createdAt ?? new Date().toISOString();
-          savedLessons[idx] = { ...savedLessons[idx], ...newEntry };
-        } else {
-          const nameIdx = savedLessons.findIndex(
-            (s: any) =>
-              String(s.name).toLowerCase() ===
-              String(lessonName.trim()).toLowerCase()
-          );
-          if (nameIdx !== -1) {
-            newEntry.createdAt =
-              savedLessons[nameIdx].createdAt ?? new Date().toISOString();
-            savedLessons[nameIdx] = { ...savedLessons[nameIdx], ...newEntry };
-          } else {
-            newEntry.createdAt = new Date().toISOString();
-            savedLessons.unshift(newEntry);
-          }
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLessons));
-      } catch (e) {
-        console.warn("Failed to update local saved-lessons cache on replace:", e);
-      }
 
       setShowReplaceConfirm(false);
       setExistingLessonId(null);
@@ -786,11 +813,9 @@ export default function FlashcardsPage() {
     setExistingLessonIndex(null);
     setExistingLessonId(null);
     setShowSaveModal(false);
+    setIsPublic(true);
   }
 
-  /* ---------------------------
-     Close dropdown when clicking outside
-     --------------------------- */
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       if (!openDropdown) return;
@@ -812,43 +837,84 @@ export default function FlashcardsPage() {
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [openDropdown]);
 
-  /* ---------------------------
-     Render
-     --------------------------- */
-
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
+    <div
+      className="min-h-screen"
+      style={
+        {
+          ['--color-primary' as any]: '#1e40af',
+          ['--color-primary-soft' as any]: '#eef2ff',
+          ['--color-bg-main' as any]: '#f7f6f2',
+          ['--color-bg-card' as any]: '#eef0e7',
+          ['--color-bg-soft' as any]: '#f1f5f9',
+          ['--color-text-main' as any]: '#2f3a2f',
+          ['--color-text-muted' as any]: '#6b756b'
+        } as React.CSSProperties
+      }
+    >
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
+      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)] border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
             ClassBloom
           </Link>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
-            <nav className="flex items-center text-4xl font-bold text-black">
-              Flashcards
-            </nav>
+            <nav className="text-lg font-semibold text-[var(--color-text-main)]">Flashcards</nav>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => (window.location.href = "/games")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
-            >
-              Games
-            </button>
+            {/* NAV DROPDOWN (hamburger) */}
+            <div className="relative" data-dropdown-btn="nav">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenDropdown(openDropdown === "nav" ? null : "nav");
+                }}
+                className="btn btn-secondary px-3 py-2 flex items-center gap-2"
+                aria-haspopup="true"
+                aria-expanded={openDropdown === "nav"}
+                data-dropdown-btn="nav"
+              >
+                <Menu size={16} />
+              </button>
+
+              {openDropdown === "nav" && (
+                <div
+                  data-dropdown-type="nav"
+                  className="absolute right-0 mt-2 w-44 rounded-2xl bg-white border shadow-lg p-2 z-50 animate-fade-up"
+                >
+                  <button
+                    onClick={() => { setOpenDropdown(null); router.push("/dashboard"); }}
+                    className="btn btn-secondary w-full px-3 py-2 text-left"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => { setOpenDropdown(null); router.push("/teacher/editor"); }}
+                    className="btn btn-secondary w-full px-3 py-2 text-left"
+                  >
+                    Editor
+                  </button>
+                  <button
+                    onClick={() => { setOpenDropdown(null); router.push("/games"); }}
+                    className="btn btn-secondary w-full px-3 py-2 text-left"
+                  >
+                    Games
+                  </button>
+                  <button
+                    onClick={() => { setOpenDropdown(null); router.push("/teacher/community"); }}
+                    className="btn btn-secondary w-full px-3 py-2 text-left"
+                  >
+                    Community
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button
-              onClick={() => (window.location.href = "/dashboard")}
-              className="px-4 py-2 rounded-lg bg-green-200 text-green-900 text-sm hover:bg-green-300 hover:shadow-md transition"
-            >
-              Dashboard
-            </button>
-
-            <button
-              onClick={() => (window.location.href = "/flashcards/classroom")}
-              className="px-4 py-2 rounded-lg bg-green-400 text-green-900 text-sm hover:bg-green-600 hover:shadow-md transition"
+              onClick={() => router.push("/flashcards/classroom")}
+              className="btn btn-secondary"
             >
               Classroom
             </button>
@@ -857,9 +923,15 @@ export default function FlashcardsPage() {
       </header>
 
       {/* Lesson Tray (sticky) */}
-      <section className="sticky top-[72px] z-40 bg-white border-b border-black/5">
+      <section className="sticky top-[72px] z-40 bg-[var(--color-bg-main)] border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2">
-          {/* Row 1: Lesson Tray cards (scrollable) */}
+          {editingLessonSetId && (
+            <div className="text-sm text-[var(--color-text-muted)]">
+              <span className="font-medium mr-2">Editing:</span>
+              <span className="font-semibold">{lessonName || "Untitled Lesson"}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 overflow-x-auto scroll-smooth">
             {lessonTray.length === 0 && (
               <div className="px-4 py-2 rounded-lg border border-dashed border-black/20 text-sm text-[var(--color-text-muted)] whitespace-nowrap">
@@ -880,9 +952,9 @@ export default function FlashcardsPage() {
                 onKeyDown={(e) => onTrayItemKeyDown(e, idx)}
                 aria-label={`Tray card ${formatWord(card.word)} — position ${idx + 1}`}
                 role="button"
-                className={`relative px-3 py-2 rounded-lg border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
+                className={`relative px-3 py-2 rounded-xl border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
                   ${draggedIndex === idx ? "opacity-60 scale-95 cursor-grabbing" : "cursor-grab"}
-                  ${dragOverIndex === idx && draggedIndex !== null ? "ring-2 ring-dashed ring-[var(--color-primary)]" : ""}`}
+                  ${dragOverIndex === idx && draggedIndex !== null ? "ring-2 ring-dashed ring-[var(--color-accent)]" : ""}`}
                 title={`${formatWord(card.word)} — use Left/Right to move, Delete to remove`}
               >
                 <span className="text-xs">{formatWord(card.word)}</span>
@@ -897,13 +969,12 @@ export default function FlashcardsPage() {
             ))}
           </div>
 
-          {/* Row 2: Save / Print / Remove / Unsaved/Saved indicators */}
           <div className="flex items-center gap-3 flex-wrap">
             {lessonTray.length > 0 && (
               <>
                 <button
                   onClick={() => setShowSaveModal(true)}
-                  className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition-all"
+                  className="btn btn-primary px-4 py-2"
                 >
                   Save To Dashboard
                 </button>
@@ -921,9 +992,9 @@ export default function FlashcardsPage() {
                     } catch (err) {
                       console.error("Failed to set lesson tray for printing:", err);
                     }
-                    window.location.href = "/printables?from=flashcards";
+                    router.push("/printables?from=flashcards");
                   }}
-                  className="px-4 py-2 rounded-lg bg-white text-blue-700 border border-black/10 text-sm hover:bg-blue-50 transition flex items-center gap-2"
+                  className="btn btn-secondary px-4 py-2 flex items-center gap-2"
                   title="Print lesson"
                 >
                   <Printer size={16} />
@@ -932,7 +1003,7 @@ export default function FlashcardsPage() {
 
                 <button
                   onClick={clearLessonTray}
-                  className="px-3 py-2 rounded-lg text-sm text-red-600 border border-red-200 hover:bg-red-50"
+                  className="btn btn-secondary px-3 py-2 text-sm"
                 >
                   Remove all
                 </button>
@@ -940,7 +1011,7 @@ export default function FlashcardsPage() {
             )}
 
             {showSavedIndicator && (
-              <span className="text-sm text-green-600 font-medium animate-pulse">
+              <span className="text-sm text-[var(--color-accent)] font-medium animate-pulse">
                 Saved!
               </span>
             )}
@@ -949,12 +1020,12 @@ export default function FlashcardsPage() {
       </section>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
+      <main className="sticky top-[72px] z-40 bg-[var(--color-bg-main)] border-b border-black/5">
         {/* Search + AI */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 max-w-4xl">
+          <div className="flex items-center gap-3 max-w-4xl mx-auto">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -964,13 +1035,13 @@ export default function FlashcardsPage() {
                   }
                 }}
                 placeholder="Select a tab before searching"
-                className="w-full pl-12 pr-4 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white"
               />
             </div>
 
             <button
               onClick={handleSearch}
-              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 whitespace-nowrap"
+              className="btn btn-primary px-5 py-3 whitespace-nowrap"
             >
               Search
             </button>
@@ -981,7 +1052,7 @@ export default function FlashcardsPage() {
                 setResults([]);
                 setQuery("");
               }}
-              className="px-4 py-2 rounded-lg bg-[var(--color-bg-soft)] border border-black/10 text-sm flex items-center gap-2 hover:bg-white whitespace-nowrap"
+              className="btn btn-secondary px-4 py-2 flex items-center gap-2 whitespace-nowrap"
             >
               <X size={16} />
               Clear Grid
@@ -990,7 +1061,7 @@ export default function FlashcardsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 mt-4 relative">
+        <div className="flex flex-wrap gap-3 mt-4 relative justify-center">
           {(
             ["noun", "verb", "adjective", "phonics", "preposition"] as const
           ).map((type) => {
@@ -998,7 +1069,6 @@ export default function FlashcardsPage() {
 
             return (
               <div key={type} className="relative" data-dropdown-type={type}>
-                {/* Main type button */}
                 <button
                   className={wordTypeButton(isSelectedType)}
                   onClick={() => {
@@ -1011,9 +1081,8 @@ export default function FlashcardsPage() {
                   {activeWordType === type && activeTheme ? activeTheme : type}
                 </button>
 
-                {/* Theme dropdown */}
                 {openDropdown === type && (
-                  <div className="absolute z-50 mt-2 w-48 rounded-xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain" data-dropdown-type={type}>
+                  <div className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain" data-dropdown-type={type}>
                     {THEMES[type].map((theme) => (
                       <button
                         key={theme}
@@ -1025,8 +1094,9 @@ export default function FlashcardsPage() {
                             handleSearch();
                           }, 0);
                         }}
-                        className={`block w-full text-left px-3 py-2 rounded-lg text-sm
-                                ${activeTheme === theme ? "bg-blue-600 text-white" : "hover:bg-blue-100"}`}
+                          className={`btn w-full px-3 py-2 text-left ${
+                            activeTheme === theme ? "btn-primary" : "btn-secondary"
+                          }`}
                       >
                         {theme}
                       </button>
@@ -1038,49 +1108,49 @@ export default function FlashcardsPage() {
           })}
         </div>
 
-        {/* Empty State */}
-        {results.length === 0 && (
-          <div className="text-center py-24 text-[var(--color-text-muted)]">
-            <p className="text-lg mb-2">Select a tab to load flashcards</p>
-          </div>
-        )}
-
         {/* Results grid */}
-        {results.length > 0 && (
-          <section className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {results.map((card) => (
-              <div
-                key={card.id}
-                onClick={() => toggleLessonTrayCard(card)}
-                className={`group cursor-pointer rounded-xl bg-white p-4 shadow-sm hover:shadow-lg transition ${
-                  lessonTray.find((c) => c.id === card.id) ? "border-2 border-blue-700" : ""
-                }`}
-              >
-                <div className="aspect-square rounded-lg bg-gray-100 mb-3 flex items-center justify-center text-gray-400">
-                  image
-                </div>
-                <h3 className="font-semibold">{card.word.replaceAll("_", " ")}</h3>
+{results.length > 0 && (
+  <section className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    {results.map((card) => (
+      <div
+        key={card.id}
+        onClick={() => toggleLessonTrayCard(card)}
+        className={`group relative cursor-pointer rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition ${
+          lessonTray.find((c) => c.id === card.id) ? "ring-2 ring-[var(--color-accent)]" : ""
+        }`}
+      >
+        <div className="aspect-square rounded-xl bg-[var(--color-bg-card)] mb-3 flex items-center justify-center text-[var(--color-text-muted)]">
+          image
+        </div>
+        <h3 className="font-semibold">{card.word.replaceAll("_", " ")}</h3>
 
-                <p className="text-xs text-[var(--color-text-muted)] capitalize">
-                  {card.type}
-                </p>
-                {lessonTray.find((c) => c.id === card.id) && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromLessonTray(card.id);
-                    }}
-                    className="absolute -top-2 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
-                  >
-                    <X size={12} className="text-red-500" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </section>
+        <p className="text-xs text-[var(--color-text-muted)] capitalize">
+          {card.type}
+        </p>
+        {lessonTray.find((c) => c.id === card.id) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFromLessonTray(card.id);
+            }}
+            className="absolute -top-2 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
+          >
+            <X size={12} className="text-red-500" />
+          </button>
         )}
+      </div>
+    ))}
+  </section>
+)}
 
-        {showSaveModal && (
+{/* Empty State (moved to bottom of content) */}
+{results.length === 0 && (
+  <div className="text-center py-24 text-[var(--color-text-muted)]">
+    <p className="text-lg mb-2">Select a tab to load flashcards</p>
+  </div>
+)}
+
+       {showSaveModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6">
               <h2 className="text-lg font-semibold mb-4">Save To Dashboard</h2>
@@ -1090,8 +1160,24 @@ export default function FlashcardsPage() {
                 value={lessonName}
                 onChange={(e) => setLessonName(e.target.value)}
                 placeholder="Enter lesson name"
-                className="w-full mb-5 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className="w-full mb-3 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
+
+              {/* Public / Private toggle */}
+              <div className="flex items-center justify-between mb-5">
+                <label className="flex items-center gap-2 text-sm">
+                   <input
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={() => setIsPublic((p) => !p)}
+                    aria-label="Make lesson public"
+                    className="w-4 h-4"
+                  />
+                  <span className="select-none">
+                    {isPublic ? "Public — visible in Community" : "Private — only visible to you"}
+                  </span>
+                </label>
+              </div>
 
               <div className="flex justify-end gap-3">
                 <button

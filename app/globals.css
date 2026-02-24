@@ -1,92 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* -------------------------
-   Color system (Pastel Green)
--------------------------- */
+/* ======================================================
+   Global design tokens (brand / theme)
+   - Inter font and homepage brand blue remain available
+   - New accent tokens added so primary buttons are not blue
+   ====================================================== */
 :root {
-  --color-bg-main: #f6fbf8;        /* page background */
-  --color-bg-soft: #eef7f1;        /* soft surfaces */
-  --color-bg-card: #ffffff;        /* cards */
-  --color-primary: #4caf84;        /* main green */
-  --color-primary-soft: #e4f3eb;   /* CTA background */
+  /* Brand / palette */
+  --color-primary: #1e40af;        /* brand blue (homepage) - used for logo/brand only */
+  --color-primary-hover: #15307f;  /* brand blue hover (if needed) */
 
-  --color-text-main: #1f2933;      /* main text */
-  --color-text-muted: #6b7280;     /* muted text */
+  /* Accent (used for primary CTA across app; not blue) */
+  --color-accent: #7fa36a;         /* homepage CTA green */
+  --color-accent-hover: #6f955b;   /* CTA hover */
+
+  --color-primary-soft: #eef2ff;   /* soft primary for backgrounds & pills */
+
+  /* Page surfaces */
+  --color-bg-main: #f7f6f2;        /* marketing page background (homepage) */
+  --color-bg-soft: #f1f5f9;        /* subtle panel background */
+  --color-bg-card: #eef0e7;        /* card surfaces (light) */
+
+  /* Text */
+  --color-text-main: #2f3a2f;      /* primary text */
+  --color-text-muted: #6b756b;     /* muted text */
+
+  /* Layout / rhythm */
+  --radius-sm: 0.375rem;  /* 6px */
+  --radius-md: 0.75rem;   /* 12px */
+  --radius-lg: 1.25rem;   /* 20px */
+  --easing: cubic-bezier(.2,.9,.3,1);
+  --shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
-/* -------------------------
-   Base styles
--------------------------- */
+/* ======================================================
+   Base styles / typography
+   ====================================================== */
+html, body, #__next {
+  height: 100%;
+}
+
 body {
+  margin: 0;
   background: var(--color-bg-main);
   color: var(--color-text-main);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.45;
+}
+
+/* Small helpers used across pages */
+.container-max {
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* ======================================================
+   Buttons (consistent shapes, hover, focus)
+   - .btn (base)
+   - Variant classes updated to use accent variables (not brand blue)
+   ====================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;               /* consistent padding */
+  border-radius: 9999px;              /* pill shape (rounded-full) */
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms var(--easing), box-shadow 120ms var(--easing), opacity 120ms var(--easing);
+  border: 1px solid transparent;
+  text-decoration: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform, opacity;
+  background-clip: padding-box;
+}
+
+/* Calm active press (slight scale) */
+.btn:active {
+  transform: scale(0.97);
 }
 
 /* -------------------------
-   Animations
--------------------------- */
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+   Primary (accent, not blue)
+   - Uses --color-accent so we can change CTAs site-wide
+   ------------------------- */
+.btn-primary,
+.btn--primary {
+  background-color: var(--color-accent);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 6px 14px rgba(15, 90, 44, 0.06);
 }
-@keyframes slide-left {
-  from {
-    transform: translateX(40px);
-    opacity: 0.6;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.btn-primary:hover,
+.btn--primary:hover {
+  background-color: var(--color-accent-hover);
+  opacity: 0.95;
 }
 
+/* -------------------------
+   Soft / pill (legacy)
+   ------------------------- */
+.btn-soft {
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  border-color: transparent;
+}
+.btn-soft:hover {
+  background-color: rgba(30, 64, 175, 0.06);
+}
+
+/* -------------------------
+   Secondary (white background with subtle border)
+   ------------------------- */
+.btn-secondary,
+.btn--secondary {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  border: 1px solid rgba(15,23,42,0.06);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+}
+.btn-secondary:hover,
+.btn--secondary:hover {
+  background-color: var(--color-bg-card);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-2px);
+}
+
+/* -------------------------
+   Ghost (transparent)
+   ------------------------- */
+.btn-ghost,
+.btn--ghost {
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid transparent;
+}
+.btn-ghost:hover,
+.btn--ghost:hover {
+  background: rgba(22,163,74,0.06); /* slight accent tint on hover */
+  box-shadow: var(--shadow-soft);
+}
+
+/* Focus helpers */
+.soft-focus:focus, .btn:focus, .btn-primary:focus, .btn-soft:focus {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(22,163,74,0.06);
+}
+
+/* ======================================================
+   Cards & surfaces
+   ====================================================== */
+.card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(15,23,42,0.03);
+  padding: 1rem;
+}
+
+/* Small tile variation */
+.tile {
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgba(15,23,42,0.02);
+  padding: 0.75rem;
+}
+
+/* Rounded image holder */
+.img-holder {
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+/* ======================================================
+   Global motion / utility classes
+   ====================================================== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-left {
+  from { transform: translateX(40px); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
 @keyframes slide-right {
-  from {
-    transform: translateX(-40px);
-    opacity: 0.6;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(-40px); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
 }
 @keyframes slide-down {
   0% { opacity: 0; transform: translateY(-10px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-.animate-slide-down {
-  animation: slide-down 0.2s ease-out forwards;
+
+.animate-slide-down { animation: slide-down 0.2s ease-out forwards; }
+.animate-slide-left { animation: slide-left 0.35s ease-out; }
+.animate-slide-right { animation: slide-right 0.35s ease-out; }
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+
+.animate-delay-1 { animation-delay: 0.08s; }
+.animate-delay-2 { animation-delay: 0.16s; }
+.animate-delay-3 { animation-delay: 0.24s; }
+.animate-delay-4 { animation-delay: 0.32s; }
+
+/* ======================================================
+   Small helpers
+   ====================================================== */
+.header-brand {
+  font-weight: 800;
+  color: var(--color-primary); /* brand blue stays reserved for logo/brand */
+  -webkit-font-smoothing: antialiased;
 }
 
-.animate-slide-left {
-  animation: slide-left 0.35s ease-out;
+.page-bg {
+  background: var(--color-bg-main);
 }
 
-.animate-slide-right {
-  animation: slide-right 0.35s ease-out;
+.tray-divider {
+  border-bottom: 1px solid rgba(15,23,42,0.04);
 }
 
-.animate-fade-up {
-  animation: fade-up 0.6s ease-out both;
+.tile:hover {
+  transform: translateY(-4px);
+  transition: transform .18s var(--easing), box-shadow .18s var(--easing);
 }
 
-.animate-delay-1 {
-  animation-delay: 0.1s;
+/* Keep modals/dropdowns visually distinct */
+.modal-surface,
+.dropdown-surface {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(15,23,42,0.08);
 }
-.animate-delay-2 {
-  animation-delay: 0.2s;
-}
-.animate-delay-3 {
-  animation-delay: 0.3s;
-}
-.animate-delay-4 {
-  animation-delay: 0.4s;
+
+/* Accessibility */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
 }
