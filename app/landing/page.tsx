@@ -96,7 +96,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b px-8 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-700">ClassBloom</h1>
+        <h1 className="text-xl font-bold text-blue-700">Classendo</h1>
 
         <div className="flex items-center gap-3">
           <button onClick={() => router.push("/flashcards")} className="btn btn-secondary">

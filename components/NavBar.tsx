@@ -11,7 +11,7 @@ export default function NavBar() {
           href="/"
           className="text-4xl md:text-5xl font-extrabold tracking-tight text-blue-700"
         >
-          ClassBloom
+          Classendo
         </Link>
 
         {/* Navigation */}

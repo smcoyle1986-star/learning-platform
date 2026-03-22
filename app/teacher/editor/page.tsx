@@ -25,7 +25,7 @@ type TrayCard = {
   [k: string]: any;
 };
 
-const STORAGE_KEY = "classbloom-saved-lessons";
+const STORAGE_KEY = "classendo-saved-lessons";
 
 export default function TeacherLessonTrayEditor() {
   const router = useRouter();
@@ -105,7 +105,7 @@ export default function TeacherLessonTrayEditor() {
   useEffect(() => {
     // Load initial tray like Printables: try lesson-tray first, fallback to saved lessons
     try {
-      const trayRaw = localStorage.getItem("classbloom-lesson-tray");
+      const trayRaw = localStorage.getItem("classendo-lesson-tray");
       if (trayRaw && trayRaw !== "undefined") {
         const parsed = JSON.parse(trayRaw);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -119,7 +119,7 @@ export default function TeacherLessonTrayEditor() {
           setTrayCards(normalized);
           // also attempt to load last-saved-tray
           try {
-            const lastSavedRaw = localStorage.getItem("classbloom-last-saved-tray");
+            const lastSavedRaw = localStorage.getItem("classendo-last-saved-tray");
             const lastSavedParsed = lastSavedRaw ? JSON.parse(lastSavedRaw) : [];
             setLastSavedTray(Array.isArray(lastSavedParsed) ? lastSavedParsed : []);
           } catch {
@@ -167,7 +167,7 @@ export default function TeacherLessonTrayEditor() {
   // persist lesson tray to localStorage so other pages can pick it up
   useEffect(() => {
     try {
-      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(trayCards));
+      localStorage.setItem("classendo-lesson-tray", JSON.stringify(trayCards));
       try {
         window.dispatchEvent(new Event("lesson-tray-updated"));
       } catch (e) {
@@ -203,7 +203,7 @@ export default function TeacherLessonTrayEditor() {
 
   function clearTray() {
     setTrayCards([]);
-    localStorage.removeItem("classbloom-lesson-tray");
+    localStorage.removeItem("classendo-lesson-tray");
     try {
       window.dispatchEvent(new Event("lesson-tray-updated"));
     } catch (e) {
@@ -422,7 +422,7 @@ export default function TeacherLessonTrayEditor() {
         <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700">
-              ClassBloom
+              Classendo
             </Link>
           </div>
         </header>
@@ -440,7 +440,7 @@ export default function TeacherLessonTrayEditor() {
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            ClassBloom
+            Classendo
           </Link>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -503,7 +503,7 @@ export default function TeacherLessonTrayEditor() {
                 <button
                   onClick={() => {
                     try {
-                      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(trayCards || []));
+                      localStorage.setItem("classendo-lesson-tray", JSON.stringify(trayCards || []));
                       try {
                         window.dispatchEvent(new Event("lesson-tray-updated"));
                       } catch (err) {

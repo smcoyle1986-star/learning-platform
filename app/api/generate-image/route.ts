@@ -16,7 +16,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Supabase env vars missing");
 }
 
-async function createReplicatePrediction(input: any) {
+async function createReplicatePrediction(input: any, modelVersion: string) {
   const res = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
@@ -24,7 +24,7 @@ async function createReplicatePrediction(input: any) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      version: REPLICATE_MODEL_VERSION,
+      version: modelVersion,
       input,
     }),
   });
@@ -66,16 +66,30 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { prompt, masterImageUrl, filenamePrefix = "gen" } = body || {};
+    const {
+      prompt,
+      masterImageUrl,
+      filenamePrefix = "gen",
+      filenameBase,
+      negativePrompt,
+      options,
+      modelVersion,
+    } = body || {};
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json({ error: "Missing required field: prompt" }, { status: 400 });
+    }
+    const resolvedModelVersion = modelVersion || REPLICATE_MODEL_VERSION;
+    if (!resolvedModelVersion) {
+      return NextResponse.json({ error: "Server not configured: missing model version" }, { status: 500 });
     }
 
     // Build the input object for the model.
     // NOTE: SDXL models accept various inputs; here we include prompt and optionally an image reference.
     const input: any = {
       prompt,
+      ...(negativePrompt ? { negative_prompt: negativePrompt } : null),
+      ...(options && typeof options === "object" ? options : null),
       // you can tune other parameters for the model here (num_images, width, height, etc.)
       // e.g. "num_outputs": 1
     };
@@ -88,7 +102,7 @@ export async function POST(req: Request) {
     }
 
     // 1) Create prediction
-    const created = await createReplicatePrediction(input);
+    const created = await createReplicatePrediction(input, resolvedModelVersion);
     const predictionId = created.id;
     // 2) Poll until succeeded
     const result = await pollPrediction(predictionId, 2 * 60 * 1000, 2000); // 2 minutes timeout
@@ -144,7 +158,11 @@ export async function POST(req: Request) {
 
       if (!buffer) continue;
 
-      const fileName = `${filenamePrefix}-${Date.now()}-${i}.${ext}`;
+      const baseName =
+        filenameBase
+          ? `${filenameBase}${outputs.length > 1 ? `-${i}` : ""}`
+          : `${filenamePrefix}-${Date.now()}-${i}`;
+      const fileName = `${baseName}.${ext}`;
       const path = `${fileName}`;
 
       const upload = await supabase.storage.from(BUCKET).upload(path, buffer, {

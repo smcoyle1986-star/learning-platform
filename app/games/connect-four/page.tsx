@@ -6,7 +6,7 @@ import { Maximize, Music, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /*
-  Connect Four — ClassBloom style
+  Connect Four — Classendo style
   - Header now includes "Return to Games" button.
   - Restart in header only restarts (does NOT open settings).
   - Settings button moved under the scoreboard on the left (shows current options).
@@ -255,7 +255,7 @@ export default function ConnectFourPage() {
   const [tray, setTray] = useState<TrayCard[]>([]);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("classbloom-lesson-tray");
+      const raw = localStorage.getItem("classendo-lesson-tray");
       if (!raw) { setTray([]); return; }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -625,7 +625,7 @@ export default function ConnectFourPage() {
       <div className={`mx-auto ${inFullscreen ? "max-w-full" : "max-w-6xl"}`}>
         <header className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <a href="/" className="text-2xl font-extrabold text-blue-700">ClassBloom</a>
+            <a href="/" className="text-2xl font-extrabold text-blue-700">Classendo</a>
             <h1 className="text-xl font-semibold">Connect Four</h1>
             <div className="ml-3 text-sm text-gray-500">{boardCols} × {boardRows}</div>
           </div>

@@ -4,7 +4,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import HeaderAuth from "@/components/HeaderAuth";
 
 export const metadata: Metadata = {
-  title: "ClassBloom",
+  title: "Classendo",
   description: "Interactive learning",
 };
 

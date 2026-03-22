@@ -32,7 +32,7 @@ type CardItem = {
   position?: number | null;
 };
 
-const STORAGE_KEY = "classbloom-saved-lessons";
+const STORAGE_KEY = "classendo-saved-lessons";
 
 export default function CommunityPage() {
   const [query, setQuery] = useState("");
@@ -333,7 +333,7 @@ export default function CommunityPage() {
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            ClassBloom
+            Classendo
           </Link>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">

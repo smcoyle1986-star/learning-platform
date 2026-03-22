@@ -18,8 +18,8 @@ type Lesson = {
   isPublic?: boolean;
 };
 
-const STORAGE_KEY = "classbloom-saved-lessons";
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const STORAGE_KEY = "classendo-saved-lessons";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const RECENT_LIMIT = 8;
 
 /* -------------------------
@@ -58,7 +58,7 @@ function normalizeLesson(raw: any): Lesson {
   };
 }
 
-// Safely read "classbloom-lesson-tray" and ensure an array is returned.
+// Safely read "classendo-lesson-tray" and ensure an array is returned.
 // Returns [] for missing, "undefined", invalid JSON, or non-array data.
 function readLessonTray(): any[] {
   try {
@@ -496,7 +496,7 @@ export default function DashboardPage() {
             href="/"
             className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
           >
-            ClassBloom
+            Classendo
           </Link>
 
           {/* Center title */}

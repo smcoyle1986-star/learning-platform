@@ -46,7 +46,7 @@ export async function saveAiSetClient({
   if (!res.ok) throw new Error(data?.error || "Save failed");
 
   try {
-    const STORAGE_KEY = "classbloom-saved-lessons";
+    const STORAGE_KEY = "classendo-saved-lessons";
     const raw = localStorage.getItem(STORAGE_KEY) || "[]";
     const parsed = JSON.parse(raw);
     const savedLessons = Array.isArray(parsed) ? parsed : [];
@@ -64,7 +64,7 @@ export async function saveAiSetClient({
   }
 
   try {
-    localStorage.setItem("classbloom-lesson-tray", JSON.stringify(data.cards || []));
+    localStorage.setItem("classendo-lesson-tray", JSON.stringify(data.cards || []));
   } catch (e) {
     console.warn("Failed to write lesson tray:", e);
   }

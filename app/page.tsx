@@ -158,7 +158,7 @@ export default function HomePage() {
             href="/"
             className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
           >
-            ClassBloom
+            Classendo
           </Link>
 
           <nav className="flex items-center gap-3 text-sm">
@@ -206,7 +206,11 @@ export default function HomePage() {
 
           {/* Illustration placeholder */}
           <div className="h-[360px] rounded-3xl bg-[#e8eadf] flex items-center justify-center text-sm text-[#6b756b]">
-            Illustration goes here
+           <img
+    src="https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/generated-images/gen-1770462333478-0.png"
+    alt="Classendo homepage illustration"
+    className="w-full h-full object-contain"
+  />
           </div>
         </main>
 
@@ -309,7 +313,7 @@ export default function HomePage() {
           </ul>
 
           <p className="max-w-xl mx-auto text-[#6b756b] mb-12">
-            ClassBloom supports focus, independence, and confidence — for both teachers and students.
+            Classendo supports focus, independence, and confidence — for both teachers and students.
           </p>
 
           {/* Mascot placeholder */}
@@ -330,7 +334,7 @@ export default function HomePage() {
         </section>
 
         <footer className="border-t border-black/10 py-10 text-center text-sm text-[#6b756b]">
-          © {new Date().getFullYear()} ClassBloom. Built for teachers.
+          © {new Date().getFullYear()} Classendo. Built for teachers.
         </footer>
       </div>
     );
@@ -352,7 +356,7 @@ export default function HomePage() {
           href="/"
           className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
         >
-          ClassBloom
+          Classendo
         </Link>
 
         <nav className="flex items-center gap-3 text-sm">
@@ -504,7 +508,7 @@ export default function HomePage() {
         </ul>
 
         <p className="max-w-xl mx-auto text-[#6b756b] mb-12">
-          ClassBloom supports focus, independence, and confidence — for both teachers and students.
+          Classendo supports focus, independence, and confidence — for both teachers and students.
         </p>
 
         {/* Mascot placeholder */}
@@ -526,7 +530,7 @@ export default function HomePage() {
 
       {/* ---------------- Footer ---------------- */}
       <footer className="border-t border-black/10 py-10 text-center text-sm text-[#6b756b]">
-        © {new Date().getFullYear()} ClassBloom. Built for teachers.
+        © {new Date().getFullYear()} Classendo. Built for teachers.
       </footer>
     </div>
   );

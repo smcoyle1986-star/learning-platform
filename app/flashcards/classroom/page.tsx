@@ -47,7 +47,7 @@ export default function ClassroomMode() {
   const handleExit = () => {
     // ✅ ALWAYS save lesson tray first (no behavior change)
     localStorage.setItem(
-      "classbloom-lesson-tray",
+      "classendo-lesson-tray",
       JSON.stringify(cards)
     );
 
@@ -64,7 +64,7 @@ export default function ClassroomMode() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("classbloom-lesson-tray");
+    const stored = localStorage.getItem("classendo-lesson-tray");
     if (!stored || stored === "undefined") return;
     try {
       const parsed = JSON.parse(stored);

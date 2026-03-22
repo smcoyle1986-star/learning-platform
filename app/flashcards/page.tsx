@@ -52,15 +52,22 @@ export type Card = {
   type: "noun" | "verb" | "adjective" | "phonics" | "preposition";
 };
 
+type TrayItem = {
+  id: string;
+  word: string;
+  image: string;
+  type: Card["type"];
+};
+
 export default function FlashcardsPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Card[]>([]);
-  const [lessonTray, setLessonTray] = useState<Card[]>([]);
+  const [lessonTray, setLessonTray] = useState<TrayItem[]>([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [lessonName, setLessonName] = useState("");
 
-  const STORAGE_KEY = "classbloom-saved-lessons";
+  const STORAGE_KEY = "classendo-saved-lessons";
   const [nameError, setNameError] = useState("");
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const [existingLessonIndex, setExistingLessonIndex] = useState<string | null>(
@@ -89,6 +96,21 @@ export default function FlashcardsPage() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [imageVariants, setImageVariants] = useState<Record<string, string[]>>({});
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+  const addToastTimeoutRef = useRef<number | null>(null);
+  const [carouselState, setCarouselState] = useState<
+    Record<
+      string,
+      {
+        index: number;
+        animating: boolean;
+        direction: "left" | "right";
+        nextIndex: number;
+        phase: "start" | "move";
+      }
+    >
+  >({});
 
   // useAuth from context (authentication requirement)
   const { user } = useAuth();
@@ -152,7 +174,7 @@ export default function FlashcardsPage() {
   }, [showSaveModal, editingLessonSetId]);
 
   // --- popularity counts state (persisted in localStorage) ---
-  const POP_KEY = "classbloom-card-select-counts";
+  const POP_KEY = "classendo-card-select-counts";
   const [cardCounts, setCardCounts] = useState<Record<string, number>>({});
   useEffect(() => {
     try {
@@ -183,16 +205,16 @@ export default function FlashcardsPage() {
   }, [activeWordType, activeTheme]);
 
   useEffect(() => {
-    const savedTray = localStorage.getItem("classbloom-lesson-tray");
+    const savedTray = localStorage.getItem("classendo-lesson-tray");
     if (savedTray) setLessonTray(JSON.parse(savedTray));
 
-    const lastSaved = localStorage.getItem("classbloom-last-saved-tray");
+    const lastSaved = localStorage.getItem("classendo-last-saved-tray");
     if (lastSaved) setLastSavedTray(JSON.parse(lastSaved));
   }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray));
+      localStorage.setItem("classendo-lesson-tray", JSON.stringify(lessonTray));
       try {
         window.dispatchEvent(new Event("lesson-tray-updated"));
       } catch (e) {
@@ -210,6 +232,47 @@ export default function FlashcardsPage() {
 
     setHasUnsavedChanges(hasChanges);
   }, [lessonTray, lastSavedTray]);
+
+  useEffect(() => {
+    const pendingKeys = Object.keys(carouselState).filter(
+      (k) => carouselState[k]?.animating && carouselState[k]?.phase === "start"
+    );
+    if (pendingKeys.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setCarouselState((prev) => {
+        const next = { ...prev };
+        pendingKeys.forEach((k) => {
+          const entry = next[k];
+          if (entry && entry.animating && entry.phase === "start") {
+            next[k] = { ...entry, phase: "move" };
+          }
+        });
+        return next;
+      });
+    }, 16);
+
+    return () => clearTimeout(timer);
+  }, [carouselState]);
+
+  useEffect(() => {
+    if (results.length === 0) return;
+    setCarouselState((prev) => {
+      const next = { ...prev };
+      results.forEach((card) => {
+        const key = lemmaKey(card);
+        const images = getCardImages(card);
+        if (!next[key]) {
+          next[key] = { index: 0, animating: false, direction: "right", nextIndex: 0, phase: "start" };
+          return;
+        }
+        if (images.length > 0 && next[key].index >= images.length) {
+          next[key] = { ...next[key], index: 0, nextIndex: 0, animating: false, phase: "start" };
+        }
+      });
+      return next;
+    });
+  }, [results, imageVariants]);
 
   async function saveLesson() {
     const { user: innerUser } = useAuth();
@@ -302,6 +365,8 @@ export default function FlashcardsPage() {
       "personality",
       "feelings",
       "colors",
+      "causes",
+      "ful_less",
     ],
     phonics: [
       "alphabet",
@@ -336,10 +401,14 @@ export default function FlashcardsPage() {
     return 3;
   }
 
+  function lemmaKey(card: Pick<Card, "type" | "word">) {
+    return `${card.type}:${card.word}`;
+  }
+
   function sortByPopularity(cards: Card[], rawQuery = "") {
     return [...cards].sort((a, b) => {
-      const ca = cardCounts[a.id] ?? 0;
-      const cb = cardCounts[b.id] ?? 0;
+      const ca = cardCounts[lemmaKey(a)] ?? 0;
+      const cb = cardCounts[lemmaKey(b)] ?? 0;
       if (cb !== ca) return cb - ca;
 
       const sa = scoreForCard(a, rawQuery);
@@ -381,7 +450,9 @@ export default function FlashcardsPage() {
           type: "noun",
         }));
 
-        setResults(sortByPopularity(cards, raw));
+        const sorted = sortByPopularity(cards, raw);
+        setResults(sorted);
+        await loadVocabImages(sorted, "noun");
         return;
       }
 
@@ -404,7 +475,9 @@ export default function FlashcardsPage() {
           type: "verb",
         }));
 
-        setResults(sortByPopularity(cards, raw));
+        const sorted = sortByPopularity(cards, raw);
+        setResults(sorted);
+        await loadVocabImages(sorted, "verb");
         return;
       }
 
@@ -427,7 +500,9 @@ export default function FlashcardsPage() {
           type: "adjective",
         }));
 
-        setResults(sortByPopularity(cards, raw));
+        const sorted = sortByPopularity(cards, raw);
+        setResults(sorted);
+        await loadVocabImages(sorted, "adjective");
         return;
       }
 
@@ -452,7 +527,9 @@ export default function FlashcardsPage() {
           type: "phonics",
         }));
 
-        setResults(sortByPopularity(cards, raw));
+        const sorted = sortByPopularity(cards, raw);
+        setResults(sorted);
+        await loadVocabImages(sorted, "phonics");
         return;
       }
 
@@ -475,7 +552,9 @@ export default function FlashcardsPage() {
           type: "preposition",
         }));
 
-        setResults(sortByPopularity(cards, raw));
+        const sorted = sortByPopularity(cards, raw);
+        setResults(sorted);
+        await loadVocabImages(sorted, "preposition");
         return;
       }
     } catch (err) {
@@ -483,24 +562,84 @@ export default function FlashcardsPage() {
     }
   }
 
-  function incrementCardCount(cardId: string) {
+  async function loadVocabImages(cards: Card[], category: Card["type"]) {
+    try {
+      const lemmas = Array.from(new Set(cards.map((c) => c.word).filter(Boolean)));
+      if (lemmas.length === 0) return;
+
+      const { data, error } = await supabase
+        .from("vocab_images")
+        .select("lemma, category, image_path, is_default")
+        .in("lemma", lemmas)
+        .eq("category", category)
+        .order("is_default", { ascending: false })
+        .order("image_path", { ascending: true });
+
+      if (error) throw error;
+
+      const nextMap: Record<string, string[]> = {};
+      (data || []).forEach((row: any) => {
+        const key = `${row.category}:${row.lemma}`;
+        if (!nextMap[key]) nextMap[key] = [];
+        if (row.image_path) {
+          const raw = String(row.image_path);
+          const publicUrl = raw.startsWith("http")
+            ? raw
+            : supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
+          nextMap[key].push(publicUrl);
+        }
+      });
+
+      Object.keys(nextMap).forEach((k) => {
+        nextMap[k] = Array.from(new Set(nextMap[k])).sort();
+      });
+
+      setImageVariants((prev) => ({ ...prev, ...nextMap }));
+    } catch (err) {
+      console.error("Failed to load vocab images:", err);
+    }
+  }
+
+  function incrementCardCount(card: Card) {
     setCardCounts((prevCounts) => {
       const next = { ...(prevCounts || {}) };
-      next[cardId] = (next[cardId] ?? 0) + 1;
+      const key = lemmaKey(card);
+      next[key] = (next[key] ?? 0) + 1;
       return next;
     });
   }
 
-  function toggleLessonTrayCard(card: Card) {
+  function getCardImages(card: Card) {
+    const key = lemmaKey(card);
+    const variants = imageVariants[key];
+    if (variants && variants.length > 0) return variants;
+    return card.image ? [card.image] : [];
+  }
+
+  function getActiveImage(card: Card) {
+    const key = lemmaKey(card);
+    const images = getCardImages(card);
+    const idx = carouselState[key]?.index ?? 0;
+    return images[idx] ?? images[0] ?? card.image;
+  }
+
+  function addToLessonTray(card: Card) {
+    const imagePath = getActiveImage(card);
+    if (!imagePath) return;
+    const trayId = `${card.type}:${card.word}:${imagePath}`;
     setLessonTray((prev) => {
-      const exists = prev.some((c) => c.id === card.id);
-      if (exists) {
-        return prev.filter((c) => c.id !== card.id);
-      } else {
-        incrementCardCount(card.id);
-        return [...prev, card];
-      }
+      const exists = prev.some((item) => item.image === imagePath);
+      if (exists) return prev;
+      incrementCardCount(card);
+      return [...prev, { id: trayId, word: card.word, image: imagePath, type: card.type }];
     });
+    setLastAddedId(trayId);
+    if (addToastTimeoutRef.current) {
+      window.clearTimeout(addToastTimeoutRef.current);
+    }
+    addToastTimeoutRef.current = window.setTimeout(() => {
+      setLastAddedId(null);
+    }, 900);
   }
 
   function removeFromLessonTray(id: string) {
@@ -509,7 +648,7 @@ export default function FlashcardsPage() {
 
   function clearLessonTray() {
     setLessonTray([]);
-    localStorage.removeItem("classbloom-lesson-tray");
+    localStorage.removeItem("classendo-lesson-tray");
     try {
       window.dispatchEvent(new Event("lesson-tray-updated"));
     } catch (e) {
@@ -636,6 +775,36 @@ export default function FlashcardsPage() {
       const id = lessonTray[index]?.id;
       if (id) removeFromLessonTray(id);
     }
+  }
+
+  function getCarouselKey(card: Card) {
+    return lemmaKey(card);
+  }
+
+  function startCarouselSlide(card: Card, direction: "left" | "right") {
+    const key = getCarouselKey(card);
+    const images = getCardImages(card);
+    if (images.length <= 1) return;
+    const current = carouselState[key] || { index: 0, animating: false, direction: "right", nextIndex: 0, phase: "start" };
+    if (current.animating) return;
+    if (direction === "left" && current.index <= 0) return;
+    if (direction === "right" && current.index >= images.length - 1) return;
+
+    const nextIndex = direction === "right" ? current.index + 1 : current.index - 1;
+    setCarouselState((prev) => ({
+      ...prev,
+      [key]: { ...current, animating: true, direction, nextIndex, phase: "start" },
+    }));
+  }
+
+  function finishCarouselSlide(card: Card) {
+    const key = getCarouselKey(card);
+    const current = carouselState[key];
+    if (!current || !current.animating) return;
+    setCarouselState((prev) => ({
+      ...prev,
+      [key]: { ...current, animating: false, index: current.nextIndex },
+    }));
   }
 
   async function handleSaveLesson() {
@@ -856,7 +1025,7 @@ export default function FlashcardsPage() {
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)] border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            ClassBloom
+            Classendo
           </Link>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -983,7 +1152,7 @@ export default function FlashcardsPage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     try {
-                      localStorage.setItem("classbloom-lesson-tray", JSON.stringify(lessonTray || []));
+                      localStorage.setItem("classendo-lesson-tray", JSON.stringify(lessonTray || []));
                       try {
                         window.dispatchEvent(new Event("lesson-tray-updated"));
                       } catch (err) {
@@ -1111,35 +1280,98 @@ export default function FlashcardsPage() {
         {/* Results grid */}
 {results.length > 0 && (
   <section className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-    {results.map((card) => (
-      <div
-        key={card.id}
-        onClick={() => toggleLessonTrayCard(card)}
-        className={`group relative cursor-pointer rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition ${
-          lessonTray.find((c) => c.id === card.id) ? "ring-2 ring-[var(--color-accent)]" : ""
-        }`}
-      >
-        <div className="aspect-square rounded-xl bg-[var(--color-bg-card)] mb-3 flex items-center justify-center text-[var(--color-text-muted)]">
-          image
-        </div>
-        <h3 className="font-semibold">{card.word.replaceAll("_", " ")}</h3>
+    {results.map((card) => {
+      const key = getCarouselKey(card);
+      const images = getCardImages(card);
+      const carousel = carouselState[key] || {
+        index: 0,
+        animating: false,
+        direction: "right",
+        nextIndex: 0,
+        phase: "start",
+      };
+      const currentIndex = carousel.index ?? 0;
+      const currentImage = images[currentIndex] ?? card.image;
+      const nextIndex = carousel.nextIndex ?? currentIndex;
+      const nextImage = images[nextIndex] ?? currentImage;
+      const showLeft = currentIndex > 0;
+      const showRight = currentIndex < images.length - 1;
 
-        <p className="text-xs text-[var(--color-text-muted)] capitalize">
-          {card.type}
-        </p>
-        {lessonTray.find((c) => c.id === card.id) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              removeFromLessonTray(card.id);
-            }}
-            className="absolute -top-2 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
-          >
-            <X size={12} className="text-red-500" />
-          </button>
-        )}
-      </div>
-    ))}
+      return (
+        <div
+          key={card.id}
+          onClick={() => addToLessonTray(card)}
+          className="group relative cursor-pointer rounded-2xl bg-white p-4 shadow-sm hover:shadow-md transition"
+        >
+          {lastAddedId === `${card.type}:${card.word}:${getActiveImage(card)}` && (
+            <div className="pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border border-blue-200 bg-white/95 px-3 py-1 text-xs font-semibold text-blue-700 shadow-sm animate-fade-up">
+              Added!
+            </div>
+          )}
+          <div className="relative aspect-square rounded-xl bg-[var(--color-bg-card)] mb-3 overflow-hidden">
+            <img
+              src={currentImage}
+              alt={card.word}
+              className={`absolute inset-0 h-full w-full object-contain transition-transform duration-300 ${
+                carousel.animating
+                  ? carousel.direction === "right"
+                    ? "-translate-x-full"
+                    : "translate-x-full"
+                  : "translate-x-0"
+              }`}
+            />
+            {carousel.animating && (
+              <img
+                src={nextImage}
+                alt={card.word}
+                onTransitionEnd={() => finishCarouselSlide(card)}
+                className="absolute inset-0 h-full w-full object-contain transition-transform duration-300"
+                style={{
+                  transform:
+                    carousel.phase === "start"
+                      ? carousel.direction === "right"
+                        ? "translateX(100%)"
+                        : "translateX(-100%)"
+                      : "translateX(0%)",
+                }}
+              />
+            )}
+
+            {showLeft && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startCarouselSlide(card, "left");
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 border shadow px-2 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Previous image"
+              >
+                ◀
+              </button>
+            )}
+            {showRight && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startCarouselSlide(card, "right");
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 border shadow px-2 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Next image"
+              >
+                ▶
+              </button>
+            )}
+          </div>
+          <h3 className="font-semibold">{card.word.replaceAll("_", " ")}</h3>
+
+          <p className="text-xs text-[var(--color-text-muted)] capitalize">
+            {card.type}
+          </p>
+        </div>
+      );
+    })}
   </section>
 )}
 

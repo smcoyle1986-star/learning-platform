@@ -30,7 +30,7 @@ type Card = {
 };
 type Team = { id: string; name: string; score: number };
 
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js";
 
 export default function MemoryFlipPage() {
@@ -496,7 +496,7 @@ export default function MemoryFlipPage() {
       {/* Header */}
       <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, background: "rgba(255,255,255,0.94)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
         <a href="/" style={{ color: "#2563eb", fontSize: 20, fontWeight: 800 }}>
-          ClassBloom
+          Classendo
         </a>
         <div style={{ fontWeight: 800, fontSize: 18 }}>Memory Flip</div>
         <div style={{ display: "flex", gap: 8 }}>

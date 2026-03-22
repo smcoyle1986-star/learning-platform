@@ -29,7 +29,7 @@ type TrayCard = {
   image?: string | null;
 };
 
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js";
 
 export default function FourCornersPage() {
@@ -446,7 +446,7 @@ export default function FourCornersPage() {
       <header className="fixed top-0 left-0 right-0 bg-white/95 border-b z-40">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <a href="/" className="text-2xl font-extrabold" style={{ color: "#2563eb" }}>ClassBloom</a>
+            <a href="/" className="text-2xl font-extrabold" style={{ color: "#2563eb" }}>Classendo</a>
             {/* Small, non-intrusive card counter */}
             <div className="ml-3 px-2 py-0.5 text-xs text-gray-600 bg-white/60 rounded" aria-hidden>
               Cards: {usedIndices.length}/{tray.length}

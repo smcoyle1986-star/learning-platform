@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /*
-  ClassBloom — Kawaii Whack-a-Word (ready-to-play page)
+  Classendo — Kawaii Whack-a-Word (ready-to-play page)
 
   Features implemented (MVP):
   - Pre-round teacher prompt: shows a card (image or word). Teacher presses Correct/Incorrect to start round.
@@ -76,10 +76,10 @@ export default function WhackAWordPage() {
     o.stop(now + dur + 0.02);
   }
 
-  // load vocabulary from localStorage (ClassBloom lesson tray) or fallback sample
+  // load vocabulary from localStorage (Classendo lesson tray) or fallback sample
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("classbloom-lesson-tray");
+      const raw = localStorage.getItem("classendo-lesson-tray");
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length) {
@@ -260,7 +260,7 @@ export default function WhackAWordPage() {
     }
   }
 
-  // placeholder: save result to backend (hook up to ClassBloom / Supabase)
+  // placeholder: save result to backend (hook up to Classendo / Supabase)
   async function saveResult() {
     const accuracy = roundHits + roundMisses > 0 ? roundHits / (roundHits + roundMisses) : 0;
     const stars = accuracy >= 0.9 ? 3 : accuracy >= 0.75 ? 2 : accuracy >= 0.5 ? 1 : 0;
@@ -275,7 +275,7 @@ export default function WhackAWordPage() {
     };
     // TODO: POST /api/games/whack-a-word/results
     console.log("Save result (placeholder):", payload);
-    // If you integrate with Supabase / ClassBloom, call API here.
+    // If you integrate with Supabase / Classendo, call API here.
   }
 
   // helper: start new round from summary or idle
@@ -299,7 +299,7 @@ export default function WhackAWordPage() {
         <header className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold">Kawaii Whack-a-Word</h1>
-            <div className="text-sm text-slate-600">Cute classroom vocabulary practice — ClassBloom</div>
+            <div className="text-sm text-slate-600">Cute classroom vocabulary practice — Classendo</div>
           </div>
 
           <div className="flex items-center gap-4">

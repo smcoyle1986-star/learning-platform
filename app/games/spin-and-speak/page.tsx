@@ -16,7 +16,7 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /* Segments: question, act, sentence, read (emoji used as picture) */
 const SEGMENTS = [
@@ -425,7 +425,7 @@ export default function SpinAndSpeakPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-2xl font-extrabold text-blue-600">ClassBloom</a>
+          <a href="/" className="text-2xl font-extrabold text-blue-600">Classendo</a>
           <div className="text-xl font-bold">Spin & Speak</div>
           <div className="flex items-center gap-2">
             <button

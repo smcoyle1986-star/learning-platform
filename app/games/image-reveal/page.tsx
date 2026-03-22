@@ -16,7 +16,7 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /* ----------------------
    Utilities (unchanged logic)
@@ -558,7 +558,7 @@ export default function CardRevealPage() {
       <div className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`} ref={containerRef}>
         <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="/" className="text-3xl font-extrabold text-blue-700">ClassBloom</a>
+            <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <h1 className="text-2xl font-bold text-black">Card Reveal</h1>
             </div>
@@ -609,7 +609,7 @@ export default function CardRevealPage() {
       {/* Header unchanged */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-3xl font-extrabold text-blue-700">ClassBloom</a>
+          <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <h1 className="text-2xl font-bold text-black">Card Reveal</h1>

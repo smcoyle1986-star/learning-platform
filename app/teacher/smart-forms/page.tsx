@@ -68,12 +68,12 @@ type LocalCard = {
 
 /* Compatibility keys used across app */
 const LESSON_TRAY_KEY_CANDIDATES = [
-  "classbloom-lesson-tray",
-  "classbloom_lesson_tray",
+  "classendo-lesson-tray",
+  "classendo_lesson_tray",
   "lesson-tray",
   "lesson_tray",
 ];
-const SAVED_SETS_KEY = "classbloom-saved-sets";
+const SAVED_SETS_KEY = "classendo-saved-sets";
 
 /* Small text helpers / mock AI */
 function suggestPlural(noun: string) {
@@ -507,7 +507,7 @@ export default function SmartFormsPageClient() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Brand */}
           <a role="button" onClick={() => (window.location.href = "/")} className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80 cursor-pointer">
-            ClassBloom
+            Classendo
           </a>
 
           {/* Center title (keeps exact positioning as Flashcards) */}

@@ -21,7 +21,7 @@ export default function LessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("classbloom-saved-lessons");
+    const stored = localStorage.getItem("classendo-saved-lessons");
     if (stored) {
       setLessons(JSON.parse(stored));
     }
@@ -29,14 +29,14 @@ export default function LessonsPage() {
 
   const loadLesson = (lesson: Lesson) => {
     localStorage.setItem(
-      "classbloom-lesson-tray",
+      "classendo-lesson-tray",
       JSON.stringify(lesson.cards)
     );
     // notify other pages that the lesson tray was updated
     window.dispatchEvent(new Event("lesson-tray-updated"));
 
     localStorage.setItem(
-      "classbloom-last-saved-tray",
+      "classendo-last-saved-tray",
       JSON.stringify(lesson.cards)
     );
     window.location.href = "/flashcards";
@@ -46,7 +46,7 @@ export default function LessonsPage() {
     const updated = lessons.filter((l) => l.id !== id);
     setLessons(updated);
     localStorage.setItem(
-      "classbloom-saved-lessons",
+      "classendo-saved-lessons",
       JSON.stringify(updated)
     );
   };

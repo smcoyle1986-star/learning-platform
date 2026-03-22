@@ -25,8 +25,8 @@ type Card = {
   type?: string;
 };
 
-const STORAGE_TRAY_KEY = "classbloom-lesson-tray";
-const STORAGE_SAVED_KEY = "classbloom-saved-lessons";
+const STORAGE_TRAY_KEY = "classendo-lesson-tray";
+const STORAGE_SAVED_KEY = "classendo-saved-lessons";
 
 export default function PrintablesPage() {
   const searchParams = useSearchParams();
@@ -224,7 +224,7 @@ export default function PrintablesPage() {
               href="/"
               className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
             >
-              ClassBloom
+              Classendo
             </Link>
 
             <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -285,7 +285,7 @@ export default function PrintablesPage() {
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            ClassBloom
+            Classendo
           </Link>
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -552,7 +552,7 @@ function getHeaderHtml(from: string) {
   const returnText = from === "dashboard" ? "Return to Dashboard" : "Return to Flashcards";
   return `
     <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:12px 24px; display:flex; align-items:center; justify-content:space-between;">
-      <div style="font-weight:800; color:#2563eb; font-size:28px;">ClassBloom</div>
+      <div style="font-weight:800; color:#2563eb; font-size:28px;">Classendo</div>
       <div style="font-size:18px; font-weight:700;">Printables</div>
       <div><a href="${returnUrl}" style="color:#166534; text-decoration:none; font-weight:600;">${returnText}</a></div>
     </div>
@@ -619,7 +619,7 @@ function buildPrintableHtml(opts: {
     <html>
       <head>
         <meta charset="utf-8" />
-        <title>ClassBloom Print</title>
+        <title>Classendo Print</title>
         ${style}
       </head>
       <body>

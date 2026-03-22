@@ -16,7 +16,7 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classbloom-lesson-tray";
+const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /*
   Yes or No (app/games/yes-or-no/page.tsx)
@@ -529,7 +529,7 @@ export default function YesOrNoPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-2xl font-extrabold text-blue-600">ClassBloom</a>
+          <a href="/" className="text-2xl font-extrabold text-blue-600">Classendo</a>
           <div className="text-xl font-bold">Yes or No</div>
           <div className="flex items-center gap-2">
             <button
