@@ -207,7 +207,7 @@ export default function HomePage() {
           {/* Illustration placeholder */}
           <div className="h-[360px] rounded-3xl bg-[#e8eadf] flex items-center justify-center text-sm text-[#6b756b]">
            <img
-    src="https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/generated-images/gen-1770462333478-0.png"
+    src="https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/ClassBloom%20images/ChatGPT%20Image%20Mar%2028,%202026,%2006_15_38%20PM.png"
     alt="Classendo homepage illustration"
     className="w-full h-full object-contain"
   />

@@ -43,6 +43,8 @@ type NounRow = {
   id: string;
   lemma: string;
   image_id: string | null;
+  countability?: "count" | "uncount" | "both";
+  themes?: string[];
 };
 
 export type Card = {
@@ -50,6 +52,8 @@ export type Card = {
   word: string;
   image: string;
   type: "noun" | "verb" | "adjective" | "phonics" | "preposition";
+  countability?: "count" | "uncount" | "both";
+  themes?: string[];
 };
 
 type TrayItem = {
@@ -88,6 +92,77 @@ export default function FlashcardsPage() {
 
   // NOTE: changed to preserve original case — only replace underscores with spaces.
   const formatWord = (word: string) => String(word ?? "").replace(/_/g, " ");
+
+  const IRREGULAR_NOUNS: Record<string, string> = {
+    child: "children",
+    person: "people",
+    man: "men",
+    woman: "women",
+    mouse: "mice",
+    goose: "geese",
+    tooth: "teeth",
+    foot: "feet",
+    ox: "oxen",
+  };
+
+  // Based on the live Supabase noun themes/lemmas, these themes should not
+  // swap the visible label to plural on image_2 because the second image is
+  // not a simple plural form of the same noun.
+  const THEMES_WITHOUT_AUTO_PLURAL_LABELS = new Set([
+    "body",
+    "dates",
+    "drink",
+    "family",
+  ]);
+
+  // Live lemmas that already represent a plural label or should not be
+  // auto-pluralized from the singular display logic.
+  const NO_AUTO_PLURAL_LEMMAS = new Set([
+    "boots",
+    "chopsticks",
+    "christmas",
+    "colored pencils",
+    "darts",
+    "ears",
+    "ethics",
+    "eyes",
+    "fries",
+    "glasses",
+    "gloves",
+    "grapes",
+    "jeans",
+    "octopus",
+    "offices",
+    "pants",
+    "potato chips",
+    "scissors",
+    "shoes",
+    "shorts",
+    "sneakers",
+    "social studies",
+    "socks",
+    "sunglasses",
+    "tennis",
+    "tongs",
+  ]);
+
+  function pluralizeLastWord(word: string) {
+    if (!word) return word;
+    const lower = word.toLowerCase();
+    if (IRREGULAR_NOUNS[lower]) return IRREGULAR_NOUNS[lower];
+    if (/(s|x|z|ch|sh)$/i.test(word)) return `${word}es`;
+    if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies`;
+    if (/(f|fe)$/i.test(word)) return word.replace(/(fe|f)$/i, "ves");
+    return `${word}s`;
+  }
+
+  function pluralizeLemma(lemma: string) {
+    const trimmed = String(lemma ?? "").trim();
+    if (!trimmed) return trimmed;
+    const parts = trimmed.split(/\s+/);
+    const last = parts.pop() ?? "";
+    return [...parts, pluralizeLastWord(last)].join(" ");
+  }
 
   type WordType = "noun" | "verb" | "adjective" | "phonics" | "preposition";
 
@@ -328,8 +403,7 @@ export default function FlashcardsPage() {
 
   const THEMES = {
     noun: [
-      "food",
-      "places",
+
       "animals baby",
       "animals land",
       "animals sea",
@@ -339,6 +413,7 @@ export default function FlashcardsPage() {
       "dates",
       "drink",
       "family",
+      "food",
       "fruit",
       "furniture",
       "health",
@@ -347,6 +422,7 @@ export default function FlashcardsPage() {
       "nature",
       "numbers",
       "people",
+      "places",
       "rooms",
       "sports",
       "subjects",
@@ -401,8 +477,8 @@ export default function FlashcardsPage() {
     return 3;
   }
 
-  function lemmaKey(card: Pick<Card, "type" | "word">) {
-    return `${card.type}:${card.word}`;
+  function lemmaKey(card: Pick<Card, "type" | "id">) {
+    return `${card.type}:${card.id}`;
   }
 
   function sortByPopularity(cards: Card[], rawQuery = "") {
@@ -431,7 +507,7 @@ export default function FlashcardsPage() {
 
         const queryBuilder = supabase
           .from("nouns")
-          .select("id, lemma, image_id, themes");
+          .select("id, lemma, image_id, countability, themes");
 
         if (activeTheme) {
           queryBuilder.contains("themes", [activeTheme]);
@@ -448,6 +524,8 @@ export default function FlashcardsPage() {
           word: noun.lemma,
           image: noun.image_id ?? "/placeholder.png",
           type: "noun",
+          countability: noun.countability,
+          themes: Array.isArray(noun.themes) ? noun.themes : [],
         }));
 
         const sorted = sortByPopularity(cards, raw);
@@ -569,7 +647,7 @@ export default function FlashcardsPage() {
 
       const { data, error } = await supabase
         .from("vocab_images")
-        .select("lemma, category, image_path, is_default")
+        .select("noun_id, lemma, category, image_path, is_default")
         .in("lemma", lemmas)
         .eq("category", category)
         .order("is_default", { ascending: false })
@@ -578,16 +656,69 @@ export default function FlashcardsPage() {
       if (error) throw error;
 
       const nextMap: Record<string, string[]> = {};
+      const rowsByNounId: Record<string, any[]> = {};
+      const rowsByLemma: Record<string, any[]> = {};
+
       (data || []).forEach((row: any) => {
-        const key = `${row.category}:${row.lemma}`;
-        if (!nextMap[key]) nextMap[key] = [];
-        if (row.image_path) {
-          const raw = String(row.image_path);
-          const publicUrl = raw.startsWith("http")
-            ? raw
-            : supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
-          nextMap[key].push(publicUrl);
+        const nounId = String(row.noun_id ?? "");
+        if (nounId) {
+          if (!rowsByNounId[nounId]) rowsByNounId[nounId] = [];
+          rowsByNounId[nounId].push(row);
         }
+        const key = String(row.lemma ?? "");
+        if (!rowsByLemma[key]) rowsByLemma[key] = [];
+        rowsByLemma[key].push(row);
+      });
+
+      const getThemePathHints = (card: Card) => {
+        const themes = (card.themes ?? []).map((theme) => String(theme).toLowerCase());
+        const hints = new Set<string>();
+
+        themes.forEach((theme) => {
+          const normalized = theme.replace(/\s+/g, "_");
+          if (normalized) hints.add(normalized);
+          if (theme === "food") hints.add("_food/");
+          if (theme === "animals land") hints.add("_animal/");
+          if (theme === "animals baby") hints.add("_baby/");
+        });
+
+        return Array.from(hints);
+      };
+
+      cards.forEach((card) => {
+        const key = lemmaKey(card);
+        const nounIdRows = rowsByNounId[card.id] ?? [];
+        const legacyLemmaRows = (rowsByLemma[card.word] ?? []).filter(
+          (row) => !row.noun_id
+        );
+        const candidateRows =
+          category === "noun"
+            ? nounIdRows.length > 0
+              ? nounIdRows
+              : legacyLemmaRows
+            : nounIdRows.length > 0
+              ? nounIdRows
+              : rowsByLemma[card.word] ?? [];
+        const hints = getThemePathHints(card);
+        const matchedRows =
+          hints.length > 0
+            ? candidateRows.filter((row) => {
+                const rawPath = String(row.image_path ?? "").toLowerCase();
+                return hints.some((hint) => rawPath.includes(hint));
+              })
+            : [];
+        const rowsForCard = matchedRows.length > 0 ? matchedRows : candidateRows;
+
+        rowsForCard.forEach((row: any) => {
+          if (!nextMap[key]) nextMap[key] = [];
+          if (row.image_path) {
+            const raw = String(row.image_path);
+            const publicUrl = raw.startsWith("http")
+              ? raw
+              : supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
+            nextMap[key].push(publicUrl);
+          }
+        });
       });
 
       Object.keys(nextMap).forEach((k) => {
@@ -623,15 +754,48 @@ export default function FlashcardsPage() {
     return images[idx] ?? images[0] ?? card.image;
   }
 
+  function getVariantNumberFromImagePath(imagePath?: string) {
+    if (!imagePath) return null;
+    const cleanPath = imagePath.split("?")[0] ?? imagePath;
+    const match = cleanPath.match(/_(\d+)\.png$/i);
+    const variantNumber = Number(match?.[1]);
+    return Number.isFinite(variantNumber) ? variantNumber : null;
+  }
+
+  function getDisplayWord(card: Card) {
+    const imagePath = getActiveImage(card);
+    const variantNumber = getVariantNumberFromImagePath(imagePath);
+    const canPluralize =
+      card.type === "noun"
+      && (card.countability === "count" || card.countability === "both" || !card.countability);
+
+    const lowerLemma = String(card.word ?? "").trim().toLowerCase();
+    const hasBlockedTheme = (card.themes ?? []).some((theme) =>
+      THEMES_WITHOUT_AUTO_PLURAL_LABELS.has(String(theme).toLowerCase())
+    );
+
+    if (
+      canPluralize
+      && variantNumber === 2
+      && !hasBlockedTheme
+      && !NO_AUTO_PLURAL_LEMMAS.has(lowerLemma)
+    ) {
+      return pluralizeLemma(card.word);
+    }
+
+    return card.word;
+  }
+
   function addToLessonTray(card: Card) {
     const imagePath = getActiveImage(card);
     if (!imagePath) return;
-    const trayId = `${card.type}:${card.word}:${imagePath}`;
+    const displayWord = getDisplayWord(card);
+    const trayId = `${card.type}:${displayWord}:${imagePath}`;
     setLessonTray((prev) => {
       const exists = prev.some((item) => item.image === imagePath);
       if (exists) return prev;
       incrementCardCount(card);
-      return [...prev, { id: trayId, word: card.word, image: imagePath, type: card.type }];
+      return [...prev, { id: trayId, word: displayWord, image: imagePath, type: card.type }];
     });
     setLastAddedId(trayId);
     if (addToastTimeoutRef.current) {
@@ -1364,7 +1528,7 @@ export default function FlashcardsPage() {
               </button>
             )}
           </div>
-          <h3 className="font-semibold">{card.word.replaceAll("_", " ")}</h3>
+          <h3 className="font-semibold">{getDisplayWord(card).replaceAll("_", " ")}</h3>
 
           <p className="text-xs text-[var(--color-text-muted)] capitalize">
             {card.type}
