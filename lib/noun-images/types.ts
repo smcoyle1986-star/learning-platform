@@ -23,7 +23,12 @@ export type NounVariantDefinition = {
     | "place"
     | "time"
     | "dates"
+    | "numbers"
+    | "holidays"
+    | "people"
     | "drink"
+    | "places"
+    | "nature"
     | "family"
     | "jobs"
     | "profession"
@@ -47,6 +52,7 @@ export type NounGenerationInput = {
   category?: string;
   overwriteExisting?: boolean;
   variantNumbers?: NounVariantNumber[];
+  uploadToSupabase?: boolean;
 };
 
 export type GeneratedNounImage = {
@@ -58,6 +64,7 @@ export type GeneratedNounImage = {
   variantNumber: NounVariantNumber;
   imagePath: string;
   publicUrl: string;
+  localPath?: string;
   isDefault: boolean;
   isPremium: boolean;
   prompt: string;
@@ -75,7 +82,12 @@ export type NounImageOverride = {
     | "place"
     | "time"
     | "dates"
+    | "numbers"
+    | "holidays"
+    | "people"
     | "drink"
+    | "places"
+    | "nature"
     | "family"
     | "jobs"
     | "profession"

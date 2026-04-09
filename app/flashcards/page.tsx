@@ -643,23 +643,62 @@ export default function FlashcardsPage() {
   async function loadVocabImages(cards: Card[], category: Card["type"]) {
     try {
       const lemmas = Array.from(new Set(cards.map((c) => c.word).filter(Boolean)));
-      if (lemmas.length === 0) return;
+      const nounIds = Array.from(
+        new Set(
+          cards
+            .map((c) => String(c.id ?? "").trim())
+            .filter((id) => id.length > 0)
+        )
+      );
+      if (lemmas.length === 0 && nounIds.length === 0) return;
 
-      const { data, error } = await supabase
-        .from("vocab_images")
-        .select("noun_id, lemma, category, image_path, is_default")
-        .in("lemma", lemmas)
-        .eq("category", category)
-        .order("is_default", { ascending: false })
-        .order("image_path", { ascending: true });
+      const rows: any[] = [];
 
-      if (error) throw error;
+      if (nounIds.length > 0) {
+        const { data, error } = await supabase
+          .from("vocab_images")
+          .select("noun_id, lemma, category, image_path, is_default")
+          .in("noun_id", nounIds)
+          .eq("category", category)
+          .order("is_default", { ascending: false })
+          .order("image_path", { ascending: true });
+
+        if (error) throw error;
+        rows.push(...(data || []));
+      }
+
+      // Fallback for older rows that were stored without noun_id, and
+      // include case variants so title-cased noun lemmas can still resolve.
+      const legacyLemmaKeys = Array.from(
+        new Set(
+          lemmas.flatMap((lemma) => {
+            const trimmed = String(lemma ?? "").trim();
+            if (!trimmed) return [];
+            const lower = trimmed.toLowerCase();
+            return lower === trimmed ? [trimmed] : [trimmed, lower];
+          })
+        )
+      );
+
+      if (legacyLemmaKeys.length > 0) {
+        const { data, error } = await supabase
+          .from("vocab_images")
+          .select("noun_id, lemma, category, image_path, is_default")
+          .in("lemma", legacyLemmaKeys)
+          .eq("category", category)
+          .is("noun_id", null)
+          .order("is_default", { ascending: false })
+          .order("image_path", { ascending: true });
+
+        if (error) throw error;
+        rows.push(...(data || []));
+      }
 
       const nextMap: Record<string, string[]> = {};
       const rowsByNounId: Record<string, any[]> = {};
       const rowsByLemma: Record<string, any[]> = {};
 
-      (data || []).forEach((row: any) => {
+      rows.forEach((row: any) => {
         const nounId = String(row.noun_id ?? "");
         if (nounId) {
           if (!rowsByNounId[nounId]) rowsByNounId[nounId] = [];
@@ -688,9 +727,10 @@ export default function FlashcardsPage() {
       cards.forEach((card) => {
         const key = lemmaKey(card);
         const nounIdRows = rowsByNounId[card.id] ?? [];
-        const legacyLemmaRows = (rowsByLemma[card.word] ?? []).filter(
-          (row) => !row.noun_id
-        );
+        const legacyLemmaRows = [
+          ...(rowsByLemma[card.word] ?? []),
+          ...(rowsByLemma[String(card.word ?? "").toLowerCase()] ?? []),
+        ].filter((row) => !row.noun_id);
         const candidateRows =
           category === "noun"
             ? nounIdRows.length > 0
@@ -1285,12 +1325,21 @@ export default function FlashcardsPage() {
                 onKeyDown={(e) => onTrayItemKeyDown(e, idx)}
                 aria-label={`Tray card ${formatWord(card.word)} — position ${idx + 1}`}
                 role="button"
-                className={`relative px-3 py-2 rounded-xl border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
+                className={`relative flex items-center gap-2 pl-2 pr-3 py-2 rounded-xl border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
                   ${draggedIndex === idx ? "opacity-60 scale-95 cursor-grabbing" : "cursor-grab"}
                   ${dragOverIndex === idx && draggedIndex !== null ? "ring-2 ring-dashed ring-[var(--color-accent)]" : ""}`}
                 title={`${formatWord(card.word)} — use Left/Right to move, Delete to remove`}
               >
-                <span className="text-xs">{formatWord(card.word)}</span>
+                {card.image ? (
+                  <img
+                    src={card.image}
+                    alt={formatWord(card.word)}
+                    className="w-10 h-10 rounded-lg object-cover border border-black/10 bg-white shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg border border-dashed border-black/10 bg-white/70 shrink-0" />
+                )}
+                <span className="text-xs pr-2">{formatWord(card.word)}</span>
                 <button
                   onClick={() => removeFromLessonTray(card.id)}
                   className="absolute -top-0 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"

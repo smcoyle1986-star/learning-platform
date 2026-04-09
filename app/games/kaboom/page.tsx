@@ -2,7 +2,14 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Maximize, Minimize } from "lucide-react";
+import GameHeader from "@/components/games/GameHeader";
+import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createKaboomGame,
+  type KaboomSceneApi,
+  type KaboomSceneEvent,
+} from "@/lib/games/phaser/kaboom";
 
 type GameCard = {
   id: string;
@@ -40,6 +47,7 @@ export default function KaBoomPage() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<HTMLDivElement | null>(null);
+  const sceneApiRef = useRef<KaboomSceneApi | null>(null);
 
   // fullscreen handling
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -666,41 +674,54 @@ export default function KaBoomPage() {
     playHighlight();
   }
 
+  function handleSceneEvent(event: KaboomSceneEvent) {
+    if (event.type === "tile-click") {
+      handleTileClick(event.index);
+    }
+  }
+
+  useEffect(() => {
+    sceneApiRef.current?.sync({
+      rows,
+      cols,
+      tilesRemoved,
+      tilesPoints,
+      tilesBomb,
+      glowingIndex,
+      specialRemoveActive,
+      centerReveal,
+    });
+  }, [
+    rows,
+    cols,
+    tilesRemoved,
+    tilesPoints,
+    tilesBomb,
+    glowingIndex,
+    specialRemoveActive,
+    centerReveal,
+  ]);
+
   // no-tray UI flag
   const noTray = !gameTray || gameTray.length === 0;
 
   if (noTray) {
     return (
       <div className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`} ref={containerRef}>
-        <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-2xl font-bold text-black">KaBoom!</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleFullscreen}
-                className="btn btn-secondary p-2"
-                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              </button>
-              {/* Header music toggles built-in 8-bit theme */}
-              <button
-                onClick={toggleThemeMusic}
-                className={`btn btn-secondary px-2 py-1 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
-              >
-                Music
-              </button>
-              {!isFullscreen && (
-                <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
-                  <Play size={14} /> Exit
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
+        <GameHeader
+          title="KaBoom!"
+          onExit={() => router.push("/games")}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          extraActions={(
+            <button
+              onClick={toggleThemeMusic}
+              className={`btn btn-secondary px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
+            >
+              Music
+            </button>
+          )}
+        />
 
         <main className="pt-[72px] max-w-4xl mx-auto px-4 py-12">
           <div className="bg-white rounded-xl p-6 shadow">
@@ -721,63 +742,34 @@ export default function KaBoomPage() {
 
   return (
     <div ref={containerRef} className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
-      {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-2xl font-bold text-black">KaBoom!</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleFullscreen}
-              className="btn btn-secondary p-2"
-              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-
-            {/* Header music toggles built-in 8-bit theme */}
-            <button
-              onClick={toggleThemeMusic}
-              className={`btn btn-secondary px-2 py-1 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
-            >
-              Music
-            </button>
-
-            {!isFullscreen && (
-              <button onClick={() => {
-                try {
-                  const toWrite = gameTrayRef.current;
-                  if (Array.isArray(toWrite) && toWrite.length > 0) {
-                    localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
-                  }
-                } catch {}
-                router.push("/games");
-              }} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
-                <Play size={14} /> Exit
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Fullscreen exit button (visible only in fullscreen) */}
-      {isFullscreen && (
-        <button
-          onClick={exitFullscreen}
-          className="btn btn-secondary fixed top-4 right-4 z-[9999] px-3 py-2 shadow-lg"
-          title="Exit fullscreen"
-        >
-          Exit
-        </button>
-      )}
+      <GameHeader
+        title="KaBoom!"
+        onExit={() => {
+          try {
+            const toWrite = gameTrayRef.current;
+            if (Array.isArray(toWrite) && toWrite.length > 0) {
+              localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+            }
+          } catch {}
+          router.push("/games");
+        }}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        settingsOpen={settingsOpen}
+        onToggleSettings={() => setSettingsOpen((s) => !s)}
+        extraActions={(
+          <button
+            onClick={toggleThemeMusic}
+            className={`btn btn-secondary px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}
+          >
+            Music
+          </button>
+        )}
+      />
 
       {/* Scoreboard + controls */}
-      <div ref={controlsRef} className={isFullscreen ? "fixed top-4 left-0 right-0 z-50" : ""}>
-        <div className={isFullscreen ? "max-w-7xl mx-auto px-4" : "pt-[68px] max-w-7xl mx-auto px-4"}>
+      <div ref={controlsRef} className={isFullscreen ? "fixed top-20 left-0 right-0 z-40" : ""}>
+        <div className={isFullscreen ? "max-w-7xl mx-auto px-4" : "pt-[76px] max-w-7xl mx-auto px-4"}>
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -815,19 +807,10 @@ export default function KaBoomPage() {
                 ))}
               </div>
 
-              {/* Settings dropdown - hidden when fullscreen per user request */}
-              {!isFullscreen && (
+              {settingsOpen && (
                 <div className="relative">
-                    <button
-                      onClick={() => setSettingsOpen((s) => !s)}
-                      className="btn btn-secondary ml-3 px-3 py-1 text-sm"
-                      title="Settings"
-                    >
-                      Settings
-                    </button>
-
-                  {settingsOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white border rounded-md shadow-lg p-3 z-60 text-sm">
+                    <div className="absolute right-0 top-0 z-60">
+                      <GameSettingsDropdown className="w-64">
                       {/* Grid size and Music removed from settings as requested */}
                       <div className="mb-2 font-semibold">Kaboom probability</div>
                       <div className="mb-3">
@@ -853,11 +836,10 @@ export default function KaBoomPage() {
                       <div className="mt-3 text-right">
                         <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1 text-sm">Close</button>
                       </div>
+                      </GameSettingsDropdown>
                     </div>
-                  )}
                 </div>
               )}
-
             </div>
           </div>
 
@@ -933,89 +915,14 @@ export default function KaBoomPage() {
             }
           >
             <div className="relative w-full h-full bg-gray-100">
-              {/* Use CSS Grid to ensure all rows and columns fit inside the panel. */}
-              <div
+              <PhaserGameHost
                 className="w-full h-full"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                  gridTemplateRows: `repeat(${rows}, 1fr)`,
-                  gap: `${isFullscreen ? 4 : 6}px`,
-                  padding: `${isFullscreen ? 4 : 6}px`,
-                  boxSizing: "border-box",
+                createGame={createKaboomGame}
+                onEvent={handleSceneEvent}
+                onApiReady={(api) => {
+                  sceneApiRef.current = api as KaboomSceneApi | null;
                 }}
-              >
-                {Array.from({ length: rows * cols }).map((_, idx) => {
-                  const r = Math.floor(idx / cols);
-                  const c = idx % cols;
-                  const removed = tilesRemoved[idx];
-                  const isGlowing = glowingIndex === idx && !removed;
-                  const isBomb = tilesBomb[idx];
-                  const pts = tilesPoints[idx];
-                  const label = `${String.fromCharCode(65 + r)}${c + 1}`;
-
-                  return (
-                    <div key={idx} style={{ width: "100%", height: "100%", boxSizing: "border-box" }}>
-                      <div
-                        onClick={() => (!removed ? handleTileClick(idx) : undefined)}
-                        role="button"
-                        tabIndex={removed ? -1 : 0}
-                        aria-disabled={removed}
-                        className="w-full h-full rounded-md flex items-center justify-center text-sm font-semibold select-none cursor-pointer relative overflow-hidden transition-all"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          background: removed ? "transparent" : "#dff7e6",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                          boxShadow: isGlowing
-                            ? "0 0 60px 26px rgba(255,215,0,0.95) inset"
-                            : "inset 0 0 0 1px rgba(0,0,0,0.06)",
-                          transform: isGlowing ? "scale(1.05)" : "scale(1)",
-                          filter: (!isGlowing && specialRemoveActive) && !removed ? "brightness(0.85)" : undefined,
-                          opacity: removed ? 0 : 1,
-                          transition: "transform 220ms ease, opacity 360ms ease, box-shadow 220ms ease, filter 220ms ease",
-                        }}
-                      >
-                        {!removed && (
-                          <div className="absolute top-2 left-3 text-xs text-[rgba(0,0,0,0.6)]">{label}</div>
-                        )}
-
-                        {removed && pts !== null && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="text-4xl font-extrabold text-green-600 animate-pulse-slow">+{pts}</div>
-                          </div>
-                        )}
-
-                        {removed && isBomb && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="text-4xl font-extrabold text-red-700">💣</div>
-                          </div>
-                        )}
-
-                        {!removed && <div className="text-lg tracking-wide">{label}</div>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* center reveal overlay (bigger, lasts 3s) */}
-              {centerReveal && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
-                  {centerReveal.kind === "points" && (
-                    <div className="bg-white/0 flex flex-col items-center">
-                      <div className="text-6xl md:text-8xl font-extrabold text-green-600 animate-scale-up">{`+${centerReveal.value}`}</div>
-                      <div className="mt-4 text-2xl md:text-3xl font-semibold">Great job!</div>
-                    </div>
-                  )}
-                  {centerReveal.kind === "bomb" && (
-                    <div className="bg-white/0 flex flex-col items-center">
-                      <div className="text-6xl md:text-8xl font-extrabold text-red-700 animate-kaboom">KABOOM!</div>
-                      <div className="mt-4 text-2xl md:text-3xl font-semibold">−5 points</div>
-                    </div>
-                  )}
-                </div>
-              )}
+              />
             </div>
           </div>
         </div>
@@ -1058,31 +965,7 @@ export default function KaBoomPage() {
           </div>
         </div>
       )}
-
       <style>{`
-        :root { --kaboom-green: #dff7e6; }
-
-        @keyframes scale-up {
-          0% { transform: scale(0.6); opacity: 0; }
-          60% { transform: scale(1.08); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-scale-up { animation: scale-up 700ms cubic-bezier(.2,.9,.3,1) both; }
-
-        @keyframes kaboom {
-          0% { transform: scale(0.6); opacity: 0; }
-          40% { transform: scale(1.12); opacity: 1; color: #ff3b30; }
-          100% { transform: scale(1); opacity: 1; color: #ff1a1a; }
-        }
-        .animate-kaboom { animation: kaboom 900ms cubic-bezier(.2,.9,.3,1) both; }
-
-        @keyframes pulse-slow {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.06); opacity: 0.95; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-pulse-slow { animation: pulse-slow 1500ms ease-in-out infinite; }
-
         /* active score pulse */
         @keyframes active-pulse {
           0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(37,99,235,0)); }

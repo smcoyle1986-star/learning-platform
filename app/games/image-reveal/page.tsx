@@ -2,7 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Maximize, Minimize } from "lucide-react";
+import GameHeader from "@/components/games/GameHeader";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createImageRevealGame,
+  type ImageRevealApi,
+  type ImageRevealEvent,
+} from "@/lib/games/phaser/image-reveal";
 
 type GameCard = {
   id: string;
@@ -18,9 +24,6 @@ type Team = {
 
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
-/* ----------------------
-   Utilities (unchanged logic)
-   ---------------------- */
 function shuffleArray<T>(arr: T[]) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -30,24 +33,13 @@ function shuffleArray<T>(arr: T[]) {
   return copy;
 }
 
-function generateClipPaths(count: number) {
-  const shapes = [
-    "polygon(10% 0%, 100% 0%, 85% 45%, 100% 100%, 0% 100%, 0% 10%)",
-    "polygon(0% 0%, 100% 0%, 100% 70%, 70% 100%, 0% 100%, 0% 30%)",
-    "polygon(0% 8%, 40% 0%, 100% 6%, 100% 60%, 60% 100%, 0% 100%)",
-    "polygon(8% 0%, 100% 0%, 100% 100%, 30% 100%, 0% 80%, 0% 20%)",
-    "polygon(0% 0%, 100% 0%, 92% 40%, 100% 100%, 0% 88%)",
-    "polygon(10% 0%, 100% 10%, 88% 50%, 100% 100%, 0% 100%, 0% 50%)",
-  ];
-  return Array.from({ length: count }).map((_, i) => shapes[i % shapes.length]);
-}
-
 /* ----------------------
    Component: Card Reveal (persistence fix)
    ---------------------- */
 export default function CardRevealPage() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const sceneApiRef = useRef<ImageRevealApi | null>(null);
 
   // Fullscreen handling
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -152,10 +144,7 @@ export default function CardRevealPage() {
      Core game state (all gameplay logic preserved)
      ---------------------- */
   const [currentIndex, setCurrentIndex] = useState(0);
-  const TILES_COLS = 6;
-  const TILES_ROWS = 4;
-  const TOTAL_TILES = TILES_COLS * TILES_ROWS;
-  const CLIP_PATHS = generateClipPaths(TOTAL_TILES);
+  const TOTAL_TILES = 24;
 
   const [tilesRemoved, setTilesRemoved] = useState<boolean[]>(() =>
     Array.from({ length: TOTAL_TILES }).map(() => false)
@@ -556,28 +545,12 @@ export default function CardRevealPage() {
   if (!currentCard && !showWinner) {
     return (
       <div className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`} ref={containerRef}>
-        <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <h1 className="text-2xl font-bold text-black">Card Reveal</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleFullscreen}
-                className="btn btn-secondary p-2"
-                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-              </button>
-              {!isFullscreen && (
-                <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 text-sm flex items-center gap-2">
-                  <Play size={14} /> Exit
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
+        <GameHeader
+          title="Card Reveal"
+          onExit={() => router.push("/games")}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+        />
 
         <main className="pt-[72px] max-w-4xl mx-auto px-4 py-12">
           <div className="bg-white rounded-xl p-6 shadow">
@@ -601,64 +574,59 @@ export default function CardRevealPage() {
   // helper: are any tiles remaining?
   const tilesRemaining = tilesRemoved.some((t) => !t);
 
-  // patchwork colors array (used when no image)
-  const PATCH_COLORS = ["#fde68a", "#fca5a5", "#c7d2fe", "#bbf7d0", "#fbcfe8", "#fee2b3", "#dbeafe", "#d1fae5"];
+  useEffect(() => {
+    sceneApiRef.current?.sync({
+      imageUrl: currentCard?.image ?? null,
+      tilesRemoved,
+      glowingIndex,
+      specialRemoveActive,
+      urgent,
+      imageRevealed,
+      showRemoveButton: !isAwaitingDecision && !specialRemoveActive && tilesRemoved.filter(Boolean).length < TOTAL_TILES,
+      removedCount: tilesRemoved.filter(Boolean).length,
+      totalTiles: TOTAL_TILES,
+    });
+  }, [
+    currentCard?.image,
+    tilesRemoved,
+    glowingIndex,
+    specialRemoveActive,
+    urgent,
+    imageRevealed,
+    isAwaitingDecision,
+    TOTAL_TILES,
+  ]);
+
+  function handleSceneEvent(event: ImageRevealEvent) {
+    if (event.type === "remove-click") {
+      startRandomRemoveSequence();
+    }
+  }
 
   return (
     <div ref={containerRef} className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
-      {/* Header unchanged */}
-      <header className={`fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5 ${isFullscreen ? "hidden" : ""}`}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-3xl font-extrabold text-blue-700">Classendo</a>
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-2xl font-bold text-black">Card Reveal</h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleFullscreen}
-              className="btn btn-secondary p-2"
-              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-
-            {/* Music toggle (Card Reveal theme, different from KaBoom) */}
-            <button onClick={toggleRevealMusic} className="btn btn-secondary px-2 py-1 text-sm">
-              {musicOn ? "Music: On" : "Music: Off"}
-            </button>
-
-            {!isFullscreen && (
-              <button onClick={() => {
-                try {
-                  const toWrite = gameTrayRef.current;
-                  if (Array.isArray(toWrite) && toWrite.length > 0) {
-                    localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
-                  }
-                } catch {}
-                router.push("/games");
-              }} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
-                <Play size={14} /> Exit
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Fullscreen exit button */}
-      {isFullscreen && (
-        <button
-          onClick={exitFullscreen}
-          className="btn btn-secondary fixed top-4 right-4 z-[9999] px-3 py-2 shadow-lg"
-          title="Exit fullscreen"
-        >
-          Exit Fullscreen
-        </button>
-      )}
+      <GameHeader
+        title="Card Reveal"
+        onExit={() => {
+          try {
+            const toWrite = gameTrayRef.current;
+            if (Array.isArray(toWrite) && toWrite.length > 0) {
+              localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+            }
+          } catch {}
+          router.push("/games");
+        }}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        extraActions={(
+          <button onClick={toggleRevealMusic} className="btn btn-secondary px-3 py-2 text-sm">
+            {musicOn ? "Music: On" : "Music: Off"}
+          </button>
+        )}
+      />
 
       {/* Compact scoreboard */}
-      <div className={`pt-[68px] max-w-7xl mx-auto px-4`}>
+      <div className={`pt-[76px] max-w-7xl mx-auto px-4`}>
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -746,82 +714,14 @@ export default function CardRevealPage() {
         <div className="flex justify-center items-start h-full">
           <div className={`w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border`} style={{ aspectRatio: isFullscreen ? "16/9" : "16/9" }}>
             <div className="relative w-full h-full bg-gray-100">
-              {/* image (if present) - opacity controlled for fade-in reveal */}
-              <img
-                src={currentCard?.image ?? ""}
-                alt={currentCard?.word ?? ""}
-                className={`w-full h-full object-cover ${imageRevealed ? "image-revealed" : "image-covered"}`}
-                style={{ display: currentCard?.image ? undefined : "none" }}
+              <PhaserGameHost
+                className="absolute inset-0"
+                createGame={createImageRevealGame}
+                onEvent={handleSceneEvent}
+                onApiReady={(api) => {
+                  sceneApiRef.current = api as ImageRevealApi | null;
+                }}
               />
-
-              {/* tiles overlay */}
-              <div className="absolute inset-0">
-                {Array.from({ length: TOTAL_TILES }).map((_, i) => {
-                  const isGlowing = i === glowingIndex && !tilesRemoved[i];
-                  const isUrgentTile = urgent && !tilesRemoved[i];
-                  const hasImage = !!currentCard?.image;
-                  // patchwork color selected deterministically by index
-                  const color = PATCH_COLORS[i % PATCH_COLORS.length];
-                  return (
-                    <div
-                      key={i}
-                      className="absolute"
-                      style={{
-                        width: `${100 / TILES_COLS}%`,
-                        height: `${100 / TILES_ROWS}%`,
-                        left: `${(i % TILES_COLS) * (100 / TILES_COLS)}%`,
-                        top: `${Math.floor(i / TILES_COLS) * (100 / TILES_ROWS)}%`,
-                        overflow: "hidden",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          clipPath: CLIP_PATHS[i],
-                          width: "100%",
-                          height: "100%",
-                          backgroundImage: hasImage ? `url("${currentCard?.image}")` : undefined,
-                          backgroundColor: hasImage ? "rgba(215,247,225,0.10)" : (tilesRemoved[i] ? "transparent" : color),
-                          backgroundBlendMode: hasImage ? "overlay" : undefined,
-                          backgroundSize: hasImage ? `${TILES_COLS * 100}% ${TILES_ROWS * 100}%` : undefined,
-                          backgroundPosition: hasImage ? `${((i % TILES_COLS) / Math.max(1, TILES_COLS - 1)) * 100}% ${(Math.floor(i / TILES_COLS) / Math.max(1, TILES_ROWS - 1)) * 100}%` : undefined,
-                          transition: "opacity 350ms ease, box-shadow 260ms ease, transform 220ms ease, filter 220ms ease",
-                          opacity: tilesRemoved[i] ? 0 : 1,
-                          backgroundRepeat: "no-repeat",
-                          // Spotlight effect for selection: brighten selected tile and dim others slightly
-                          boxShadow: isGlowing
-                            ? "0 0 60px 26px rgba(255,215,0,0.95), inset 0 0 0 1px rgba(255,255,255,0.7)"
-                            : isUrgentTile
-                              ? "0 0 36px 14px rgba(255,45,85,0.75)"
-                              : "inset 0 0 0 1px rgba(0,0,0,0.06)",
-                          // increased spotlight scale for better visibility
-                          transform: isGlowing ? "scale(1.12)" : isUrgentTile ? "scale(1.03)" : "scale(1)",
-                          zIndex: isGlowing ? 55 : undefined,
-                          // reduced dimming: brightness 0.85 instead of 0.72
-                          filter: (!isGlowing && (specialRemoveActive || urgent)) && !tilesRemoved[i] ? "brightness(0.85) saturate(0.95)" : undefined,
-                          animation: isUrgentTile ? "tile-urgent 900ms ease-in-out infinite" : isGlowing ? "glow-spot 600ms ease-in-out infinite" : undefined,
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* central large Remove button (in front of tiles) */}
-              {!isAwaitingDecision && !specialRemoveActive && tilesRemoved.filter(Boolean).length < TOTAL_TILES && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startRandomRemoveSequence();
-                    }}
-                    className="btn btn-primary pointer-events-auto px-8 py-5 text-2xl font-bold shadow-2xl transform hover:scale-105 transition"
-                    title="Remove a tile (random)"
-                  >
-                    Remove Tile
-                  </button>
-                </div>
-              )}
 
               {/* X/O buttons moved to bottom center of the game grid */}
               {isAwaitingDecision && (
@@ -842,11 +742,6 @@ export default function CardRevealPage() {
                   </button>
                 </div>
               )}
-
-              {/* bottom info overlay (compact) */}
-              <div className="absolute bottom-3 right-3 text-sm">
-                <div className="bg-white/90 text-black rounded-full px-2 py-1 text-xs shadow-sm">{tilesRemoved.filter(Boolean).length}/{TOTAL_TILES} tiles removed</div>
-              </div>
             </div>
           </div>
         </div>
@@ -890,24 +785,6 @@ export default function CardRevealPage() {
           50% { transform: scale(1.12); filter: drop-shadow(0 8px 26px rgba(255,0,0,0.45)); }
           100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,0,0,0)); }
         }
-
-        /* New stronger glowing "spotlight" */
-        @keyframes glow-spot {
-          0% { transform: scale(1.00); box-shadow: 0 0 38px 18px rgba(255,215,0,0.85); }
-          50% { transform: scale(1.12); box-shadow: 0 0 64px 28px rgba(255,215,0,0.98); }
-          100% { transform: scale(1.00); box-shadow: 0 0 38px 18px rgba(255,215,0,0.85); }
-        }
-
-        /* Urgent tile pulse animation (applies when countdown <= 3s) */
-        @keyframes tile-urgent {
-          0% { transform: scale(1); box-shadow: 0 0 10px 4px rgba(255,45,85,0.45); }
-          50% { transform: scale(1.04); box-shadow: 0 0 36px 14px rgba(255,45,85,0.85); }
-          100% { transform: scale(1); box-shadow: 0 0 10px 4px rgba(255,45,85,0.45); }
-        }
-
-        /* image reveal fade */
-        .image-covered { opacity: 0.94; transition: opacity 450ms ease-in; }
-        .image-revealed { opacity: 1; transition: opacity 600ms ease-in; }
 
         /* active score pulse */
         @keyframes active-pulse {

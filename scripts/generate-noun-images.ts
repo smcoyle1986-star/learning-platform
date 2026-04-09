@@ -43,10 +43,12 @@ function parseArgs() {
     limit?: number;
     concurrency: number;
     overwriteExisting: boolean;
+    uploadToSupabase: boolean;
   } = {
     exclude: [],
     concurrency: 1,
     overwriteExisting: false,
+    uploadToSupabase: false,
   };
 
   for (const arg of args) {
@@ -86,6 +88,8 @@ function parseArgs() {
       }
     } else if (arg === "--overwrite-existing") {
       parsed.overwriteExisting = true;
+    } else if (arg === "--upload-to-supabase") {
+      parsed.uploadToSupabase = true;
     }
   }
 
@@ -130,6 +134,7 @@ async function main() {
         countability: args.countability,
         overwriteExisting: args.overwriteExisting,
         variantNumbers: args.variants,
+        uploadToSupabase: args.uploadToSupabase,
       },
     ];
   } else if (args.theme) {
@@ -137,12 +142,14 @@ async function main() {
       ...item,
       overwriteExisting: args.overwriteExisting,
       variantNumbers: args.variants,
+      uploadToSupabase: args.uploadToSupabase,
     }));
   } else {
     items = (await loadNounsForGeneration(args.limit)).map((item) => ({
       ...item,
       overwriteExisting: args.overwriteExisting,
       variantNumbers: args.variants,
+      uploadToSupabase: args.uploadToSupabase,
     }));
   }
 
@@ -157,7 +164,7 @@ async function main() {
   }
 
   console.log(
-    `Starting noun image generation for ${items.length} lemma(s) with concurrency ${args.concurrency}.`
+    `Starting noun image generation for ${items.length} lemma(s) with concurrency ${args.concurrency}. Upload to Supabase: ${args.uploadToSupabase ? "yes" : "no"}.`
   );
 
   const failures: Array<{ lemma: string; error: string }> = [];

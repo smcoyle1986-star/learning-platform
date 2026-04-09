@@ -2,7 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Maximize, Minimize } from "lucide-react";
+import GameHeader from "@/components/games/GameHeader";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createYesNoGame,
+  type YesNoSceneApi,
+  type YesNoSceneEvent,
+} from "@/lib/games/phaser/yes-or-no";
 
 type GameCard = {
   id: string;
@@ -37,6 +43,7 @@ const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 export default function YesOrNoPage() {
   const router = useRouter();
+  const sceneApiRef = useRef<YesNoSceneApi | null>(null);
 
   // Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -480,6 +487,32 @@ export default function YesOrNoPage() {
     runPrepThenStart(currentCardIndex);
   }
 
+  function handleSceneEvent(event: YesNoSceneEvent) {
+    if (event.type === "yes-click") {
+      void handleYesNo(true);
+    }
+    if (event.type === "no-click") {
+      void handleYesNo(false);
+    }
+    if (event.type === "prev-click") {
+      prevIndex();
+    }
+    if (event.type === "next-click") {
+      nextIndex();
+    }
+  }
+
+  useEffect(() => {
+    const currentCard = currentCardIndex !== null ? tray[currentCardIndex] : null;
+    sceneApiRef.current?.sync({
+      imageUrl: currentCard?.image ?? null,
+      roundPhase,
+      timerText: roundPhase === "timing" && timerSeconds !== null ? `${timerSeconds}s` : "Ready",
+      displayedText: roundPhase === "timing" || roundPhase === "feedback" ? displayedText : "—",
+      canAnswer: roundPhase === "timing",
+    });
+  }, [currentCardIndex, tray, roundPhase, timerSeconds, displayedText]);
+
   // Start initial card when modal closed: only set currentCardIndex (done in handleModalFinished)
   useEffect(() => {
     // If modal was closed through other means and there's no current card, select one
@@ -526,25 +559,12 @@ export default function YesOrNoPage() {
   // UI
   return (
     <div className="min-h-screen bg-[hsl(140,40%,95%)] text-black">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b z-40">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-2xl font-extrabold text-blue-600">Classendo</a>
-          <div className="text-xl font-bold">Yes or No</div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleFullscreen}
-              className="btn btn-secondary p-2"
-              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
-              <Play size={14} /> Exit
-            </button>
-          </div>
-        </div>
-      </header>
+      <GameHeader
+        title="Yes or No"
+        onExit={() => router.push("/games")}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+      />
 
       {/* Scoreboard */}
       <div className="pt-[72px] max-w-7xl mx-auto px-4">
@@ -634,88 +654,22 @@ export default function YesOrNoPage() {
       <main className="max-w-7xl mx-auto px-4 pb-20" style={{ minHeight: "calc(100vh - 260px)" }}>
         <div className="flex justify-center items-start">
           <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center">
-
-            {/* Timer badge centered above picture */}
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2">
-              <div className="bg-white border shadow px-6 py-3 rounded-full text-2xl font-bold">
-                {roundPhase === "timing" && timerSeconds !== null ? `${timerSeconds}s` : "Ready"}
-              </div>
+            <div className="w-full rounded-xl overflow-hidden shadow-inner" style={{ height: 640 }}>
+              <PhaserGameHost
+                className="w-full h-full"
+                createGame={createYesNoGame}
+                onEvent={handleSceneEvent}
+                onApiReady={(api) => {
+                  sceneApiRef.current = api as YesNoSceneApi | null;
+                }}
+              />
             </div>
 
-            {/* Left arrow */}
-            <button
-              onClick={prevIndex}
-              aria-label="Previous"
-              className="btn btn-secondary absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center shadow"
-            >
-              ◀
-            </button>
-
-            {/* Right arrow */}
-            <button
-              onClick={nextIndex}
-              aria-label="Next"
-              className="btn btn-secondary absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center shadow"
-            >
-              ▶
-            </button>
-
-            {/* Image - wider not taller */}
-            <div className="w-full bg-white rounded-xl overflow-hidden shadow-inner flex items-center justify-center" style={{ height: 420 }}>
-              {currentCardIndex !== null && tray[currentCardIndex] ? (
-                tray[currentCardIndex].image ? (
-                  <img src={tray[currentCardIndex].image} alt={tray[currentCardIndex].word} className="object-contain w-11/12 h-full" />
-                ) : (
-                  <div className="text-3xl text-gray-400">No image</div>
-                )
-              ) : (
-                <div className="text-2xl text-gray-500">No card</div>
-              )}
-            </div>
-
-            {/* Prep overlay */}
-            {roundPhase === "prepping" && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-black/30 rounded-2xl p-6 text-center text-white">
-                  <div className="text-5xl font-bold mb-2 animate-bounce">Get Ready</div>
-                </div>
-              </div>
-            )}
-
-            {/* Text (revealed when timing or feedback) */}
-            <div className="mt-6 text-4xl md:text-5xl font-extrabold text-center min-h-[4.5rem]">
-              {(roundPhase === "timing" || roundPhase === "feedback") ? displayedText : "—"}
-            </div>
-
-            {/* Start Game button (visible when modal closed and not started) */}
             {!gameStarted && !sentencesModalOpen && currentCardIndex !== null && (
               <div className="mt-6">
                 <button onClick={handleStartGameClick} className="btn btn-primary px-6 py-3 text-lg shadow">Start Game</button>
               </div>
             )}
-
-            {/* Yes / No */}
-            <div className="mt-8 flex items-center gap-10">
-              <button
-                onClick={() => handleYesNo(true)}
-                disabled={roundPhase !== "timing"}
-                className={`btn btn-primary px-12 py-4 text-2xl font-bold shadow-lg transform transition-all ${
-                  roundPhase !== "timing" ? "opacity-60 cursor-not-allowed" : "hover:scale-105 active:scale-95"
-                }`}
-              >
-                Yes
-              </button>
-
-              <button
-                onClick={() => handleYesNo(false)}
-                disabled={roundPhase !== "timing"}
-                className={`btn btn-secondary px-12 py-4 text-2xl font-bold shadow-lg transform transition-all ${
-                  roundPhase !== "timing" ? "opacity-60 cursor-not-allowed" : "hover:scale-105 active:scale-95"
-                }`}
-              >
-                No
-              </button>
-            </div>
 
             <div className="mt-6 text-lg text-gray-700">Cards remaining: {remainingCount}</div>
           </div>

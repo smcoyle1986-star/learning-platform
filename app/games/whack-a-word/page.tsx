@@ -1,6 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import GameHeader from "@/components/games/GameHeader";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createWhackWordGame,
+  type WhackDifficulty,
+  type WhackSceneApi,
+  type WhackSceneEvent,
+} from "@/lib/games/phaser/whack-a-word";
 
 /*
   Classendo — Kawaii Whack-a-Word (ready-to-play page)
@@ -21,12 +30,14 @@ const DEFAULT_HOLES = 6;
 const DEFAULT_ROUND_SECONDS = 90;
 
 export default function WhackAWordPage() {
+  const router = useRouter();
   // basic UI / routing hooks (router not required here)
+  const [isFullscreen, setIsFullscreen] = useState(false);
   // data
   const [cards, setCards] = useState<Card[]>([]);
   // game config
   const [useImages, setUseImages] = useState<boolean>(true); // default images for younger learners
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [difficulty, setDifficulty] = useState<WhackDifficulty>("medium");
   const holesCount = DEFAULT_HOLES;
   const roundSeconds = DEFAULT_ROUND_SECONDS;
 
@@ -38,14 +49,24 @@ export default function WhackAWordPage() {
   const [score, setScore] = useState<number>(0);
   const [roundHits, setRoundHits] = useState<number>(0);
   const [roundMisses, setRoundMisses] = useState<number>(0);
-  const [holes, setHoles] = useState<(Card | null)[]>(Array(holesCount).fill(null));
   const [showCardReveal, setShowCardReveal] = useState<boolean>(false);
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
 
-  // refs for intervals / timeouts
-  const spawnIntervalRef = useRef<number | null>(null);
-  const hideTimeoutsRef = useRef<Record<number, number>>({});
   const timerIntervalRef = useRef<number | null>(null);
+  const sceneApiRef = useRef<WhackSceneApi | null>(null);
+
+  useEffect(() => {
+    function onFullChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFullChange);
+    return () => document.removeEventListener("fullscreenchange", onFullChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
 
   // sounds - small web audio helper
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -117,16 +138,6 @@ export default function WhackAWordPage() {
     setShowCardReveal(false);
   }, [gameState, cards]);
 
-  // difficulty params
-  function getSpawnParams() {
-    if (difficulty === "easy") return { minSpawn: 900, maxSpawn: 1400, visible: 1400, basePoints: 2 };
-    if (difficulty === "hard") return { minSpawn: 350, maxSpawn: 700, visible: 800, basePoints: 1 };
-    return { minSpawn: 500, maxSpawn: 900, visible: 1100, basePoints: 1 }; // medium
-  }
-
-  // helper random
-  const randInt = (min: number, max: number) => Math.floor(min + Math.random() * (max - min + 1));
-
   // start round
   function startRound(teacherSaysCorrect: boolean) {
     setTeacherMarkedCorrect(teacherSaysCorrect);
@@ -149,115 +160,18 @@ export default function WhackAWordPage() {
         return t - 1;
       });
     }, 1000) as unknown as number;
-
-    // start spawn loop
-    const { minSpawn, maxSpawn } = getSpawnParams();
-    // spawn function called recursively using setTimeout to allow randomized intervals
-    const spawnLoop = () => {
-      if (gameState !== "playing") return;
-      spawnOne();
-      const delay = randInt(minSpawn, maxSpawn);
-      spawnIntervalRef.current = window.setTimeout(spawnLoop, delay) as unknown as number;
-    };
-    spawnLoop();
   }
 
   // stop round
   function stopRound() {
     setGameState("summary");
-    // clear spawn timers
-    if (spawnIntervalRef.current) {
-      window.clearTimeout(spawnIntervalRef.current);
-      spawnIntervalRef.current = null;
-    }
-    // clear hide timeouts for holes
-    Object.values(hideTimeoutsRef.current).forEach((id) => window.clearTimeout(id));
-    hideTimeoutsRef.current = {};
     // clear timer interval
     if (timerIntervalRef.current) {
       window.clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    // hide all holes
-    setHoles(Array(holesCount).fill(null));
     // placeholder: save result
     saveResult();
-  }
-
-  // spawn one item into a random empty hole
-  function spawnOne() {
-    // choose an empty hole
-    const emptyIndexes = holes.map((h, i) => (h ? -1 : i)).filter((i) => i >= 0);
-    if (emptyIndexes.length === 0) return;
-    const holeIdx = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
-
-    // choose a candidate: include target sometimes to ensure target appears
-    // weight target higher if teacher marked correct
-    const pool = [...cards];
-    // chance to pick target: 30% + (teacherCorrect ? 20% : 0)
-    const chanceTarget = 0.3 + (teacherMarkedCorrect ? 0.2 : 0);
-    const pickTarget = Math.random() < chanceTarget;
-    let chosen: Card;
-    if (pickTarget && targetCard) chosen = targetCard;
-    else {
-      // choose a distractor (not always excluding target to keep variety)
-      const others = pool.filter((c) => c.id !== (targetCard?.id ?? ""));
-      chosen = others.length ? others[Math.floor(Math.random() * others.length)] : pool[Math.floor(Math.random() * pool.length)];
-    }
-
-    // set hole visible
-    setHoles((h) => {
-      const copy = [...h];
-      copy[holeIdx] = chosen;
-      return copy;
-    });
-
-    // hide after visible duration
-    const { visible } = getSpawnParams();
-    const hideId = window.setTimeout(() => {
-      setHoles((h) => {
-        const copy = [...h];
-        copy[holeIdx] = null;
-        return copy;
-      });
-      delete hideTimeoutsRef.current[holeIdx];
-    }, visible) as unknown as number;
-    hideTimeoutsRef.current[holeIdx] = hideId;
-  }
-
-  // handle tap/click on a hole
-  function handleHit(holeIndex: number) {
-    const card = holes[holeIndex];
-    if (!card || gameState !== "playing") return;
-
-    // hide clicked immediately
-    setHoles((h) => {
-      const copy = [...h];
-      copy[holeIndex] = null;
-      return copy;
-    });
-    if (hideTimeoutsRef.current[holeIndex]) {
-      window.clearTimeout(hideTimeoutsRef.current[holeIndex]);
-      delete hideTimeoutsRef.current[holeIndex];
-    }
-
-    // is it the target?
-    if (targetCard && card.id === targetCard.id) {
-      // correct
-      const base = teacherMarkedCorrect ? 2 : 1; // teacher-correct boosts points this round
-      setScore((s) => s + base);
-      setRoundHits((h) => h + 1);
-      // positive sound & small animation (playTone)
-      playTone(900, 0.08, "sine", 0.03);
-      // optional quick effect: show reveal for a moment
-      setShowCardReveal(true);
-      window.setTimeout(() => setShowCardReveal(false), 500);
-    } else {
-      // incorrect: gentle feedback
-      setRoundMisses((m) => m + 1);
-      playTone(300, 0.12, "sine", 0.02);
-      // no points, no harsh penalty
-    }
   }
 
   // placeholder: save result to backend (hook up to Classendo / Supabase)
@@ -286,17 +200,50 @@ export default function WhackAWordPage() {
   // cleanup intervals/timeouts on unmount
   useEffect(() => {
     return () => {
-      if (spawnIntervalRef.current) window.clearTimeout(spawnIntervalRef.current);
-      Object.values(hideTimeoutsRef.current).forEach((id) => window.clearTimeout(id));
       if (timerIntervalRef.current) window.clearInterval(timerIntervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    sceneApiRef.current?.sync({
+      cards,
+      targetCard,
+      mode: gameState === "playing" ? "playing" : "idle",
+      useImages,
+      difficulty,
+      reducedMotion,
+      teacherMarkedCorrect: !!teacherMarkedCorrect,
+    });
+  }, [cards, targetCard, gameState, useImages, difficulty, reducedMotion, teacherMarkedCorrect]);
+
+  function handleSceneEvent(event: WhackSceneEvent) {
+    if (event.type !== "hit" || gameState !== "playing") return;
+    if (event.isTarget) {
+      const base = teacherMarkedCorrect ? 2 : 1;
+      setScore((s) => s + base);
+      setRoundHits((h) => h + 1);
+      playTone(900, 0.08, "sine", 0.03);
+      setShowCardReveal(true);
+      window.setTimeout(() => setShowCardReveal(false), 500);
+      return;
+    }
+
+    setRoundMisses((m) => m + 1);
+    playTone(300, 0.12, "sine", 0.02);
+  }
 
   // UI components & markup
   return (
     <div className="min-h-screen p-6 bg-gradient-to-b from-[#F6F9FF] to-[#EAF7FF] text-[#0B2545]">
       <div className="max-w-6xl mx-auto">
-        <header className="flex items-center justify-between mb-4">
+        <GameHeader
+          title="Whack-a-Word"
+          onExit={() => router.push("/games")}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+        />
+
+        <header className="flex items-center justify-between mb-4 pt-20">
           <div>
             <h1 className="text-2xl font-bold">Kawaii Whack-a-Word</h1>
             <div className="text-sm text-slate-600">Cute classroom vocabulary practice — Classendo</div>
@@ -369,36 +316,15 @@ export default function WhackAWordPage() {
             </div>
           </div>
 
-          {/* holes grid */}
-          <div className="grid grid-cols-3 gap-4 justify-center">
-            {holes.map((card, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleHit(idx)}
-                className="relative bg-[#FFEFEF] rounded-xl h-36 flex items-end justify-center overflow-hidden shadow-md hover:brightness-95"
-                aria-label={`Hole ${idx + 1}`}
-                style={{
-                  transition: reducedMotion ? "none" : "transform 120ms ease",
-                }}
-              >
-                {/* hole rim */}
-                <div className="absolute top-0 left-0 right-0 h-12 bg-[#FFF4E6] rounded-t-xl" />
-                {/* content */}
-                {card ? (
-                  <div className="z-10 mb-2 w-full flex items-center justify-center px-2">
-                    {useImages && card.image ? (
-                      <img src={card.image} alt={card.word} className="w-28 h-24 object-cover rounded-md" />
-                    ) : (
-                      <div className="px-3 py-2 bg-white rounded-md text-lg font-semibold">{card.word}</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="z-10 mb-2 w-full flex items-center justify-center px-2">
-                    <div className="w-28 h-24 rounded-md bg-[#FFF4E6]" />
-                  </div>
-                )}
-              </button>
-            ))}
+          <div className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden border border-[#dbeafe] bg-gradient-to-b from-[#fff8f3] to-[#fff0f5]">
+            <PhaserGameHost
+              className="w-full h-full"
+              createGame={createWhackWordGame}
+              onEvent={handleSceneEvent}
+              onApiReady={(api) => {
+                sceneApiRef.current = api as WhackSceneApi | null;
+              }}
+            />
           </div>
         </div>
 

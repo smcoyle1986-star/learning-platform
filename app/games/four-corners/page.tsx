@@ -2,8 +2,14 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Maximize } from "lucide-react";
-import { motion } from "framer-motion";
+import GameHeader from "@/components/games/GameHeader";
+import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createFourCornersGame,
+  type FourCornersSceneApi,
+  type FourCornersSceneEvent,
+} from "@/lib/games/phaser/four-corners";
 
 /*
   Four Corners — blackout selection with optional bomb animation (v-update)
@@ -34,6 +40,16 @@ const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/co
 
 export default function FourCornersPage() {
   const router = useRouter();
+  const sceneApiRef = useRef<FourCornersSceneApi | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFullChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFullChange);
+    return () => document.removeEventListener("fullscreenchange", onFullChange);
+  }, []);
 
   /* ---------- Lesson tray load (preserve) ---------- */
   const [tray, setTray] = useState<TrayCard[]>([]);
@@ -363,78 +379,31 @@ export default function FourCornersPage() {
     };
   }, []);
 
-  /* ---------- render helpers ---------- */
-  const renderThemeSVG = (i: number) => {
-    const style = { width: 160, height: 120 };
-    if (i === 0) {
-      return (
-        <svg viewBox="0 0 64 48" style={style} xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="6" width="60" height="36" rx="4" fill="#fff" stroke="#000" strokeOpacity="0.06" />
-          <rect x="8" y="12" width="48" height="4" rx="1" fill="#111827" opacity="0.85" />
-          <rect x="8" y="20" width="36" height="4" rx="1" fill="#111827" opacity="0.85" />
-          <rect x="8" y="28" width="28" height="4" rx="1" fill="#111827" opacity="0.85" />
-        </svg>
-      );
+  function handleSceneEvent(event: FourCornersSceneEvent) {
+    if (event.type === "start-click" && phase === "idle") {
+      setPhase("countdown");
+      startCountdown();
+      startSpotlight();
+      audio.playStart();
     }
-    if (i === 1) {
-      return (
-        <svg viewBox="0 0 64 48" style={style} xmlns="http://www.w3.org/2000/svg">
-          <circle cx="32" cy="24" r="20" fill="#fff" stroke="#000" strokeOpacity="0.06" />
-          <path d="M28 18a4 4 0 0 1 8 0c0 4-6 6-6 10" stroke="#111827" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <circle cx="32" cy="34" r="1.8" fill="#111827" />
-        </svg>
-      );
-    }
-    if (i === 2) {
-      return (
-        <svg viewBox="0 0 64 48" style={style} xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="6" width="60" height="36" rx="4" fill="#fff" stroke="#000" strokeOpacity="0.06" />
-          <circle cx="22" cy="14" r="3.2" fill="#111827" />
-          <path d="M24 18c2 0 4 1 5 3l4 6" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="M18 30c2 0 4-1 7-1l6 2" stroke="#111827" strokeWidth="2" strokeLinecap="round" fill="none" />
-        </svg>
-      );
-    }
-    return (
-      <svg viewBox="0 0 64 48" style={style} xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="6" width="60" height="36" rx="4" fill="#fff" stroke="#000" strokeOpacity="0.06" />
-        <rect x="8" y="18" width="48" height="4" rx="1" fill="#111827" opacity="0.85" />
-        <rect x="8" y="26" width="28" height="4" rx="1" fill="#111827" opacity="0.85" />
-        <line x1="12" y1="12" x2="52" y2="12" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-        <text x="32" y="34" textAnchor="middle" fill="#ef4444" fontSize="6" fontWeight="700">NO</text>
-      </svg>
-    );
-  };
 
-  function renderQuarter(i: number, title: string, caption: string, eliminatedFlag: boolean, spotlight: boolean, blacked: boolean) {
-    const colors = ["#6366f1", "#10b981", "#f59e0b", "#f43f5e"];
-    const bg = eliminatedFlag ? `${colors[i]}55` : colors[i];
-    return (
-      <div key={i} className="flex flex-col items-center justify-center p-6" style={{
-        background: bg,
-        opacity: eliminatedFlag ? 0.45 : 1,
-        transform: spotlight ? "scale(1.02)" : "scale(1)",
-        transition: "transform 240ms ease, opacity 300ms ease",
-        position: "relative",
-        borderTopLeftRadius: i===0 ? 16 : 0,
-        borderTopRightRadius: i===1 ? 16 : 0,
-        borderBottomLeftRadius: i===2 ? 16 : 0,
-        borderBottomRightRadius: i===3 ? 16 : 0,
-      }}>
-        <div style={{ width: 220, height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {renderThemeSVG(i)}
-        </div>
-        <div className="mt-4 text-xl font-semibold">{title}</div>
-        <div className="mt-2 text-sm text-white text-center max-w-xs">{caption}</div>
-        <div className={`mt-3 text-3xl font-extrabold ${spotlight ? "animate-pulse-fast" : ""}`}>{i+1}</div>
-
-        {/* black overlay when blacked */}
-        {blacked && (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.98)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: (i===0 || i===1) ? 16 : 0 }} />
-        )}
-      </div>
-    );
+    if (event.type === "next-click" && (phase === "bomb" || phase === "showcard")) {
+      onNextPressedByTeacher();
+    }
   }
+
+  useEffect(() => {
+    const currentCard = currentFlashcardIndex !== null ? tray[currentFlashcardIndex] : null;
+    sceneApiRef.current?.sync({
+      phase,
+      count,
+      spotlightIndex,
+      blackedOut,
+      eliminated,
+      currentCardWord: currentCard?.word ?? null,
+      currentCardImage: currentCard?.image ?? null,
+    });
+  }, [phase, count, spotlightIndex, blackedOut, eliminated, currentFlashcardIndex, tray]);
 
   /* ---------- render UI ---------- */
 
@@ -443,35 +412,28 @@ export default function FourCornersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-black">
-      <header className="fixed top-0 left-0 right-0 bg-white/95 border-b z-40">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center">
-            <a href="/" className="text-2xl font-extrabold" style={{ color: "#2563eb" }}>Classendo</a>
-            {/* Small, non-intrusive card counter */}
-            <div className="ml-3 px-2 py-0.5 text-xs text-gray-600 bg-white/60 rounded" aria-hidden>
-              Cards: {usedIndices.length}/{tray.length}
-            </div>
-          </div>
-
-          <div className="text-xl font-bold">Four Corners</div>
-
-          <div className="flex items-center gap-2">
-            <button onClick={resetAll} className="btn btn-secondary px-3 py-1">Reset game</button>
+      <GameHeader
+        title="Four Corners"
+        onExit={() => router.push("/games")}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={() => {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else document.documentElement.requestFullscreen();
+        }}
+        settingsOpen={settingsOpen}
+        onToggleSettings={() => setSettingsOpen((s) => !s)}
+        extraActions={(
+          <>
+            <button onClick={resetAll} className="btn btn-secondary px-3 py-2 text-sm">Reset game</button>
             <button
               onClick={() => audio.toggleMusic()}
-              className={`btn px-3 py-1 ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
+              className={`btn px-3 py-2 text-sm ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
             >
               {audio.musicOn ? "Music On" : "Music Off"}
             </button>
-            <button onClick={() => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }} className="btn btn-secondary px-3 py-1"><Maximize size={16} /></button>
-
-            {/* Exit game button: changed to green to match site */}
-            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2"><Play size={14} /> Exit</button>
-
-            <button onClick={() => setSettingsOpen(true)} className="btn btn-secondary px-3 py-1">Settings</button>
-          </div>
-        </div>
-      </header>
+          </>
+        )}
+      />
 
       {trayIsEmpty ? (
         <main style={{ paddingTop: 80 }} className="max-w-7xl mx-auto px-6 pb-12">
@@ -489,72 +451,21 @@ export default function FourCornersPage() {
       ) : (
         <main style={{ paddingTop: 80 }} className="max-w-7xl mx-auto px-6 pb-12">
           <div className="relative rounded-2xl shadow-xl overflow-hidden" style={{ height: "calc(100vh - 120px)" }}>
-            {/* quarter base colors */}
-            <div style={{ position: "absolute", inset: 0 }}>
-              <div style={{ position: "absolute", top: 0, left: 0, width: "50%", height: "50%", background: eliminated[0] ? "rgba(99,102,241,0.35)" : "#6366f1", borderTopLeftRadius: 16 }} />
-              <div style={{ position: "absolute", top: 0, right: 0, width: "50%", height: "50%", background: eliminated[1] ? "rgba(16,185,129,0.35)" : "#10b981", borderTopRightRadius: 16 }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, width: "50%", height: "50%", background: eliminated[2] ? "rgba(234,179,8,0.35)" : "#f59e0b", borderBottomLeftRadius: 16 }} />
-              <div style={{ position: "absolute", bottom: 0, right: 0, width: "50%", height: "50%", background: eliminated[3] ? "rgba(244,63,94,0.35)" : "#f43f5e", borderBottomRightRadius: 16 }} />
-            </div>
-
-            {/* grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", width: "100%", height: "100%" }}>
-              {renderQuarter(0, "Make a sentence", "Create a sentence using the prompt", eliminated[0], spotlightIndex === 0 && phase === "countdown", blackedOut[0])}
-              {renderQuarter(1, "Make a question", "Turn the prompt into a question", eliminated[1], spotlightIndex === 1 && phase === "countdown", blackedOut[1])}
-              {renderQuarter(2, "Do an action", "Act out / do an action from the prompt", eliminated[2], spotlightIndex === 2 && phase === "countdown", blackedOut[2])}
-              {renderQuarter(3, "Make a negative sentence", "Say the negative form", eliminated[3], spotlightIndex === 3 && phase === "countdown", blackedOut[3])}
-            </div>
-
-            {/* center overlay */}
-            <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", zIndex: 40 }}>
-              {phase === "idle" && (
-                <motion.button onClick={() => { setPhase("countdown"); startCountdown(); startSpotlight(); audio.playStart(); }} whileTap={{ scale: 0.96 }} className="btn btn-primary rounded-full px-10 py-5 font-extrabold shadow-lg" style={{ fontSize: 28 }}>
-                  Start
-                </motion.button>
-              )}
-
-              {phase === "countdown" && (
-                <div style={{ textAlign: "center" }}>
-                  <motion.div animate={{ scale: count <= 3 ? 1.12 : 1 }} style={{ fontSize: 88, fontWeight: 900, color: count <= 3 ? "#dc2626" : "#111827" }}>{count}</motion.div>
-                  <div className="mt-2 text-sm text-gray-600">Quick! Find a corner!</div>
-                </div>
-              )}
-
-              {phase === "animating" && (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 36, fontWeight: 800 }}>Selecting...</div>
-                </div>
-              )}
-
-              {phase === "bomb" && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ width: 420, height: 420, borderRadius: 999, background: "radial-gradient(circle at 30% 30%, rgba(255,200,0,0.95), rgba(255,80,0,0.9) 40%, rgba(80,0,0,0.85) 70%)", boxShadow: "0 20px 80px rgba(0,0,0,0.6)" }} />
-                  <div className="mt-4 text-3xl font-extrabold text-white">BOOM!</div>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="btn btn-secondary mt-4 px-6 py-2 font-semibold">Next</motion.button>
-                </div>
-              )}
-
-              {phase === "showcard" && currentFlashcardIndex !== null && tray[currentFlashcardIndex] && (
-                <motion.div initial={{ y: 6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center pointer-events-auto">
-                  {tray[currentFlashcardIndex].image ? (
-                    <img src={tray[currentFlashcardIndex].image} alt={tray[currentFlashcardIndex].word} style={{ width: 520, height: 340, objectFit: "contain", borderRadius: 12, boxShadow: "0 12px 36px rgba(0,0,0,0.12)" }} />
-                  ) : (
-                    <div style={{ width: 520, height: 280, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 12, background: "#fff", boxShadow: "0 12px 36px rgba(0,0,0,0.08)" }}>
-                      <div style={{ fontSize: 44, fontWeight: 900 }}>{tray[currentFlashcardIndex].word}</div>
-                    </div>
-                  )}
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={onNextPressedByTeacher} className="btn btn-secondary mt-4 px-6 py-2 font-semibold">Next</motion.button>
-                </motion.div>
-              )}
-            </div>
+            <PhaserGameHost
+              className="w-full h-full"
+              createGame={createFourCornersGame}
+              onEvent={handleSceneEvent}
+              onApiReady={(api) => {
+                sceneApiRef.current = api as FourCornersSceneApi | null;
+              }}
+            />
           </div>
         </main>
       )}
 
       {/* Settings modal */}
       {settingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <GameSettingsModal className="max-w-md">
             <h3 className="text-lg font-bold mb-2">Settings</h3>
             <div className="mb-4">
               <label className="text-sm text-gray-700">Bomb probability: {(bombProb*100).toFixed(0)}%</label>
@@ -562,30 +473,24 @@ export default function FourCornersPage() {
               <div className="text-xs text-gray-500 mt-1">Adjust how often a bomb animation appears (0% - 50%). Default 20%</div>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setSettingsOpen(false)} className="px-3 py-1 border rounded bg-white">Close</button>
+              <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1">Close</button>
             </div>
-          </div>
-        </div>
+        </GameSettingsModal>
       )}
 
       {/* Finished modal */}
       {phase === "finished" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-lg">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-lg">
             <div className="text-3xl font-extrabold mb-2">Congratulations — you survived!</div>
             <div className="text-sm text-gray-600 mb-6">All flashcards used or all quarters eliminated.</div>
             <div className="flex items-center justify-center gap-4">
               <button onClick={() => { setUsedIndices([]); setEliminated([false,false,false,false]); setPhase("idle"); }} className="btn btn-primary px-4 py-2">Play again</button>
               <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1">Return to Games</button>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
-
-      <style jsx>{`
-        .animate-pulse-fast { animation: pulse 700ms ease-in-out infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-      `}</style>
     </div>
   );
 }

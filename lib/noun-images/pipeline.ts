@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import {
   buildNounImagePrompt,
@@ -19,6 +22,17 @@ import {
 
 const IMAGE_BUCKET = "vocab-images";
 const IMAGE_CATEGORY = "noun";
+const DEFAULT_LOCAL_IMAGE_ROOT = "/Users/Sean/Desktop/nouns-backup";
+
+function getStorageRootFolder(category: string) {
+  const normalized = category.trim().toLowerCase();
+  if (normalized === "noun") return "nouns";
+  if (normalized === "adjective") return "adjectives";
+  if (normalized === "preposition") return "prepositions";
+  if (normalized === "phonic") return "phonics";
+  if (normalized === "verb") return "verbs";
+  return normalized.endsWith("s") ? normalized : `${normalized}s`;
+}
 
 function getMaxSubjectSizeForVariant(variantDef: NounVariantDefinition) {
   if (variantDef.promptProfile === "family" || variantDef.promptProfile === "jobs") {
@@ -54,12 +68,54 @@ async function retry<T>(
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
-function buildStoragePath(lemma: string, variant: string) {
+function buildStoragePath(
+  lemma: string,
+  variant: string,
+  category: string,
+  variantDef?: NounVariantDefinition
+) {
+  const rootFolder = getStorageRootFolder(category);
+
   if (lemma === "family friend") {
-    return `nouns/family_friend/${variant.replaceAll("family friend", "family_friend")}.png`;
+    return `${rootFolder}/family_friend/${variant.replaceAll("family friend", "family_friend")}.png`;
   }
 
-  return `nouns/${lemma}/${variant}.png`;
+  if (variantDef?.promptProfile === "holidays") {
+    if (lemma === "christmas") {
+      return `${rootFolder}/christmas_holidays/${variant.replaceAll("christmas", "christmas_holidays")}.png`;
+    }
+
+    if (lemma === "halloween") {
+      return `${rootFolder}/halloween_holidays/${variant.replaceAll("halloween", "halloween_holidays")}.png`;
+    }
+  }
+
+  if (variantDef?.promptProfile === "nature") {
+    if (lemma === "lake") {
+      return `${rootFolder}/lake_nature/${variant.replaceAll("lake", "lake_nature")}.png`;
+    }
+
+    if (lemma === "river") {
+      return `${rootFolder}/river_nature/${variant.replaceAll("river", "river_nature")}.png`;
+    }
+  }
+
+  return `${rootFolder}/${lemma}/${variant}.png`;
+}
+
+function getLocalImageRoot() {
+  return process.env.LOCAL_IMAGE_ROOT?.trim() || DEFAULT_LOCAL_IMAGE_ROOT;
+}
+
+async function saveFinalImageLocally(params: {
+  storagePath: string;
+  buffer: Buffer;
+}) {
+  const root = getLocalImageRoot();
+  const absolutePath = path.join(root, params.storagePath);
+  fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+  fs.writeFileSync(absolutePath, params.buffer);
+  return absolutePath;
 }
 
 async function uploadFinalImage(params: {
@@ -175,6 +231,7 @@ async function processVariant(params: {
   category: string;
   variantDef: NounVariantDefinition;
   overwriteExisting: boolean;
+  uploadToSupabase: boolean;
 }): Promise<GeneratedNounImage> {
   const { prompt, negativePrompt } = buildNounImagePrompt({
     lemma: params.lemma,
@@ -182,7 +239,7 @@ async function processVariant(params: {
     variant: params.variantDef,
   });
 
-  if (!params.overwriteExisting) {
+  if (params.uploadToSupabase && !params.overwriteExisting) {
     const existing = await getExistingVocabImage({
       nounId: params.nounId,
       lemma: params.lemma,
@@ -239,21 +296,35 @@ async function processVariant(params: {
     1_500
   );
 
-  const storagePath = buildStoragePath(params.lemma, params.variantDef.variant);
-  const publicUrl = await uploadFinalImage({
-    path: storagePath,
+  const storagePath = buildStoragePath(
+    params.lemma,
+    params.variantDef.variant,
+    params.category,
+    params.variantDef
+  );
+  const localPath = await saveFinalImageLocally({
+    storagePath,
     buffer: transparentBuffer.buffer,
   });
 
-  await upsertVocabImageRow({
-    nounId: params.nounId,
-    lemma: params.lemma,
-    category: params.category,
-    variant: params.variantDef.variant,
-    imagePath: storagePath,
-    isDefault: params.variantDef.isDefault,
-    isPremium: params.variantDef.isPremium,
-  });
+  let publicUrl = localPath;
+
+  if (params.uploadToSupabase) {
+    publicUrl = await uploadFinalImage({
+      path: storagePath,
+      buffer: transparentBuffer.buffer,
+    });
+
+    await upsertVocabImageRow({
+      nounId: params.nounId,
+      lemma: params.lemma,
+      category: params.category,
+      variant: params.variantDef.variant,
+      imagePath: storagePath,
+      isDefault: params.variantDef.isDefault,
+      isPremium: params.variantDef.isPremium,
+    });
+  }
 
   return {
     lemma: params.lemma,
@@ -264,6 +335,7 @@ async function processVariant(params: {
     variantNumber: params.variantDef.variantNumber,
     imagePath: storagePath,
     publicUrl,
+    localPath,
     isDefault: params.variantDef.isDefault,
     isPremium: params.variantDef.isPremium,
     prompt,
@@ -286,6 +358,7 @@ export async function generateNounImageSet(input: NounGenerationInput) {
 
   const category = input.category ?? IMAGE_CATEGORY;
   const overwriteExisting = input.overwriteExisting ?? false;
+  const uploadToSupabase = input.uploadToSupabase ?? false;
   let variantDefs = planNounImageVariants({
     lemma,
     countability,
@@ -304,6 +377,7 @@ export async function generateNounImageSet(input: NounGenerationInput) {
       category,
       variantDef,
       overwriteExisting,
+      uploadToSupabase,
     });
     results.push(result);
   }

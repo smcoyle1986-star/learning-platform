@@ -10,6 +10,55 @@ import {
 } from "@/lib/noun-images/variants";
 
 const PLACE_NOUNS = new Set(["airport", "amusement park", "aquarium"]);
+const PLACES_THEME_NOUNS = new Set([
+  "airport",
+  "amusement park",
+  "aquarium",
+  "bakery",
+  "bank",
+  "barber shop",
+  "beach",
+  "book store",
+  "bus stop",
+  "bus terminal",
+  "cafe",
+  "church",
+  "cinema",
+  "clothes store",
+  "coffee shop",
+  "convenience store",
+  "dentist",
+  "department store",
+  "electronics store",
+  "factory",
+  "fire station",
+  "gas station",
+  "hair salon",
+  "hospital",
+  "hotel",
+  "island",
+  "kids cafe",
+  "lake",
+  "library",
+  "museum",
+  "ocean",
+  "offices",
+  "park",
+  "pharmacy",
+  "police station",
+  "post office",
+  "restaurant",
+  "river",
+  "school",
+  "shoe store",
+  "shopping center",
+  "stadium",
+  "supermarket",
+  "swimming pool",
+  "train station",
+  "veterinary clinic",
+  "zoo",
+]);
 const TIME_NOUNS = new Set(["afternoon", "april"]);
 const DATES_NOUNS = new Set([
   "april",
@@ -35,6 +84,68 @@ const DATES_NOUNS = new Set([
   "tuesday",
   "wednesday",
 ]);
+const NUMBERS_NOUNS = new Set([
+  "eight",
+  "eighteen",
+  "eighty",
+  "eleven",
+  "fifteen",
+  "fifty",
+  "five",
+  "forty",
+  "four",
+  "fourteen",
+  "nine",
+  "nineteen",
+  "ninety",
+  "number",
+  "one",
+  "one hundred",
+  "one hundred thousand",
+  "one million",
+  "one thousand",
+  "seven",
+  "seventeen",
+  "seventy",
+  "six",
+  "sixteen",
+  "sixty",
+  "ten",
+  "ten thousand",
+  "thirteen",
+  "thirty",
+  "thirty one",
+  "three",
+  "twelve",
+  "twenty",
+  "twenty eight",
+  "twenty five",
+  "twenty four",
+  "twenty nine",
+  "twenty one",
+  "twenty seven",
+  "twenty six",
+  "twenty three",
+  "twenty two",
+  "two",
+]);
+const HOLIDAYS_NOUNS = new Set([
+  "budha's birthday",
+  "children's day",
+  "christmas",
+  "christmas eve",
+  "diwali",
+  "easter",
+  "halloween",
+  "hanukkah",
+  "independence day",
+  "lunar new year",
+  "new year's eve",
+  "ramadan",
+  "st patrick's day",
+  "thanksgiving",
+  "valentines day",
+]);
 const FAMILY_NOUNS = new Set([
   "aunt",
   "baby",
@@ -47,6 +158,18 @@ const FAMILY_NOUNS = new Set([
   "mother",
   "sister",
   "uncle",
+]);
+const PEOPLE_NOUNS = new Set([
+  "adult",
+  "boy",
+  "child",
+  "friend",
+  "girl",
+  "man",
+  "neighbor",
+  "person",
+  "teenager",
+  "woman",
 ]);
 const JOBS_NOUNS = new Set([
   "architect",
@@ -108,6 +231,26 @@ const DRINK_NOUNS = new Set([
   "soda",
   "tea",
   "water",
+]);
+const NATURE_NOUNS = new Set([
+  "bee",
+  "bug",
+  "bush",
+  "butterfly",
+  "desert",
+  "flower",
+  "forest",
+  "grass",
+  "jungle",
+  "lake",
+  "mosquito",
+  "mountain",
+  "pond",
+  "river",
+  "rock",
+  "spider",
+  "tree",
+  "worm",
 ]);
 const PROFESSION_NOUNS = new Set(["adult", "architect"]);
 const FRUIT_NOUNS = new Set([
@@ -360,6 +503,18 @@ function selectJobsCharacterReference(lemma: string, variantNumber: NounVariantN
 }
 
 export const nounImageOverrides: Record<string, NounImageOverride> = {
+  adult: {
+    variants: [1, 2],
+    promptProfile: "people",
+    variantPromptNotes: {
+      1: "Show one adult person only. Match the same polished Classendo character style as the successful people images, especially woman_1 and teenager_1. The face must be soft, polished, and friendly. The eyes are the most important part: give this person clearly colored eyes with visible white sclera, medium-sized brown, hazel, blue, or green irises, bright catchlight highlights, soft upper eyelids, and a warm expressive look with personality. The eyes must not be solid black, black-dot, bead-like, button-like, blank, or tiny simplified eyes. Keep the whole figure fully visible from head to toe with generous space so nothing is cropped.",
+      2: "Show two or three adult people only. Match the same polished Classendo character style as the successful people batch, especially woman_2 and teenager_2. The face and eye rendering must be consistent across all adults: clearly colored eyes with visible white sclera, medium-sized brown, hazel, blue, or green irises, bright catchlight highlights, soft upper eyelids, and warm expressive personality. Do not use solid black eyes, black-dot eyes, bead eyes, button eyes, blank eyes, or tiny simplified eyes. Keep all figures fully visible with generous spacing so nobody is cropped.",
+    },
+    variantStyleReferencePaths: {
+      1: "/Users/Sean/Desktop/maya.png",
+      2: "/Users/Sean/Desktop/owen.png",
+    },
+  },
   aunt: {
     variants: [1, 2, 3],
     promptProfile: "family",
@@ -545,15 +700,6 @@ export const nounImageOverrides: Record<string, NounImageOverride> = {
       1: "Show one cup of tea only.",
       2: "Show one teapot of tea only.",
       3: "Show four or five tea cups only, all sitting on one tray. There must be no teapot, no kettle, no mugs, and no mixed container types. All cups must use the same teacup style. Show light amber tea visible in every cup. Separate the cups enough to read clearly. No writing, no labels, and no extra objects.",
-    },
-  },
-  adult: {
-    variants: [1, 2],
-    promptProfile: "profession",
-    useStyleReference: false,
-    variantPromptNotes: {
-      1: "Show one adult person only, clearly visible, friendly, full body or upper body, simple everyday clothing, no children.",
-      2: "Show two adult people together, clearly visible, friendly, simple everyday clothing, no children.",
     },
   },
   afternoon: {
@@ -917,6 +1063,119 @@ export const nounImageOverrides: Record<string, NounImageOverride> = {
       3: "Show one child character using a workbook that clearly looks like a workbook, thicker and more structured than a notebook, with workbook-style pages or cover detail, and not like a simple notebook.",
     },
   },
+  neighbor: {
+    variants: [1, 2],
+    promptProfile: "people",
+    variantPromptNotes: {
+      1: "Include a little neighborhood context such as a house front, front gate, fence, mailbox, or garden path, while keeping one friendly neighbor person as the dominant subject.",
+      2: "Show two or three neighbors together in a friendly neighborhood interaction with small house-front, fence, gate, or mailbox context so it clearly reads as neighbors.",
+    },
+  },
+  library: {
+    variants: [2],
+    promptProfile: "places",
+    variantPromptNotes: {
+      2: "Make the two or three library buildings unique from each other, but clearly all libraries. Use clear book-related visual symbols and library-style building details. Do not use any writing.",
+    },
+  },
+  hospital: {
+    variants: [2],
+    promptProfile: "places",
+    variantPromptNotes: {
+      2: "Make the hospitals unique from each other while still clearly hospitals. Use medical cross symbols and hospital-style building details. Do not use any writing.",
+    },
+  },
+  restaurant: {
+    variants: [2],
+    promptProfile: "places",
+    variantPromptNotes: {
+      2: "Make the restaurants unique from each other while still clearly restaurants. Use simple fork-and-spoon or plate symbols instead of writing. Do not use any text.",
+    },
+  },
+  school: {
+    variants: [2],
+    promptProfile: "places",
+    variantPromptNotes: {
+      2: "Make the schools unique from each other while still clearly schools. Use simple school symbols such as a bell, bus, or playground details instead of writing. Do not use any text.",
+    },
+  },
+  bee: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show many bees flying around flowers in one clear outdoor nature setting. The image must clearly show multiple bees, not one single bee. Keep the bees readable and separate enough to identify, while still feeling like a natural busy group around flowers.",
+    },
+  },
+  bug: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a variety of bugs together in one natural outdoor setting, such as on leaves or garden ground. Use more than one kind of bug and clearly show multiple bugs, not one single ladybug.",
+    },
+  },
+  bush: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a large hedgerow made of many connected bushes in one natural outdoor setting. It must clearly look like a long row of bushes, not a single bush.",
+    },
+  },
+  jungle: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a rich jungle scene with dense tropical plants and vines only. Do not include any writing, signs, symbols, letters, or text anywhere in the image.",
+    },
+  },
+  lake: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a bird's-eye view, zoomed out, of two large lakes near each other in one natural landscape. It must clearly show two lakes, not one single lake. Keep the view clean and easy to understand.",
+    },
+  },
+  mosquito: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a swarm of many mosquitoes in one outdoor nature setting. Clearly include multiple mosquitoes, with some close enough to show detail, not just one single mosquito.",
+    },
+  },
+  pond: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a fancy garden scene with two ponds. One pond should contain carp, and the other should have a small water creek falling into it. It must clearly show two ponds, not one single pond.",
+    },
+  },
+  river: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a bird's-eye view of two rivers running close to each other in one natural landscape. It must clearly show two rivers, not one single river. Do not include any writing, signs, letters, symbols, or text anywhere in the image.",
+    },
+  },
+  spider: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a few spiders on their webs in one outdoor setting. It must clearly show multiple spiders and multiple webs, not one single spider.",
+    },
+  },
+  tree: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show a row of trees on both sides of a road, creating a tunnel effect. It must clearly show many trees in one setting, not one single tree.",
+    },
+  },
+  worm: {
+    variants: [1, 2],
+    promptProfile: "nature",
+    variantPromptNotes: {
+      2: "Show many worms in an underground soil setting. It must clearly show multiple worms in the earth, not one single worm.",
+    },
+  },
   broccoli: {
     variants: [1, 2],
     promptProfile: "vegetable",
@@ -943,8 +1202,13 @@ function inferVariantNumbers(
   lemma: string,
   countability: Exclude<NounCountability, "both">
 ): NounVariantNumber[] {
+  if (HOLIDAYS_NOUNS.has(lemma)) return [1, 2];
   if (JOBS_NOUNS.has(lemma)) return [1, 2];
+  if (PEOPLE_NOUNS.has(lemma)) return [1, 2];
+  if (NUMBERS_NOUNS.has(lemma)) return [1];
+  if (PLACES_THEME_NOUNS.has(lemma)) return [2];
   if (DATES_NOUNS.has(lemma)) return [1, 2];
+  if (NATURE_NOUNS.has(lemma)) return [1, 2];
   if (CLOTHES_NOUNS.has(lemma)) return [1, 2];
   if (CLASSROOM_NOUNS.has(lemma)) return [1, 2, 3];
   if (BODY_NOUNS.has(lemma)) return [1, 2, 3];
@@ -976,12 +1240,22 @@ export function planNounImageVariants(params: {
     .map((variant) => {
       const promptProfile =
         override?.promptProfile
-        ?? (DATES_NOUNS.has(lemma)
+        ?? (HOLIDAYS_NOUNS.has(lemma)
+          ? "holidays"
+          : DATES_NOUNS.has(lemma)
           ? "dates"
+          : PEOPLE_NOUNS.has(lemma)
+          ? "people"
+          : NUMBERS_NOUNS.has(lemma)
+          ? "numbers"
+          : PLACES_THEME_NOUNS.has(lemma)
+          ? "places"
           : FAMILY_NOUNS.has(lemma)
           ? "family"
           : JOBS_NOUNS.has(lemma)
           ? "jobs"
+          : NATURE_NOUNS.has(lemma)
+          ? "nature"
           : DRINK_NOUNS.has(lemma)
           ? "drink"
           : FRUIT_NOUNS.has(lemma)
@@ -1014,6 +1288,8 @@ export function planNounImageVariants(params: {
             ? variant.variantNumber === 1
               ? "high"
               : "medium"
+            : promptProfile === "numbers"
+              ? "low"
             : undefined,
         useStyleReference:
           promptProfile === "body"
@@ -1023,6 +1299,8 @@ export function planNounImageVariants(params: {
               )
             : promptProfile === "family"
               ? variant.variantNumber === 1
+            : promptProfile === "people"
+              ? true
             : promptProfile === "jobs"
               ? true
             : promptProfile === "classroom"
@@ -1035,6 +1313,9 @@ export function planNounImageVariants(params: {
                 ? selectBodyCharacterReference(lemma, variant.variantNumber)
                 : undefined)
             : promptProfile === "family" && variant.variantNumber === 1
+              ? override?.variantStyleReferencePaths?.[variant.variantNumber]
+                ?? selectFamilyCharacterReference(lemma, variant.variantNumber)
+            : promptProfile === "people"
               ? override?.variantStyleReferencePaths?.[variant.variantNumber]
                 ?? selectFamilyCharacterReference(lemma, variant.variantNumber)
             : promptProfile === "jobs"

@@ -27,10 +27,24 @@ const RECENT_LIMIT = 8;
    -------------------------*/
 
 // Normalize a saved lesson object so downstream code sees a stable shape
+function normalizeLessonCard(raw: any) {
+  return {
+    ...raw,
+    id: raw?.id ?? String(Date.now()),
+    word: raw?.word ?? raw?.front ?? raw?.text ?? "",
+    image: raw?.image ?? raw?.back ?? raw?.image_url ?? raw?.img ?? null,
+    back: raw?.back ?? raw?.image ?? raw?.image_url ?? raw?.img ?? null,
+    image_id: raw?.image_id ?? null,
+    position: raw?.position ?? 0,
+  };
+}
+
 function normalizeLesson(raw: any): Lesson {
   const id = raw?.id ?? String(Date.now());
   const name = raw?.name ?? "Untitled";
-  const cards = Array.isArray(raw?.cards) ? raw.cards.filter(Boolean) : [];
+  const cards = Array.isArray(raw?.cards)
+    ? raw.cards.filter(Boolean).map(normalizeLessonCard)
+    : [];
   const useCount = Number(raw?.useCount ?? 0);
   const lastUsed =
     raw?.lastUsed === undefined || raw?.lastUsed === null
@@ -224,7 +238,9 @@ export default function DashboardPage() {
           cardsBySet[lid].push({
             id: c.id,
             word: c.front,
+            image: c.back,
             back: c.back,
+            image_id: null,
             position: c.position,
           });
         });
@@ -856,6 +872,15 @@ export default function DashboardPage() {
                     key={index}
                     className="border rounded-lg p-3 text-sm bg-[var(--color-bg-soft)]"
                   >
+                    {card.image ? (
+                      <div className="mb-2 w-full h-24 rounded-md bg-white border border-black/5 overflow-hidden flex items-center justify-center">
+                        <img
+                          src={card.image}
+                          alt={card.word || card.text || "Card image"}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                    ) : null}
                     {card.word || card.text || "Card"}
                   </div>
                 ))}

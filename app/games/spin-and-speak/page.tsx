@@ -2,7 +2,14 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Maximize, Minimize } from "lucide-react";
+import GameHeader from "@/components/games/GameHeader";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createSpinWheelGame,
+  type SpinSegment,
+  type SpinWheelApi,
+  type SpinWheelEvent,
+} from "@/lib/games/phaser/spin-wheel";
 
 type GameCard = {
   id: string;
@@ -19,15 +26,16 @@ type Team = {
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /* Segments: question, act, sentence, read (emoji used as picture) */
-const SEGMENTS = [
+const SEGMENTS: SpinSegment[] = [
   { id: "question", emoji: "❓", label: "Answer a Question" },
   { id: "act", emoji: "🎭", label: "Act or Describe" },
   { id: "sentence", emoji: "✏️", label: "Make a Sentence" },
   { id: "read", emoji: "🗣️", label: "Read Aloud" },
-] as const;
+];
 
 export default function SpinAndSpeakPage() {
   const router = useRouter();
+  const sceneApiRef = useRef<SpinWheelApi | null>(null);
 
   // Fullscreen handling
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -181,24 +189,9 @@ export default function SpinAndSpeakPage() {
     else stopMusicLoop();
   }
 
-  // Wheel animation via RAF
-  const [spinRotation, setSpinRotation] = useState(0); // degrees
-  const spinningRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
-  const animStartRef = useRef(0);
-  const animDurationRef = useRef(0);
-  const animStartRotRef = useRef(0);
-  const animTargetRotRef = useRef(0);
-
-  const notchCount = 36;
-  const lastNotchRef = useRef<number | null>(null);
-
   const [spinning, setSpinning] = useState(false);
-  const [landedSegment, setLandedSegment] = useState<typeof SEGMENTS[number] | null>(null);
+  const [landedSegment, setLandedSegment] = useState<SpinSegment | null>(null);
   const [showPopup, setShowPopup] = useState(false);
-
-  // compute notch positions client-side to avoid hydration mismatch
-  const [notchPositions, setNotchPositions] = useState<{ x1: number; y1: number; x2: number; y2: number }[] | null>(null);
 
   // Timer
   const TIMER_OPTIONS = [10, 15, 20, 30] as const;
@@ -231,127 +224,28 @@ export default function SpinAndSpeakPage() {
     clearTimer();
   }
 
-  function playNotchClick() {
-    playTone(1200, 0.03, "square", 0.04);
-  }
-  function easeOutCubic(t: number) {
-    return 1 - Math.pow(1 - t, 3);
-  }
-  function notchIndexForAngle(angle: number) {
-    let a = angle % 360;
-    if (a < 0) a += 360;
-    const degPerNotch = 360 / notchCount;
-    return Math.floor(a / degPerNotch);
-  }
-
-  // SVG geometry helpers (deterministic)
-  const cx = 150;
-  const cy = 150;
-  const r = 140;
-  function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-    const angleRad = ((angleDeg - 90) * Math.PI) / 180.0;
-    return {
-      x: cx + r * Math.cos(angleRad),
-      y: cy + r * Math.sin(angleRad),
-    };
-  }
-  function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number) {
-    const start = polarToCartesian(cx, cy, r, endAngle);
-    const end = polarToCartesian(cx, cy, r, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    return ["M", cx, cy, "L", start.x, start.y, "A", r, r, 0, largeArcFlag, 0, end.x, end.y, "Z"].join(" ");
-  }
-
-  useEffect(() => {
-    // compute notch positions once on client to avoid SSR/CSR differences
-    const positions: { x1: number; y1: number; x2: number; y2: number }[] = [];
-    for (let n = 0; n < notchCount; n++) {
-      const angle = (n / notchCount) * 360;
-      const inner = polarToCartesian(cx, cy, r - 6, angle);
-      const outer = polarToCartesian(cx, cy, r + 6, angle);
-      positions.push({ x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y });
+  function handleSpinSceneEvent(event: SpinWheelEvent) {
+    if (event.type === "spin-start") {
+      setSpinning(true);
+      playTone(780, 0.06, "triangle", 0.06);
+      return;
     }
-    setNotchPositions(positions);
-  }, []);
 
-  function animateTo(targetRotation: number, durationMs: number, onComplete?: (finalRotation: number) => void) {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    animStartRef.current = performance.now();
-    animDurationRef.current = durationMs;
-    animStartRotRef.current = spinRotation;
-    animTargetRotRef.current = targetRotation;
-    lastNotchRef.current = notchIndexForAngle(spinRotation);
-
-    const loop = (now: number) => {
-      const elapsed = now - animStartRef.current;
-      const t = Math.min(1, elapsed / animDurationRef.current);
-      const eased = easeOutCubic(t);
-      const current = animStartRotRef.current + (animTargetRotRef.current - animStartRotRef.current) * eased;
-      setSpinRotation(current);
-
-      const currentNotch = notchIndexForAngle(current);
-      if (lastNotchRef.current !== null && currentNotch !== lastNotchRef.current) {
-        let steps = currentNotch - lastNotchRef.current;
-        if (steps < 0) steps += notchCount;
-        for (let s = 0; s < steps; s++) {
-          playNotchClick();
-        }
-        lastNotchRef.current = currentNotch;
-      }
-
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(loop);
-      } else {
-        rafRef.current = null;
-        // ensure final state set
-        setSpinRotation(animTargetRotRef.current);
-        if (onComplete) onComplete(animTargetRotRef.current);
-      }
-    };
-    rafRef.current = requestAnimationFrame(loop);
-  }
-
-  // Spin: duration random among 3000,4000,5000,6000 ms and determine landing by final rotation
-  function spinWheel(autoStartTimer = true) {
-    if (spinningRef.current || timerActive || showPopup) return;
-    if (tray.length === 0) return;
-    spinningRef.current = true;
-    setSpinning(true);
-    playTone(780, 0.06, "triangle", 0.06);
-
-    const segCount = SEGMENTS.length;
-    const rotations = 4 + Math.floor(Math.random() * 4); // 4..7
-    const chosen = Math.floor(Math.random() * segCount); // used to compute target offset to avoid degenerate landings
-    const segAngle = 360 / segCount;
-    const offset = chosen * segAngle + segAngle / 2;
-    const target = spinRotation + rotations * 360 + offset;
-
-    // choose random duration from {3,4,5,6} seconds
-    const secondsOptions = [3, 4, 5, 6];
-    const seconds = secondsOptions[Math.floor(Math.random() * secondsOptions.length)];
-    const duration = seconds * 1000;
-
-    animateTo(target, duration, (finalRotation) => {
-      spinningRef.current = false;
+    if (event.type === "spin-landed") {
       setSpinning(false);
-      // Determine which segment is at the pointer (top) given finalRotation
-      // Normalized angle for wheel center -> the segment whose center A satisfies (A + finalRotation) % 360 == 0
-      // So compute normalized = (360 - (finalRotation % 360)) % 360, then index = floor(normalized / 90)
-      let normalized = 360 - (finalRotation % 360);
-      normalized = ((normalized % 360) + 360) % 360;
-      const index = Math.floor(normalized / segAngle) % segCount;
-      const landed = SEGMENTS[index];
-      setLandedSegment(landed);
+      setLandedSegment(event.segment);
       playTone(520, 0.18, "sine", 0.08);
       setShowPopup(true);
-      setTimeout(() => {
+      window.setTimeout(() => {
         setShowPopup(false);
-        if (autoStartTimer) startTimer(turnLength);
+        startTimer(turnLength);
       }, 3000);
-    });
+    }
+  }
+
+  function spinWheel() {
+    if (spinning || timerActive || showPopup || tray.length === 0) return;
+    sceneApiRef.current?.spin();
   }
 
   // Turn resolution
@@ -399,7 +293,6 @@ export default function SpinAndSpeakPage() {
     setLandedSegment(null);
     setShowPopup(false);
     setSpinning(false);
-    setSpinRotation(0);
     clearTimer();
     setWinnerModalOpen(false);
     setWinnerTeam(null);
@@ -408,10 +301,6 @@ export default function SpinAndSpeakPage() {
   }
 
   const remainingCount = Math.max(0, tray.length - usedIndices.length);
-
-  // wheel sizing; make smaller so it fits, but still larger when spinning (bounded)
-  const wheelIdleSize = 280;
-  const wheelMaxSpinning = isFullscreen ? "min(78vw,560px)" : "min(68vw,460px)";
 
   // --- SAFE image handling: compute currentCard & imgSrc so we never pass empty string to <img src=...>
   const currentCard = currentCardIndex !== null && tray[currentCardIndex] ? tray[currentCardIndex] : null;
@@ -422,93 +311,32 @@ export default function SpinAndSpeakPage() {
 
   return (
     <div className="min-h-screen bg-[hsl(140,40%,95%)] text-black antialiased"> {/* pastel green background */}
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-2xl font-extrabold text-blue-600">Classendo</a>
-          <div className="text-xl font-bold">Spin & Speak</div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleFullscreen}
-              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              className="btn btn-secondary p-2"
-            >
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-            </button>
-            {/* Exit button uses site green */}
-            <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1 flex items-center gap-2">
-              <Play size={14} /> Exit
-            </button>
-          </div>
-        </div>
-      </header>
+      <GameHeader
+        title="Spin & Speak"
+        onExit={() => router.push("/games")}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+      />
 
       {/* Main */}
       <main className="pt-[72px] max-w-7xl mx-auto px-4 h-[calc(100vh-72px)]">
         <div className="h-full flex gap-6">
           {/* Wheel */}
           <section className="w-1/3 flex flex-col items-center justify-center">
-            <div className="relative flex items-center justify-center">
-              <div
-                style={{
-                  width: spinning ? wheelMaxSpinning : `${wheelIdleSize}px`,
-                  height: spinning ? wheelMaxSpinning : `${wheelIdleSize}px`,
-                  transition: "width 360ms ease, height 360ms ease",
-                  maxWidth: "100%",
+            <div className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
+              <PhaserGameHost
+                className="w-full h-full"
+                createGame={(context) => createSpinWheelGame({ ...context, segments: SEGMENTS })}
+                onEvent={handleSpinSceneEvent}
+                onApiReady={(api) => {
+                  sceneApiRef.current = api as SpinWheelApi | null;
                 }}
-                className="flex items-center justify-center"
-              >
-                <svg viewBox="0 0 300 300" className="w-full h-full" style={{ transform: `rotate(${spinRotation}deg)` }}>
-                  {/* four quarter slices */}
-                  {SEGMENTS.map((seg, i) => {
-                    const start = i * 90;
-                    const end = start + 90;
-                    const colors = ["#FF6B6B", "#FFD166", "#6BCB77", "#7CC7FF"];
-                    return (
-                      <path key={seg.id} d={describeArc(cx, cy, r, start, end)} fill={colors[i % colors.length]} stroke="#fff" strokeWidth="0" />
-                    );
-                  })}
-
-                  {/* center hub */}
-                  <circle cx={cx} cy={cy} r={48} fill="#ffffff" stroke="rgba(0,0,0,0.06)" strokeWidth="2" />
-
-                  {/* emoji pictures */}
-                  {SEGMENTS.map((seg, i) => {
-                    const angle = i * 90 + 45;
-                    const pos = polarToCartesian(cx, cy, r * 0.57, angle);
-                    return (
-                      <text key={seg.id} x={pos.x} y={pos.y + 8} textAnchor="middle" fontSize="34" style={{ pointerEvents: "none" }}>
-                        {seg.emoji}
-                      </text>
-                    );
-                  })}
-
-                  {/* notches: render only after client computed positions to avoid hydration mismatch */}
-                  {notchPositions &&
-                    notchPositions.map((p, idx) => (
-                      <line
-                        key={idx}
-                        x1={p.x1}
-                        y1={p.y1}
-                        x2={p.x2}
-                        y2={p.y2}
-                        stroke="#333"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        opacity="0.9"
-                      />
-                    ))}
-                </svg>
-              </div>
-
-              <div className="absolute left-1/2 transform -translate-x-1/2 -top-6">
-                <div className="w-10 h-10 md:w-14 md:h-14 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg">▼</div>
-              </div>
+              />
             </div>
 
             <div className="mt-6">
               <button
-                onClick={() => spinWheel(true)}
+                onClick={spinWheel}
                 disabled={spinning || timerActive || showPopup || tray.length === 0}
                 className={`btn btn-primary px-6 py-3 text-lg font-bold shadow-2xl transition ${
                   spinning || timerActive || showPopup || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"

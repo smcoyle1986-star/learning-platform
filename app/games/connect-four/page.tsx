@@ -2,8 +2,16 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Maximize, Music, RefreshCw } from "lucide-react";
+import { Music, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import GameHeader from "@/components/games/GameHeader";
+import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createConnectFourGame,
+  type ConnectFourSceneApi,
+  type ConnectFourSceneEvent,
+} from "@/lib/games/phaser/connect-four";
 
 /*
   Connect Four — Classendo style
@@ -250,6 +258,7 @@ function selectAiMove(board: Cell[][], rows: number, cols: number, level: AiLeve
 
 export default function ConnectFourPage() {
   const router = useRouter();
+  const sceneApiRef = useRef<ConnectFourSceneApi | null>(null);
 
   // lesson-tray
   const [tray, setTray] = useState<TrayCard[]>([]);
@@ -582,10 +591,6 @@ export default function ConnectFourPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchWins]);
 
-  function renderTokenDisc(player: Player) {
-    return <div className={`w-8 h-8 rounded-full ${player === 1 ? "bg-red-500" : "bg-yellow-400"}`} />;
-  }
-
   // TimerBadge - dramatic when <= 5
   const TimerBadge = () => {
     const danger = turnTimer <= 5;
@@ -619,28 +624,49 @@ export default function ConnectFourPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleSceneEvent(event: ConnectFourSceneEvent) {
+    if (event.type === "column-click") {
+      handleColumnClick(event.col);
+    }
+  }
+
+  useEffect(() => {
+    sceneApiRef.current?.sync({
+      rows: boardRows,
+      cols: boardCols,
+      board,
+      cursorCol,
+      currentPlayer,
+      winnerLine,
+      falling,
+    });
+  }, [boardRows, boardCols, board, cursorCol, currentPlayer, winnerLine, falling]);
+
   // UI
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)] p-6">
+    <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)] p-6 pt-24">
       <div className={`mx-auto ${inFullscreen ? "max-w-full" : "max-w-6xl"}`}>
-        <header className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <a href="/" className="text-2xl font-extrabold text-blue-700">Classendo</a>
-            <h1 className="text-xl font-semibold">Connect Four</h1>
-            <div className="ml-3 text-sm text-gray-500">{boardCols} × {boardRows}</div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <TurnBadge />
-            <button onClick={() => restartMatch()} className={CBUTTON}><RefreshCw size={14} />Restart</button>
-            <button onClick={() => router.push("/games")} className={CBUTTON}>Return</button>
-            <button onClick={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }} className={CBUTTON}><Maximize size={14} />Fullscreen</button>
-            <button onClick={() => toggleMusic()} className={CBUTTON}><Music size={14} />{musicOn ? "Music On" : "Music Off"}</button>
-          </div>
-        </header>
+        <GameHeader
+          title="Connect Four"
+          onExit={() => router.push("/games")}
+          isFullscreen={inFullscreen}
+          onToggleFullscreen={() => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+          }}
+          settingsOpen={showSettings}
+          onToggleSettings={() => setShowSettings((s) => !s)}
+          extraActions={(
+            <>
+              <div className="hidden lg:block"><TurnBadge /></div>
+              <button onClick={() => restartMatch()} className={CBUTTON}><RefreshCw size={14} />Restart</button>
+              <button onClick={() => toggleMusic()} className={CBUTTON}><Music size={14} />{musicOn ? "Music On" : "Music Off"}</button>
+            </>
+          )}
+        />
 
         <div className="flex items-start gap-6">
-          {/* Left: scoreboard + Settings button (moved under scoreboard) */}
+          {/* Left: scoreboard */}
           <div className="w-56 bg-white rounded p-3 shadow flex flex-col">
             <div>
               <div className="font-semibold mb-2">Match (first to {firstToWins})</div>
@@ -653,85 +679,19 @@ export default function ConnectFourPage() {
                 <div className="mt-2 text-xs text-gray-500">Use number keys or arrows to choose column, click number to see image, then ✅/❌.</div>
               </div>
             </div>
-
-            {/* Settings button placed under scoreboard as requested */}
-            <div className="mt-4">
-              <button onClick={() => setShowSettings(true)} className={CBUTTON} aria-label="Open settings">Settings</button>
-            </div>
           </div>
 
           <div className="flex-1">
             <div className={`bg-gray-100 p-4 rounded shadow ${inFullscreen ? "min-h-[80vh]" : ""}`}>
-              {/* Column numbers always visible and bold black (selected becomes blue/white) */}
-              <div className="grid mb-2" style={{ gridTemplateColumns: `repeat(${boardCols}, minmax(64px, 1fr))`, gap: 8 }}>
-                {Array.from({ length: boardCols }).map((_, ci) => (
-                  <button
-                    key={`num-${ci}`}
-                    onClick={() => handleColumnClick(ci)}
-                    onDoubleClick={() => handleColumnClick(ci)}
-                    className={`py-2 rounded font-bold border ${
-                      ci === cursorCol ? "bg-[var(--color-accent)] text-white" : "bg-white text-black"
-                    }`}
-                  >
-                    {ci + 1}
-                  </button>
-                ))}
-              </div>
-
-              {/* Preview token row */}
-              <div className="grid" style={{ gridTemplateColumns: `repeat(${boardCols}, minmax(64px, 1fr))`, gap: 8 }}>
-                {Array.from({ length: boardCols }).map((_, ci) => {
-                  const isActive = ci === cursorCol;
-                  return (
-                    <div key={`preview-${ci}`} className="h-10 flex items-center justify-center">
-                      <motion.div
-                        animate={isActive ? { y: -8, scale: 1.12 } : { y: 0, scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 18 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive ? (currentPlayer === 1 ? "bg-red-500" : "bg-yellow-400") : "opacity-0"}`}
-                      >
-                        {isActive && renderTokenDisc(currentPlayer)}
-                      </motion.div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Board grid + falling overlay */}
-              <div className="mt-3 relative" role="grid" aria-label="Connect Four board">
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${boardCols}, minmax(64px, 1fr))`, gap: 8 }}>
-                  {board.map((row, r) =>
-                    row.map((cell, c) => {
-                      const isWinning = winnerLine?.some(([rr, cc]) => rr === r && cc === c) ?? false;
-                      return (
-                        <div key={`cell-${r}-${c}`} className={`bg-blue-600 rounded flex items-center justify-center p-2`} style={{ minHeight: inFullscreen ? 96 : 64 }}>
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${cell === 0 ? "bg-white" : cell === 1 ? "bg-red-500" : "bg-yellow-400"} ${isWinning ? "ring-4 ring-green-300" : ""}`}>
-                            {cell !== 0 ? renderTokenDisc(cell) : null}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* falling token overlay */}
-                {falling && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    <motion.div
-                      initial={{ y: "-6%" }}
-                      animate={{ y: ((falling.row + 1) / (boardRows + 1)) * 100 + "%" }}
-                      transition={{ duration: 0.28 + Math.max(0, falling.row) * 0.06, ease: "easeOut" }}
-                      style={{
-                        position: "absolute",
-                        left: `${(falling.col + 0.5) * (100 / boardCols)}%`,
-                        transform: "translate(-50%, -6%)",
-                      }}
-                    >
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${falling.player === 1 ? "bg-red-500" : "bg-yellow-400"}`}>
-                        {renderTokenDisc(falling.player)}
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
+              <div className="mt-2 rounded-2xl overflow-hidden bg-white shadow-inner" style={{ height: inFullscreen ? "78vh" : "620px" }}>
+                <PhaserGameHost
+                  className="w-full h-full"
+                  createGame={createConnectFourGame}
+                  onEvent={handleSceneEvent}
+                  onApiReady={(api) => {
+                    sceneApiRef.current = api as ConnectFourSceneApi | null;
+                  }}
+                />
               </div>
 
             </div>
@@ -814,8 +774,8 @@ export default function ConnectFourPage() {
         {/* Settings modal */}
         <AnimatePresence>
           {showSettings && !showNoCardsModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-              <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -12, opacity: 0 }} transition={{ duration: 0.28 }} className="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <GameSettingsModal className="max-w-3xl">
                 <h2 className="text-xl font-bold mb-3">Connect Four — Settings</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -852,7 +812,7 @@ export default function ConnectFourPage() {
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowSettings(false)} className={CBUTTON}>Close</motion.button>
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => { setShowSettings(false); setBoard(createEmptyBoard(boardRows, boardCols)); }} className={CBUTTON}>Start</motion.button>
                 </div>
-              </motion.div>
+              </GameSettingsModal>
             </motion.div>
           )}
         </AnimatePresence>

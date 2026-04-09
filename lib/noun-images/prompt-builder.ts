@@ -122,6 +122,55 @@ function buildUncountablePrompt(lemma: string, variant: NounVariantDefinition) {
 
 function buildProfilePrompt(variant: NounVariantDefinition) {
   switch (variant.promptProfile) {
+    case "numbers":
+      return [
+        "show a numbers educational flashcard illustration in the Classendo style",
+        "the digit must be very large, centered, bold, and extremely easy to read from across a classroom",
+        "use bright cheerful full color with smooth gentle shading",
+        "show the number using digits only, not number words",
+        "keep the composition simple, polished, and uncluttered",
+      ];
+    case "people":
+      return [
+        "show a people educational flashcard illustration in the Classendo style",
+        "the person or people must be very large, centered, polished, and easy to recognize from across a classroom",
+        "show full figures clearly from head to toe with generous space around the outer edges",
+        "do not crop off heads, hair, hands, feet, or the sides of the body",
+        "use bright cheerful full color with smooth gentle shading",
+        "use large expressive Classendo-style eyes with clear irises, highlights, eyelids, and personality",
+        "do not use tiny black dot eyes, bead eyes, blank eyes, or uncanny eyes",
+      ];
+    case "places":
+      return [
+        "show a places educational flashcard illustration in the Classendo style",
+        "for image 2, show a simple town map from a top-down or slightly angled map view",
+        "include streets, blocks, and a few simple town details",
+        "show two or three clearly visible versions of the target place on the map",
+        "the target places must pop out from the map and be the clear focus",
+        "all other buildings should be simple shaded rectangles with very little detail",
+        "do not include writing, labels, street names, text, logos, letters, or numbers",
+        "if the place has a simple recognizable symbol, use the symbol instead of writing",
+      ];
+    case "nature":
+      return [
+        "show a nature educational flashcard illustration in the Classendo style",
+        "keep the main nature subject large, centered, polished, and easy to recognize from across a classroom",
+        "use bright cheerful full color with smooth gentle shading",
+        "for image 1, show one clear singular example, or one simple representative natural scene if the lemma is a landscape or environment noun",
+        "for image 2, show a contextual outdoor nature scene",
+        "if the noun is countable, image 2 may show several examples in context",
+        "if the noun is uncountable or scene-like, image 2 should show a larger richer amount of the same natural setting in context",
+        "do not include people, buildings, labels, writing, or text",
+      ];
+    case "holidays":
+      return [
+        "show a holiday educational flashcard illustration in the Classendo style",
+        "keep the holiday scene very large, centered, polished, and easy to recognize from across a classroom",
+        "use bright cheerful full color with smooth gentle shading",
+        "for image 1, show one symbolic celebration scene with iconic holiday elements",
+        "for image 2, show one indoor holiday scene with a visible window showing the season outside through weather and plant life",
+        "do not use calendars, date pages, labels, writing, or text",
+      ];
     case "dates":
       return [
         "show a dates educational flashcard illustration in the Classendo style",
@@ -258,6 +307,128 @@ function buildProfilePrompt(variant: NounVariantDefinition) {
     default:
       return [];
   }
+}
+
+function numberWordToDigits(lemma: string) {
+  const normalized = String(lemma ?? "").trim().toLowerCase();
+  const explicit: Record<string, string> = {
+    number: "123",
+    one: "1",
+    two: "2",
+    three: "3",
+    four: "4",
+    five: "5",
+    six: "6",
+    seven: "7",
+    eight: "8",
+    nine: "9",
+    ten: "10",
+    eleven: "11",
+    twelve: "12",
+    thirteen: "13",
+    fourteen: "14",
+    fifteen: "15",
+    sixteen: "16",
+    seventeen: "17",
+    eighteen: "18",
+    nineteen: "19",
+    twenty: "20",
+    "twenty one": "21",
+    "twenty two": "22",
+    "twenty three": "23",
+    "twenty four": "24",
+    "twenty five": "25",
+    "twenty six": "26",
+    "twenty seven": "27",
+    "twenty eight": "28",
+    "twenty nine": "29",
+    thirty: "30",
+    "thirty one": "31",
+    forty: "40",
+    fifty: "50",
+    sixty: "60",
+    seventy: "70",
+    eighty: "80",
+    ninety: "90",
+    "one hundred": "100",
+    "one thousand": "1,000",
+    "ten thousand": "10,000",
+    "one hundred thousand": "100,000",
+    "one million": "1,000,000",
+  };
+
+  return explicit[normalized] ?? normalized;
+}
+
+function buildNumbersPrompt(lemma: string) {
+  const digits = numberWordToDigits(lemma);
+
+  return [
+    `Create ONE single illustration of the number "${lemma}".`,
+    `Show the digits "${digits}" as the main subject.`,
+    "The digits must be very large, centered, bold, and crystal clear.",
+    "Make the number easy to read from across a classroom.",
+    "Use only the digits, not the spelled-out word.",
+    "Do not add extra objects, characters, hands, or scenes.",
+  ];
+}
+
+const NATURE_SCENE_LEMMAS = new Set([
+  "desert",
+  "forest",
+  "grass",
+  "jungle",
+  "lake",
+  "mountain",
+  "pond",
+  "river",
+]);
+
+function usesNatureSceneComposition(lemma: string, variant: NounVariantDefinition) {
+  return variant.promptProfile === "nature"
+    && (variant.variantNumber === 2 || NATURE_SCENE_LEMMAS.has(lemma));
+}
+
+function buildNaturePrompt(
+  lemma: string,
+  countability: NounCountability,
+  variant: NounVariantDefinition
+) {
+  const sceneLike = NATURE_SCENE_LEMMAS.has(lemma);
+
+  if (sceneLike && variant.variantNumber === 1) {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      "Show one simple representative natural scene of this nature place or environment.",
+      "Keep the scene clean, centered, and easy to understand.",
+      "Make the main landform or environment dominate the image.",
+    ];
+  }
+
+  if (variant.variantNumber === 1) {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      "Show one clear singular example.",
+      "Keep the subject large, centered, and easy to identify.",
+      "Do not add unrelated extra objects.",
+    ];
+  }
+
+  if (countability === "count") {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      "Show a small outdoor nature scene with several examples of the subject in context.",
+      "Keep the subject clearly identifiable and dominant.",
+      "The scene should feel natural, grounded, and uncluttered.",
+    ];
+  }
+
+  return [
+    `Create ONE single illustration of: "${lemma}"`,
+    "Show a larger richer outdoor nature scene with more of the same natural setting.",
+    "Keep the scene grounded, simple, and easy to recognize.",
+    "The main nature subject should still be dominant and centered.",
+  ];
 }
 
 const DATE_MONTHS = new Set([
@@ -598,6 +769,49 @@ function buildDrinkPrompt(lemma: string, variant: NounVariantDefinition) {
   ];
 }
 
+function buildPeoplePrompt(lemma: string, variant: NounVariantDefinition) {
+  if (variant.variantNumber === 1) {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      "Show one person only.",
+      "The person should be centered, fully visible from head to toe, and easy to see with generous empty space around them.",
+      "Use a simple natural standing pose with no extra unrelated people.",
+      "Make the social role clear through age, proportions, facial features, and clothing.",
+      "Use the master character reference only as a style anchor for the eyes, face, polish, and character quality while still making this a unique person.",
+    ];
+  }
+
+  return [
+    `Create ONE single illustration of: "${lemma}"`,
+    "Show two or three people only, all matching the same lemma.",
+    "Keep all figures centered as one grouped composition with generous space around the outer edges so no one is cropped.",
+    "Make the people large and easy to recognize, but do not make them so big that they are cut off.",
+    "Use the master character reference only as a style anchor for the eyes, face, polish, and character quality while still making these unique people.",
+  ];
+}
+
+function buildPlacesPrompt(lemma: string, variant: NounVariantDefinition) {
+  if (variant.variantNumber === 2) {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      "Show a simple town map from a top-down or slightly angled map view.",
+      `Show two or three clearly visible versions of "${lemma}" on the map.`,
+      `Only the "${lemma}" places should have clear detail, color, and emphasis.`,
+      "If a simple recognizable place symbol exists, use the symbol instead of any writing.",
+      "All other buildings should be simple shaded rectangles or soft plain block shapes with very little detail.",
+      "Include streets, blocks, and a few simple town details.",
+      "Keep the map clean, easy to read, and classroom-friendly.",
+      "Do not add people or mixed building types as the focus.",
+      "Do not use any writing, labels, letters, numbers, or road names.",
+    ];
+  }
+
+  return [
+    `Create ONE single illustration of: "${lemma}"`,
+    "Show the place clearly and simply.",
+  ];
+}
+
 function buildFamilyPrompt(lemma: string, variant: NounVariantDefinition) {
   if (variant.variantNumber === 1) {
     return [
@@ -613,6 +827,90 @@ function buildFamilyPrompt(lemma: string, variant: NounVariantDefinition) {
   return [
     `Create ONE single illustration of: "${lemma}"`,
     "Show a family-themed illustration that matches the existing manually created variant.",
+  ];
+}
+
+const HOLIDAY_SCENE_NOTES: Record<string, { one: string; two: string }> = {
+  "budha's birthday": {
+    one: "Show a symbolic celebration scene with lotus flowers, lanterns, and a peaceful festive setup.",
+    two: "Show an indoor Budha's Birthday celebration scene with lanterns and lotus decorations, plus a visible window showing late spring greenery and mild spring weather outside.",
+  },
+  "children's day": {
+    one: "Show a symbolic celebration scene with balloons, gifts, playful decorations, and a cheerful holiday feeling.",
+    two: "Show an indoor Children's day celebration scene with cheerful decorations and a visible window showing bright spring weather and fresh plants outside.",
+  },
+  "christmas": {
+    one: "Show a symbolic celebration scene with a Christmas tree, stockings, ornaments, and wrapped gifts.",
+    two: "Show an indoor Christmas celebration scene with cozy decorations and a visible window showing winter snow and bare winter plants outside.",
+  },
+  "christmas eve": {
+    one: "Show a symbolic celebration scene with glowing tree lights, stockings, and wrapped presents at night.",
+    two: "Show an indoor Christmas Eve evening scene with warm festive decorations and a visible window showing winter night weather outside.",
+  },
+  diwali: {
+    one: "Show a symbolic celebration scene with diyas, rangoli, and glowing festive lights.",
+    two: "Show an indoor Diwali celebration scene with festive lights and a visible window showing autumn evening weather and seasonal plants outside.",
+  },
+  easter: {
+    one: "Show a symbolic celebration scene with decorated Easter eggs, a basket, and spring flowers.",
+    two: "Show an indoor Easter celebration scene with holiday decorations and a visible window showing spring blossoms and fresh green plants outside.",
+  },
+  halloween: {
+    one: "Show a symbolic celebration scene with jack-o-lanterns, candy, and child-friendly spooky decorations.",
+    two: "Show an indoor Halloween scene with holiday decorations and a visible window showing autumn leaves and cool seasonal weather outside.",
+  },
+  hanukkah: {
+    one: "Show a symbolic celebration scene with a menorah, candles, and dreidels.",
+    two: "Show an indoor Hanukkah celebration scene with holiday decorations and a visible window showing winter weather and winter plants outside.",
+  },
+  "independence day": {
+    one: "Show a symbolic celebration scene with fireworks, flags, and parade-style decorations.",
+    two: "Show an indoor Independence Day celebration scene with patriotic decorations and a visible window showing a bright summer sky and green summer trees outside.",
+  },
+  "lunar new year": {
+    one: "Show a symbolic celebration scene with lanterns, red envelopes, and festive decorations.",
+    two: "Show an indoor Lunar New Year celebration scene with festive decorations and a visible window showing winter weather and winter plant life outside.",
+  },
+  "new year's eve": {
+    one: "Show a symbolic celebration scene with fireworks, festive party decorations, and a midnight celebration feeling.",
+    two: "Show an indoor New Year's Eve celebration scene with festive decorations and a visible window showing a winter night sky outside.",
+  },
+  ramadan: {
+    one: "Show a symbolic celebration scene with a crescent moon, lanterns, and a peaceful festive setup.",
+    two: "Show an indoor Ramadan evening scene with lanterns and a visible window showing a warm night sky and seasonal plant life outside.",
+  },
+  "st patrick's day": {
+    one: "Show a symbolic celebration scene with shamrocks and green holiday decorations.",
+    two: "Show an indoor St Patrick's day celebration scene with green decorations and a visible window showing early spring greenery outside.",
+  },
+  thanksgiving: {
+    one: "Show a symbolic celebration scene with a harvest table, pumpkin, and autumn feast decorations.",
+    two: "Show an indoor Thanksgiving celebration scene with harvest decorations and a visible window showing fall leaves and late-autumn plants outside.",
+  },
+  "valentines day": {
+    one: "Show a symbolic celebration scene with hearts, flowers, and a gift box.",
+    two: "Show an indoor Valentines day celebration scene with cozy decorations and a visible window showing winter or early spring weather outside.",
+  },
+};
+
+function buildHolidaysPrompt(lemma: string, variant: NounVariantDefinition) {
+  const notes = HOLIDAY_SCENE_NOTES[lemma.trim().toLowerCase()];
+
+  if (variant.variantNumber === 1) {
+    return [
+      `Create ONE single illustration of: "${lemma}"`,
+      notes?.one ?? "Show one symbolic celebration scene for the holiday.",
+      "Keep it as one single holiday scene, not a plural lineup and not a repeated grid.",
+      "Use iconic holiday elements clearly and make the holiday easy to recognize.",
+    ];
+  }
+
+  return [
+    `Create ONE single illustration of: "${lemma}"`,
+    notes?.two
+      ?? "Show one indoor holiday scene with a visible window showing the season outside through weather and plant life.",
+    "This must be one single indoor holiday scene, not a plural lineup.",
+    "Keep the window visible enough to understand the season outside.",
   ];
 }
 
@@ -836,6 +1134,16 @@ export function buildNounImagePrompt(params: {
   const quantityBlock =
     variant.promptProfile === "body"
       ? buildBodyPrompt(lemma, variant)
+      : variant.promptProfile === "people"
+      ? buildPeoplePrompt(lemma, variant)
+      : variant.promptProfile === "places"
+      ? buildPlacesPrompt(lemma, variant)
+      : variant.promptProfile === "numbers"
+      ? buildNumbersPrompt(lemma)
+      : variant.promptProfile === "nature"
+      ? buildNaturePrompt(lemma, countability, variant)
+      : variant.promptProfile === "holidays"
+      ? buildHolidaysPrompt(lemma, variant)
       : variant.promptProfile === "dates"
       ? buildDatesPrompt(lemma, variant)
       : variant.promptProfile === "family"
@@ -858,8 +1166,14 @@ export function buildNounImagePrompt(params: {
         ? buildUncountablePrompt(lemma, variant)
         : buildCountablePrompt(lemma, variant);
   const profileBlock = buildProfilePrompt(variant);
+  const usesSceneFadeTransparency =
+    (variant.promptProfile === "dates" && variant.variantNumber === 2)
+    || variant.promptProfile === "places"
+    || usesNatureSceneComposition(lemma, variant);
+  const allowsDigitsAsSubject = variant.promptProfile === "numbers";
   const forbidPeople =
     variant.promptProfile !== "profession"
+    && variant.promptProfile !== "people"
     && variant.promptProfile !== "jobs"
     && !(variant.promptProfile === "classroom" && variant.variantNumber === 3);
 
@@ -870,7 +1184,7 @@ export function buildNounImagePrompt(params: {
     ...STYLE_BLOCK,
     `composition: ${COMPOSITION_BLOCK.join(", ")}`,
     `lighting: ${LIGHTING_BLOCK.join(", ")}`,
-    ...(variant.promptProfile === "dates" && variant.variantNumber === 2
+    ...(usesSceneFadeTransparency
       ? [
           "TRUE alpha transparency ONLY (RGBA image)",
           "outer edges of the background should softly fade into transparency",
@@ -882,7 +1196,7 @@ export function buildNounImagePrompt(params: {
           "NO fake transparency",
         ]
       : TRANSPARENCY_BLOCK),
-    ...(variant.promptProfile === "dates" && variant.variantNumber === 2
+    ...(usesSceneFadeTransparency
       ? [
           "NO text",
           "NO watermark",
@@ -890,7 +1204,9 @@ export function buildNounImagePrompt(params: {
           "NO floating unrealistic arrangement",
           "NO messy composition",
         ]
-      : NEGATIVE_BLOCK),
+      : allowsDigitsAsSubject
+        ? NEGATIVE_BLOCK.filter((item) => item !== "NO text")
+        : NEGATIVE_BLOCK),
     "consistent style across all images",
     "same illustration style every time",
     "no variation in art style",
@@ -970,6 +1286,19 @@ export function buildNounImagePrompt(params: {
                   "no full environment scene",
                   "no people unless absolutely necessary for the concept",
                 ]),
+          ]
+      : variant.promptProfile === "holidays"
+        ? [
+            "no calendar",
+            "no date page",
+            "no writing",
+            "no labels",
+            "no text",
+            "no numbers",
+            "no letters",
+            "no holiday name written in the image",
+            "no plural lineup",
+            "no repeated object grid",
           ]
       : variant.promptProfile === "drink"
         ? [
@@ -1140,6 +1469,18 @@ export function buildNounImagePrompt(params: {
                 ]
               : ["full room scene"]),
           ]
+      : variant.promptProfile === "holidays"
+        ? [
+            "calendar",
+            "date page",
+            "writing",
+            "labels",
+            "text",
+            "numbers",
+            "letters",
+            "plural lineup",
+            "object grid",
+          ]
       : variant.promptProfile === "drink"
         ? [
             "people",
@@ -1156,6 +1497,70 @@ export function buildNounImagePrompt(params: {
             "text",
             "cafe scene",
             "restaurant background",
+          ]
+      : variant.promptProfile === "numbers"
+        ? [
+            "number words",
+            "letters",
+            "equation",
+            "math symbols",
+            "plus sign",
+            "minus sign",
+            "times sign",
+            "division sign",
+            "multiple different numbers",
+            "small unreadable digits",
+            "people",
+            "person",
+            "child",
+            "character",
+            "objects",
+            "scene",
+            "background elements",
+          ]
+      : variant.promptProfile === "places"
+        ? [
+            "people",
+            "person",
+            "character",
+            "street names",
+            "labels",
+            "logos",
+            "letters",
+            "numbers",
+            "signs",
+            "realistic satellite map",
+            "busy city map",
+            "mixed building focus",
+          ]
+      : variant.promptProfile === "nature"
+        ? [
+            "people",
+            "person",
+            "child",
+            "character",
+            "building",
+            "city",
+            "road",
+            "sign",
+            "labels",
+            "text",
+            "writing",
+            "indoor scene",
+          ]
+      : variant.promptProfile === "people"
+        ? [
+            "cropped head",
+            "cropped feet",
+            "cut off hands",
+            "black dot eyes",
+            "bead eyes",
+            "blank eyes",
+            "uncanny eyes",
+            "extra unrelated people",
+            "text",
+            "labels",
+            "writing",
           ]
       : variant.promptProfile === "family"
         ? [

@@ -2,8 +2,15 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Maximize } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import GameHeader from "@/components/games/GameHeader";
+import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import {
+  createMemoryFlipGame,
+  type MemoryFlipSceneApi,
+  type MemoryFlipSceneEvent,
+} from "@/lib/games/phaser/memory-flip";
 
 /*
   Memory Flip — final small change:
@@ -35,6 +42,16 @@ const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/co
 
 export default function MemoryFlipPage() {
   const router = useRouter();
+  const sceneApiRef = useRef<MemoryFlipSceneApi | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFullChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFullChange);
+    return () => document.removeEventListener("fullscreenchange", onFullChange);
+  }, []);
 
   // Header controls
   const [musicOn, setMusicOn] = useState(false);
@@ -186,8 +203,6 @@ export default function MemoryFlipPage() {
   // Layout helpers
   const gridCols = gridSize === 20 ? 5 : 4;
   const gridRows = Math.ceil(gridSize / gridCols);
-  const rowBackColors = ["#e6fffa", "#ecfccb", "#fef3c7", "#fee2e2", "#ede9fe", "#fff7ed"];
-
   // Single buildDeck
   function buildDeck() {
     const pairsNeeded = Math.floor(gridSize / 2);
@@ -450,81 +465,55 @@ export default function MemoryFlipPage() {
     );
   }
 
-  function CardElement({ card, idx }: { card: Card; idx: number }) {
-    const revealed = card.revealed || card.matched;
-    const row = Math.floor(idx / gridCols);
-    const backColor = rowBackColors[row % rowBackColors.length];
-    return (
-      <motion.div key={card.id} layout style={{ display: "flex", justifyContent: "center" }}>
-        <motion.button
-          onClick={() => flipCard(idx)}
-          disabled={locked || card.matched}
-          aria-pressed={revealed}
-          aria-label={revealed ? `Card ${card.faceText ?? "image"}` : `Face-down card ${idx + 1}`}
-          initial={{ perspective: 600 }}
-          whileTap={{ scale: 0.98 }}
-          style={{
-            width: `calc(min(880px, 80vh) / ${Math.max(2, gridCols)})`,
-            height: `calc(min(660px, 60vh) / ${Math.max(2, gridRows)})`,
-            borderRadius: 12,
-            border: "2px solid rgba(0,0,0,0.06)",
-            background: revealed ? "#fff" : backColor,
-            color: revealed ? "#111827" : "#000",
-            fontWeight: 800,
-            fontSize: revealed ? 18 : 28,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: revealed ? "0 12px 30px rgba(0,0,0,0.12)" : "0 6px 12px rgba(0,0,0,0.06)",
-          }}
-          whileHover={{ scale: card.matched ? 1 : 1.02 }}
-          transition={{ duration: 0.28 }}
-        >
-          <motion.div animate={{ scale: matchedPair && (matchedPair.a === idx || matchedPair.b === idx) ? 1.05 : 1 }} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {revealed ? renderFace(card) : <div style={{ fontSize: 34, fontWeight: 900 }}>{idx + 1}</div>}
-          </motion.div>
-        </motion.button>
-      </motion.div>
-    );
+  function handleSceneEvent(event: MemoryFlipSceneEvent) {
+    if (event.type === "card-click") {
+      flipCard(event.index);
+    }
   }
+
+  useEffect(() => {
+    sceneApiRef.current?.sync({
+      cards,
+      gridCols,
+      gridRows,
+      gameStyle,
+      locked,
+      matchedPair,
+    });
+  }, [cards, gridCols, gridRows, gameStyle, locked, matchedPair]);
 
   const trayIsEmpty = trayCards.length === 0;
 
   // JSX
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f0fdf4", fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" }}>
-      {/* Header */}
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, background: "rgba(255,255,255,0.94)", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-        <a href="/" style={{ color: "#2563eb", fontSize: 20, fontWeight: 800 }}>
-          Classendo
-        </a>
-        <div style={{ fontWeight: 800, fontSize: 18 }}>Memory Flip</div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={toggleFullscreen} className="btn btn-secondary p-2">
-            <Maximize size={14} />
-          </button>
-          <button
-            onClick={toggleMusic}
-            className={`btn px-3 py-1 ${musicOn ? "btn-primary" : "btn-secondary"}`}
-          >
-            {musicOn ? "Music On" : "Music Off"}
-          </button>
-          <button onClick={resetGame} className="btn btn-secondary px-3 py-1">
-            Reset game
-          </button>
-          {/* Exit game button changed to site green */}
-          <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1">
-            Return
-          </button>
-
-          <div style={{ position: "relative" }}>
-            <button onClick={() => setSettingsOpen((s) => !s)} className="btn btn-secondary px-3 py-1">
-              Settings ▾
+      <GameHeader
+        title="Memory Flip"
+        onExit={() => router.push("/games")}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        settingsOpen={settingsOpen}
+        onToggleSettings={() => setSettingsOpen((s) => !s)}
+        extraActions={(
+          <>
+            <button
+              onClick={toggleMusic}
+              className={`btn px-3 py-2 text-sm ${musicOn ? "btn-primary" : "btn-secondary"}`}
+            >
+              {musicOn ? "Music On" : "Music Off"}
             </button>
+            <button onClick={resetGame} className="btn btn-secondary px-3 py-2 text-sm">
+              Reset game
+            </button>
+          </>
+        )}
+      />
 
-            <AnimatePresence>
-              {settingsOpen && (
-                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} style={{ position: "absolute", right: 0, marginTop: 8, width: 420, background: "white", borderRadius: 10, padding: 12, boxShadow: "0 12px 40px rgba(2,6,23,0.12)", zIndex: 900 }}>
+      <div style={{ position: "relative" }}>
+        <AnimatePresence>
+          {settingsOpen && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} style={{ position: "fixed", top: 76, right: 16, zIndex: 900 }}>
+              <GameSettingsDropdown className="w-[420px]">
                   <div style={{ fontWeight: 700 }}>Grid size</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                     {[8, 12, 16, 20].map((n) => (
@@ -571,16 +560,15 @@ export default function MemoryFlipPage() {
                       Done
                     </button>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </header>
+              </GameSettingsDropdown>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* If the lesson tray is empty show message and two buttons */}
       {trayIsEmpty ? (
-        <main style={{ padding: 24, flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <main style={{ padding: 24, paddingTop: 96, flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "white", padding: 28, borderRadius: 12, boxShadow: "0 12px 40px rgba(2,6,23,0.08)", textAlign: "center", maxWidth: 720 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>No cards selected</h2>
             <p style={{ color: "#6b7280", marginBottom: 18 }}>There are no cards in the lesson tray. Add cards in Flashcards or choose a saved lesson in Dashboard before starting the game.</p>
@@ -597,7 +585,7 @@ export default function MemoryFlipPage() {
       ) : (
         <>
           {/* Scoreboard */}
-          <div style={{ display: "flex", gap: 12, padding: 12, alignItems: "center", background: "rgba(255,255,255,0.9)" }}>
+          <div style={{ display: "flex", gap: 12, padding: 12, paddingTop: 84, alignItems: "center", background: "rgba(255,255,255,0.9)" }}>
             {teams.map((t, i) => (
               <div key={t.id} style={{ minWidth: 140, padding: 10, borderRadius: 12, background: activeTeamIndex === i ? "#111827" : "white", color: activeTeamIndex === i ? "white" : "#111827", boxShadow: activeTeamIndex === i ? "0 12px 30px rgba(2,6,23,0.12)" : "0 6px 12px rgba(2,6,23,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", animation: activeTeamIndex === i ? "pulse 1.2s infinite" : "none" }}>
                 <div style={{ fontSize: 12, opacity: 0.85 }}>{t.name}</div>
@@ -627,10 +615,15 @@ export default function MemoryFlipPage() {
           {/* Grid */}
           <div style={{ padding: 20, display: "flex", justifyContent: "center" }}>
             <div style={{ width: "min(1200px, 92vw)", background: "#dff6e9", borderRadius: 14, padding: 18 }}>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: 12 }}>
-                {cards.slice(0, gridSize).map((c, idx) => (
-                  <CardElement key={c.id} card={c} idx={idx} />
-                ))}
+              <div style={{ height: "min(760px, 68vh)" }}>
+                <PhaserGameHost
+                  className="w-full h-full"
+                  createGame={createMemoryFlipGame}
+                  onEvent={handleSceneEvent}
+                  onApiReady={(api) => {
+                    sceneApiRef.current = api as MemoryFlipSceneApi | null;
+                  }}
+                />
               </div>
             </div>
           </div>
