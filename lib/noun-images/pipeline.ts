@@ -284,17 +284,23 @@ async function processVariant(params: {
     2_000
   );
 
-  const transparentBuffer = await retry(
-    `Transparent asset normalization for ${params.variantDef.variant}`,
-    async () => {
-      const normalized = await normalizeFlashcardPng(generated.imageBuffer, {
-        maxSubjectSize: getMaxSubjectSizeForVariant(params.variantDef),
-      });
-      return normalized;
-    },
-    2,
-    1_500
-  );
+  const transparentBuffer = params.variantDef.skipNormalization
+    ? {
+        buffer: generated.imageBuffer,
+        width: 1024,
+        height: 1024,
+      }
+    : await retry(
+        `Transparent asset normalization for ${params.variantDef.variant}`,
+        async () => {
+          const normalized = await normalizeFlashcardPng(generated.imageBuffer, {
+            maxSubjectSize: getMaxSubjectSizeForVariant(params.variantDef),
+          });
+          return normalized;
+        },
+        2,
+        1_500
+      );
 
   const storagePath = buildStoragePath(
     params.lemma,

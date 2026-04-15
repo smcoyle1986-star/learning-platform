@@ -58,6 +58,26 @@ const NEGATIVE_BLOCK = [
   "NO extra objects not listed",
   "NO floating unrealistic arrangement",
   "NO messy composition",
+  "NO people",
+  "NO person",
+  "NO character",
+  "NO face",
+];
+
+const WHITE_BG_BLOCK = [
+  "background must be pure white",
+  "no transparency",
+  "no alpha channel",
+  "no gray",
+  "no gradient",
+  "no vignette",
+];
+
+const PEOPLE_STYLE_BLOCK = [
+  "use Classendo character style",
+  "large expressive eyes with full irises and highlights",
+  "no tiny black dot eyes",
+  "friendly proportions",
 ];
 
 function buildCountablePrompt(lemma: string, variant: NounVariantDefinition) {
@@ -122,6 +142,17 @@ function buildUncountablePrompt(lemma: string, variant: NounVariantDefinition) {
 
 function buildProfilePrompt(variant: NounVariantDefinition) {
   switch (variant.promptProfile) {
+    case "utensils":
+      return [
+        "show kitchen utensils educational flashcard illustration in the Classendo style",
+        "utensil must be very large, centered, and easy to recognize",
+        "use bright cheerful full color with smooth gentle shading",
+        "no text or labels anywhere",
+        "for image 1, show a single utensil (or a natural pair when the utensil is normally used as a pair)",
+        "for image 2, show two or three examples arranged like in a drawer, on a shelf, or on a kitchen countertop, but keep the scene elements minimal and isolated",
+        "for image 3, show a person using the utensil correctly with the utensil in contact with hands",
+        "people must use Classendo character style with full eyes (irises and highlights), not dot eyes",
+      ];
     case "numbers":
       return [
         "show a numbers educational flashcard illustration in the Classendo style",
@@ -1172,7 +1203,8 @@ export function buildNounImagePrompt(params: {
     || usesNatureSceneComposition(lemma, variant);
   const allowsDigitsAsSubject = variant.promptProfile === "numbers";
   const forbidPeople =
-    variant.promptProfile !== "profession"
+    !variant.allowPeople
+    && variant.promptProfile !== "profession"
     && variant.promptProfile !== "people"
     && variant.promptProfile !== "jobs"
     && !(variant.promptProfile === "classroom" && variant.variantNumber === 3);
@@ -1184,7 +1216,9 @@ export function buildNounImagePrompt(params: {
     ...STYLE_BLOCK,
     `composition: ${COMPOSITION_BLOCK.join(", ")}`,
     `lighting: ${LIGHTING_BLOCK.join(", ")}`,
-    ...(usesSceneFadeTransparency
+    ...(variant.backgroundStyle === "white"
+      ? WHITE_BG_BLOCK
+      : usesSceneFadeTransparency
       ? [
           "TRUE alpha transparency ONLY (RGBA image)",
           "outer edges of the background should softly fade into transparency",
@@ -1206,7 +1240,15 @@ export function buildNounImagePrompt(params: {
         ]
       : allowsDigitsAsSubject
         ? NEGATIVE_BLOCK.filter((item) => item !== "NO text")
-        : NEGATIVE_BLOCK),
+        : forbidPeople
+          ? NEGATIVE_BLOCK
+          : NEGATIVE_BLOCK.filter(
+              (item) =>
+                item !== "NO people" &&
+                item !== "NO person" &&
+                item !== "NO character" &&
+                item !== "NO face"
+            )),
     "consistent style across all images",
     "same illustration style every time",
     "no variation in art style",

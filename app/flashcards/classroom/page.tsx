@@ -42,8 +42,7 @@ export default function ClassroomMode() {
 
   const [cardAvailableHeight, setCardAvailableHeight] = useState<number | null>(null);
 
-  const formatWord = (word: string) =>
-    word.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatWord = (word: string) => word.replace(/_/g, " ");
   const handleExit = () => {
     // ✅ ALWAYS save lesson tray first (no behavior change)
     localStorage.setItem(
@@ -234,10 +233,13 @@ export default function ClassroomMode() {
     // Use that available height and make the card take most of it.
     // Keep a small space for card margins/controls inside the card wrapper.
     cardStyle.height = `${cardAvailableHeight}px`;
-    cardStyle.maxWidth = "calc(100vw - 48px)";
+    const maxWidth = Math.min(cardAvailableHeight * 1.75, window.innerWidth - 88);
+    cardStyle.width = `${Math.max(520, maxWidth)}px`;
+    cardStyle.maxWidth = "calc(100vw - 88px)";
     cardStyle.padding = "24px";
   } else {
     cardStyle.height = undefined;
+    cardStyle.width = undefined;
     cardStyle.maxWidth = undefined;
     cardStyle.padding = undefined;
   }
@@ -377,15 +379,15 @@ export default function ClassroomMode() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         key={index}
-        className={`cursor-pointer mx-auto my-6 bg-white rounded-3xl shadow-2xl border-[10px] border-gray-300 w-full
-          ${inFullscreen ? "max-w-none" : "max-w-5xl aspect-[16/9]"} transition-all duration-300 ease-out`}
+        className={`cursor-pointer mx-auto my-6 bg-white rounded-3xl shadow-2xl border-[10px] border-gray-300
+          ${inFullscreen ? "max-w-none" : "max-w-7xl w-[min(96vw,104rem)] aspect-[16/9]"} transition-all duration-300 ease-out`}
         style={{ ...cardStyle }}
       >
         {/* Conditional rendering for text-only centered mode */}
         {displayMode === "text" && !revealToggle ? (
           // centered text (no image visible)
           <div className="w-full h-full flex items-center justify-center">
-            <h2 className="text-7xl md:text-8xl font-extrabold tracking-wide capitalize">{formatWord(card.word)}</h2>
+            <h2 className="text-7xl md:text-8xl font-extrabold tracking-wide">{formatWord(card.word)}</h2>
           </div>
         ) : (
           // Normal layout: image area on top, text area below
@@ -428,7 +430,7 @@ export default function ClassroomMode() {
                 || (displayMode === "image" && revealToggle)
                 || (displayMode === "text") // in text mode, when revealToggle true we still show text (moved down); when false handled above
               ) && (
-                <h2 className={`text-7xl md:text-8xl font-extrabold tracking-wide capitalize ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
+                <h2 className={`text-7xl md:text-8xl font-extrabold tracking-wide ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
                   {formatWord(card.word)}
                 </h2>
               )}

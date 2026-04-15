@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import BrandButton from "@/components/BrandButton";
 import { useRouter } from "next/navigation";
 import { X, Play } from "lucide-react";
+import {
+  clearLessonTray,
+  readLessonTray,
+  subscribeToLessonTray,
+  writeLessonTray,
+} from "@/lib/lessons/tray";
 
 /**
  * Games Landing Page
@@ -117,121 +123,26 @@ const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] 
 ];
 
 /* -------------------------
-   Lesson tray persistence keys
-   ------------------------- */
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
-
-/* -------------------------
    Component
    ------------------------- */
 export default function GamesLandingPage() {
   const router = useRouter();
   const [lessonTray, setLessonTray] = useState<GameCard[]>([]);
-  const lessonTrayRef = useRef<GameCard[]>([]);
-
-  // keep ref in sync with state for comparisons inside timers/intervals
-  useEffect(() => {
-    lessonTrayRef.current = lessonTray;
-  }, [lessonTray]);
-
-  // safe parser for the stored tray
-  const readTray = (): GameCard[] => {
-    try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
-  };
-
-  // update state only when different (simple JSON compare is fine for these small arrays)
-  const syncFromLocalStorage = () => {
-    const next = readTray();
-    const currentJson = JSON.stringify(lessonTrayRef.current || []);
-    const nextJson = JSON.stringify(next || []);
-    if (currentJson !== nextJson) {
-      setLessonTray(next);
-    }
-  };
 
   useEffect(() => {
-    // immediate read
-    syncFromLocalStorage();
-
-    // small delayed re-read to catch very fast writes that happen right before navigation
-    const t = window.setTimeout(() => {
-      syncFromLocalStorage();
-    }, 50);
-
-    // short polling window (e.g. 10 attempts over 500ms) to catch races where writer updates localStorage
-    // just around navigation time. This avoids changing UI or persistence, only improves detection.
-    let attempts = 0;
-    const maxAttempts = 10;
-    const interval = window.setInterval(() => {
-      attempts++;
-      syncFromLocalStorage();
-      if (attempts >= maxAttempts) {
-        window.clearInterval(interval);
-      }
-    }, 50);
-
-    return () => {
-      window.clearTimeout(t);
-      window.clearInterval(interval);
-    };
-    // we intentionally do not include syncFromLocalStorage / lessonTray in deps to run only on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setLessonTray(readLessonTray() as GameCard[]);
+    return subscribeToLessonTray((cards) => {
+      setLessonTray(cards as GameCard[]);
+    });
   }, []);
 
-  // Listen for other pages/tabs updating the shared tray:
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === LESSON_TRAY_KEY) syncFromLocalStorage();
-    };
-    const onVisibility = () => {
-      if (!document.hidden) syncFromLocalStorage();
-    };
-    const onFocus = () => syncFromLocalStorage();
-    const onCustom = () => syncFromLocalStorage();
-
-    window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("lesson-tray-updated", onCustom as EventListener);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("lesson-tray-updated", onCustom as EventListener);
-    };
-  }, []);
-
-  // Persist only on explicit user removal and notify listeners.
-  // Avoid writing an empty array back (so other pages' trays aren't clobbered by an accidental empty write).
   const removeFromLessonTray = (id: string) => {
     setLessonTray((prev) => {
       const next = prev.filter((c) => String(c.id) !== String(id));
-      try {
-        if (Array.isArray(next) && next.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(next));
-          try {
-            window.dispatchEvent(new Event("lesson-tray-updated"));
-          } catch (err) {
-            /* ignore environments that restrict dispatch */
-          }
-        } else {
-          // Do not write an empty array back to localStorage.
-          // If you want to clear the shared tray globally, do that from Flashcards/Dashboard explicitly.
-        }
-      } catch (e) {
-        console.warn("Failed to persist lesson tray removal:", e);
-      }
+      if (next.length > 0) writeLessonTray(next);
+      else clearLessonTray();
       return next;
     });
-    // Note: this only removes from the active lesson tray and does NOT touch saved lessons
   };
 
   const enterGame = (gameId: string) => {
@@ -244,9 +155,7 @@ export default function GamesLandingPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            Classendo
-          </Link>
+          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <h1 className="text-4xl font-bold text-black">Games</h1>

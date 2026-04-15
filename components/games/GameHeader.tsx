@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import BrandButton from "@/components/BrandButton";
 import { Maximize2, Minimize2, Settings2, LogOut } from "lucide-react";
 
 import Button from "@/components/ui/Button";
@@ -31,9 +31,7 @@ export default function GameHeader({
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-3xl font-extrabold text-blue-700">
-          Classendo
-        </Link>
+        <BrandButton className="text-3xl font-extrabold text-blue-700" />
 
         <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
           <h1 className="text-2xl font-bold text-[var(--color-text-main)]">{title}</h1>

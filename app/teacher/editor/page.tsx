@@ -1,10 +1,23 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import BrandButton from "@/components/BrandButton";
 import { X, Printer } from "lucide-react";
+import EditorCardRow from "@/components/teacher/editor/EditorCardRow";
 import { supabase } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import {
+  findExistingLessonIdByName,
+  loadLessonMetadata,
+  saveLesson,
+} from "@/lib/lessons/repository";
+import {
+  clearLessonTray,
+  readLastSavedTray,
+  readLessonTray,
+  writeLastSavedTray,
+  writeLessonTray,
+} from "@/lib/lessons/tray";
+import { LessonCard } from "@/lib/lessons/types";
 
 /**
  * Teacher Lesson Tray Editor (updated)
@@ -17,20 +30,24 @@ import { useRouter } from "next/navigation";
  * No other UI or flows were changed beyond adding the toggle and wiring it to saves/updates.
  */
 
-type TrayCard = {
-  id: string;
-  word?: string;
-  image?: string | null;
-  image_id?: string | null;
-  [k: string]: any;
-};
+function areCardsEqual(left: LessonCard[], right: LessonCard[]) {
+  if (left.length !== right.length) return false;
 
-const STORAGE_KEY = "classendo-saved-lessons";
+  return left.every((card, index) => {
+    const other = right[index];
+    if (!other) return false;
+
+    return (
+      String(card.id) === String(other.id) &&
+      String(card.word ?? "") === String(other.word ?? "") &&
+      String(card.image ?? card.back ?? "") === String(other.image ?? other.back ?? "") &&
+      String(card.type ?? "") === String(other.type ?? "")
+    );
+  });
+}
 
 export default function TeacherLessonTrayEditor() {
-  const router = useRouter();
-
-  const [trayCards, setTrayCards] = useState<TrayCard[]>([]);
+  const [trayCards, setTrayCards] = useState<LessonCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Save modal & name state (mirrors Flashcards)
@@ -47,7 +64,7 @@ export default function TeacherLessonTrayEditor() {
   const [isPublic, setIsPublic] = useState<boolean>(true);
 
   // Unsaved change tracking
-  const [lastSavedTray, setLastSavedTray] = useState<TrayCard[]>([]);
+  const [lastSavedTray, setLastSavedTray] = useState<LessonCard[]>([]);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -62,20 +79,6 @@ export default function TeacherLessonTrayEditor() {
         null;
       if (idFromQuery) {
         setEditingLessonSetId(idFromQuery);
-      } else {
-        const possibleKeys = [
-          "editingLessonSetId",
-          "editing-lesson-set-id",
-          "editing_lesson_set_id",
-          "editLessonSetId",
-        ];
-        for (const k of possibleKeys) {
-          const v = localStorage.getItem(k);
-          if (v) {
-            setEditingLessonSetId(v);
-            break;
-          }
-        }
       }
     } catch (e) {
       /* ignore */
@@ -87,12 +90,8 @@ export default function TeacherLessonTrayEditor() {
     if (!editingLessonSetId) return;
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from("lesson_sets")
-          .select("name,is_public")
-          .eq("id", editingLessonSetId)
-          .single();
-        if (!error && data?.name) {
+        const data = await loadLessonMetadata(supabase, editingLessonSetId);
+        if (data?.name) {
           setLessonName(data.name);
           setIsPublic(Boolean(data.is_public ?? true));
         }
@@ -103,58 +102,9 @@ export default function TeacherLessonTrayEditor() {
   }, [editingLessonSetId]);
 
   useEffect(() => {
-    // Load initial tray like Printables: try lesson-tray first, fallback to saved lessons
     try {
-      const trayRaw = localStorage.getItem("classendo-lesson-tray");
-      if (trayRaw && trayRaw !== "undefined") {
-        const parsed = JSON.parse(trayRaw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map((c: any) => ({
-            id: String(c.id ?? c.card_id ?? c.word),
-            word: c.word ?? c.front ?? c.text ?? "",
-            image: c.image ?? c.back ?? null,
-            image_id: c.image_id ?? null,
-            ...c,
-          }));
-          setTrayCards(normalized);
-          // also attempt to load last-saved-tray
-          try {
-            const lastSavedRaw = localStorage.getItem("classendo-last-saved-tray");
-            const lastSavedParsed = lastSavedRaw ? JSON.parse(lastSavedRaw) : [];
-            setLastSavedTray(Array.isArray(lastSavedParsed) ? lastSavedParsed : []);
-          } catch {
-            setLastSavedTray([]);
-          }
-          setLoading(false);
-          return;
-        }
-      }
-
-      // fallback to saved lessons (use first saved lesson's cards)
-      const savedRaw = localStorage.getItem(STORAGE_KEY);
-      if (savedRaw && savedRaw !== "undefined") {
-        const parsedSaved = JSON.parse(savedRaw);
-        if (Array.isArray(parsedSaved) && parsedSaved.length > 0) {
-          const first = parsedSaved[0];
-          if (first?.cards && Array.isArray(first.cards) && first.cards.length) {
-            const normalized = first.cards.map((c: any) => ({
-              id: String(c.id ?? c.card_id ?? c.word),
-              word: c.word ?? c.front ?? c.text ?? "",
-              image: c.image ?? c.back ?? null,
-              image_id: c.image_id ?? null,
-              ...c,
-            }));
-            setTrayCards(normalized);
-            setLastSavedTray(normalized);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-
-      // nothing found
-      setTrayCards([]);
-      setLastSavedTray([]);
+      setTrayCards(readLessonTray());
+      setLastSavedTray(readLastSavedTray());
     } catch (err) {
       console.error("Failed to load lesson tray:", err);
       setTrayCards([]);
@@ -166,24 +116,12 @@ export default function TeacherLessonTrayEditor() {
 
   // persist lesson tray to localStorage so other pages can pick it up
   useEffect(() => {
-    try {
-      localStorage.setItem("classendo-lesson-tray", JSON.stringify(trayCards));
-      try {
-        window.dispatchEvent(new Event("lesson-tray-updated"));
-      } catch (e) {
-        /* ignore */
-      }
-    } catch (e) {
-      console.warn("Failed to persist lesson tray:", e);
-    }
+    writeLessonTray(trayCards);
   }, [trayCards]);
 
   // track unsaved changes similar to Flashcards (visual only; no blocking)
   useEffect(() => {
-    const hasChanges =
-      trayCards.length !== lastSavedTray.length ||
-      trayCards.some((card) => !lastSavedTray.find((c) => c.id === card.id));
-    setHasUnsavedChanges(hasChanges);
+    setHasUnsavedChanges(!areCardsEqual(trayCards, lastSavedTray));
   }, [trayCards, lastSavedTray]);
 
   // navigation without guard (no popup)
@@ -193,8 +131,10 @@ export default function TeacherLessonTrayEditor() {
   }
 
   // Editor handlers
-  function updateCardField(id: string, field: keyof TrayCard, value: any) {
-    setTrayCards((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  function updateCardWord(id: string, value: string) {
+    setTrayCards((prev) =>
+      prev.map((card) => (card.id === id ? { ...card, word: value } : card))
+    );
   }
 
   function removeFromTray(id: string) {
@@ -203,12 +143,7 @@ export default function TeacherLessonTrayEditor() {
 
   function clearTray() {
     setTrayCards([]);
-    localStorage.removeItem("classendo-lesson-tray");
-    try {
-      window.dispatchEvent(new Event("lesson-tray-updated"));
-    } catch (e) {
-      /* ignore */
-    }
+    clearLessonTray();
   }
 
   /* -------------------------------
@@ -233,74 +168,24 @@ export default function TeacherLessonTrayEditor() {
       }
 
       const trimmedName = lessonName.trim();
-
-      // Check for existing lesson_set for this user (case-insensitive)
-      const { data: existing, error: existingErr } = await supabase
-        .from("lesson_sets")
-        .select("id")
-        .eq("user_id", user.id)
-        .ilike("name", trimmedName)
-        .limit(1);
-
-      if (existingErr) throw existingErr;
-
-      if (existing && existing.length > 0) {
-        setExistingLessonId(existing[0].id);
-        setShowReplaceConfirm(true);
-        return;
+      if (!editingLessonSetId) {
+        const existingId = await findExistingLessonIdByName(supabase, user.id, trimmedName);
+        if (existingId) {
+          setExistingLessonId(existingId);
+          setShowReplaceConfirm(true);
+          return;
+        }
       }
 
-      // Insert new lesson_set with user_id, last_used and is_public
-      const { data: insertedLesson, error: insertErr } = await supabase
-        .from("lesson_sets")
-        .insert({
-          name: trimmedName,
-          user_id: user.id,
-          last_used: new Date().toISOString(),
-          is_public: isPublic,
-        })
-        .select("id, created_at")
-        .single();
+      const savedLesson = await saveLesson(supabase, {
+        lessonId: editingLessonSetId,
+        userId: user.id,
+        name: trimmedName,
+        isPublic,
+        cards: trayCards,
+      });
 
-      if (insertErr) throw insertErr;
-
-      const lessonSetId = (insertedLesson as any).id;
-
-      // Insert cards (if any)
-      if (trayCards.length > 0) {
-        const cardsToInsert = trayCards.map((card, idx) => ({
-          lesson_set_id: lessonSetId,
-          front: card.word ?? card.front ?? card.text ?? "",
-          back: card.image ?? card.back ?? null,
-          position: idx,
-        }));
-
-        const { error: cardsErr } = await supabase.from("cards").insert(cardsToInsert);
-        if (cardsErr) throw cardsErr;
-      }
-
-      // update localStorage saved lessons cache (so Dashboard shows it immediately)
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || "[]";
-        const parsed = JSON.parse(raw);
-        const savedLessons = Array.isArray(parsed) ? parsed : [];
-        const newEntry = {
-          id: String(lessonSetId),
-          name: trimmedName,
-          cards: trayCards,
-          createdAt: (insertedLesson as any).created_at ?? new Date().toISOString(),
-          lastUsed: Date.now(),
-          useCount: 0,
-          isPublic: isPublic,
-        };
-        const updatedLocal = [newEntry, ...savedLessons];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
-      } catch (e) {
-        console.warn("Failed to update local saved-lessons cache:", e);
-      }
-
-      // UI updates
-      setLastSavedTray([...trayCards]);
+      applySavedLessonState(savedLesson);
       setShowSavedIndicator(true);
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
@@ -319,81 +204,25 @@ export default function TeacherLessonTrayEditor() {
         return;
       }
 
-      const userResult = await supabase.auth.getUser();
-      const user = (userResult as any)?.data?.user ?? null;
-      const userErr = (userResult as any)?.error ?? null;
+      const { data, error: userErr } = await supabase.auth.getUser();
+      const user = data?.user ?? null;
       if (userErr || !user) {
         setNameError("You must be signed in to replace lessons");
         return;
       }
 
-      // delete existing cards
-      const { error: delErr } = await supabase.from("cards").delete().eq("lesson_set_id", existingLessonId);
-      if (delErr) throw delErr;
-
-      // insert new cards
-      if (trayCards.length > 0) {
-        const cardsToInsert = trayCards.map((card, idx) => ({
-          lesson_set_id: existingLessonId,
-          front: card.word ?? card.front ?? card.text ?? "",
-          back: card.image ?? card.back ?? null,
-          position: idx,
-        }));
-
-        const { error: insertCardsErr } = await supabase.from("cards").insert(cardsToInsert);
-        if (insertCardsErr) throw insertCardsErr;
-      }
-
-      // update lesson_sets metadata (include is_public)
-      const { error: updateErr } = await supabase
-        .from("lesson_sets")
-        .update({ name: lessonName.trim(), last_used: new Date().toISOString(), is_public: isPublic })
-        .eq("id", existingLessonId);
-
-      if (updateErr) throw updateErr;
-
-      // update local saved-lessons cache similar to Flashcards
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) || "[]";
-        const parsed = JSON.parse(raw);
-        const savedLessons = Array.isArray(parsed) ? parsed : [];
-
-        const newEntry: any = {
-          id: existingLessonId,
-          name: lessonName.trim(),
-          cards: trayCards,
-          createdAt: undefined,
-          lastUsed: Date.now(),
-          useCount: 0,
-          isPublic: isPublic,
-        };
-
-        const idx = savedLessons.findIndex((s: any) => String(s.id) === String(existingLessonId));
-        if (idx !== -1) {
-          newEntry.createdAt = savedLessons[idx].createdAt ?? new Date().toISOString();
-          savedLessons[idx] = { ...savedLessons[idx], ...newEntry };
-        } else {
-          const nameIdx = savedLessons.findIndex(
-            (s: any) => String(s.name).toLowerCase() === String(lessonName.trim()).toLowerCase()
-          );
-          if (nameIdx !== -1) {
-            newEntry.createdAt = savedLessons[nameIdx].createdAt ?? new Date().toISOString();
-            savedLessons[nameIdx] = { ...savedLessons[nameIdx], ...newEntry };
-          } else {
-            newEntry.createdAt = new Date().toISOString();
-            savedLessons.unshift(newEntry);
-          }
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLessons));
-      } catch (e) {
-        console.warn("Failed to update local saved-lessons cache on replace:", e);
-      }
+      const savedLesson = await saveLesson(supabase, {
+        lessonId: existingLessonId,
+        userId: user.id,
+        name: lessonName.trim(),
+        isPublic,
+        cards: trayCards,
+      });
 
       setShowReplaceConfirm(false);
       setExistingLessonId(null);
 
-      setLastSavedTray([...trayCards]);
+      applySavedLessonState(savedLesson);
       setShowSavedIndicator(true);
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
@@ -404,26 +233,37 @@ export default function TeacherLessonTrayEditor() {
     }
   }
 
+  function applySavedLessonState(savedLesson: { id: string; name: string; cards: LessonCard[]; isPublic?: boolean }) {
+    setTrayCards(savedLesson.cards);
+    setLastSavedTray(savedLesson.cards);
+    writeLessonTray(savedLesson.cards);
+    writeLastSavedTray(savedLesson.cards);
+    setEditingLessonSetId(savedLesson.id);
+    setLessonName(savedLesson.name);
+    setIsPublic(Boolean(savedLesson.isPublic ?? true));
+  }
+
   function finishSave() {
-    setLessonName("");
     setNameError("");
     setShowSaveModal(false);
     setShowReplaceConfirm(false);
-    setIsPublic(true); // reset to default for next creation
-    // do not navigate automatically — keep teacher on editor page
   }
 
   // UI helper to format labels — preserve original case, only replace underscores with spaces
   const formatWord = (word?: string) => (word ?? "").toString().replace(/_/g, " ");
+  const resolveImageUrl = (value?: string | null) => {
+    const raw = (value ?? "").toString().trim();
+    if (!raw) return "";
+    if (raw.startsWith("http")) return raw;
+    return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700">
-              Classendo
-            </Link>
+            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700" />
           </div>
         </header>
 
@@ -439,9 +279,7 @@ export default function TeacherLessonTrayEditor() {
       {/* Header (matches Flashcards/Dashboard) */}
       <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            Classendo
-          </Link>
+          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <nav className="flex items-center text-4xl font-bold text-black">
@@ -481,7 +319,20 @@ export default function TeacherLessonTrayEditor() {
                 className="relative px-3 py-2 rounded-lg border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none"
                 title={`${formatWord(card.word)} — position ${idx + 1}`}
               >
-                <span className="text-xs">{formatWord(card.word)}</span>
+                <div className="flex items-center gap-2">
+                  {resolveImageUrl(card.image ?? card.image_id ?? card.back) ? (
+                    <img
+                      src={resolveImageUrl(card.image ?? card.image_id ?? card.back)}
+                      alt={formatWord(card.word)}
+                      className="h-8 w-8 rounded-md border object-cover bg-white"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-md border bg-white text-[10px] text-gray-400 flex items-center justify-center">
+                      No img
+                    </div>
+                  )}
+                  <span className="text-xs">{formatWord(card.word)}</span>
+                </div>
                 <button
                   onClick={() => removeFromTray(card.id)}
                   className="absolute -top-0 -right-2 bg-white rounded-full border shadow p-0.5 hover:bg-red-50"
@@ -502,16 +353,7 @@ export default function TeacherLessonTrayEditor() {
 
                 <button
                   onClick={() => {
-                    try {
-                      localStorage.setItem("classendo-lesson-tray", JSON.stringify(trayCards || []));
-                      try {
-                        window.dispatchEvent(new Event("lesson-tray-updated"));
-                      } catch (err) {
-                        /* ignore */
-                      }
-                    } catch (err) {
-                      console.error("Failed to set lesson tray for printing:", err);
-                    }
+                    writeLessonTray(trayCards);
                     window.location.href = "/printables?from=flashcards";
                   }}
                   className="btn btn-secondary px-4 py-2 flex items-center gap-2"
@@ -538,6 +380,9 @@ export default function TeacherLessonTrayEditor() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Edit Lesson Tray Cards</h1>
           <p className="text-sm text-gray-600 mt-1">Edit the front/back text for each card. Click Save to persist to Dashboard.</p>
+          <p className="text-xs text-gray-500 mt-2">
+            Use this lesson card editor to update vocabulary, phrases, and classroom flashcards for future lessons, printable activities, worksheet creation, and interactive teaching games.
+          </p>
         </div>
 
         {trayCards.length === 0 ? (
@@ -550,61 +395,21 @@ export default function TeacherLessonTrayEditor() {
         ) : (
           <div className="grid gap-4">
             {trayCards.map((card, idx) => (
-              <div key={card.id} className="flex gap-4 p-4 border rounded bg-white">
-                <div className="w-24 flex-shrink-0">
-                  {card.image_id ? (
-                    <div className="w-24 h-16 border rounded flex items-center justify-center text-xs text-gray-600">{card.image_id}</div>
-                  ) : card.image ? (
-                    <div className="w-24 h-16 border rounded flex items-center justify-center text-xs text-gray-400">image</div>
-                  ) : (
-                    <div className="w-24 h-16 border rounded flex items-center justify-center text-xs text-gray-300">No image</div>
-                  )}
+              <EditorCardRow
+                key={card.id}
+                card={card}
+                index={idx}
+                imageUrl={resolveImageUrl(card.image ?? card.image_id ?? card.back)}
+                onWordChange={updateCardWord}
+                onReset={(id) => {
+                  const saved = lastSavedTray.find((entry) => entry.id === id);
+                  if (!saved) return;
 
-                  <button
-                    className="mt-2 text-xs text-[var(--color-text-main)] underline underline-offset-4"
-                    onClick={() => {
-                      console.log("Change image pressed for", card.id);
-                      alert("Change image handler not implemented. (stub)");
-                    }}
-                  >
-                    Change image
-                  </button>
-                </div>
-
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-600">Front</label>
-                  <input
-                    value={card.word ?? card.front ?? ""}
-                    onChange={(e) => updateCardField(card.id, "word", e.target.value)}
-                    className="w-full p-2 border rounded mt-1"
-                    placeholder="Front text"
-                  />
-
-                  <label className="block text-xs font-semibold text-gray-600 mt-3">Back</label>
-                  <input
-                    value={card.image ?? card.back ?? ""}
-                    onChange={(e) => updateCardField(card.id, "image", e.target.value)}
-                    className="w-full p-2 border rounded mt-1"
-                    placeholder="Back text (or image id)"
-                  />
-                </div>
-
-                <div className="w-32 flex flex-col items-end justify-between">
-                  <div className="text-xs text-gray-500">#{idx + 1}</div>
-
-                  <button
-                    onClick={() => {
-                      const saved = lastSavedTray.find((c) => c.id === card.id);
-                      if (saved) {
-                        setTrayCards((prev) => prev.map((p) => (p.id === card.id ? saved : p)));
-                      }
-                    }}
-                    className="btn btn-secondary px-3 py-1 text-sm"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
+                  setTrayCards((prev) =>
+                    prev.map((entry) => (entry.id === id ? saved : entry))
+                  );
+                }}
+              />
             ))}
           </div>
         )}

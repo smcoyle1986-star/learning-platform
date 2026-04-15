@@ -38,11 +38,16 @@ export type NounVariantDefinition = {
     | "animals_land"
     | "body"
     | "classroom"
-    | "clothes";
+    | "clothes"
+    | "utensils";
   modelOverride?: string;
   qualityOverride?: string;
   useStyleReference?: boolean;
   styleReferencePath?: string;
+  allowBackground?: boolean;
+  allowPeople?: boolean;
+  backgroundStyle?: "transparent" | "white";
+  skipNormalization?: boolean;
 };
 
 export type NounGenerationInput = {
@@ -97,6 +102,11 @@ export type NounImageOverride = {
     | "animals_land"
     | "body"
     | "classroom"
-    | "clothes";
+    | "clothes"
+    | "utensils";
   useStyleReference?: boolean;
+  allowBackground?: boolean;
+  allowPeople?: boolean;
+  backgroundStyle?: "transparent" | "white";
+  skipNormalization?: boolean;
 };

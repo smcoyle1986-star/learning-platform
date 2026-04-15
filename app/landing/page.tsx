@@ -1,6 +1,7 @@
 "use client";
 
 import HeaderAuth from "@/components/HeaderAuth";
+import BrandButton from "@/components/BrandButton";
 import PersistentToast from "@/components/PersistentToast";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -96,7 +97,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b px-8 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-700">Classendo</h1>
+        <BrandButton className="text-xl font-bold text-blue-700" />
 
         <div className="flex items-center gap-3">
           <button onClick={() => router.push("/flashcards")} className="btn btn-secondary">

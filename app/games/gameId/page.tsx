@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import BrandButton from "@/components/BrandButton";
 import { useParams, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
@@ -187,9 +187,7 @@ export default function GamePage() {
       <div className="min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-              Classendo
-            </Link>
+            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <h1 className="text-4xl font-bold text-black">Games</h1>
@@ -233,9 +231,7 @@ export default function GamePage() {
       {/* Header (matches site) */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80">
-            Classendo
-          </Link>
+          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <h1 className="text-4xl font-bold text-black">Games</h1>

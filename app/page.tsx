@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import BrandButton from "@/components/BrandButton";
 
 import { supabase } from "@/lib/supabase/client";
 import HeaderAuth from "@/components/HeaderAuth";
@@ -154,12 +154,7 @@ export default function HomePage() {
       <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
         {/* ---------------- Header ---------------- */}
         <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
-          >
-            Classendo
-          </Link>
+          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
           <nav className="flex items-center gap-3 text-sm">
             {/* Lessons removed */}
@@ -352,12 +347,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       {/* ---------------- Header ---------------- */}
       <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link
-          href="/"
-          className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80"
-        >
-          Classendo
-        </Link>
+        <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
         <nav className="flex items-center gap-3 text-sm">
           {/* Dashboard replaces Games in the nav but routes to login when logged out */}

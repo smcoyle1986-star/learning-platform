@@ -1,0 +1,134 @@
+import { Edit, FileSpreadsheet, Play, Printer, Trash2 } from "lucide-react";
+
+import { LessonRecord } from "@/lib/lessons/types";
+
+type DashboardLessonCardProps = {
+  lesson: LessonRecord;
+  enterLabel?: string;
+  enterButtonClassName?: string;
+  onPreview: (lesson: LessonRecord) => void;
+  onEdit: (lesson: LessonRecord) => void;
+  onOpenGames: (lesson: LessonRecord) => void;
+  onDelete: (lessonId: string) => void;
+  onEnterClassroom: (lesson: LessonRecord) => void;
+  onOpenWorksheets: (lesson: LessonRecord) => void;
+  onPrint: (lesson: LessonRecord) => void;
+};
+
+export default function DashboardLessonCard({
+  lesson,
+  enterLabel = "Enter Classroom",
+  enterButtonClassName = "btn btn-primary flex-1 px-3 py-2 text-sm",
+  onPreview,
+  onEdit,
+  onOpenGames,
+  onDelete,
+  onEnterClassroom,
+  onOpenWorksheets,
+  onPrint,
+}: DashboardLessonCardProps) {
+  return (
+    <div className="bg-white rounded-2xl p-5 transition relative border shadow-sm hover:shadow-md">
+      <div className="flex items-center gap-2 mb-2">
+        <button
+          type="button"
+          onClick={() => onPreview(lesson)}
+          className="group inline-flex items-center gap-2 font-semibold text-[var(--color-text-main)] truncate text-left cursor-pointer hover:text-blue-700"
+          title={lesson.name}
+          aria-label={lesson.name}
+        >
+          <span className="truncate group-hover:underline underline-offset-4">{lesson.name}</span>
+          <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-blue-600 opacity-0 transition group-hover:opacity-100">
+            Preview
+          </span>
+        </button>
+      </div>
+
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2 mt-7">
+          <button
+            onClick={() => onOpenWorksheets(lesson)}
+            className="btn btn-secondary px-2 py-1.5 text-xs"
+            title="Worksheets"
+          >
+            <FileSpreadsheet size={14} />
+          </button>
+
+          <button
+            onClick={() => onOpenGames(lesson)}
+            className="btn btn-secondary px-2 py-1.5 text-xs"
+            title="Games"
+            aria-label="Open Games"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M6 12c0-1.333-.667-2-2-2S2 10.667 2 12s.667 2 2 2 2-.667 2-2z" />
+              <path d="M22 12c0-1.333-.667-2-2-2s-2 .667-2 2 .667 2 2 2 2-.667 2-2z" />
+              <path d="M4.5 12h15a3.5 3.5 0 0 1 3.5 3.5V17a3.5 3.5 0 0 1-3.5 3.5H4.5A3.5 3.5 0 0 1 1 17v-1.5A3.5 3.5 0 0 1 4.5 12z" />
+              <path d="M9 15v.01" />
+              <path d="M12 13v4" />
+              <path d="M15 15v.01" />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => onEdit(lesson)}
+            className="btn btn-secondary px-2 py-1.5 text-xs"
+            title="Edit"
+          >
+            <Edit size={14} />
+          </button>
+
+          <button
+            onClick={() => onDelete(lesson.id)}
+            className="btn btn-secondary px-2 py-1.5 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+
+        <div className="text-right text-xs text-[var(--color-text-muted)] flex flex-col gap-2 mt-7">
+          <div>{lesson.cards?.length ?? 0} cards</div>
+          <div>{lesson.useCount ?? 0} uses</div>
+          <div
+            className="self-end cb-badge-icon text-[var(--color-text-muted)]"
+            title={lesson.isPublic ? "Public" : "Private"}
+            aria-label={lesson.isPublic ? "Public" : "Private"}
+          >
+            {lesson.isPublic ? "🌍" : "🔒"}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => onEnterClassroom(lesson)}
+          className={enterButtonClassName}
+        >
+          <Play size={14} />
+          {enterLabel}
+        </button>
+
+        <button
+          onClick={() => onPrint(lesson)}
+          className="btn btn-secondary px-3 py-2 flex items-center gap-2 text-sm"
+        >
+          <Printer size={14} />
+          Print
+        </button>
+      </div>
+    </div>
+  );
+}

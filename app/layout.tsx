@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import { BrandMenuProvider } from "@/components/BrandMenuContext";
+import BrandMenuDrawer from "@/components/BrandMenuDrawer";
 import HeaderAuth from "@/components/HeaderAuth";
 
 export const metadata: Metadata = {
@@ -17,12 +19,15 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {/* GLOBAL HEADER — THIS WAS MISSING */}
-          <header className="p-4 border-b flex justify-end">
-            <HeaderAuth />
-          </header>
+          <BrandMenuProvider>
+            <BrandMenuDrawer />
+            {/* GLOBAL HEADER — THIS WAS MISSING */}
+            <header className="p-4 border-b flex justify-end">
+              <HeaderAuth />
+            </header>
 
-          {children}
+            {children}
+          </BrandMenuProvider>
         </AuthProvider>
       </body>
     </html>

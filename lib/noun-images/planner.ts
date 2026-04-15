@@ -421,6 +421,38 @@ const CLASSROOM_NOUNS = new Set([
   "white board",
   "workbook",
 ]);
+const UTENSIL_NOUNS = new Set([
+  "bottle",
+  "bowl",
+  "chopping board",
+  "chopsticks",
+  "colander",
+  "container",
+  "cup",
+  "fork",
+  "frying pan",
+  "glass",
+  "jar",
+  "jug",
+  "kettle",
+  "knife",
+  "mug",
+  "pan",
+  "peeler",
+  "plate",
+  "pot",
+  "rice cooker",
+  "scissors",
+  "spoon",
+  "tongs",
+  "wok",
+]);
+
+const UTENSIL_VARIANT_NOTES: Record<number, string> = {
+  1: "isolated utensil only, no background, transparent PNG",
+  2: "two or three utensils arranged like in a drawer or on a shelf, but isolated with no background, transparent PNG",
+  3: "person using the utensil correctly, no background, transparent PNG, utensil in contact with hands",
+};
 const CLOTHES_NOUNS = new Set([
   "belt",
   "blazer",
@@ -1270,16 +1302,20 @@ export function planNounImageVariants(params: {
                 ? "classroom"
               : ANIMALS_SEA_NOUNS.has(lemma)
                 ? "animals_land"
-                : ANIMALS_LAND_NOUNS.has(lemma)
+          : ANIMALS_LAND_NOUNS.has(lemma)
                   ? "animals_land"
                   : BODY_NOUNS.has(lemma)
                     ? "body"
-                    : "default");
+                    : UTENSIL_NOUNS.has(lemma)
+                      ? "utensils"
+                      : "default");
 
       return {
         ...variant,
         promptNote:
-          override?.variantPromptNotes?.[variant.variantNumber] ?? override?.promptNote,
+          override?.variantPromptNotes?.[variant.variantNumber]
+          ?? (promptProfile === "utensils" ? UTENSIL_VARIANT_NOTES[variant.variantNumber] : undefined)
+          ?? override?.promptNote,
         promptProfile,
         modelOverride:
           promptProfile === "jobs" ? "gpt-image-1" : undefined,
@@ -1325,6 +1361,8 @@ export function planNounImageVariants(params: {
               ? override?.variantStyleReferencePaths?.[variant.variantNumber]
                 ?? selectClassroomCharacterReference(lemma, variant.variantNumber)
             : undefined,
+        allowPeople: promptProfile === "utensils" && variant.variantNumber === 3,
+        backgroundStyle: promptProfile === "utensils" ? "transparent" : undefined,
       };
     });
 }
