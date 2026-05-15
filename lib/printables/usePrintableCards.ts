@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { readLessonTray, subscribeToLessonTray } from "@/lib/lessons/tray";
 import { PrintableCard } from "@/lib/printables/types";
 
@@ -11,7 +12,7 @@ function normalizePrintableCard(raw: any): PrintableCard {
   return {
     id: String(raw.id ?? raw.card_id ?? raw.word),
     word: String(raw.word ?? raw.front ?? ""),
-    image: String(raw.image ?? raw.back ?? "/placeholder.png"),
+    image: resolveLessonImageUrl(raw.image ?? raw.back ?? "/placeholder.png"),
     type: raw.type ?? undefined,
   };
 }

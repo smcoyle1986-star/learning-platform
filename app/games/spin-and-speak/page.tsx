@@ -3,7 +3,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
+import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import { trackGameStart } from "@/lib/games/track-game-start";
 import {
   createSpinWheelGame,
   type SpinSegment,
@@ -25,12 +27,12 @@ type Team = {
 
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
-/* Segments: question, act, sentence, read (emoji used as picture) */
+/* Segments: question, act, sentence, read */
 const SEGMENTS: SpinSegment[] = [
-  { id: "question", emoji: "❓", label: "Answer a Question" },
-  { id: "act", emoji: "🎭", label: "Act or Describe" },
-  { id: "sentence", emoji: "✏️", label: "Make a Sentence" },
-  { id: "read", emoji: "🗣️", label: "Read Aloud" },
+  { id: "question", label: "Question" },
+  { id: "act", label: "Act" },
+  { id: "sentence", label: "Make" },
+  { id: "read", label: "Read" },
 ];
 
 export default function SpinAndSpeakPage() {
@@ -94,10 +96,19 @@ export default function SpinAndSpeakPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   function addTeam() {
     if (teams.length >= 6) return;
     const next = teams.length + 1;
     setTeams((s) => [...s, { id: `team-${next}`, name: `Team ${next}`, score: 0 }]);
+  }
+  function removeTeam() {
+    setTeams((s) => {
+      if (s.length <= 1) return s;
+      const next = s.slice(0, -1);
+      setActiveTeamIndex((i) => Math.min(i, next.length - 1));
+      return next;
+    });
   }
   function resetScores() {
     setTeams((s) => s.map((t) => ({ ...t, score: 0 })));
@@ -192,6 +203,14 @@ export default function SpinAndSpeakPage() {
   const [spinning, setSpinning] = useState(false);
   const [landedSegment, setLandedSegment] = useState<SpinSegment | null>(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [showCardWord, setShowCardWord] = useState(true);
+  const [showPointsPrompt, setShowPointsPrompt] = useState(false);
+  const [showPointsSpinner, setShowPointsSpinner] = useState(false);
+  const [spinningPoints, setSpinningPoints] = useState(1);
+  const [awardedPoints, setAwardedPoints] = useState<number | null>(null);
+  const pointsSpinIntervalRef = useRef<number | null>(null);
+  const pointsSpinTimeoutRef = useRef<number | null>(null);
+  const pointsAwardTimeoutRef = useRef<number | null>(null);
 
   // Timer
   const TIMER_OPTIONS = [10, 15, 20, 30] as const;
@@ -199,6 +218,9 @@ export default function SpinAndSpeakPage() {
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const timerIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    setShowCardWord(timerActive && !showPopup && !showPointsPrompt && !showPointsSpinner);
+  }, [timerActive, showPopup, showPointsPrompt, showPointsSpinner]);
   useEffect(() => {
     if (!timerActive || timerSeconds === null) return;
     if (timerSeconds <= 0) {
@@ -224,6 +246,21 @@ export default function SpinAndSpeakPage() {
     clearTimer();
   }
 
+  function clearPointsSpinnerTimers() {
+    if (pointsSpinIntervalRef.current) {
+      window.clearInterval(pointsSpinIntervalRef.current);
+      pointsSpinIntervalRef.current = null;
+    }
+    if (pointsSpinTimeoutRef.current) {
+      window.clearTimeout(pointsSpinTimeoutRef.current);
+      pointsSpinTimeoutRef.current = null;
+    }
+    if (pointsAwardTimeoutRef.current) {
+      window.clearTimeout(pointsAwardTimeoutRef.current);
+      pointsAwardTimeoutRef.current = null;
+    }
+  }
+
   function handleSpinSceneEvent(event: SpinWheelEvent) {
     if (event.type === "spin-start") {
       setSpinning(true);
@@ -239,21 +276,26 @@ export default function SpinAndSpeakPage() {
       window.setTimeout(() => {
         setShowPopup(false);
         startTimer(turnLength);
-      }, 3000);
+      }, 1500);
     }
   }
 
   function spinWheel() {
-    if (spinning || timerActive || showPopup || tray.length === 0) return;
+    if (spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0) return;
+    trackGameStart("spin-and-speak");
     sceneApiRef.current?.spin();
   }
 
   // Turn resolution
   function onCorrect() {
-    const teamId = teams[activeTeamIndex].id;
-    adjustScore(teamId, 1);
+    if (showPointsPrompt || showPointsSpinner) return;
     playTone(980, 0.12, "sine", 0.09);
-    resolveTurn();
+    clearTimer();
+    setTimerSeconds(null);
+    setShowPointsPrompt(true);
+    setShowPointsSpinner(false);
+    setAwardedPoints(null);
+    clearPointsSpinnerTimers();
   }
   function onPass() {
     resolveTurn();
@@ -273,6 +315,36 @@ export default function SpinAndSpeakPage() {
     clearTimer();
   }
 
+  function startPointsSpinner() {
+    if (!showPointsPrompt || showPointsSpinner) return;
+    const scoringTeamIndex = activeTeamIndex;
+    setShowPointsPrompt(false);
+    setShowPointsSpinner(true);
+    setAwardedPoints(null);
+    clearPointsSpinnerTimers();
+
+    pointsSpinIntervalRef.current = window.setInterval(() => {
+      setSpinningPoints(1 + Math.floor(Math.random() * 10));
+    }, 90);
+
+    pointsSpinTimeoutRef.current = window.setTimeout(() => {
+      clearPointsSpinnerTimers();
+      const finalPoints = 1 + Math.floor(Math.random() * 10);
+      setSpinningPoints(finalPoints);
+      setAwardedPoints(finalPoints);
+      pointsAwardTimeoutRef.current = window.setTimeout(() => {
+        setTeams((prev) => prev.map((t, idx) => (idx === scoringTeamIndex ? { ...t, score: t.score + finalPoints } : t)));
+        playTone(780, 0.16, "triangle", 0.08);
+
+        window.setTimeout(() => {
+          setShowPointsSpinner(false);
+          setAwardedPoints(null);
+          resolveTurn();
+        }, 650);
+      }, 1500);
+    }, 4000);
+  }
+
   // Winner detection
   const allUsed = tray.length > 0 && usedIndices.length >= tray.length;
   const [winnerModalOpen, setWinnerModalOpen] = useState(false);
@@ -288,11 +360,22 @@ export default function SpinAndSpeakPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allUsed]);
 
+  useEffect(() => {
+    return () => {
+      clearPointsSpinnerTimers();
+    };
+  }, []);
+
   function resetGame(fullResetScores = false) {
     setUsedIndices([]);
     setLandedSegment(null);
     setShowPopup(false);
+    setShowCardWord(false);
     setSpinning(false);
+    setShowPointsPrompt(false);
+    setShowPointsSpinner(false);
+    setAwardedPoints(null);
+    clearPointsSpinnerTimers();
     clearTimer();
     setWinnerModalOpen(false);
     setWinnerTeam(null);
@@ -316,13 +399,16 @@ export default function SpinAndSpeakPage() {
         onExit={() => router.push("/games")}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        settingsOpen={settingsOpen}
+        onToggleSettings={() => setSettingsOpen((s) => !s)}
+        trackGameKey="spin-and-speak"
       />
 
       {/* Main */}
       <main className="pt-[72px] max-w-7xl mx-auto px-4 h-[calc(100vh-72px)]">
         <div className="h-full flex gap-6">
           {/* Wheel */}
-          <section className="w-1/3 flex flex-col items-center justify-center">
+          <section className="w-1/3 relative flex flex-col items-center justify-center">
             <div className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
               <PhaserGameHost
                 className="w-full h-full"
@@ -337,10 +423,10 @@ export default function SpinAndSpeakPage() {
             <div className="mt-6">
               <button
                 onClick={spinWheel}
-                disabled={spinning || timerActive || showPopup || tray.length === 0}
-                className={`btn btn-primary px-6 py-3 text-lg font-bold shadow-2xl transition ${
-                  spinning || timerActive || showPopup || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
-                }`}
+                disabled={spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0}
+                className={`btn btn-primary px-8 py-4 text-xl md:text-2xl font-extrabold shadow-2xl transition ${
+                  spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
+                } ${!spinning && !timerActive && !showPopup && !showPointsPrompt && !showPointsSpinner && tray.length > 0 ? "spin-pulse" : ""}`}
               >
                 SPIN
               </button>
@@ -351,10 +437,10 @@ export default function SpinAndSpeakPage() {
 
           {/* Center card */}
           <section className="w-1/3 flex flex-col items-center justify-center">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md h-80 md:h-96 flex items-center justify-center overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl h-[22rem] md:h-[30rem] flex items-center justify-center overflow-hidden">
               {currentCard ? (
                 imgSrc ? (
-                  <img src={imgSrc} alt={currentCard.word ?? ""} className="object-cover w-full h-full" />
+                  <img src={imgSrc} alt={currentCard.word ?? ""} className="object-contain w-full h-full p-3 md:p-4" />
                 ) : (
                   <div className="text-2xl text-gray-400">No image</div>
                 )
@@ -363,20 +449,21 @@ export default function SpinAndSpeakPage() {
               )}
             </div>
 
-            <div className="text-4xl font-extrabold text-center mt-4">
-              {currentCard ? currentCard.word : "—"}
+            <div className="text-6xl md:text-7xl font-extrabold text-center mt-5 min-h-[4.5rem] tracking-tight">
+              {showCardWord && currentCard ? currentCard.word : " "}
             </div>
 
-            {showPopup && landedSegment && (
-              <div className="mt-6">
-                <div className="bg-white rounded-2xl shadow-2xl p-6 text-center animate-zoom-in">
-                  <div className="text-2xl md:text-3xl font-extrabold">{landedSegment.label}</div>
+            {showPopup && landedSegment && !showPointsPrompt && !showPointsSpinner && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center px-4 pointer-events-none">
+                <div className="bg-white/95 border border-black/10 rounded-[2rem] shadow-[0_26px_80px_rgba(15,23,42,0.22)] px-8 py-7 text-center animate-zoom-in w-[min(90vw,32rem)]">
+                  <div className="text-sm uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-2">Spin result</div>
+                  <div className="text-3xl md:text-4xl font-extrabold">{landedSegment.label}</div>
                 </div>
               </div>
             )}
 
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <div className={`px-4 py-2 rounded-lg font-bold text-xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-white text-black shadow-sm"}`}>
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <div className={`px-5 py-3 rounded-2xl font-bold text-2xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-white text-black shadow-sm"}`}>
                 {timerActive && timerSeconds !== null ? `${timerSeconds}s` : `Ready`}
               </div>
 
@@ -388,7 +475,7 @@ export default function SpinAndSpeakPage() {
               )}
 
               {timerActive && (
-                <button onClick={teacherEndTimerEarly} className="btn btn-secondary mt-2 px-3 py-1">
+                <button onClick={teacherEndTimerEarly} className="btn btn-secondary mt-2 px-4 py-2">
                   End Early
                 </button>
               )}
@@ -400,10 +487,6 @@ export default function SpinAndSpeakPage() {
             <div className="bg-white rounded-2xl shadow p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">Teams</div>
-                <div className="flex items-center gap-2">
-                  <button onClick={addTeam} className="btn btn-secondary px-2 py-1">＋</button>
-                  <button onClick={() => resetGame(true)} className="btn btn-secondary px-2 py-1">Reset Game</button>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3">
@@ -426,37 +509,11 @@ export default function SpinAndSpeakPage() {
                 })}
               </div>
 
-              <div className="pt-2 border-t mt-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">Timer</div>
-                  <div className="flex gap-2">
-                    {TIMER_OPTIONS.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setTurnLength(t)}
-                        className={`btn px-2 py-1 ${turnLength === t ? "btn-primary" : "btn-secondary"}`}
-                      >
-                        {t}s
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleMusic}
-                      className={`btn px-3 py-1 ${musicOn ? "btn-primary" : "btn-secondary"}`}
-                    >
-                      {musicOn ? "Music: On" : "Music: Off"}
-                    </button>
-                    <button onClick={() => resetGame(false)} className="btn btn-secondary px-3 py-1">
-                      Reset Turn
-                    </button>
-                  </div>
-
-                  <div className="text-sm text-gray-500">Cards: {tray.length}</div>
-                </div>
+              <div className="pt-2 border-t mt-2 flex items-center justify-between">
+                <button onClick={() => resetGame(false)} className="btn btn-secondary px-3 py-1">
+                  Reset Turn
+                </button>
+                <div className="text-sm text-gray-500">Cards: {tray.length}</div>
               </div>
             </div>
 
@@ -484,6 +541,83 @@ export default function SpinAndSpeakPage() {
         </div>
       </main>
 
+      {(showPointsPrompt || showPointsSpinner) && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center pointer-events-auto">
+          {!showPointsSpinner ? (
+            <button
+              onClick={startPointsSpinner}
+              className="w-52 h-52 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
+              title="Get points"
+            >
+              <span className="text-3xl font-extrabold leading-tight">Get points!</span>
+            </button>
+          ) : (
+            <div className="w-52 h-52 rounded-full bg-white/96 border-[10px] border-[var(--color-accent)] shadow-2xl flex flex-col items-center justify-center animate-zoom-in">
+              <div className="text-[10px] uppercase tracking-[0.35em] text-[var(--color-text-muted)] mb-2">
+                Points
+              </div>
+              <div className="text-8xl font-extrabold text-[var(--color-accent)] tabular-nums leading-none">
+                {spinningPoints}
+              </div>
+              <div className="mt-2 text-xs font-semibold text-[var(--color-text-muted)]">
+                {awardedPoints !== null ? "Awarded" : "Spinning..."}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {settingsOpen && (
+        <div className="fixed top-[72px] right-4 z-[70]">
+          <GameSettingsDropdown className="w-[340px]">
+            <div className="mb-4">
+              <div className="mb-2 font-semibold">Teams</div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={addTeam} disabled={teams.length >= 6} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
+                  Add team
+                </button>
+                <button onClick={removeTeam} disabled={teams.length <= 1} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
+                  Remove team
+                </button>
+                <button onClick={resetScores} className="btn btn-secondary px-3 py-2 text-sm">
+                  Reset scores
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="mb-2 font-semibold">Timer</div>
+              <div className="flex gap-2 flex-wrap">
+                {TIMER_OPTIONS.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTurnLength(t)}
+                    className={`px-2 py-2 text-xs rounded-lg border transition-transform hover:-translate-y-0.5 ${
+                      turnLength === t ? "bg-[var(--color-accent)] text-white border-transparent" : "bg-white text-black border-black/10"
+                    }`}
+                  >
+                    {t}s
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="mb-2 font-semibold">Music</div>
+              <button onClick={toggleMusic} className={`btn btn-secondary w-full px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
+                {musicOn ? "Music: On" : "Music: Off"}
+              </button>
+            </div>
+
+            <div className="text-right">
+              <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1 text-sm">
+                Close
+              </button>
+            </div>
+          </GameSettingsDropdown>
+        </div>
+      )}
+
       <style jsx>{`
         .animate-zoom-in {
           animation: zoom-in 420ms cubic-bezier(.2,.9,.3,1) both;
@@ -506,6 +640,14 @@ export default function SpinAndSpeakPage() {
           0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(99,102,241,0)); }
           50% { transform: scale(1.08); filter: drop-shadow(0 8px 24px rgba(99,102,241,0.18)); }
           100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(99,102,241,0)); }
+        }
+        .spin-pulse {
+          animation: spin-pulse 900ms ease-in-out infinite;
+        }
+        @keyframes spin-pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0.35); }
+          70% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(37,99,235,0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0); }
         }
       `}</style>
     </div>

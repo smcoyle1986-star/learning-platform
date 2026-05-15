@@ -14,6 +14,7 @@ type GameHeaderProps = {
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
   extraActions?: React.ReactNode;
+  trackGameKey?: string;
 };
 
 export default function GameHeader({
@@ -25,6 +26,7 @@ export default function GameHeader({
   settingsOpen,
   onToggleSettings,
   extraActions,
+  trackGameKey: _trackGameKey,
 }: GameHeaderProps) {
   if (hidden) return null;
 

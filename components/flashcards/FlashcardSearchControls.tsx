@@ -1,8 +1,13 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import type { CSSProperties } from "react";
 
-import { FLASHCARD_THEMES, WordType } from "@/lib/flashcards/types";
+import {
+  ADJECTIVE_THEME_GROUPS,
+  FLASHCARD_THEMES,
+  WordType,
+} from "@/lib/flashcards/types";
 
 type FlashcardSearchControlsProps = {
   openDropdown: string | null;
@@ -16,7 +21,6 @@ type FlashcardSearchControlsProps = {
   onSearch: () => Promise<void> | void;
   onClearGrid: () => void;
   onGoDashboard: () => void;
-  onGoEditor: () => void;
   onGoGames: () => void;
   onGoCommunity: () => void;
 };
@@ -25,6 +29,70 @@ function wordTypeButton(active: boolean) {
   return `btn px-4 py-2 rounded-full text-sm font-semibold transition-all ${
     active ? "btn-primary" : "btn-secondary"
   }`;
+}
+
+function adjectiveThemeButton(
+  themeValue: string,
+  themeTone: "grammar" | "meaning",
+  active: boolean
+) {
+  const grammarStyles: Record<
+    string,
+    { base: CSSProperties; active: CSSProperties }
+  > = {
+    comparative: {
+      base: {
+        backgroundColor: "#e0f2fe",
+        borderColor: "#bae6fd",
+        color: "#0369a1",
+      },
+      active: {
+        backgroundColor: "#bae6fd",
+        borderColor: "#7dd3fc",
+        color: "#0c4a6e",
+        boxShadow: "0 6px 14px rgba(15, 23, 42, 0.08)",
+      },
+    },
+    superlative: {
+      base: {
+        backgroundColor: "#dbeafe",
+        borderColor: "#bfdbfe",
+        color: "#1d4ed8",
+      },
+      active: {
+        backgroundColor: "#bfdbfe",
+        borderColor: "#93c5fd",
+        color: "#1e3a8a",
+        boxShadow: "0 6px 14px rgba(15, 23, 42, 0.08)",
+      },
+    },
+    adverb: {
+      base: {
+        backgroundColor: "#e0e7ff",
+        borderColor: "#c7d2fe",
+        color: "#4338ca",
+      },
+      active: {
+        backgroundColor: "#c7d2fe",
+        borderColor: "#a5b4fc",
+        color: "#312e81",
+        boxShadow: "0 6px 14px rgba(15, 23, 42, 0.08)",
+      },
+    },
+  };
+
+  const isGrammar = themeTone === "grammar";
+  const grammarStyle = isGrammar
+    ? active
+      ? grammarStyles[themeValue]?.active
+      : grammarStyles[themeValue]?.base
+    : undefined;
+
+  const className = `btn w-full px-3 py-2 text-left transition-all ${
+    isGrammar ? "border" : active ? "btn-primary" : "btn-secondary"
+  }`;
+
+  return { className, style: grammarStyle };
 }
 
 export default function FlashcardSearchControls({
@@ -39,10 +107,16 @@ export default function FlashcardSearchControls({
   onSearch,
   onClearGrid,
   onGoDashboard,
-  onGoEditor,
   onGoGames,
   onGoCommunity,
 }: FlashcardSearchControlsProps) {
+  const adjectiveThemeLabel =
+    activeWordType === "adjective" && activeTheme
+      ? ADJECTIVE_THEME_GROUPS.flatMap((group) => group.items).find(
+          (item) => item.value === activeTheme
+        )?.label ?? activeTheme
+      : null;
+
   return (
     <>
       <section className="bg-[var(--color-bg-main)] border-b border-black/5">
@@ -78,51 +152,92 @@ export default function FlashcardSearchControls({
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4 relative justify-center">
-          {(["noun", "verb", "adjective", "phonics", "preposition"] as const).map((type) => {
-            const isSelectedType = activeWordType === type;
+            {(["noun", "verb", "adjective", "phonics", "preposition"] as const).map((type) => {
+              const isSelectedType = activeWordType === type;
 
-            return (
-              <div key={type} className="relative" data-dropdown-type={type}>
-                <button
-                  className={wordTypeButton(isSelectedType)}
-                  onClick={() => {
-                    onSetOpenDropdown(openDropdown === type ? null : type);
-                    onSetActiveWordType(type);
-                    onSetActiveTheme(null);
-                  }}
-                  data-dropdown-btn={type}
-                >
-                  {activeWordType === type && activeTheme ? activeTheme : type}
-                </button>
-
-                {openDropdown === type && (
-                  <div
-                    className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain"
-                    data-dropdown-type={type}
+              return (
+                <div key={type} className="relative" data-dropdown-type={type}>
+                  <button
+                    className={wordTypeButton(isSelectedType)}
+                    onClick={() => {
+                      onSetOpenDropdown(openDropdown === type ? null : type);
+                      onSetActiveWordType(type);
+                      onSetActiveTheme(null);
+                    }}
+                    data-dropdown-btn={type}
                   >
-                    {FLASHCARD_THEMES[type].map((theme) => (
-                      <button
-                        key={theme}
-                        onClick={() => {
-                          onSetActiveTheme(theme);
-                          onSetActiveWordType(type);
-                          onSetOpenDropdown(null);
-                          setTimeout(() => {
-                            void onSearch();
-                          }, 0);
-                        }}
-                        className={`btn w-full px-3 py-2 text-left ${
-                          activeTheme === theme ? "btn-primary" : "btn-secondary"
-                        }`}
+                    {activeWordType === type && adjectiveThemeLabel
+                      ? adjectiveThemeLabel
+                      : activeWordType === type && activeTheme
+                        ? activeTheme
+                        : type}
+                  </button>
+
+                  {openDropdown === type &&
+                    (type === "adjective" ? (
+                      <div
+                        className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain space-y-2"
+                        data-dropdown-type={type}
                       >
-                        {theme}
-                      </button>
+                        {ADJECTIVE_THEME_GROUPS.flatMap((group) => group.items.map((theme) => ({
+                          theme,
+                          tone: group.tone ?? "meaning",
+                        }))).map(({ theme, tone }, index, list) => {
+                          const previousTone = list[index - 1]?.tone;
+                          const showDivider = previousTone === "grammar" && tone === "meaning";
+
+                          return (
+                            <div key={theme.value}>
+                              {showDivider && <div className="h-px bg-black/5 my-1" aria-hidden="true" />}
+                              <button
+                                onClick={() => {
+                                onSetActiveTheme(theme.value);
+                                  onSetActiveWordType(type);
+                                  onSetOpenDropdown(null);
+                                  setTimeout(() => {
+                                    void onSearch();
+                                  }, 0);
+                                }}
+                                {...adjectiveThemeButton(
+                                  theme.value,
+                                  tone,
+                                  activeTheme === theme.value
+                                )}
+                              >
+                                {theme.label}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div
+                        className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain space-y-2"
+                        data-dropdown-type={type}
+                      >
+                        {FLASHCARD_THEMES[type].map((theme) => (
+                          <button
+                            key={theme}
+                            onClick={() => {
+                              onSetActiveTheme(theme);
+                              onSetActiveWordType(type);
+                              onSetOpenDropdown(null);
+                              setTimeout(() => {
+                                void onSearch();
+                              }, 0);
+                            }}
+                            className={`btn w-full px-3 py-2 text-left transition-all ${
+                              activeTheme === theme ? "btn-primary" : "btn-secondary"
+                            }`}
+                          >
+                            {theme}
+                          </button>
+                        ))}
+                      </div>
                     ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

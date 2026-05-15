@@ -6,8 +6,8 @@ type FlashcardsNavActionsProps = {
   openDropdown: string | null;
   onSetOpenDropdown: (value: string | null) => void;
   onGoDashboard: () => void;
-  onGoEditor: () => void;
   onGoGames: () => void;
+  onGoWorksheets: () => void;
   onGoCommunity: () => void;
   onGoClassroom: () => void;
 };
@@ -16,8 +16,8 @@ export default function FlashcardsNavActions({
   openDropdown,
   onSetOpenDropdown,
   onGoDashboard,
-  onGoEditor,
   onGoGames,
+  onGoWorksheets,
   onGoCommunity,
   onGoClassroom,
 }: FlashcardsNavActionsProps) {
@@ -45,11 +45,11 @@ export default function FlashcardsNavActions({
             <button onClick={onGoDashboard} className="btn btn-secondary w-full px-3 py-2 text-left">
               Dashboard
             </button>
-            <button onClick={onGoEditor} className="btn btn-secondary w-full px-3 py-2 text-left">
-              Editor
-            </button>
             <button onClick={onGoGames} className="btn btn-secondary w-full px-3 py-2 text-left">
               Games
+            </button>
+            <button onClick={onGoWorksheets} className="btn btn-secondary w-full px-3 py-2 text-left">
+              Worksheets
             </button>
             <button onClick={onGoCommunity} className="btn btn-secondary w-full px-3 py-2 text-left">
               Community

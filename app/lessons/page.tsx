@@ -8,12 +8,8 @@ import { supabase } from "@/lib/supabase/client";
 import { loadLessonsForUser } from "@/lib/lessons/repository";
 import { LessonRecord } from "@/lib/lessons/types";
 import { writeLessonTray } from "@/lib/lessons/tray";
-import {
-  createDraftFromLesson,
-  EMPTY_LESSON_PLAN_DRAFT,
-  LESSON_PLAN_DRAFT_KEY,
-  LessonPlanDraft,
-} from "@/lib/lesson-plans/types";
+import { EMPTY_LESSON_PLAN_DRAFT, LESSON_PLAN_DRAFT_KEY, LessonLevel, LessonPlanDraft } from "@/lib/lesson-plans/types";
+import { buildLessonPlanDraft } from "@/lib/lesson-plans/generate";
 
 function readDraft(): LessonPlanDraft {
   try {
@@ -31,6 +27,7 @@ export default function LessonsPage() {
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<LessonPlanDraft>(EMPTY_LESSON_PLAN_DRAFT);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
   useEffect(() => {
     setDraft(readDraft());
@@ -73,7 +70,19 @@ export default function LessonsPage() {
   );
 
   function applyLesson(lesson: LessonRecord) {
-    setDraft(createDraftFromLesson(lesson));
+    setDraft(buildLessonPlanDraft(lesson, draft.level, draft.variant + 1));
+  }
+
+  function regeneratePlan(nextLevel = draft.level) {
+    if (!selectedLesson) {
+      setDraft((current) => ({
+        ...current,
+        level: nextLevel,
+        variant: current.variant + 1,
+      }));
+      return;
+    }
+    setDraft(buildLessonPlanDraft(selectedLesson, nextLevel, draft.variant + 1));
   }
 
   function updateDraft<K extends keyof LessonPlanDraft>(key: K, value: LessonPlanDraft[K]) {
@@ -95,6 +104,46 @@ export default function LessonsPage() {
     if (!selectedLesson) return;
     writeLessonTray(selectedLesson.cards);
     window.location.href = `/flashcards?lesson_set_id=${selectedLesson.id}`;
+  }
+
+  async function exportLessonPlanPdf() {
+    if (!selectedLesson || !draft.selectedLessonId) return;
+
+    setIsPdfExporting(true);
+    try {
+      const response = await fetch("/api/lesson-plans/export-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lesson: selectedLesson,
+          draft,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download =
+        `${(draft.title || `${selectedLesson.name} Lesson Plan`)
+          .trim()
+          .replace(/[^a-z0-9]+/gi, "-")
+          .replace(/^-+|-+$/g, "") || "lesson-plan"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      console.error("Failed to export lesson plan PDF:", error);
+    } finally {
+      setIsPdfExporting(false);
+    }
   }
 
   return (
@@ -181,6 +230,14 @@ export default function LessonsPage() {
               Send Selected Lesson to Printables
             </button>
 
+            <button
+              onClick={exportLessonPlanPdf}
+              disabled={!selectedLesson || isPdfExporting}
+              className="btn btn-primary w-full disabled:opacity-50"
+            >
+              {isPdfExporting ? "Generating PDF…" : "Export Lesson Plan PDF"}
+            </button>
+
             <button onClick={clearDraft} className="btn btn-secondary w-full">
               Clear Draft
             </button>
@@ -211,6 +268,95 @@ export default function LessonsPage() {
                   {selectedLesson
                     ? `${selectedLesson.cards.length} cards ready for planning and printables`
                     : "Choose a saved lesson to prefill the draft"}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-black/5 bg-[linear-gradient(135deg,rgba(127,163,106,0.10),rgba(255,255,255,0.92))] p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
+                    Student level
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(["beginner", "middle", "high"] as LessonLevel[]).map((level) => {
+                      const active = draft.level === level;
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => regeneratePlan(level)}
+                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                            active
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm"
+                              : "border-black/10 bg-white text-[var(--color-text-main)] hover:-translate-y-0.5"
+                          }`}
+                        >
+                          {level[0].toUpperCase() + level.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button onClick={() => regeneratePlan(draft.level)} className="btn btn-primary px-4 py-3 text-sm">
+                  Generate fresh plan
+                </button>
+              </div>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">50-minute flow</div>
+                  <div className="mt-3 space-y-3">
+                    {draft.schedule
+                      .split("\n")
+                      .filter(Boolean)
+                      .map((entry) => {
+                        const [time, rest] = entry.split(" · ");
+                        const [title, detail] = (rest ?? "").split(" — ");
+                        return (
+                          <div key={entry} className="rounded-xl border border-black/5 bg-[var(--color-bg-main)] px-3 py-2">
+                            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--color-text-muted)]">{time}</div>
+                            <div className="mt-1 text-sm font-semibold text-[var(--color-text-main)]">{title}</div>
+                            <div className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">{detail}</div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested games</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {draft.recommendedGames.split(" · ").filter(Boolean).map((game) => (
+                      <span
+                        key={game}
+                        className="rounded-full border border-[rgba(30,64,175,0.16)] bg-[rgba(30,64,175,0.06)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
+                      >
+                        {game}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested worksheets</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {draft.recommendedWorksheets.split(" · ").filter(Boolean).map((worksheet) => (
+                      <span
+                        key={worksheet}
+                        className="rounded-full border border-[rgba(127,163,106,0.18)] bg-[rgba(127,163,106,0.08)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
+                      >
+                        {worksheet}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Why this feels varied</div>
+                  <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                    This generator changes the lesson wording, game order, worksheet pair, and the pace of the 50-minute flow based on the selected lesson cards and student level.
+                  </p>
+                  <div className="mt-4 rounded-xl border border-black/5 bg-[var(--color-bg-main)] p-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                    <span className="font-semibold text-[var(--color-text-main)]">Best fit:</span> {draft.focus || "Choose a lesson to generate a plan."}
+                  </div>
                 </div>
               </div>
             </div>

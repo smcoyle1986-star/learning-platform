@@ -1,0 +1,21 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="48" fill="#F7F8F3"/>
+  <rect x="52" y="52" width="696" height="496" rx="32" fill="#FFFDF8" stroke="#D8E2D0" stroke-width="4"/>
+  <g transform="translate(190 120)">
+    <rect x="0" y="0" width="420" height="280" rx="26" fill="#F2F7EE" stroke="#D5E1CD" stroke-width="4"/>
+    <g opacity="0.95">
+      <rect x="24" y="24" width="86" height="86" rx="18" fill="#DFF0D7"/>
+      <rect x="118" y="24" width="86" height="86" rx="18" fill="#FBE58E"/>
+      <rect x="212" y="24" width="86" height="86" rx="18" fill="#F7A9A9"/>
+      <rect x="306" y="24" width="86" height="86" rx="18" fill="#D9E2FF"/>
+      <rect x="24" y="118" width="86" height="86" rx="18" fill="#F2C6E8"/>
+      <rect x="118" y="118" width="86" height="86" rx="18" fill="#C8F1D1"/>
+      <rect x="212" y="118" width="86" height="86" rx="18" fill="#F9DEB0"/>
+      <rect x="306" y="118" width="86" height="86" rx="18" fill="#DFF0D7"/>
+    </g>
+    <circle cx="210" cy="140" r="56" fill="#FF5F5F"/>
+    <path d="M210 94L224 122H252L229 141L238 169L210 153L182 169L191 141L168 122H196L210 94Z" fill="#FFFFFF"/>
+    <text x="210" y="245" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#4F5E56">Kaboom!</text>
+  </g>
+  <text x="400" y="516" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#6F7E78">Tap the safe square</text>
+</svg>

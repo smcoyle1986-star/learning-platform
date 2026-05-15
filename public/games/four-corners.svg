@@ -1,0 +1,12 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="48" fill="#F7F8F3"/>
+  <rect x="52" y="52" width="696" height="496" rx="32" fill="#FFFDF8" stroke="#D8E2D0" stroke-width="4"/>
+  <rect x="160" y="132" width="480" height="280" rx="26" fill="#F2F7EE" stroke="#D5E1CD" stroke-width="4"/>
+  <rect x="174" y="146" width="102" height="102" rx="20" fill="#FBE58E"/>
+  <rect x="434" y="146" width="102" height="102" rx="20" fill="#F7A9A9"/>
+  <rect x="174" y="296" width="102" height="102" rx="20" fill="#D9E2FF"/>
+  <rect x="434" y="296" width="102" height="102" rx="20" fill="#C8F1D1"/>
+  <circle cx="400" cy="272" r="50" fill="#FFFFFF" stroke="#A7B8EA" stroke-width="6"/>
+  <path d="M400 244L414 266H440L419 282L428 306L400 292L372 306L381 282L360 266H386L400 244Z" fill="#6C90FF"/>
+  <text x="400" y="488" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#6F7E78">Four corners</text>
+</svg>

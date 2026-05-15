@@ -5,12 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
-import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
-import {
-  createMemoryFlipGame,
-  type MemoryFlipSceneApi,
-  type MemoryFlipSceneEvent,
-} from "@/lib/games/phaser/memory-flip";
+import { trackGameStart } from "@/lib/games/track-game-start";
 
 /*
   Memory Flip — final small change:
@@ -32,6 +27,7 @@ type Card = {
   pairId: string;
   faceText?: string;
   faceImage?: string | null;
+  faceMode?: "image" | "text";
   matched: boolean;
   revealed: boolean;
 };
@@ -42,7 +38,6 @@ const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/co
 
 export default function MemoryFlipPage() {
   const router = useRouter();
-  const sceneApiRef = useRef<MemoryFlipSceneApi | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -118,7 +113,6 @@ export default function MemoryFlipPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [gridSize, setGridSize] = useState<number>(16); // 8 / 12 / 16 / 20
   const [bombInsteadProb, setBombInsteadProb] = useState<number>(0.15);
-  const [bombPairProb, setBombPairProb] = useState<number>(0.10);
   const [gameStyle, setGameStyle] = useState<"image-image" | "text-text" | "image-text">("image-text");
 
   // Teams / scoreboard
@@ -132,6 +126,14 @@ export default function MemoryFlipPage() {
   function addTeam() {
     if (teams.length >= 6) return;
     setTeams((prev) => [...prev, { id: `team-${prev.length + 1}`, name: `Team ${prev.length + 1}`, score: 0 }]);
+  }
+  function removeLastTeam() {
+    setTeams((prev) => {
+      if (prev.length <= 2) return prev;
+      const next = prev.slice(0, -1);
+      setActiveTeamIndex((i) => Math.max(0, Math.min(i, next.length - 1)));
+      return next;
+    });
   }
   function resetScores() {
     setTeams((prev) => prev.map((t) => ({ ...t, score: 0 })));
@@ -188,41 +190,44 @@ export default function MemoryFlipPage() {
   const [flipped, setFlipped] = useState<number[]>([]);
   const [locked, setLocked] = useState(false);
   const [matchedPair, setMatchedPair] = useState<{ a: number; b: number } | null>(null);
-  const pairTypeRef = useRef<Record<string, "bomb" | "normal">>({});
 
   // Generator / overlays
   const [showGenerator, setShowGenerator] = useState(false);
   const [generatorValue, setGeneratorValue] = useState<number | null>(null);
   const [generatorSpinning, setGeneratorSpinning] = useState(false);
+  const [generatorShowingFinal, setGeneratorShowingFinal] = useState(false);
   const [showBomb, setShowBomb] = useState(false);
   const generatorIntervalRef = useRef<number | null>(null);
   const generatorTimeoutRef = useRef<number | null>(null);
+  const generatorAwardTimeoutRef = useRef<number | null>(null);
+  const generatorAdvanceTimeoutRef = useRef<number | null>(null);
   const confettiLoadedRef = useRef<boolean>(false);
   const confettiLoadingRef = useRef<Promise<void> | null>(null);
+  const hasTrackedStartRef = useRef(false);
 
   // Layout helpers
   const gridCols = gridSize === 20 ? 5 : 4;
   const gridRows = Math.ceil(gridSize / gridCols);
+  const activeTeam = teams[activeTeamIndex] ?? teams[0];
   // Single buildDeck
   function buildDeck() {
+    hasTrackedStartRef.current = false;
     const pairsNeeded = Math.floor(gridSize / 2);
     const source = trayCards.length ? trayCards : defaultTray();
     const chosen: TrayCard[] = [];
     for (let i = 0; i < pairsNeeded; i++) chosen.push(source[i % source.length]);
 
-    const pairIds = chosen.map((c) => c.id);
-    const bombCount = Math.round(pairIds.length * bombPairProb);
-    const bombPairIds = shuffle(pairIds).slice(0, bombCount);
-    pairTypeRef.current = {};
-    pairIds.forEach((pid) => (pairTypeRef.current[pid] = bombPairIds.includes(pid) ? "bomb" : "normal"));
-
     const created: Card[] = [];
     chosen.forEach((s) => {
+      const firstMode: "image" | "text" =
+        gameStyle === "image-image" ? "image" : gameStyle === "text-text" ? "text" : Math.random() < 0.5 ? "image" : "text";
+      const secondMode: "image" | "text" = firstMode === "image" ? "text" : "image";
       created.push({
         id: `${s.id}-a-${Math.random().toString(36).slice(2)}`,
         pairId: s.id,
         faceText: s.word,
         faceImage: s.image ?? null,
+        faceMode: firstMode,
         matched: false,
         revealed: false,
       });
@@ -231,6 +236,7 @@ export default function MemoryFlipPage() {
         pairId: s.id,
         faceText: s.word,
         faceImage: s.image ?? null,
+        faceMode: secondMode,
         matched: false,
         revealed: false,
       });
@@ -242,6 +248,7 @@ export default function MemoryFlipPage() {
     setMatchedPair(null);
     setShowGenerator(false);
     setGeneratorValue(null);
+    setGeneratorShowingFinal(false);
     setShowBomb(false);
   }
 
@@ -249,13 +256,17 @@ export default function MemoryFlipPage() {
   useEffect(() => {
     buildDeck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trayCards, gridSize, bombPairProb, gameStyle]);
+  }, [trayCards, gridSize, gameStyle]);
 
   // Flip / match
   function flipCard(index: number) {
     if (locked) return;
     const c = cards[index];
     if (!c || c.matched || c.revealed) return;
+    if (!hasTrackedStartRef.current) {
+      hasTrackedStartRef.current = true;
+      trackGameStart("memory-flip");
+    }
     setCards((prev) => {
       const cp = prev.slice();
       cp[index] = { ...cp[index], revealed: true };
@@ -298,6 +309,7 @@ export default function MemoryFlipPage() {
       });
       setFlipped([]);
       setLocked(false);
+      advanceTeamTurn();
     }, 700);
   }
 
@@ -305,6 +317,13 @@ export default function MemoryFlipPage() {
   function onRedX() {
     // Close modal only; matched cards remain face-up
     setMatchedPair(null);
+  }
+
+  function advanceTeamTurn() {
+    setActiveTeamIndex((prev) => {
+      if (teams.length <= 1) return 0;
+      return (prev + 1) % teams.length;
+    });
   }
 
   async function onGreenO() {
@@ -316,7 +335,7 @@ export default function MemoryFlipPage() {
       const matchedPairCard = cards.find((c) => c.matched);
       const pairId = matchedPairCard ? matchedPairCard.pairId : undefined;
 
-      const isBomb = pairId ? (Math.random() < bombInsteadProb || pairTypeRef.current[pairId] === "bomb") : (Math.random() < bombInsteadProb);
+      const isBomb = Math.random() < bombInsteadProb;
 
       if (isBomb) {
         setShowBomb(true);
@@ -341,7 +360,9 @@ export default function MemoryFlipPage() {
 
   // Generator: slower cycle, dramatic final
   function startGenerator() {
+    if (generatorSpinning) return;
     setGeneratorSpinning(true);
+    setGeneratorShowingFinal(false);
     setGeneratorValue(null);
 
     generatorIntervalRef.current = window.setInterval(() => {
@@ -366,22 +387,30 @@ export default function MemoryFlipPage() {
       }
       setGeneratorSpinning(false);
       setGeneratorValue(final);
+      setGeneratorShowingFinal(true);
 
-      await loadConfetti();
-      const confettiFn = (window as any).confetti;
-      if (typeof confettiFn === "function") confettiFn({ particleCount: 80, spread: 90, origin: { y: 0.5 } });
+      generatorAwardTimeoutRef.current = window.setTimeout(async () => {
+        await loadConfetti();
+        const confettiFn = (window as any).confetti;
+        if (typeof confettiFn === "function") confettiFn({ particleCount: 80, spread: 90, origin: { y: 0.5 } });
 
-      const idx = activeTeamIndexRef.current;
-      const prev = teams[idx].score;
-      const target = prev + final;
-      let step = 0;
-      const stepsAnim = 25;
-      const timer = window.setInterval(() => {
-        step++;
-        const val = Math.round(prev + ((target - prev) * (step / stepsAnim)));
-        setTeams((prevArr) => prevArr.map((t, i) => (i === idx ? { ...t, score: val } : t)));
-        if (step >= stepsAnim) clearInterval(timer);
-      }, 60);
+        const idx = activeTeamIndexRef.current;
+        const prev = teams[idx].score;
+        const target = prev + final;
+        let step = 0;
+        const stepsAnim = 25;
+        const timer = window.setInterval(() => {
+          step++;
+          const val = Math.round(prev + ((target - prev) * (step / stepsAnim)));
+          setTeams((prevArr) => prevArr.map((t, i) => (i === idx ? { ...t, score: val } : t)));
+          if (step >= stepsAnim) clearInterval(timer);
+        }, 60);
+
+        generatorAdvanceTimeoutRef.current = window.setTimeout(() => {
+          setGeneratorShowingFinal(false);
+          onNext();
+        }, 900) as unknown as number;
+      }, 1500) as unknown as number;
     }, 4000) as unknown as number;
   }
 
@@ -395,8 +424,17 @@ export default function MemoryFlipPage() {
       clearTimeout(generatorTimeoutRef.current as number);
       generatorTimeoutRef.current = null;
     }
+    if (generatorAwardTimeoutRef.current) {
+      clearTimeout(generatorAwardTimeoutRef.current as number);
+      generatorAwardTimeoutRef.current = null;
+    }
+    if (generatorAdvanceTimeoutRef.current) {
+      clearTimeout(generatorAdvanceTimeoutRef.current as number);
+      generatorAdvanceTimeoutRef.current = null;
+    }
     setGeneratorSpinning(false);
     setGeneratorValue(null);
+    setGeneratorShowingFinal(false);
     setShowGenerator(false);
   }
 
@@ -405,7 +443,8 @@ export default function MemoryFlipPage() {
     setShowBomb(false);
     setShowGenerator(false);
     setGeneratorValue(null);
-    setActiveTeamIndex((prev) => (prev + 1) % teams.length);
+    setGeneratorShowingFinal(false);
+    advanceTeamTurn();
   }
 
   // Confetti loader
@@ -432,6 +471,7 @@ export default function MemoryFlipPage() {
 
   // Reset
   function resetGame() {
+    closeGenerator();
     setTeams((prev) => prev.map((t) => ({ ...t, score: 0 })));
     setActiveTeamIndex(0);
     buildDeck();
@@ -449,40 +489,146 @@ export default function MemoryFlipPage() {
 
   // Render helpers
   function renderFace(card: Card) {
-    if (gameStyle === "text-text") return <div style={{ fontWeight: 700 }}>{card.faceText}</div>;
+    if (gameStyle === "text-text")
+      return (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 12,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 900,
+              fontSize: "clamp(2rem, 3.5vw, 3.4rem)",
+              lineHeight: 0.96,
+              maxWidth: "92%",
+              wordBreak: "break-word",
+            }}
+          >
+            {card.faceText}
+          </div>
+        </div>
+      );
     if (gameStyle === "image-image")
       return (
         <img
           src={card.faceImage ?? ""}
           alt={card.faceText}
-          style={{ maxWidth: "92%", maxHeight: "92%", objectFit: "contain", borderRadius: 8 }}
+          style={{
+            width: "100%",
+            height: "100%",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            borderRadius: 8,
+            display: "block",
+            transform: "scale(1.06)",
+            transformOrigin: "center center",
+          }}
         />
       );
-    return card.faceImage ? (
-      <img src={card.faceImage} alt={card.faceText} style={{ maxWidth: "92%", maxHeight: "92%", objectFit: "contain", borderRadius: 8 }} />
-    ) : (
-      <div style={{ fontWeight: 700 }}>{card.faceText}</div>
+    if (gameStyle === "image-text") {
+      return card.faceMode === "image" ? (
+        <img
+          src={card.faceImage ?? ""}
+          alt={card.faceText}
+          style={{
+            width: "100%",
+            height: "100%",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            borderRadius: 8,
+            display: "block",
+            transform: "scale(1.06)",
+            transformOrigin: "center center",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 12,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 900,
+              fontSize: "clamp(2rem, 3.5vw, 3.4rem)",
+              lineHeight: 0.96,
+              maxWidth: "92%",
+              wordBreak: "break-word",
+            }}
+          >
+            {card.faceText}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          padding: 14,
+          textAlign: "center",
+        }}
+      >
+        {card.faceImage ? (
+          <img
+            src={card.faceImage}
+            alt={card.faceText}
+            style={{
+              width: "100%",
+              height: "100%",
+              maxWidth: "100%",
+              maxHeight: "70%",
+              objectFit: "contain",
+              borderRadius: 8,
+              display: "block",
+              transform: "scale(1.02)",
+              transformOrigin: "center center",
+            }}
+          />
+        ) : null}
+        <div
+          style={{
+            fontWeight: 900,
+            fontSize: "clamp(1.2rem, 2.2vw, 2.2rem)",
+            lineHeight: 1,
+            maxWidth: "94%",
+            wordBreak: "break-word",
+          }}
+        >
+          {card.faceText}
+        </div>
+      </div>
     );
   }
 
-  function handleSceneEvent(event: MemoryFlipSceneEvent) {
-    if (event.type === "card-click") {
-      flipCard(event.index);
-    }
-  }
-
-  useEffect(() => {
-    sceneApiRef.current?.sync({
-      cards,
-      gridCols,
-      gridRows,
-      gameStyle,
-      locked,
-      matchedPair,
-    });
-  }, [cards, gridCols, gridRows, gameStyle, locked, matchedPair]);
-
   const trayIsEmpty = trayCards.length === 0;
+  const boardCards = cards.map((card, index) => ({
+    card,
+    index,
+    faceVisible: card.revealed || card.matched,
+  }));
 
   // JSX
   return (
@@ -494,19 +640,7 @@ export default function MemoryFlipPage() {
         onToggleFullscreen={toggleFullscreen}
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
-        extraActions={(
-          <>
-            <button
-              onClick={toggleMusic}
-              className={`btn px-3 py-2 text-sm ${musicOn ? "btn-primary" : "btn-secondary"}`}
-            >
-              {musicOn ? "Music On" : "Music Off"}
-            </button>
-            <button onClick={resetGame} className="btn btn-secondary px-3 py-2 text-sm">
-              Reset game
-            </button>
-          </>
-        )}
+        trackGameKey="memory-flip"
       />
 
       <div style={{ position: "relative" }}>
@@ -514,6 +648,44 @@ export default function MemoryFlipPage() {
           {settingsOpen && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} style={{ position: "fixed", top: 76, right: 16, zIndex: 900 }}>
               <GameSettingsDropdown className="w-[420px]">
+                  <div style={{ fontWeight: 700 }}>Game controls</div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                    <button
+                      onClick={toggleMusic}
+                      className={`btn px-2 py-2 ${musicOn ? "btn-primary" : "btn-secondary"}`}
+                    >
+                      {musicOn ? "Music On" : "Music Off"}
+                    </button>
+                    <button onClick={resetGame} className="btn btn-secondary px-2 py-2">
+                      Reset game
+                    </button>
+                  </div>
+
+                  <div style={{ height: 1, background: "rgba(15,23,42,0.08)", margin: "14px 0" }} />
+
+                  <div style={{ fontWeight: 700 }}>Teams</div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                    <button
+                      onClick={addTeam}
+                      disabled={teams.length >= 6}
+                      className="btn btn-secondary px-2 py-2"
+                    >
+                      Add team
+                    </button>
+                    <button
+                      onClick={removeLastTeam}
+                      disabled={teams.length <= 2}
+                      className="btn btn-secondary px-2 py-2"
+                    >
+                      Remove team
+                    </button>
+                    <button onClick={resetScores} className="btn btn-secondary px-2 py-2">
+                      Reset scores
+                    </button>
+                  </div>
+
+                  <div style={{ height: 1, background: "rgba(15,23,42,0.08)", margin: "14px 0" }} />
+
                   <div style={{ fontWeight: 700 }}>Grid size</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                     {[8, 12, 16, 20].map((n) => (
@@ -527,11 +699,11 @@ export default function MemoryFlipPage() {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: 12, fontWeight: 700 }}>Bomb (after O) probability</div>
+                  <div style={{ marginTop: 12, fontWeight: 700 }}>Bomb chance after a correct match</div>
                   <input type="range" min={0} max={50} value={Math.round(bombInsteadProb * 100)} onChange={(e) => setBombInsteadProb(Number(e.target.value) / 100)} style={{ width: "100%" }} />
-
-                  <div style={{ marginTop: 12, fontWeight: 700 }}>Bomb pair probability (deck)</div>
-                  <input type="range" min={0} max={50} value={Math.round(bombPairProb * 100)} onChange={(e) => setBombPairProb(Number(e.target.value) / 100)} style={{ width: "100%" }} />
+                  <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+                    Sets how often a matched pair turns into a bomb after the team earns the green O.
+                  </div>
 
                   <div style={{ marginTop: 12, fontWeight: 700 }}>Game style</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -584,46 +756,155 @@ export default function MemoryFlipPage() {
         </main>
       ) : (
         <>
-          {/* Scoreboard */}
-          <div style={{ display: "flex", gap: 12, padding: 12, paddingTop: 84, alignItems: "center", background: "rgba(255,255,255,0.9)" }}>
-            {teams.map((t, i) => (
-              <div key={t.id} style={{ minWidth: 140, padding: 10, borderRadius: 12, background: activeTeamIndex === i ? "#111827" : "white", color: activeTeamIndex === i ? "white" : "#111827", boxShadow: activeTeamIndex === i ? "0 12px 30px rgba(2,6,23,0.12)" : "0 6px 12px rgba(2,6,23,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", animation: activeTeamIndex === i ? "pulse 1.2s infinite" : "none" }}>
-                <div style={{ fontSize: 12, opacity: 0.85 }}>{t.name}</div>
-                <div style={{ fontSize: 20, fontWeight: 900 }}>{t.score}</div>
-              </div>
-            ))}
-            <div style={{ marginLeft: "auto" }}>
-              <button
-                onClick={() => setTeams((t) => t.map((p, i) => ({ ...p, name: `Team ${i + 1}` })))}
-                className="btn btn-secondary px-3 py-2"
-              >
-                Rename default
-              </button>
-              <button
-                onClick={addTeam}
-                disabled={teams.length >= 6}
-                className="btn btn-secondary px-3 py-2 ml-2"
-              >
-                Add team
-              </button>
-              <button onClick={resetScores} className="btn btn-secondary px-3 py-2 ml-2">
-                Reset scores
-              </button>
-            </div>
+      {/* Scoreboard */}
+      <div style={{ maxWidth: "none", margin: 0, padding: "14px 24px 8px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Scoreboard</h2>
+            <div style={{ fontSize: 13, color: "#6b7280" }}>Teams</div>
           </div>
+
+          <div
+            style={{
+              padding: "6px 10px",
+              borderRadius: 999,
+              border: "1px solid rgba(15,23,42,0.12)",
+              background: "white",
+              boxShadow: "0 6px 12px rgba(2,6,23,0.06)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+            }}
+          >
+            <span style={{ color: "#6b7280" }}>Active</span>
+            <span style={{ fontWeight: 700 }}>{activeTeam?.name ?? "Team 1"}</span>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: "#88a96f", boxShadow: "0 0 0 3px rgba(136,169,111,0.18)" }} />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 8, width: "100%" }}>
+          {teams.map((t, i) => {
+            const isActive = activeTeamIndex === i;
+            return (
+              <div
+                key={t.id}
+                style={{
+                  width: "100%",
+                  minHeight: 52,
+                  padding: "7px 10px",
+                  borderRadius: 12,
+                  background: "white",
+                  color: "#111827",
+                  border: `1px solid ${isActive ? "rgba(136,169,111,0.65)" : "rgba(15,23,42,0.08)"}`,
+                  boxShadow: isActive ? "0 12px 30px rgba(2,6,23,0.10)" : "0 6px 12px rgba(2,6,23,0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  animation: isActive ? "pulse 1.2s infinite" : "none",
+                }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, lineHeight: 1.05 }}>{t.name}</div>
+                  </div>
+
+                <div style={{ fontSize: isActive ? 28 : 20, fontWeight: 900, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                  {t.score}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
           {/* Grid */}
           <div style={{ padding: 20, display: "flex", justifyContent: "center" }}>
-            <div style={{ width: "min(1200px, 92vw)", background: "#dff6e9", borderRadius: 14, padding: 18 }}>
-              <div style={{ height: "min(760px, 68vh)" }}>
-                <PhaserGameHost
-                  className="w-full h-full"
-                  createGame={createMemoryFlipGame}
-                  onEvent={handleSceneEvent}
-                  onApiReady={(api) => {
-                    sceneApiRef.current = api as MemoryFlipSceneApi | null;
+            <div
+              style={{
+                width: "min(1200px, 92vw)",
+                background: "#dff6e9",
+                borderRadius: 18,
+                padding: 18,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+              }}
+            >
+              <div
+                className="relative w-full"
+                style={{
+                  height: "min(760px, 68vh)",
+                }}
+              >
+                <div
+                  className="grid h-full w-full gap-2 md:gap-3"
+                  style={{
+                    gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+                    gridTemplateRows: `repeat(${gridRows}, minmax(0, 1fr))`,
                   }}
-                />
+                >
+                  {boardCards.map(({ card, index, faceVisible }) => {
+                    const isMatched = card.matched;
+                    const isFlipped = faceVisible;
+                    const isHighlighted = matchedPair ? matchedPair.a === index || matchedPair.b === index : false;
+                    const backTone = [
+                      "#e6fffa",
+                      "#ecfccb",
+                      "#fef3c7",
+                      "#fee2e2",
+                      "#ede9fe",
+                      "#fff7ed",
+                    ][Math.floor(index / gridCols) % 6];
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        onClick={() => flipCard(index)}
+                        disabled={locked || isMatched || isFlipped}
+                        className={`relative min-w-0 min-h-0 rounded-2xl border-2 overflow-hidden shadow-sm transition-all duration-300 ${
+                          isHighlighted ? "ring-4 ring-amber-300 scale-[1.02]" : "hover:shadow-md"
+                        } ${isMatched ? "cursor-default" : "cursor-pointer"}`}
+                        style={{
+                          perspective: 1200,
+                          background: isFlipped ? "#ffffff" : backTone,
+                          borderColor: isFlipped ? "#d1d5db" : "#b8e0c8",
+                          transform: isHighlighted ? "translateY(-2px)" : "translateY(0)",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 transition-transform duration-500"
+                          style={{
+                            transformStyle: "preserve-3d",
+                            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                          }}
+                        >
+                          <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{
+                              backfaceVisibility: "hidden",
+                              WebkitBackfaceVisibility: "hidden",
+                              background: backTone,
+                            }}
+                          >
+                            <div className="text-3xl md:text-4xl font-black text-slate-900/90">{index + 1}</div>
+                          </div>
+                          <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{
+                              backfaceVisibility: "hidden",
+                              WebkitBackfaceVisibility: "hidden",
+                              transform: "rotateY(180deg)",
+                              background: "#fff",
+                            }}
+                          >
+                            <div className="w-full h-full flex items-center justify-center p-0">
+                              {renderFace(card)}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -634,10 +915,10 @@ export default function MemoryFlipPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 150 }}>
                 <div style={{ width: "80%", maxWidth: 980, background: "white", padding: 20, borderRadius: 12, boxShadow: "0 30px 80px rgba(2,6,23,0.2)" }}>
                   <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center" }}>
-                    <motion.div layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <motion.div layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.a])}
                     </motion.div>
-                    <motion.div layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <motion.div layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.b])}
                     </motion.div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -654,29 +935,37 @@ export default function MemoryFlipPage() {
             )}
           </AnimatePresence>
 
-          {/* Generator modal — pastel green + footer buttons */}
+          {/* Reward overlay */}
           <AnimatePresence>
             {showGenerator && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-                <div style={{ width: "min(1100px, 95vw)", height: "min(720px, 80vh)", background: "#e6ffef", borderRadius: 16, padding: 24, textAlign: "center", boxShadow: "0 30px 120px rgba(2,6,23,0.28)", display: "flex", flexDirection: "column" }}>
-                  <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 0.5 }}>Score generator</div>
-
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 18 }}>
-                    <motion.div key={String(generatorValue) + String(generatorSpinning)} initial={{ scale: 0.9, opacity: 0 }} animate={generatorSpinning ? { scale: 1, opacity: 0.9 } : { scale: 1.6, opacity: 1 }} transition={generatorSpinning ? { duration: 0.25 } : { type: "spring", stiffness: 650, damping: 18 }} style={{ fontSize: generatorSpinning ? 72 : 160, fontWeight: 900, minWidth: 240, textAlign: "center", color: "#0f172a" }}>
-                      {generatorValue === null ? (generatorSpinning ? "…" : "?") : generatorValue}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, pointerEvents: "none" }}>
+                {!generatorSpinning && !generatorShowingFinal ? (
+                  <button
+                    onClick={startGenerator}
+                    className="pointer-events-auto w-52 h-52 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
+                    title="Get points"
+                  >
+                    <span className="text-3xl font-extrabold leading-tight">Get points!</span>
+                  </button>
+                ) : (
+                  <div className="pointer-events-auto w-52 h-52 rounded-full bg-white/96 border-[10px] border-[var(--color-accent)] shadow-2xl flex flex-col items-center justify-center">
+                    <div className="text-[10px] uppercase tracking-[0.35em] text-[var(--color-text-muted)] mb-2">
+                      Points
+                    </div>
+                    <motion.div
+                      key={String(generatorValue) + String(generatorSpinning)}
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1.6, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 650, damping: 18 }}
+                      style={{ fontSize: 96, fontWeight: 900, minWidth: 240, textAlign: "center", color: "var(--color-accent)", lineHeight: 1 }}
+                    >
+                      {generatorValue === null ? "…" : generatorValue}
                     </motion.div>
+                    <div className="mt-2 text-xs font-semibold text-[var(--color-text-muted)]">
+                      Spinning...
+                    </div>
                   </div>
-
-                  <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 8 }}>
-                    <button onClick={startGenerator} style={{ padding: "14px 28px", borderRadius: 12, background: "#10b981", color: "white", fontWeight: 900, fontSize: 18 }}>
-                      Go!
-                    </button>
-
-                    <button onClick={closeGenerator} style={{ padding: "14px 28px", borderRadius: 12, background: "#6b7280", color: "white", fontWeight: 700, fontSize: 16 }}>
-                      Back
-                    </button>
-                  </div>
-                </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -19,6 +19,7 @@ function normalizeWorksheetType(value: unknown): WorksheetType {
   if (value === "bullseye") return "bullseye";
   if (value === "crossword") return "crossword";
   if (value === "matching") return "matching";
+  if (value === "battleship") return "battleship";
   if (value === "questions") return "questions";
   if (value === "reading") return "reading";
   if (value === "sentence-scramble") return "sentence-scramble";
@@ -41,6 +42,35 @@ function normalizeWorksheet(raw: any): SavedWorksheetRecord {
       type: normalizeWorksheetType(draft.type),
       title: String(draft.title ?? ""),
       instructions: String(draft.instructions ?? ""),
+      questionBuilderPrompts: Array.isArray(draft.questionBuilderPrompts)
+        ? draft.questionBuilderPrompts.map((item: unknown) => String(item ?? ""))
+        : [],
+      readingLines: Array.isArray(draft.readingLines)
+        ? draft.readingLines.map((item: unknown) => String(item ?? ""))
+        : [],
+      writingLines: Array.isArray(draft.writingLines)
+        ? draft.writingLines.map((item: unknown) => String(item ?? ""))
+        : [],
+      writingImageMode: draft.writingImageMode ?? "both",
+      writingTraceable: Boolean(draft.writingTraceable ?? false),
+      writingTraceRepeats: [1, 2, 3].includes(Number(draft.writingTraceRepeats))
+        ? (Number(draft.writingTraceRepeats) as 1 | 2 | 3)
+        : 1,
+      sentenceScrambleLines: Array.isArray(draft.sentenceScrambleLines)
+        ? draft.sentenceScrambleLines.map((item: unknown) => String(item ?? ""))
+        : [],
+      sentenceScrambleLevel: draft.sentenceScrambleLevel ?? "medium",
+      ticTacToeImageMode: draft.ticTacToeImageMode ?? "both",
+      ticTacToeBoardCount: [1, 2, 4, 8].includes(Number(draft.ticTacToeBoardCount))
+        ? (Number(draft.ticTacToeBoardCount) as 1 | 2 | 4 | 8)
+        : 1,
+      battleshipImageMode: draft.battleshipImageMode ?? "image",
+      battleshipBoardMode: draft.battleshipBoardMode === "ships" ? "ships" : "empty",
+      battleshipWorksheetCount: Number.isFinite(Number(draft.battleshipWorksheetCount))
+        ? Math.max(1, Math.floor(Number(draft.battleshipWorksheetCount)))
+        : 1,
+      wordsearchListMode: draft.wordsearchListMode ?? "both",
+      wordsearchAddRandomLetters: Boolean(draft.wordsearchAddRandomLetters ?? false),
       difficulty: draft.difficulty ?? "medium",
       clueMode: draft.clueMode ?? "both",
       bullseyeVersion: draft.bullseyeVersion ?? "points",

@@ -21,7 +21,8 @@
     "playwright": "^1.59.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "sharp": "^0.34.4"
+    "sharp": "^0.34.4",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

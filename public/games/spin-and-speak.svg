@@ -1,0 +1,16 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="48" fill="#F7F8F3"/>
+  <rect x="52" y="52" width="696" height="496" rx="32" fill="#FFFDF8" stroke="#D8E2D0" stroke-width="4"/>
+  <circle cx="400" cy="280" r="168" fill="#F2F7EE" stroke="#D5E1CD" stroke-width="4"/>
+  <g transform="translate(400 280)">
+    <path d="M0 -130A130 130 0 0 1 118 -46L0 0Z" fill="#FBE58E"/>
+    <path d="M118 -46A130 130 0 0 1 92 88L0 0Z" fill="#F7A9A9"/>
+    <path d="M92 88A130 130 0 0 1 -38 124L0 0Z" fill="#C8F1D1"/>
+    <path d="M-38 124A130 130 0 0 1 -112 20L0 0Z" fill="#D9E2FF"/>
+    <path d="M-112 20A130 130 0 0 1 0 -130L0 0Z" fill="#F2C6E8"/>
+    <circle cx="0" cy="0" r="44" fill="#FFFFFF" stroke="#A7B8EA" stroke-width="6"/>
+    <path d="M0 -62L10 -30L42 -20L10 -8L0 24L-10 -8L-42 -20L-10 -30L0 -62Z" fill="#6C90FF"/>
+    <path d="M0 -42L0 42" stroke="#6C90FF" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="400" y="488" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#6F7E78">Spin and speak</text>
+</svg>

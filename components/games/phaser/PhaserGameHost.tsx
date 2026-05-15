@@ -47,6 +47,17 @@ export default function PhaserGameHost<TApi, TEvent>({
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
 
+    const destroyGameSafely = (game: PhaserNamespace.Game | null) => {
+      if (!game) return;
+      window.setTimeout(() => {
+        try {
+          game.destroy(true);
+        } catch {
+          // ignore shutdown timing errors during route transitions
+        }
+      }, 0);
+    };
+
     async function mount() {
       const parent = mountRef.current;
       if (!parent) return;
@@ -67,7 +78,7 @@ export default function PhaserGameHost<TApi, TEvent>({
         exposeApi: (api) => onApiReadyRef.current?.(api),
       });
       if (disposed) {
-        result.game.destroy(true);
+        destroyGameSafely(result.game);
         return;
       }
 
@@ -91,7 +102,7 @@ export default function PhaserGameHost<TApi, TEvent>({
       resizeObserver?.disconnect();
       onApiReadyRef.current?.(null);
       if (gameRef.current) {
-        gameRef.current.destroy(true);
+        destroyGameSafely(gameRef.current);
         gameRef.current = null;
       }
     };

@@ -1,4 +1,5 @@
 import { LessonRecord } from "@/lib/lessons/types";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 type DashboardPreviewModalProps = {
   lesson: LessonRecord | null;
@@ -33,7 +34,7 @@ export default function DashboardPreviewModal({
               {card.image ? (
                 <div className="mb-2 w-full h-24 rounded-md bg-white border border-black/5 overflow-hidden flex items-center justify-center">
                   <img
-                    src={card.image}
+                    src={resolveLessonImageUrl(card.image)}
                     alt={card.word || "Card image"}
                     className="max-w-full max-h-full object-contain"
                   />

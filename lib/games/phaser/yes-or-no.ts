@@ -1,8 +1,10 @@
+import type Phaser from "phaser";
 import { makeTextureKey } from "@/lib/games/phaser/types";
 import {
   applyButtonFeedback,
   PHASER_PANEL_STROKE,
   PHASER_PRIMARY,
+  PHASER_PRIMARY_DARK,
   PHASER_TEXT,
   PHASER_UI_FONT,
 } from "@/lib/games/phaser/ui-theme";
@@ -17,12 +19,21 @@ export type YesNoSceneState = {
 
 export type YesNoSceneEvent =
   | { type: "yes-click" }
-  | { type: "no-click" }
-  | { type: "prev-click" }
-  | { type: "next-click" };
+  | { type: "no-click" };
 
 export type YesNoSceneApi = {
   sync: (next: YesNoSceneState) => void;
+};
+
+type AnswerButtonKind = "yes" | "no";
+
+type AnswerButtonUi = {
+  container: Phaser.GameObjects.Container;
+  bg: Phaser.GameObjects.Arc;
+  glow: Phaser.GameObjects.Arc;
+  shadow: Phaser.GameObjects.Arc;
+  pulseTween?: Phaser.Tweens.Tween;
+  kind: AnswerButtonKind;
 };
 
 export async function createYesNoGame({
@@ -49,158 +60,274 @@ export async function createYesNoGame({
       canAnswer: false,
     };
 
-    private image?: Phaser.GameObjects.Image;
-    private timerBadge?: Phaser.GameObjects.Container;
+    private previousImageUrl: string | null = null;
+    private sceneWidth = 0;
+    private sceneHeight = 0;
+
+    private stageFrame?: Phaser.GameObjects.Graphics;
+    private stageWash?: Phaser.GameObjects.Graphics;
+    private stageGlow?: Phaser.GameObjects.Graphics;
+    private imageFrame?: Phaser.GameObjects.Rectangle;
+    private promptFrame?: Phaser.GameObjects.Rectangle;
+    private timerFrame?: Phaser.GameObjects.Rectangle;
     private timerTextNode?: Phaser.GameObjects.Text;
     private promptText?: Phaser.GameObjects.Text;
-    private yesButton?: Phaser.GameObjects.Container;
-    private noButton?: Phaser.GameObjects.Container;
-    private prepOverlay?: Phaser.GameObjects.Container;
-    private prevButton?: Phaser.GameObjects.Container;
-    private nextButton?: Phaser.GameObjects.Container;
+    private image?: Phaser.GameObjects.Image;
     private fallbackText?: Phaser.GameObjects.Text;
+    private prepOverlay?: Phaser.GameObjects.Container;
+
+    private yesButton?: AnswerButtonUi;
+    private noButton?: AnswerButtonUi;
 
     create() {
-      this.cameras.main.setBackgroundColor("#ffffff");
-      const panel = this.add.rectangle(0, 0, 100, 100, 0xffffff).setStrokeStyle(2, 0xe5e7eb, 1);
-      panel.setOrigin(0);
+      this.cameras.main.setBackgroundColor("#f6fbf7");
+      this.stageFrame = this.add.graphics();
+      this.stageWash = this.add.graphics();
+      this.stageGlow = this.add.graphics();
 
-      this.image = this.add.image(0, 0, "__MISSING").setVisible(false);
+      this.imageFrame = this.add.rectangle(0, 0, 100, 100, 0xffffff).setStrokeStyle(2, PHASER_PANEL_STROKE, 0.92);
+      this.promptFrame = this.add.rectangle(0, 0, 100, 100, 0xffffff).setStrokeStyle(2, PHASER_PANEL_STROKE, 0.92);
+      this.timerFrame = this.add.rectangle(0, 0, 100, 100, PHASER_PRIMARY).setStrokeStyle(2, 0xffffff, 0.85);
+
+      this.image = this.add.image(0, 0, "__MISSING");
+      this.image.setVisible(false);
+      this.image.setDepth(3);
+
       this.fallbackText = this.add
-        .text(0, 0, "No image", {
+        .text(0, 0, "No image selected", {
           fontFamily: PHASER_UI_FONT,
-          fontSize: "34px",
+          fontSize: "30px",
+          fontStyle: "bold",
           color: "#94a3b8",
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(4);
 
-      const timerBg = this.add.rectangle(0, 0, 180, 68, 0xffffff).setStrokeStyle(2, PHASER_PANEL_STROKE);
       this.timerTextNode = this.add
         .text(0, 0, "Ready", {
           fontFamily: PHASER_UI_FONT,
-          fontSize: "28px",
+          fontSize: "34px",
           fontStyle: "bold",
-          color: PHASER_TEXT,
+          color: "#ffffff",
         })
-        .setOrigin(0.5);
-      this.timerBadge = this.add.container(0, 0, [timerBg, this.timerTextNode]);
+        .setOrigin(0.5)
+        .setDepth(6);
+
+      this.timerFrame.setDepth(5);
 
       this.promptText = this.add
         .text(0, 0, "—", {
           fontFamily: PHASER_UI_FONT,
           fontSize: "38px",
           fontStyle: "bold",
-          color: "#0f172a",
+          color: PHASER_TEXT,
           align: "center",
-          wordWrap: { width: 760 },
+          wordWrap: { width: 740 },
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(4);
 
-      this.yesButton = this.buildButton("Yes", PHASER_PRIMARY, () => emit({ type: "yes-click" }));
-      this.noButton = this.buildButton("No", 0xe2e8f0, () => emit({ type: "no-click" }), "#0f172a");
-      this.prevButton = this.buildCircleButton("◀", () => emit({ type: "prev-click" }));
-      this.nextButton = this.buildCircleButton("▶", () => emit({ type: "next-click" }));
+      this.yesButton = this.buildAnswerButton("yes");
+      this.noButton = this.buildAnswerButton("no");
 
-      const prepBg = this.add.rectangle(0, 0, 340, 170, 0x000000, 0.45).setStrokeStyle(2, 0xffffff, 0.1);
+      const prepCard = this.add.rectangle(0, 0, 360, 170, 0x0f172a, 0.72).setStrokeStyle(2, 0xffffff, 0.12);
       const prepText = this.add
         .text(0, 0, "Get Ready", {
           fontFamily: PHASER_UI_FONT,
-          fontSize: "46px",
+          fontSize: "48px",
           fontStyle: "bold",
           color: "#ffffff",
         })
         .setOrigin(0.5);
-      this.prepOverlay = this.add.container(0, 0, [prepBg, prepText]).setVisible(false);
-
-      this.children.bringToTop(this.prepOverlay);
+      this.prepOverlay = this.add.container(0, 0, [prepCard, prepText]).setVisible(false);
+      this.prepOverlay.setDepth(20);
 
       this.scale.on("resize", this.handleResize, this);
       this.handleResize(this.scale.gameSize);
       this.renderState();
+      this.syncButtonStates();
+      this.children.bringToTop(this.prepOverlay);
     }
 
     shutdownScene() {
       this.scale.off("resize", this.handleResize, this);
+      this.yesButton?.pulseTween?.stop();
+      this.noButton?.pulseTween?.stop();
     }
 
     sync(next: YesNoSceneState) {
+      const imageChanged = next.imageUrl !== this.previousImageUrl;
       this.state = next;
-      void this.ensureTexture(next.imageUrl).then(() => this.renderState());
+      if (imageChanged) {
+        void this.ensureTexture(next.imageUrl).then(() => {
+          this.renderState();
+        });
+        this.previousImageUrl = next.imageUrl;
+      }
       this.renderState();
+      this.syncButtonStates();
     }
 
-    private buildButton(label: string, color: number, onClick: () => void, textColor = "#ffffff") {
-      const bg = this.add.rectangle(0, 0, 220, 86, color).setStrokeStyle(3, PHASER_PANEL_STROKE, 0.6);
-      const text = this.add
-        .text(0, 0, label, {
+    private buildAnswerButton(kind: AnswerButtonKind): AnswerButtonUi {
+      const isYes = kind === "yes";
+      const fill = isYes ? 0x22c55e : 0xef4444;
+      const fillActive = isYes ? 0x16a34a : 0xdc2626;
+
+      const shadow = this.add.circle(0, 12, 86, 0x0f172a, 0.18);
+      const glow = this.add.circle(0, 0, 82, 0xffffff, 0.14).setVisible(false);
+      const bg = this.add.circle(0, 0, 76, fill, 1).setStrokeStyle(4, 0xffffff, 0.95);
+      const label = this.add
+        .text(0, 0, isYes ? "YES" : "NO", {
           fontFamily: PHASER_UI_FONT,
           fontSize: "34px",
           fontStyle: "bold",
-          color: textColor,
+          color: "#ffffff",
         })
         .setOrigin(0.5);
-      const container = this.add.container(0, 0, [bg, text]);
-      container.setSize(220, 86);
-      container.setInteractive(new Phaser.Geom.Rectangle(-110, -43, 220, 86), Phaser.Geom.Rectangle.Contains);
-      container.on("pointerdown", onClick);
-      applyButtonFeedback(container);
-      return container;
+
+      const container = this.add.container(0, 0, [shadow, glow, bg, label]);
+      container.setSize(180, 180);
+      container.setInteractive(new Phaser.Geom.Circle(0, 0, 86), Phaser.Geom.Circle.Contains);
+      container.on("pointerdown", () => {
+        if (!this.state.canAnswer) return;
+        emit({ type: isYes ? "yes-click" : "no-click" });
+      });
+      applyButtonFeedback(container, { hoverScale: 1.04, pressedScale: 0.96 });
+
+      return {
+        container,
+        bg,
+        glow,
+        shadow,
+        kind,
+        pulseTween: undefined,
+      };
     }
 
-    private buildCircleButton(label: string, onClick: () => void) {
-      const bg = this.add.circle(0, 0, 34, 0xffffff).setStrokeStyle(2, PHASER_PANEL_STROKE);
-      const text = this.add
-        .text(0, 0, label, {
-          fontFamily: PHASER_UI_FONT,
-          fontSize: "24px",
-          fontStyle: "bold",
-          color: PHASER_TEXT,
-        })
-        .setOrigin(0.5);
-      const container = this.add.container(0, 0, [bg, text]);
-      container.setSize(68, 68);
-      container.setInteractive(new Phaser.Geom.Circle(0, 0, 34), Phaser.Geom.Circle.Contains);
-      container.on("pointerdown", onClick);
-      applyButtonFeedback(container);
-      return container;
+    private syncButtonStates() {
+      this.updateAnswerButton(this.yesButton, this.state.canAnswer);
+      this.updateAnswerButton(this.noButton, this.state.canAnswer);
+    }
+
+    private updateAnswerButton(button: AnswerButtonUi | undefined, active: boolean) {
+      if (!button) return;
+
+      const fill = button.kind === "yes" ? (active ? 0x22c55e : 0x86efac) : active ? 0xef4444 : 0xfca5a5;
+      const stroke = active ? 0xffffff : 0xf8fafc;
+      button.bg.setFillStyle(fill, 1);
+      button.bg.setStrokeStyle(active ? 5 : 4, stroke, active ? 0.98 : 0.86);
+      button.shadow.setAlpha(active ? 0.28 : 0.16);
+      button.glow.setVisible(active);
+
+      if (active) {
+        if (!button.container.input) {
+          button.container.setInteractive(new Phaser.Geom.Circle(0, 0, 86), Phaser.Geom.Circle.Contains);
+        }
+        if (!button.pulseTween) {
+          button.pulseTween = this.tweens.add({
+            targets: button.glow,
+            scaleX: 1.28,
+            scaleY: 1.28,
+            alpha: 0.02,
+            duration: 850,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
+        button.glow.setScale(1);
+        button.glow.setAlpha(0.14);
+      } else {
+        button.container.disableInteractive();
+        if (button.pulseTween) {
+          button.pulseTween.stop();
+          button.pulseTween = undefined;
+        }
+        button.glow.setVisible(false);
+        button.glow.setScale(1);
+        button.glow.setAlpha(0);
+      }
     }
 
     private handleResize(size: Phaser.Structs.Size | { width: number; height: number }) {
       const centerX = size.width / 2;
       const centerY = size.height / 2;
-      const compact = size.width < 760;
-      const imageWidth = Math.min(size.width * (compact ? 0.86 : 0.8), 920);
-      const imageHeight = Math.min(size.height * (compact ? 0.42 : 0.5), 420);
-      const sideInset = compact ? 34 : 44;
-      const buttonOffset = compact ? 118 : 150;
-      const buttonY = size.height - (compact ? 78 : 72);
+      const compact = size.width < 840;
 
-      const panel = this.children.list[0] as Phaser.GameObjects.Rectangle;
-      panel.setSize(size.width, size.height);
+      const boardPaddingX = Math.max(18, size.width * 0.035);
+      const boardPaddingY = Math.max(18, size.height * 0.035);
+      const boardWidth = size.width - boardPaddingX * 2;
+      const boardHeight = size.height - boardPaddingY * 2;
 
-      this.timerBadge?.setPosition(centerX, 46);
-      this.image?.setPosition(centerX, centerY - 80);
-      this.image?.setDisplaySize(imageWidth, imageHeight);
-      this.fallbackText?.setPosition(centerX, centerY - 80);
-      this.prevButton?.setPosition(sideInset, centerY - 80);
-      this.nextButton?.setPosition(size.width - sideInset, centerY - 80);
-      this.promptText?.setPosition(centerX, size.height - (compact ? 168 : 170));
-      this.promptText?.setWordWrapWidth(Math.min(size.width * 0.84, 820), true);
-      this.promptText?.setFontSize(compact ? 30 : 38);
-      this.yesButton?.setPosition(centerX - buttonOffset, buttonY);
-      this.noButton?.setPosition(centerX + buttonOffset, buttonY);
-      this.yesButton?.setScale(compact ? 0.9 : 1);
-      this.noButton?.setScale(compact ? 0.9 : 1);
-      this.prepOverlay?.setPosition(centerX, centerY - 40);
+      const imageFrameWidth = Math.min(size.width * (compact ? 0.8 : 0.76), 980);
+      const imageFrameHeight = Math.min(size.height * (compact ? 0.4 : 0.42), 380);
+      const promptFrameWidth = Math.min(size.width * (compact ? 0.74 : 0.68), 880);
+      const promptFrameHeight = compact ? 92 : 102;
+      const imageY = centerY - (compact ? 124 : 132);
+      const promptY = centerY + (compact ? 120 : 130);
+      const timerY = Math.max(56, boardPaddingY + 30);
+      const buttonY = size.height - Math.max(168, size.height * 0.18);
+      const buttonOffset = compact ? 180 : 214;
+
+      this.sceneWidth = size.width;
+      this.sceneHeight = size.height;
+
+      this.stageFrame?.clear();
+      this.stageFrame?.fillStyle(0xffffff, 0.96);
+      this.stageFrame?.fillRoundedRect(10, 10, boardWidth, boardHeight, 24);
+      this.stageFrame?.lineStyle(2, PHASER_PANEL_STROKE, 0.42);
+      this.stageFrame?.strokeRoundedRect(10, 10, boardWidth, boardHeight, 24);
+      this.stageFrame?.setDepth(1);
+
+      this.stageWash?.clear();
+      this.stageWash?.fillStyle(0xeff6f1, 0.8);
+      this.stageWash?.fillRoundedRect(16, 16, boardWidth - 12, boardHeight - 12, 22);
+      this.stageWash?.lineStyle(24, 0x0f172a, 0.03);
+      this.stageWash?.strokeRoundedRect(16, 16, boardWidth - 12, boardHeight - 12, 22);
+      this.stageWash?.setDepth(2);
+
+      this.stageGlow?.clear();
+      this.stageGlow?.fillStyle(0xffffff, 0.16);
+      this.stageGlow?.fillRoundedRect(24, 24, boardWidth - 28, boardHeight - 28, 18);
+      this.stageGlow?.setDepth(3);
+
+      this.timerFrame?.setPosition(centerX, timerY);
+      this.timerFrame?.setSize(240, 82);
+      this.timerTextNode?.setPosition(centerX, timerY);
+
+      this.imageFrame?.setPosition(centerX, imageY);
+      this.imageFrame?.setSize(imageFrameWidth, imageFrameHeight);
+      this.image?.setPosition(centerX, imageY);
+      this.fallbackText?.setPosition(centerX, imageY);
+
+      this.promptFrame?.setPosition(centerX, promptY);
+      this.promptFrame?.setSize(promptFrameWidth, promptFrameHeight);
+      this.promptText?.setPosition(centerX, promptY);
+      this.promptText?.setWordWrapWidth(promptFrameWidth - 48, true);
+
+      this.yesButton?.container.setPosition(centerX - buttonOffset, buttonY);
+      this.noButton?.container.setPosition(centerX + buttonOffset, buttonY);
+      this.yesButton?.container.setScale(compact ? 0.98 : 1);
+      this.noButton?.container.setScale(compact ? 0.98 : 1);
+      this.prepOverlay?.setPosition(centerX, centerY - 36);
     }
 
     private renderState() {
       const textureKey = this.state.imageUrl ? makeTextureKey("yes-no", this.state.imageUrl) : null;
       const hasImage = textureKey ? this.textures.exists(textureKey) : false;
+
       if (hasImage && textureKey && this.image) {
         this.image.setTexture(textureKey);
         this.image.setVisible(true);
         this.fallbackText?.setVisible(false);
+
+        const source = this.textures.get(textureKey).getSourceImage() as { width?: number; height?: number } | undefined;
+        const naturalWidth = Math.max(1, Number(source?.width ?? 1));
+        const naturalHeight = Math.max(1, Number(source?.height ?? 1));
+        const frameWidth = Math.max(1, (this.imageFrame?.width ?? this.sceneWidth * 0.72) - 72);
+        const frameHeight = Math.max(1, (this.imageFrame?.height ?? this.sceneHeight * 0.4) - 44);
+        const scale = Math.min(frameWidth / naturalWidth, frameHeight / naturalHeight);
+        this.image.setDisplaySize(naturalWidth * scale, naturalHeight * scale);
       } else {
         this.image?.setVisible(false);
         this.fallbackText?.setVisible(true);
@@ -208,11 +335,8 @@ export async function createYesNoGame({
 
       this.timerTextNode?.setText(this.state.timerText);
       this.promptText?.setText(this.state.displayedText);
-      this.promptText?.setAlpha(this.state.roundPhase === "hidden" ? 0.45 : 1);
+      this.promptText?.setAlpha(this.state.roundPhase === "hidden" ? 0.42 : 1);
       this.prepOverlay?.setVisible(this.state.roundPhase === "prepping");
-
-      this.yesButton?.setAlpha(this.state.canAnswer ? 1 : 0.55);
-      this.noButton?.setAlpha(this.state.canAnswer ? 1 : 0.55);
     }
 
     private ensureTexture(imageUrl: string | null) {
@@ -249,7 +373,7 @@ export async function createYesNoGame({
     parent,
     width,
     height,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f6fbf7",
     scene,
     render: {
       antialias: true,

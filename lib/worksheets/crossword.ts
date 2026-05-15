@@ -233,21 +233,10 @@ function chooseBestPlacement(
 
 function assignNumbers(placedWords: PlacedWord[]) {
   const sorted = [...placedWords].sort((a, b) => (a.row - b.row) || (a.col - b.col));
-  const numberMap = new Map<string, number>();
-  let current = 1;
-
-  return sorted.map((entry) => {
-    const key = getCellKey(entry.row, entry.col);
-    if (!numberMap.has(key)) {
-      numberMap.set(key, current);
-      current += 1;
-    }
-
-    return {
-      ...entry,
-      number: numberMap.get(key) ?? 0,
-    };
-  });
+  return sorted.map((entry, index) => ({
+    ...entry,
+    number: index + 1,
+  }));
 }
 
 function buildRevealMap(

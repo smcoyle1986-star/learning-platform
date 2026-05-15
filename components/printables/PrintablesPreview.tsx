@@ -1,6 +1,8 @@
 "use client";
 
 import { PrintableCard, PrintableContentOption } from "@/lib/printables/types";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 type PrintablesPreviewProps = {
   cards: PrintableCard[];
@@ -17,9 +19,9 @@ function gridClassFor(value: number | null) {
     case 2:
       return "grid-cols-2 gap-6";
     case 4:
-      return "grid-cols-2 gap-6";
+      return "grid-cols-2 gap-5";
     case 8:
-      return "grid-cols-4 gap-6";
+      return "grid-cols-4 gap-4";
     default:
       return "grid-cols-1 gap-6";
   }
@@ -37,18 +39,18 @@ export default function PrintablesPreview({
       <div className="bg-white rounded-2xl p-3 shadow-sm border mb-4">
         <h3 className="font-semibold mb-2">Lesson Tray (thumbnails)</h3>
 
-        <div className="flex gap-3 overflow-x-auto py-2" style={{ maxHeight: 140 }}>
+        <LessonTrayScroller className="pb-1" contentClassName="gap-3">
           {cards.map((card) => (
             <div
               key={card.id}
               className="min-w-[120px] max-w-[120px] bg-[var(--color-bg-soft)] rounded-xl p-2 flex-shrink-0 border"
             >
-              <div
-                className="w-full h-[86px] rounded-md overflow-hidden mb-2 flex items-center justify-center bg-gray-100"
-                style={{ filter: inkSaving ? "grayscale(100%)" : undefined }}
-              >
-                <img src={card.image} alt={card.word} className="w-full h-full object-cover" />
-              </div>
+                <div
+                  className="w-full h-[86px] rounded-md overflow-hidden mb-2 flex items-center justify-center bg-gray-100"
+                  style={{ filter: inkSaving ? "grayscale(100%)" : undefined }}
+                >
+                <img src={resolveLessonImageUrl(card.image)} alt={card.word} className="w-full h-full object-cover" />
+                </div>
               {contentOption === "picture+word" && (
                 <div className="text-sm font-medium text-center truncate">
                   {card.word.replaceAll("_", " ")}
@@ -56,7 +58,7 @@ export default function PrintablesPreview({
               )}
             </div>
           ))}
-        </div>
+        </LessonTrayScroller>
       </div>
 
       <div className="bg-white rounded-2xl p-4 shadow-sm border">
@@ -81,40 +83,74 @@ export default function PrintablesPreview({
                 maxWidth: "100%",
                 scrollSnapAlign: "start",
                 boxSizing: "border-box",
-                minHeight: 520,
-                padding: 24,
+                aspectRatio: "11 / 8.5",
+                minHeight: 0,
+                padding: "14px 12px",
                 borderRadius: 12,
                 border: "1px solid #e5e7eb",
                 background: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <div className={`grid ${gridClassFor(selectedCardsPerPage)}`}>
-                {pageCards.map((card) => (
+              <div
+                className={`grid ${gridClassFor(selectedCardsPerPage)}`}
+                style={{
+                  width:
+                    selectedCardsPerPage === 1
+                      ? "68%"
+                      : selectedCardsPerPage === 2
+                        ? "88%"
+                        : selectedCardsPerPage === 4
+                          ? "74%"
+                          : "94%",
+                  margin: "0 auto",
+                  alignItems: "stretch",
+                  justifyItems: "stretch",
+                }}
+              >
+                {Array.from({ length: selectedCardsPerPage ?? 1 }).map((_, index) => {
+                  const card = pageCards[index];
+                  if (!card) {
+                    return (
+                      <div
+                        key={`ph-${pageIndex}-${index}`}
+                        className="rounded-lg border p-4 bg-transparent"
+                        style={{ aspectRatio: "1 / 1", width: "100%", opacity: 0 }}
+                      />
+                    );
+                  }
+
+                  return (
                   <div
                     key={card.id}
-                    className="rounded-lg border p-4 flex flex-col items-center justify-center"
+                    className="rounded-lg border p-3 flex flex-col items-stretch justify-between"
                     style={{
                       borderColor: inkSaving ? "rgba(0,0,0,0.12)" : undefined,
+                      aspectRatio: "1 / 1",
+                      width: "100%",
                     }}
                   >
                     <div
-                      className="w-full aspect-video rounded-md overflow-hidden mb-3 flex items-center justify-center bg-gray-100"
+                      className="w-full flex-1 min-h-0 rounded-md overflow-hidden mb-3 flex items-center justify-center bg-gray-100"
                       style={{ filter: inkSaving ? "grayscale(100%)" : undefined }}
                     >
-                      <img src={card.image} alt={card.word} className="w-full h-full object-cover" />
+                      <img
+                        src={resolveLessonImageUrl(card.image)}
+                        alt={card.word}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
 
                     {contentOption === "picture+word" && (
-                      <div className="text-xl font-semibold text-center">
+                      <div className="text-[20px] font-semibold text-center leading-tight">
                         {card.word.replaceAll("_", " ")}
                       </div>
                     )}
                   </div>
-                ))}
-
-                {Array.from({ length: (selectedCardsPerPage ?? 1) - pageCards.length }).map((_, index) => (
-                  <div key={`ph-${index}`} className="rounded-lg border p-4 bg-transparent" />
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

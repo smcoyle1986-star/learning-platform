@@ -78,7 +78,7 @@ export async function createWorksheetPdfBuffer(
 ) {
   const html = await buildWorksheetPreviewHtml(cards, draft, {
     includeTeacherCopy: options.includeTeacherCopy ?? false,
-    previewMode: true,
+    previewMode: false,
   });
 
   return renderHtmlToPdfBuffer(html, draft.type === "bullseye");

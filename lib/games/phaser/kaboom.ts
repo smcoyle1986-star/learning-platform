@@ -70,6 +70,7 @@ export async function createKaboomGame({
 
     private board?: Phaser.GameObjects.Container;
     private tiles: TileNode[] = [];
+    private centerBackdrop?: Phaser.GameObjects.Arc;
     private centerTitle?: Phaser.GameObjects.Text;
     private centerSubtitle?: Phaser.GameObjects.Text;
     private pulseTween?: Phaser.Tweens.Tween;
@@ -77,14 +78,19 @@ export async function createKaboomGame({
     create() {
       this.cameras.main.setBackgroundColor("#f3f4f6");
       this.board = this.add.container(0, 0);
+      this.centerBackdrop = this.add
+        .circle(0, 0, 320, 0xffffff, 0.98)
+        .setStrokeStyle(12, 0x93c5fd, 0.95)
+        .setDepth(19)
+        .setVisible(false);
       this.centerTitle = this.add
         .text(0, 0, "", {
           fontFamily: PHASER_UI_FONT,
-          fontSize: "72px",
+          fontSize: "104px",
           fontStyle: "bold",
           color: "#16a34a",
           stroke: "#ffffff",
-          strokeThickness: 8,
+          strokeThickness: 10,
         })
         .setOrigin(0.5)
         .setDepth(20)
@@ -92,11 +98,11 @@ export async function createKaboomGame({
       this.centerSubtitle = this.add
         .text(0, 0, "", {
           fontFamily: PHASER_UI_FONT,
-          fontSize: "28px",
+          fontSize: "34px",
           fontStyle: "bold",
           color: "#111827",
           stroke: "#ffffff",
-          strokeThickness: 6,
+          strokeThickness: 8,
         })
         .setOrigin(0.5)
         .setDepth(20)
@@ -194,7 +200,8 @@ export async function createKaboomGame({
       });
 
       this.centerTitle?.setPosition(boardWidth / 2, boardHeight / 2 - 16);
-      this.centerSubtitle?.setPosition(boardWidth / 2, boardHeight / 2 + 54);
+      this.centerBackdrop?.setPosition(boardWidth / 2, boardHeight / 2 + 4);
+      this.centerSubtitle?.setPosition(boardWidth / 2, boardHeight / 2 + 68);
     }
 
     private renderState() {
@@ -240,6 +247,7 @@ export async function createKaboomGame({
       });
 
       if (!this.state.centerReveal) {
+        this.centerBackdrop?.setVisible(false);
         this.centerTitle?.setVisible(false);
         this.centerSubtitle?.setVisible(false);
         this.pulseTween?.stop();
@@ -250,17 +258,21 @@ export async function createKaboomGame({
       this.centerTitle?.setText(isBomb ? "KABOOM!" : `+${this.state.centerReveal.value ?? 0}`);
       this.centerTitle?.setColor(isBomb ? "#dc2626" : "#16a34a");
       this.centerSubtitle?.setText(isBomb ? "-5 points" : "Great job!");
+      this.centerBackdrop?.setFillStyle(isBomb ? 0xfef2f2 : 0xffffff, 0.98);
+      this.centerBackdrop?.setStrokeStyle(12, isBomb ? 0xf87171 : 0x93c5fd, 0.95);
+      this.centerBackdrop?.setVisible(true);
       this.centerTitle?.setVisible(true);
       this.centerSubtitle?.setVisible(true);
 
       this.pulseTween?.stop();
-      this.centerTitle?.setScale(0.7);
-      this.centerSubtitle?.setScale(0.9);
+      this.centerBackdrop?.setScale(0.78);
+      this.centerTitle?.setScale(0.58);
+      this.centerSubtitle?.setScale(0.72);
       this.pulseTween = this.tweens.add({
-        targets: [this.centerTitle, this.centerSubtitle],
-        scale: { from: 0.7, to: 1 },
-        alpha: { from: 0.1, to: 1 },
-        duration: 360,
+        targets: [this.centerBackdrop, this.centerTitle, this.centerSubtitle],
+        scale: { from: 0.78, to: 1 },
+        alpha: { from: 0.08, to: 1 },
+        duration: 420,
         ease: "Back.out",
       });
     }

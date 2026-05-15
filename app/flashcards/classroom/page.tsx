@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import ClassroomCanvas from "@/components/classroom/ClassroomCanvas";
 import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 
 type Card = {
@@ -393,12 +394,16 @@ export default function ClassroomMode() {
           // Normal layout: image area on top, text area below
           <div className="w-full h-full flex flex-col justify-center items-center">
             {/* Image area */}
-            <div className={`w-full ${inFullscreen ? "flex-1" : "flex-1"} bg-gray-100 rounded-2xl mb-6 flex items-center justify-center text-gray-400 text-xl overflow-hidden relative`}>
+            <div className={`w-full ${inFullscreen ? "flex-[1.45]" : "flex-[1.35]"} bg-gray-100 rounded-2xl mb-3 md:mb-4 flex items-center justify-center text-gray-400 text-xl overflow-hidden relative`}>
               <div className="w-full h-full flex items-center justify-center relative">
                 {(displayMode === "image+text") ||
                  (displayMode === "image") ||
                  (displayMode === "text" && revealToggle) ? (
-                  <img src={card.image || "/placeholder.png"} alt={card.word} className="object-contain w-full h-full" />
+                  <img
+                    src={resolveLessonImageUrl(card.image || "/placeholder.png")}
+                    alt={card.word}
+                    className="object-contain w-full h-full scale-[1.08] md:scale-[1.12]"
+                  />
                 ) : (
                   <div className="text-2xl text-gray-400"> </div>
                 )}
@@ -424,7 +429,7 @@ export default function ClassroomMode() {
             </div>
 
             {/* Vocabulary word area */}
-            <div className={`${displayMode === "text" && revealToggle ? "mt-2" : ""} flex items-center justify-center w-full`}>
+            <div className={`${displayMode === "text" && revealToggle ? "mt-2" : "mt-1"} flex items-center justify-center w-full flex-none`}>
               {(
                 displayMode === "image+text"
                 || (displayMode === "image" && revealToggle)

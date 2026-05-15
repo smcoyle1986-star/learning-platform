@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   createWhackWordGame,
   type WhackDifficulty,
@@ -302,7 +303,7 @@ export default function WhackAWordPage() {
                 {targetCard ? (
                   <div className="inline-flex items-center gap-3 bg-[#FFF4E6] px-4 py-2 rounded-full shadow-sm">
                     {useImages && targetCard.image ? (
-                      <img src={targetCard.image} alt={targetCard.word} className="w-12 h-12 object-cover rounded-md" />
+                      <img src={resolveLessonImageUrl(targetCard.image)} alt={targetCard.word} className="w-12 h-12 object-cover rounded-md" />
                     ) : (
                       <div className="w-12 h-12 flex items-center justify-center rounded-md bg-[#C7E7FF] text-lg font-semibold">{targetCard.word[0].toUpperCase()}</div>
                     )}
@@ -360,7 +361,7 @@ export default function WhackAWordPage() {
 
             <div className="mb-4">
               {useImages && targetCard.image ? (
-                <img src={targetCard.image} alt={targetCard.word} className="mx-auto w-44 h-36 object-cover rounded-md shadow" />
+                <img src={resolveLessonImageUrl(targetCard.image)} alt={targetCard.word} className="mx-auto w-44 h-36 object-cover rounded-md shadow" />
               ) : (
                 <div className="mx-auto w-44 h-36 flex items-center justify-center bg-[#C7E7FF] rounded-md text-2xl font-semibold">{targetCard.word}</div>
               )}

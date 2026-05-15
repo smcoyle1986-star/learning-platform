@@ -201,7 +201,9 @@ export default function FlashcardsPage() {
       const exists = prev.some((item) => item.image === imagePath);
       if (exists) return prev;
       incrementCardCount(card);
-      return [...prev, { id: trayId, word: displayWord, image: imagePath, type: card.type }];
+      const next = [...prev, { id: trayId, word: displayWord, image: imagePath, type: card.type }];
+      writeLessonTray(next as LessonCard[]);
+      return next;
     });
     setLastAddedId(trayId);
     if (addToastTimeoutRef.current) {
@@ -213,12 +215,20 @@ export default function FlashcardsPage() {
   }
 
   function removeFromLessonTray(id: string) {
-    setLessonTray((prev) => prev.filter((c) => c.id !== id));
+    setLessonTray((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      writeLessonTray(next as LessonCard[]);
+      return next;
+    });
   }
 
   function clearLessonTray() {
     setLessonTray([]);
     writeLessonTray([]);
+  }
+
+  function persistLessonTray() {
+    writeLessonTray(lessonTray as LessonCard[]);
   }
 
   useEffect(() => {
@@ -289,22 +299,24 @@ export default function FlashcardsPage() {
           setOpenDropdown(null);
           router.push("/dashboard");
         }}
-        onGoEditor={() => {
-          setOpenDropdown(null);
-          router.push("/teacher/editor");
-        }}
         onGoGames={() => {
           setOpenDropdown(null);
           router.push("/games");
+        }}
+        onGoWorksheets={() => {
+          setOpenDropdown(null);
+          router.push("/worksheets");
         }}
         onGoCommunity={() => {
           setOpenDropdown(null);
           router.push("/teacher/community");
         }}
-        onGoClassroom={() => router.push("/flashcards/classroom")}
-        onGoWorksheets={() => router.push("/worksheets")}
+        onGoClassroom={() => {
+          persistLessonTray();
+          router.push("/flashcards/classroom");
+        }}
         onPrint={() => {
-          writeLessonTray(lessonTray as LessonCard[]);
+          persistLessonTray();
           router.push("/printables?from=flashcards");
         }}
         onClearTray={clearLessonTray}
@@ -327,10 +339,6 @@ export default function FlashcardsPage() {
         onGoDashboard={() => {
           setOpenDropdown(null);
           router.push("/dashboard");
-        }}
-        onGoEditor={() => {
-          setOpenDropdown(null);
-          router.push("/teacher/editor");
         }}
         onGoGames={() => {
           setOpenDropdown(null);

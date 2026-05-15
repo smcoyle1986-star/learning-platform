@@ -1,0 +1,16 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="48" fill="#F7F8F3"/>
+  <rect x="52" y="52" width="696" height="496" rx="32" fill="#FFFDF8" stroke="#D8E2D0" stroke-width="4"/>
+  <rect x="140" y="130" width="520" height="240" rx="26" fill="#F2F7EE" stroke="#D5E1CD" stroke-width="4"/>
+  <g transform="translate(265 250)">
+    <circle cx="0" cy="0" r="66" fill="#C8F1D1"/>
+    <path d="M-26 0L-6 20L30 -16" stroke="#2D6A4F" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="0" y="100" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="#2D6A4F">YES</text>
+  </g>
+  <g transform="translate(535 250)">
+    <circle cx="0" cy="0" r="66" fill="#F7A9A9"/>
+    <path d="M-22 -22L22 22M22 -22L-22 22" stroke="#8B2F45" stroke-width="16" stroke-linecap="round"/>
+    <text x="0" y="100" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="#8B2F45">NO</text>
+  </g>
+  <text x="400" y="488" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#6F7E78">Choose yes or no</text>
+</svg>

@@ -9,6 +9,185 @@ type ThemeArrayRow = {
   themes?: string[] | null;
 };
 
+type AdjectiveRow = {
+  id: string;
+  lemma: string;
+  image_id?: string | null;
+  comparative?: string | null;
+  superlative?: string | null;
+  themes?: string[] | null;
+};
+
+type AdjectiveGrammarMode = "comparative" | "superlative" | "adverb";
+
+const ADJECTIVE_GRAMMAR_LEMMAS: Record<AdjectiveGrammarMode, string[]> = {
+  comparative: [
+    "good",
+    "bad",
+    "far",
+    "big",
+    "small",
+    "tall",
+    "short",
+    "long",
+    "fast",
+    "slow",
+    "quick",
+    "hot",
+    "cold",
+    "happy",
+    "easy",
+    "heavy",
+    "funny",
+    "tiny",
+    "pretty",
+    "beautiful",
+    "expensive",
+    "difficult",
+    "dangerous",
+    "interesting",
+    "careful",
+  ],
+  superlative: [
+    "good",
+    "bad",
+    "far",
+    "big",
+    "small",
+    "tall",
+    "short",
+    "long",
+    "fast",
+    "slow",
+    "quick",
+    "hot",
+    "cold",
+    "happy",
+    "easy",
+    "heavy",
+    "funny",
+    "tiny",
+    "pretty",
+    "beautiful",
+    "expensive",
+    "difficult",
+    "dangerous",
+    "interesting",
+    "careful",
+  ],
+  adverb: [
+    "good",
+    "bad",
+    "quick",
+    "slow",
+    "quiet",
+    "loud",
+    "careful",
+    "careless",
+    "happy",
+    "angry",
+    "easy",
+    "beautiful",
+    "polite",
+    "rude",
+    "brave",
+    "calm",
+    "safe",
+    "honest",
+    "soft",
+    "bright",
+    "nervous",
+    "lazy",
+    "successful",
+    "helpful",
+    "powerful",
+  ],
+};
+
+const ADJECTIVE_GRAMMAR_FORMS: Record<AdjectiveGrammarMode, Record<string, string>> = {
+  comparative: {
+    good: "better",
+    bad: "worse",
+    far: "farther",
+    big: "bigger",
+    small: "smaller",
+    tall: "taller",
+    short: "shorter",
+    long: "longer",
+    fast: "faster",
+    slow: "slower",
+    quick: "quicker",
+    hot: "hotter",
+    cold: "colder",
+    happy: "happier",
+    easy: "easier",
+    heavy: "heavier",
+    funny: "funnier",
+    tiny: "tinier",
+    pretty: "prettier",
+    beautiful: "more beautiful",
+    expensive: "more expensive",
+    difficult: "more difficult",
+    dangerous: "more dangerous",
+    interesting: "more interesting",
+    careful: "more careful",
+  },
+  superlative: {
+    good: "best",
+    bad: "worst",
+    far: "farthest",
+    big: "biggest",
+    small: "smallest",
+    tall: "tallest",
+    short: "shortest",
+    long: "longest",
+    fast: "fastest",
+    slow: "slowest",
+    quick: "quickest",
+    hot: "hottest",
+    cold: "coldest",
+    happy: "happiest",
+    easy: "easiest",
+    heavy: "heaviest",
+    funny: "funniest",
+    tiny: "tiniest",
+    pretty: "prettiest",
+    beautiful: "most beautiful",
+    expensive: "most expensive",
+    difficult: "most difficult",
+    dangerous: "most dangerous",
+    interesting: "most interesting",
+    careful: "most careful",
+  },
+  adverb: {
+    good: "well",
+    bad: "badly",
+    quick: "quickly",
+    slow: "slowly",
+    quiet: "quietly",
+    loud: "loudly",
+    careful: "carefully",
+    careless: "carelessly",
+    happy: "happily",
+    angry: "angrily",
+    easy: "easily",
+    beautiful: "beautifully",
+    polite: "politely",
+    rude: "rudely",
+    brave: "bravely",
+    calm: "calmly",
+    safe: "safely",
+    honest: "honestly",
+    soft: "softly",
+    bright: "brightly",
+    nervous: "nervously",
+    lazy: "lazily",
+    successful: "successfully",
+    helpful: "helpfully",
+    powerful: "powerfully",
+  },
+};
+
 type NounRow = ThemeArrayRow & {
   countability?: Card["countability"] | null;
 };
@@ -108,6 +287,30 @@ function scoreForCard(card: Card, rawQuery: string) {
   return 3;
 }
 
+function getAdjectiveMode(activeTheme: string | null) {
+  if (activeTheme === "comparative") return "comparative";
+  if (activeTheme === "superlative") return "superlative";
+  if (activeTheme === "adverb") return "adverb";
+  return null;
+}
+
+function getAdjectiveDisplayWord(row: AdjectiveRow, mode: ReturnType<typeof getAdjectiveMode>) {
+  if (mode === "comparative") {
+    return row.comparative ?? ADJECTIVE_GRAMMAR_FORMS.comparative[row.lemma] ?? row.lemma;
+  }
+  if (mode === "superlative") {
+    return row.superlative ?? ADJECTIVE_GRAMMAR_FORMS.superlative[row.lemma] ?? row.lemma;
+  }
+  if (mode === "adverb") {
+    return ADJECTIVE_GRAMMAR_FORMS.adverb[row.lemma] ?? row.lemma;
+  }
+  return row.lemma;
+}
+
+function getAdjectiveImage(row: AdjectiveRow, mode: ReturnType<typeof getAdjectiveMode>) {
+  return row.image_id;
+}
+
 export function lemmaKey(card: Pick<Card, "type" | "id">) {
   return `${card.type}:${card.id}`;
 }
@@ -186,9 +389,12 @@ function getThemePathHints(card: Card) {
   themes.forEach((theme) => {
     const normalized = theme.replace(/\s+/g, "_");
     if (normalized) hints.add(normalized);
-    if (theme === "food") hints.add("_food/");
-    if (theme === "animals land") hints.add("_animal/");
-    if (theme === "animals baby") hints.add("_baby/");
+    if (theme === "food" || theme === "food & drinks") hints.add("_food/");
+    if (theme === "places" || theme === "buildings & places") hints.add("_place/");
+    if (theme === "kitchen") hints.add("_utensil/");
+    if (theme === "animals land" || theme === "animals" || theme === "animals baby") {
+      hints.add("_animal/");
+    }
   });
 
   return Array.from(hints);
@@ -237,14 +443,11 @@ export async function fetchSearchResults(params: {
   }
 
   if (activeWordType === "verb") {
-    const { data, error } = await supabase
-      .from("verbs")
-      .select("id, lemma, image_id, themes")
-      .or(
-        activeTheme
-          ? `themes.cs.{${activeTheme}}`
-          : `lemma.ilike.%${raw}%,themes.cs.{${raw}}`
-      );
+    const verbQuery = supabase.from("verbs").select("id, lemma, image_id, themes");
+
+    const { data, error } = activeTheme
+      ? await verbQuery.contains("themes", [activeTheme])
+      : await verbQuery.or(`lemma.ilike.%${raw}%,themes.cs.{${raw}}`);
 
     if (error) throw error;
 
@@ -261,24 +464,61 @@ export async function fetchSearchResults(params: {
   }
 
   if (activeWordType === "adjective") {
-    const { data, error } = await supabase
+    const grammarMode = getAdjectiveMode(activeTheme);
+    const adjectiveQuery = supabase
       .from("adjectives")
-      .select("id, lemma, image_id, themes")
-      .or(
-        activeTheme
-          ? `themes.cs.{${activeTheme}}`
-          : `lemma.ilike.%${raw}%,themes.cs.{${raw}}`
+      .select("id, lemma, image_id, comparative, superlative, themes");
+
+    let data: AdjectiveRow[] | null = null;
+    let error: unknown = null;
+
+    if (grammarMode) {
+      const grammarLemmas = ADJECTIVE_GRAMMAR_LEMMAS[grammarMode];
+      const response = await adjectiveQuery.in("lemma", grammarLemmas);
+      data = response.data as AdjectiveRow[] | null;
+      error = response.error;
+    } else if (activeTheme) {
+      const response = await adjectiveQuery.contains("themes", [activeTheme]);
+      data = response.data as AdjectiveRow[] | null;
+      error = response.error;
+    } else {
+      const response = await adjectiveQuery.or(
+        `lemma.ilike.%${raw}%,comparative.ilike.%${raw}%,superlative.ilike.%${raw}%,themes.cs.{${raw}}`
       );
+      data = response.data as AdjectiveRow[] | null;
+      error = response.error;
+    }
 
     if (error) throw error;
 
+    const filteredData =
+      grammarMode && raw
+        ? (data ?? []).filter((row) => {
+            const displayWord = getAdjectiveDisplayWord(row, grammarMode);
+            return (
+              row.lemma.toLowerCase().includes(raw) ||
+              displayWord.toLowerCase().includes(raw)
+            );
+          })
+        : data ?? [];
+
     return sortByPopularity(
-      (data ?? []).map((adj: ThemeArrayRow) => ({
-        id: adj.id,
-        word: adj.lemma,
-        image: adj.image_id ?? "/placeholder.png",
-        type: "adjective" as const,
-      })),
+      filteredData.map((adj: AdjectiveRow) => {
+        const mode = getAdjectiveMode(activeTheme);
+        const displayWord = getAdjectiveDisplayWord(adj, mode);
+        const image =
+          getAdjectiveImage(adj, mode) ??
+          adj.image_id ??
+          "/placeholder.png";
+
+        return {
+          id: adj.id,
+          word: displayWord,
+          image,
+          type: "adjective" as const,
+          themes: Array.isArray(adj.themes) ? adj.themes : [],
+        };
+      }),
       raw,
       cardCounts
     );

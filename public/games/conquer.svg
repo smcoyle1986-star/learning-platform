@@ -1,0 +1,26 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" rx="48" fill="#F7F8F3"/>
+  <rect x="52" y="52" width="696" height="496" rx="32" fill="#FFFDF8" stroke="#D8E2D0" stroke-width="4"/>
+  <g opacity="0.9">
+    <path d="M120 120H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 180H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 240H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 300H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 360H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 420H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M120 480H680" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M160 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M240 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M320 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M400 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M480 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M560 100V500" stroke="#D3DCCB" stroke-width="3"/>
+    <path d="M640 100V500" stroke="#D3DCCB" stroke-width="3"/>
+  </g>
+  <circle cx="250" cy="220" r="54" fill="#DFF3D1" stroke="#A8C79A" stroke-width="8"/>
+  <circle cx="550" cy="220" r="54" fill="#DDE7FF" stroke="#A7B8EA" stroke-width="8"/>
+  <circle cx="250" cy="390" r="54" fill="#FFE0EA" stroke="#E4A8BE" stroke-width="8"/>
+  <circle cx="550" cy="390" r="54" fill="#FFF0C6" stroke="#E0C47D" stroke-width="8"/>
+  <text x="400" y="110" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="800" fill="#35516A">Conquer</text>
+  <text x="400" y="540" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="600" fill="#7A8877">Build territory. Defend your squares.</text>
+</svg>

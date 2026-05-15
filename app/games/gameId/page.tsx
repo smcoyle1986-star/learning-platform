@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import BrandButton from "@/components/BrandButton";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { useParams, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
@@ -69,7 +71,7 @@ function GameEngine({ cards, onExit }: GameEngineProps) {
         {cards.map((c) => (
           <div key={c.id} className="rounded-lg border p-3 flex flex-col items-center gap-2">
             <div className="w-full aspect-video rounded-md overflow-hidden mb-1 bg-gray-100">
-              <img src={c.image ?? "/placeholder.png"} alt={c.word} className="w-full h-full object-cover" />
+              <img src={resolveLessonImageUrl(c.image ?? "/placeholder.png")} alt={c.word} className="w-full h-full object-cover" />
             </div>
             <div className="text-sm font-medium text-center">{c.word.replaceAll("_", " ")}</div>
           </div>
@@ -97,6 +99,7 @@ const GAMES: { title: string; id: string; subtitle?: string }[] = [
   { title: "Freeze & Guess", id: "freeze-and-guess", subtitle: "Freeze frames and guess" },
   { title: "Odd One Out", id: "odd-one-out", subtitle: "Find the odd card" },
   { title: "Build the Set", id: "build-the-set", subtitle: "Assemble a set of cards" },
+  { title: "Conquer", id: "conquer", subtitle: "Claim territory on a giant board" },
 ];
 
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
@@ -257,7 +260,7 @@ export default function GamePage() {
       {/* Lesson Tray (sticky below header) */}
       <section className="sticky top-[72px] z-40 bg-white border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="flex items-center gap-3 overflow-x-auto py-2">
+          <LessonTrayScroller className="py-2" contentClassName="gap-3">
             {lessonTray.length === 0 && (
               <div className="px-4 py-2 rounded-lg border border-dashed border-black/20 text-sm text-[var(--color-text-muted)] whitespace-nowrap">
                 Click flashcards to add
@@ -271,7 +274,7 @@ export default function GamePage() {
                 style={{ minWidth: 140 }}
               >
                 <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                  <img src={card.image ?? "/placeholder.png"} alt={card.word} className="w-full h-full object-cover" />
+                  <img src={resolveLessonImageUrl(card.image ?? "/placeholder.png")} alt={card.word} className="w-full h-full object-cover" />
                 </div>
 
                 <span className="text-xs">{card.word.replaceAll("_", " ")}</span>
@@ -285,7 +288,7 @@ export default function GamePage() {
                 </button>
               </div>
             ))}
-          </div>
+          </LessonTrayScroller>
         </div>
       </section>
 

@@ -178,14 +178,13 @@ export default function HomePage() {
           {/* Text */}
           <div>
             <h2 className="text-5xl font-semibold leading-tight mb-6">
-              A calm space for
+              Interactive teaching tools
               <br />
-              meaningful learning
+              for English classrooms
             </h2>
 
             <p className="text-lg text-[#5c665c] mb-8 max-w-xl">
-              Create, explore, and share classroom materials — designed for focus,
-              curiosity, and growth.
+              Explore flashcards, classroom games, worksheets, lesson plans, and printable activities designed for English teachers and young learners.
             </p>
 
             <div className="flex items-center gap-4">

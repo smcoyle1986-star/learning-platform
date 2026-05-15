@@ -8,7 +8,7 @@ import PrintablesPreview from "@/components/printables/PrintablesPreview";
 import {
   buildPrintableHtml,
   getPrintableHeaderHtml,
-  openPrintableWindow,
+  printPrintableHtml,
 } from "@/lib/printables/export";
 import { PrintableContentOption } from "@/lib/printables/types";
 import { usePrintableCards } from "@/lib/printables/usePrintableCards";
@@ -83,32 +83,54 @@ export default function PrintablesPage() {
 
   const handlePrintNow = async () => {
     setPrinting(true);
-    const printableHtml = buildPrintableHtml({
-      pages,
-      contentOption,
-      inkSaving,
-      siteHeaderHtml: getPrintableHeaderHtml(from),
-    });
-    openPrintableWindow(
-      printableHtml,
-      "Popup blocked. Allow popups for this site to print/export.",
-      () => setPrinting(false)
-    );
+    try {
+      const printableHtml = buildPrintableHtml({
+        pages,
+        contentOption,
+        inkSaving,
+        siteHeaderHtml: getPrintableHeaderHtml(from),
+      });
+      printPrintableHtml(printableHtml, () => setPrinting(false));
+    } catch (error) {
+      console.error("Failed to print printable cards:", error);
+      setPrinting(false);
+    }
   };
 
   const handleExportPdf = async () => {
     setExporting(true);
-    const printableHtml = buildPrintableHtml({
-      pages,
-      contentOption,
-      inkSaving,
-      siteHeaderHtml: getPrintableHeaderHtml(from),
-    });
-    openPrintableWindow(
-      printableHtml,
-      "Popup blocked. Allow popups for this site to export PDF.",
-      () => setExporting(false)
-    );
+    try {
+      const response = await fetch("/api/printables/export-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pages,
+          contentOption,
+          inkSaving,
+          siteHeaderHtml: getPrintableHeaderHtml(from),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "classendo-printables.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      console.error("Failed to export printable PDF:", error);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleWorksheetExportPdf = async () => {

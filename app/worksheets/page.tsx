@@ -3,14 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import BrandButton from "@/components/BrandButton";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel";
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
 import { useAuth } from "@/components/AuthProvider";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { supabase } from "@/lib/supabase/client";
 import { LessonCard } from "@/lib/lessons/types";
 import { clearLessonTray, readLessonTray, subscribeToLessonTray, writeLessonTray } from "@/lib/lessons/tray";
-import { buildWorksheetPreviewHtml, openWorksheetPrintWindow } from "@/lib/worksheets/export";
+import { buildWorksheetPrintHtml, openWorksheetPrintWindow } from "@/lib/worksheets/export";
+import { generateCrosswordLayout } from "@/lib/worksheets/crossword";
+import { generateWordsearchLayout } from "@/lib/worksheets/wordsearch";
 import { loadWorksheetById, saveWorksheet } from "@/lib/worksheets/repository";
+import { scrambleSentenceLine } from "@/lib/worksheets/scramble";
 import {
   buildWorksheetDraft,
   DEFAULT_WORKSHEET_DRAFT,
@@ -19,6 +24,22 @@ import {
   WorksheetDraft,
   WorksheetType,
 } from "@/lib/worksheets/types";
+
+function buildReadingLinesFromCards(nextCards: LessonCard[]) {
+  if (nextCards.length === 0) {
+    return Array.from({ length: 8 }, () => "");
+  }
+
+  return nextCards.map((card) => formatWorksheetWord(card.word));
+}
+
+function buildWritingLinesFromCards(nextCards: LessonCard[]) {
+  if (nextCards.length === 0) {
+    return Array.from({ length: 8 }, () => "");
+  }
+
+  return nextCards.map((card) => formatWorksheetWord(card.word));
+}
 
 export default function WorksheetsPage() {
   const searchParams = useSearchParams();
@@ -50,10 +71,29 @@ export default function WorksheetsPage() {
     loadWorksheetById(supabase, existingWorksheetId)
       .then((worksheet) => {
         if (!mounted) return;
+        const readingLines =
+          worksheet.draft.type === "reading"
+            ? worksheet.draft.readingLines?.length
+              ? worksheet.draft.readingLines
+              : buildReadingLinesFromCards(worksheet.cards)
+            : worksheet.draft.readingLines ?? [];
+        const writingLines =
+          worksheet.draft.type === "writing"
+            ? worksheet.draft.writingLines?.length
+              ? worksheet.draft.writingLines
+              : buildWritingLinesFromCards(worksheet.cards)
+            : worksheet.draft.writingLines ?? [];
         setWorksheetId(worksheet.id);
         setWorksheetName(worksheet.name);
         setWorksheetIsPublic(worksheet.isPublic);
-        setDraft(worksheet.draft);
+        setDraft({
+          ...DEFAULT_WORKSHEET_DRAFT,
+          ...worksheet.draft,
+          questionBuilderPrompts: worksheet.draft.questionBuilderPrompts ?? [],
+          readingLines,
+          writingLines,
+          sentenceScrambleLines: worksheet.draft.sentenceScrambleLines ?? [],
+        });
         setCards(worksheet.cards);
         writeLessonTray(worksheet.cards);
       })
@@ -70,10 +110,58 @@ export default function WorksheetsPage() {
     () => WORKSHEET_TYPES.find((item) => item.id === draft.type) ?? null,
     [draft.type]
   );
+  const isQuestionBuilder = draft.type === "questions";
+  const isSentenceScramble = draft.type === "sentence-scramble";
+  const worksheetCards = cards;
+  const trayDescription = isQuestionBuilder
+    ? "Question Builder lets you type directly into the worksheet preview."
+    : draft.type === "writing"
+      ? "Writing uses the lesson cards as word cues and lets teachers build handwriting practice lines."
+    : isSentenceScramble
+      ? "Sentence Scramble uses the lesson cards and lets you scramble each sentence row from the preview."
+    : "Every card in this tray is used for worksheet generation.";
+  const questionBuilderCanRemove = isQuestionBuilder && (draft.questionBuilderPrompts?.length ?? 0) > cards.length;
+  const questionBuilderRemoveReason = isQuestionBuilder
+    ? "You can only remove a question after the worksheet has more image rows than the lesson tray."
+    : "";
+
+  const crosswordFitSummary = useMemo(() => {
+    if (draft.type !== "crossword") return null;
+    const layout = generateCrosswordLayout(cards, draft.difficulty, draft.shuffleSeed);
+    if (!layout) return null;
+    if (layout.placedWordCount >= cards.length) return null;
+
+    return {
+      placed: layout.placedWordCount,
+      total: cards.length,
+      missing: cards.length - layout.placedWordCount,
+    };
+  }, [cards, draft.difficulty, draft.shuffleSeed, draft.type]);
+
+  const wordsearchFitSummary = useMemo(() => {
+    if (draft.type !== "wordsearch") return null;
+    const layout = generateWordsearchLayout(cards, draft.difficulty, draft.shuffleSeed, {
+      fillRandomLetters: draft.wordsearchAddRandomLetters,
+    });
+    if (layout.unusedCards.length === 0) return null;
+
+    return {
+      placed: layout.placements.length,
+      total: cards.length,
+      missing: layout.unusedCards.length,
+    };
+  }, [cards, draft.difficulty, draft.shuffleSeed, draft.type, draft.wordsearchAddRandomLetters]);
 
   function selectWorksheetType(type: WorksheetType) {
-    setDraft(buildWorksheetDraft(type));
-    setWorksheetName(buildWorksheetDraft(type).title);
+    const nextDraft = buildWorksheetDraft(type);
+    if (type === "reading") {
+      nextDraft.readingLines = buildReadingLinesFromCards(cards);
+    }
+    if (type === "writing") {
+      nextDraft.writingLines = buildWritingLinesFromCards(cards);
+    }
+    setDraft(nextDraft);
+    setWorksheetName(nextDraft.title);
   }
 
   function updateDraft<K extends keyof WorksheetDraft>(key: K, value: WorksheetDraft[K]) {
@@ -86,6 +174,66 @@ export default function WorksheetsPage() {
             : "Score points by landing on the wedges. The bullseye is worth 8 points.";
       }
       return next;
+    });
+  }
+
+  function updateQuestionPrompts(nextPrompts: string[]) {
+    setDraft((current) => ({
+      ...current,
+      questionBuilderPrompts: nextPrompts,
+    }));
+  }
+
+  function updateReadingLines(nextLines: string[]) {
+    setDraft((current) => ({
+      ...current,
+      readingLines: nextLines,
+    }));
+  }
+
+  function updateWritingLines(nextLines: string[]) {
+    setDraft((current) => ({
+      ...current,
+      writingLines: nextLines,
+    }));
+  }
+
+  function updateSentenceScrambleLines(nextLines: string[]) {
+    setDraft((current) => ({
+      ...current,
+      sentenceScrambleLines: nextLines,
+    }));
+  }
+
+  function scrambleSentenceWorksheet() {
+    setDraft((current) => ({
+      ...current,
+      sentenceScrambleLines: (current.sentenceScrambleLines.length ? current.sentenceScrambleLines : buildReadingLinesFromCards(cards)).map((line, index) =>
+        scrambleSentenceLine(line, current.sentenceScrambleLevel, Date.now() + index * 97)
+      ),
+      shuffleSeed: Date.now(),
+    }));
+  }
+
+  function addQuestionPrompt() {
+    setDraft((current) => ({
+      ...current,
+      questionBuilderPrompts: [
+        ...(current.questionBuilderPrompts?.length ? current.questionBuilderPrompts : []),
+        "",
+      ],
+    }));
+  }
+
+  function removeQuestionPrompt() {
+    setDraft((current) => {
+      const nextPrompts = [...(current.questionBuilderPrompts ?? [])];
+      if (nextPrompts.length === 0) return current;
+      nextPrompts.pop();
+      return {
+        ...current,
+        questionBuilderPrompts: nextPrompts,
+      };
     });
   }
 
@@ -119,7 +267,7 @@ export default function WorksheetsPage() {
         name: worksheetName.trim(),
         worksheetType: draft.type,
         isPublic: worksheetIsPublic,
-        cards,
+        cards: worksheetCards,
         draft: {
           ...draft,
           title: worksheetName.trim(),
@@ -151,7 +299,7 @@ export default function WorksheetsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          cards,
+          cards: worksheetCards,
           draft: activeDraft,
           includeTeacherCopy: false,
         }),
@@ -182,12 +330,12 @@ export default function WorksheetsPage() {
 
   async function handlePrintNow() {
     setIsPrinting(true);
-    const html = await buildWorksheetPreviewHtml(cards, {
+    const html = await buildWorksheetPrintHtml(worksheetCards, {
       ...draft,
       title: worksheetName.trim() || draft.title || "Worksheet",
     }, {
       includeTeacherCopy: false,
-      previewMode: true,
+      previewMode: false,
     });
     openWorksheetPrintWindow(
       html,
@@ -219,9 +367,7 @@ export default function WorksheetsPage() {
           <div className="flex items-center justify-between gap-3 mb-2">
             <div>
               <h2 className="text-sm font-semibold">Lesson Tray</h2>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Every card in this tray is used for worksheet generation.
-              </p>
+              <p className="text-xs text-[var(--color-text-muted)]">{trayDescription}</p>
             </div>
             <button
               onClick={() => (window.location.href = "/flashcards")}
@@ -231,7 +377,7 @@ export default function WorksheetsPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <LessonTrayScroller className="pb-1" contentClassName="gap-2">
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed px-4 py-3 text-sm text-[var(--color-text-muted)] text-center min-w-full">
                 No cards in the lesson tray yet.
@@ -244,9 +390,9 @@ export default function WorksheetsPage() {
                 >
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg overflow-hidden border bg-white shrink-0">
-                      {card.image ? (
+                      {resolveLessonImageUrl(card.image) ? (
                         <img
-                          src={card.image}
+                          src={resolveLessonImageUrl(card.image)}
                           alt={formatWorksheetWord(card.word)}
                           className="w-full h-full object-cover"
                         />
@@ -267,7 +413,7 @@ export default function WorksheetsPage() {
                 </div>
               ))
             )}
-          </div>
+          </LessonTrayScroller>
         </section>
 
         <section className="shrink-0">
@@ -301,11 +447,18 @@ export default function WorksheetsPage() {
             <div className="h-full flex flex-col gap-4">
               <div className="min-h-0 overflow-y-auto pr-1">
                 {selectedType ? (
-                  <WorksheetOptionsPanel
-                    worksheetType={selectedType}
-                    draft={draft}
-                    onUpdate={updateDraft}
-                  />
+                <WorksheetOptionsPanel
+                  worksheetType={selectedType}
+                  draft={draft}
+                  onUpdate={updateDraft}
+                  onQuestionPromptsAdd={addQuestionPrompt}
+                  onQuestionPromptsRemove={removeQuestionPrompt}
+                onSentenceScramble={scrambleSentenceWorksheet}
+                questionBuilderCanRemove={questionBuilderCanRemove}
+                questionBuilderRemoveReason={questionBuilderRemoveReason}
+                crosswordFitSummary={crosswordFitSummary}
+                wordsearchFitSummary={wordsearchFitSummary}
+              />
                 ) : (
                   <div className="bg-white rounded-2xl border shadow-sm p-4 text-sm text-[var(--color-text-muted)]">
                     Select a worksheet type to see its editing options here.
@@ -318,31 +471,35 @@ export default function WorksheetsPage() {
           <section className="col-span-12 lg:col-span-8 xl:col-span-9 min-h-0 overflow-hidden">
             <div className="relative h-full group">
               <WorksheetPreview
-                cards={cards}
-                draft={{ ...draft, title: worksheetName || draft.title }}
-                className="h-full"
-              />
+              cards={cards}
+              draft={{ ...draft, title: worksheetName || draft.title }}
+              onQuestionPromptsChange={updateQuestionPrompts}
+              onReadingLinesChange={updateReadingLines}
+              onWritingLinesChange={updateWritingLines}
+              onSentenceScrambleLinesChange={updateSentenceScrambleLines}
+              className="h-full"
+            />
 
               <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none">
                 <div className="w-full max-w-3xl px-6 pt-6 pb-1 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
                   <div className="pointer-events-auto mx-auto flex items-center justify-center gap-3 px-4 py-3">
                     <button
                       onClick={() => setShowSaveModal(true)}
-                      disabled={!draft.type || cards.length === 0}
+                    disabled={!draft.type || (!isQuestionBuilder && cards.length === 0)}
                       className="btn btn-primary px-4 py-2 text-sm shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       Save Worksheet
                     </button>
                     <button
                       onClick={handleExportPdf}
-                      disabled={!draft.type || cards.length === 0 || isExporting}
+                      disabled={!draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
                       className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       {isExporting ? "Exporting…" : "Export PDF"}
                     </button>
                     <button
                       onClick={handlePrintNow}
-                      disabled={!draft.type || cards.length === 0 || isPrinting}
+                      disabled={!draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
                       className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       {isPrinting ? "Printing…" : "Print Now"}

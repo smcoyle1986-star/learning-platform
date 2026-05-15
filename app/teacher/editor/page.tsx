@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import BrandButton from "@/components/BrandButton";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { X, Printer } from "lucide-react";
 import EditorCardRow from "@/components/teacher/editor/EditorCardRow";
 import { supabase } from "@/lib/supabase/client";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   findExistingLessonIdByName,
   loadLessonMetadata,
@@ -112,6 +114,29 @@ export default function TeacherLessonTrayEditor() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const syncTrayFromStorage = () => {
+      try {
+        const nextTray = readLessonTray();
+        const nextSavedTray = readLastSavedTray();
+        setTrayCards((current) => (areCardsEqual(current, nextTray) ? current : nextTray));
+        setLastSavedTray((current) =>
+          areCardsEqual(current, nextSavedTray) ? current : nextSavedTray
+        );
+      } catch (err) {
+        console.error("Failed to refresh lesson tray:", err);
+      }
+    };
+
+    window.addEventListener("focus", syncTrayFromStorage);
+    window.addEventListener("storage", syncTrayFromStorage);
+
+    return () => {
+      window.removeEventListener("focus", syncTrayFromStorage);
+      window.removeEventListener("storage", syncTrayFromStorage);
+    };
   }, []);
 
   // persist lesson tray to localStorage so other pages can pick it up
@@ -251,12 +276,6 @@ export default function TeacherLessonTrayEditor() {
 
   // UI helper to format labels — preserve original case, only replace underscores with spaces
   const formatWord = (word?: string) => (word ?? "").toString().replace(/_/g, " ");
-  const resolveImageUrl = (value?: string | null) => {
-    const raw = (value ?? "").toString().trim();
-    if (!raw) return "";
-    if (raw.startsWith("http")) return raw;
-    return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
-  };
 
   if (loading) {
     return (
@@ -306,7 +325,7 @@ export default function TeacherLessonTrayEditor() {
       {/* Sticky lesson tray header */}
       <section className="sticky top-[72px] z-40 bg-white border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-2">
-          <div className="flex items-center gap-3 overflow-x-auto scroll-smooth">
+          <LessonTrayScroller className="pb-1" contentClassName="gap-3">
             {trayCards.length === 0 && (
               <div className="px-4 py-2 rounded-lg border border-dashed border-black/20 text-sm text-[var(--color-text-muted)] whitespace-nowrap">
                 No cards in lesson tray
@@ -320,9 +339,9 @@ export default function TeacherLessonTrayEditor() {
                 title={`${formatWord(card.word)} — position ${idx + 1}`}
               >
                 <div className="flex items-center gap-2">
-                  {resolveImageUrl(card.image ?? card.image_id ?? card.back) ? (
+                  {resolveLessonImageUrl(card.image ?? card.image_id ?? card.back) ? (
                     <img
-                      src={resolveImageUrl(card.image ?? card.image_id ?? card.back)}
+                      src={resolveLessonImageUrl(card.image ?? card.image_id ?? card.back)}
                       alt={formatWord(card.word)}
                       className="h-8 w-8 rounded-md border object-cover bg-white"
                     />
@@ -342,7 +361,7 @@ export default function TeacherLessonTrayEditor() {
                 </button>
               </div>
             ))}
-          </div>
+          </LessonTrayScroller>
 
           <div className="flex items-center gap-3 flex-wrap">
             {trayCards.length > 0 && (
@@ -389,7 +408,9 @@ export default function TeacherLessonTrayEditor() {
           <div className="p-6 bg-white rounded shadow-sm">
             <p className="text-gray-700">No cards in the lesson tray. Add cards from Flashcards to edit them here.</p>
             <div className="mt-4 flex gap-2">
-              <button onClick={() => navigateDirect("/flashcards")} className="btn btn-primary px-3 py-2">Open Flashcards</button>
+              <button onClick={() => navigateDirect("/dashboard")} className="btn btn-primary px-3 py-2">
+                Redirect to Dashboard
+              </button>
             </div>
           </div>
         ) : (
@@ -399,7 +420,7 @@ export default function TeacherLessonTrayEditor() {
                 key={card.id}
                 card={card}
                 index={idx}
-                imageUrl={resolveImageUrl(card.image ?? card.image_id ?? card.back)}
+                    imageUrl={resolveLessonImageUrl(card.image ?? card.image_id ?? card.back)}
                 onWordChange={updateCardWord}
                 onReset={(id) => {
                   const saved = lastSavedTray.find((entry) => entry.id === id);

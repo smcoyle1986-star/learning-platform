@@ -2,16 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Music, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
-import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
-import {
-  createConnectFourGame,
-  type ConnectFourSceneApi,
-  type ConnectFourSceneEvent,
-} from "@/lib/games/phaser/connect-four";
+import { supabase } from "@/lib/supabase/client";
+import { trackGameStart } from "@/lib/games/track-game-start";
 
 /*
   Connect Four — Classendo style
@@ -33,6 +28,28 @@ type AiLevel = "none" | "easy" | "medium" | "hard";
 
 const CBUTTON = "btn btn-secondary px-3 py-1";
 const RBUTTON = "btn btn-secondary px-3 py-1";
+
+const ACTIVE_BOARD_THEME: Record<Player, { shell: string; border: string; glow: string; inner: string }> = {
+  1: {
+    shell: "linear-gradient(180deg, rgba(255, 245, 245, 0.98) 0%, rgba(254, 232, 232, 0.96) 100%)",
+    border: "rgba(239, 68, 68, 0.18)",
+    glow: "0 18px 50px rgba(239, 68, 68, 0.12)",
+    inner: "linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 248, 248, 0.82) 100%)",
+  },
+  2: {
+    shell: "linear-gradient(180deg, rgba(255, 251, 235, 0.98) 0%, rgba(254, 249, 195, 0.96) 100%)",
+    border: "rgba(234, 179, 8, 0.18)",
+    glow: "0 18px 50px rgba(234, 179, 8, 0.12)",
+    inner: "linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 251, 236, 0.82) 100%)",
+  },
+};
+
+function resolveImageUrl(value?: string | null) {
+  const raw = (value ?? "").toString().trim();
+  if (!raw) return null;
+  if (raw.startsWith("http")) return raw;
+  return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
+}
 
 function createEmptyBoard(rows: number, cols: number): Cell[][] {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell));
@@ -258,7 +275,6 @@ function selectAiMove(board: Cell[][], rows: number, cols: number, level: AiLeve
 
 export default function ConnectFourPage() {
   const router = useRouter();
-  const sceneApiRef = useRef<ConnectFourSceneApi | null>(null);
 
   // lesson-tray
   const [tray, setTray] = useState<TrayCard[]>([]);
@@ -267,14 +283,14 @@ export default function ConnectFourPage() {
       const raw = localStorage.getItem("classendo-lesson-tray");
       if (!raw) { setTray([]); return; }
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const normalized = parsed.map((c: any, i: number) => ({
-          id: String(c.id ?? c.word ?? `t-${i}`),
-          word: String(c.word ?? c.text ?? c.label ?? ""),
-          image: c.image ?? null,
-          audio: c.audio ?? null,
-        })).filter((x) => x.word);
-        setTray(normalized);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const normalized = parsed.map((c: any, i: number) => ({
+            id: String(c.id ?? c.word ?? `t-${i}`),
+            word: String(c.word ?? c.text ?? c.label ?? ""),
+            image: resolveImageUrl(c.image ?? c.image_id ?? c.img),
+            audio: c.audio ?? null,
+          })).filter((x) => x.word);
+          setTray(normalized);
       } else setTray([]);
     } catch {
       setTray([]);
@@ -294,7 +310,6 @@ export default function ConnectFourPage() {
   const [showNoCardsModal, setShowNoCardsModal] = useState<boolean>(false);
   const [aiLevel, setAiLevel] = useState<AiLevel>("none");
   const [firstToWins, setFirstToWins] = useState<number>(3);
-  const [perMoveSeconds, setPerMoveSeconds] = useState<number>(20);
   const [boardCols, setBoardCols] = useState<number>(DEFAULT_COLS);
   const [boardRows, setBoardRows] = useState<number>(DEFAULT_ROWS);
 
@@ -302,9 +317,12 @@ export default function ConnectFourPage() {
   const [board, setBoard] = useState<Cell[][]>(() => createEmptyBoard(DEFAULT_ROWS, DEFAULT_COLS));
   const [currentPlayer, setCurrentPlayer] = useState<Player>(1);
   const [cursorCol, setCursorCol] = useState<number>(Math.floor(DEFAULT_COLS / 2));
+  const [aiFocusCol, setAiFocusCol] = useState<number | null>(null);
   const [winnerLine, setWinnerLine] = useState<[number, number][] | null>(null);
   const [matchWins, setMatchWins] = useState<Record<number, number>>({ 1: 0, 2: 0 });
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
+  const didTrackMatchStartRef = useRef(false);
+  const activeBoardTheme = ACTIVE_BOARD_THEME[currentPlayer];
 
   // falling animation state
   const [falling, setFalling] = useState<{ col: number; row: number; player: Player } | null>(null);
@@ -343,9 +361,7 @@ export default function ConnectFourPage() {
     }
   }
 
-  // timer / AI
-  const [turnTimer, setTurnTimer] = useState<number>(perMoveSeconds);
-  const turnTimerRef = useRef<number | null>(null);
+  // AI
   const [aiPlaysAs, setAiPlaysAs] = useState<Player>(2);
   const aiTimeoutsRef = useRef<number[]>([]);
 
@@ -354,6 +370,7 @@ export default function ConnectFourPage() {
   const [learningCard, setLearningCard] = useState<TrayCard | null>(null);
   const [showLearningLabel, setShowLearningLabel] = useState<boolean>(false);
   const [showMissedTurn, setShowMissedTurn] = useState<boolean>(false);
+  const [modalDisplayMode, setModalDisplayMode] = useState<"image+text" | "image" | "text">("image+text");
 
   // Show no-cards modal when tray empty
   useEffect(() => {
@@ -368,6 +385,7 @@ export default function ConnectFourPage() {
   useEffect(() => {
     setBoard(createEmptyBoard(boardRows, boardCols));
     setCursorCol(Math.floor(boardCols / 2));
+    didTrackMatchStartRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardCols, boardRows]);
 
@@ -391,34 +409,6 @@ export default function ConnectFourPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSettings, showNoCardsModal, boardCols, cursorCol, winnerLine, isAiThinking]);
 
-  // per-move countdown — NOTE: we intentionally DO NOT pause when learning modal is open.
-  useEffect(() => {
-    if (showSettings || showNoCardsModal || winnerLine || isAiThinking) {
-      if (turnTimerRef.current) { clearInterval(turnTimerRef.current); turnTimerRef.current = null; }
-      return;
-    }
-    setTurnTimer(perMoveSeconds);
-    if (turnTimerRef.current) clearInterval(turnTimerRef.current);
-    turnTimerRef.current = window.setInterval(() => {
-      setTurnTimer((t) => {
-        if (t <= 1) {
-          if (turnTimerRef.current) { clearInterval(turnTimerRef.current); turnTimerRef.current = null; }
-          handleTimeout();
-          return perMoveSeconds;
-        }
-        return t - 1;
-      });
-    }, 1000) as unknown as number;
-    return () => { if (turnTimerRef.current) { clearInterval(turnTimerRef.current); turnTimerRef.current = null; } };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPlayer, showSettings, showNoCardsModal, winnerLine, perMoveSeconds, isAiThinking]);
-
-  function handleTimeout() {
-    setSelectedColForModal(null); // dismiss any learning action
-    setLearningCard(null);
-    setCurrentPlayer((p) => (p === 1 ? 2 : 1) as Player);
-  }
-
   // Column click handler (shows learning modal for human players)
   function handleColumnClick(col: number) {
     setCursorCol(col);
@@ -441,6 +431,36 @@ export default function ConnectFourPage() {
     handleDropAnimated(col);
   }
 
+  function buildAiThinkingPath(startCol: number, chosenCol: number, availableColsList: number[]) {
+    const pool = availableColsList.length > 0 ? availableColsList : [chosenCol];
+    const path: number[] = [];
+    let cursor = startCol;
+
+    if (cursor !== chosenCol) {
+      path.push(cursor);
+    }
+
+    const introSteps = aiLevel === "hard"
+      ? 2 + Math.floor(Math.random() * 5)
+      : aiLevel === "medium"
+        ? 1 + Math.floor(Math.random() * 4)
+        : 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < introSteps; i++) {
+      const options = pool.filter((col) => col !== cursor && col !== chosenCol);
+      const next = options.length > 0 ? options[Math.floor(Math.random() * options.length)] : chosenCol;
+      if (next !== cursor) {
+        path.push(next);
+        cursor = next;
+      }
+    }
+
+    if (cursor !== chosenCol) {
+      path.push(chosenCol);
+    }
+
+    return path;
+  }
+
   // deny learning modal -> miss turn
   function denyLearningAndMissTurn() {
     setSelectedColForModal(null);
@@ -454,6 +474,10 @@ export default function ConnectFourPage() {
   // standard drop
   function handleDrop(col: number) {
     if (showSettings || showNoCardsModal || winnerLine || isAiThinking) return;
+    if (!didTrackMatchStartRef.current) {
+      didTrackMatchStartRef.current = true;
+      trackGameStart("connect-four");
+    }
     const b = cloneBoard(board);
     for (let r = boardRows - 1; r >= 0; r--) {
       if (b[r][col] === 0) {
@@ -477,6 +501,10 @@ export default function ConnectFourPage() {
   // animated falling drop
   function handleDropAnimated(col: number) {
     if (showSettings || showNoCardsModal || winnerLine || isAiThinking || falling) return;
+    if (!didTrackMatchStartRef.current) {
+      didTrackMatchStartRef.current = true;
+      trackGameStart("connect-four");
+    }
     const b = cloneBoard(board);
     let dropRow = -1;
     for (let r = boardRows - 1; r >= 0; r--) {
@@ -518,7 +546,6 @@ export default function ConnectFourPage() {
   async function doAiMoveWithDrama() {
     if (isAiThinking) return;
     setIsAiThinking(true);
-    if (turnTimerRef.current) { clearInterval(turnTimerRef.current); turnTimerRef.current = null; }
 
     const chosen = selectAiMove(board, boardRows, boardCols, aiLevel, aiPlaysAs);
     const avail = availableCols(board);
@@ -527,38 +554,47 @@ export default function ConnectFourPage() {
       return;
     }
 
-    const seqLen = Math.min(6, Math.max(3, avail.length));
-    const seq: number[] = [];
-    for (let i = 0; i < seqLen - 1; i++) seq.push(avail[Math.floor(Math.random() * avail.length)]);
-    seq.push(chosen);
+    const seq = buildAiThinkingPath(cursorCol, chosen, avail);
+    const thinkProfile = (() => {
+      const roll = Math.random();
+      if (roll < 0.28) {
+        return { min: 2, max: 3, base: aiLevel === "hard" ? 180 : aiLevel === "medium" ? 160 : 140 };
+      }
+      if (roll < 0.78) {
+        return { min: 3, max: 5, base: aiLevel === "hard" ? 250 : aiLevel === "medium" ? 220 : 190 };
+      }
+      return { min: 5, max: 8, base: aiLevel === "hard" ? 340 : aiLevel === "medium" ? 300 : 250 };
+    })();
+    const pulseSpacing = thinkProfile.base + Math.floor(Math.random() * 70);
+    const pulseCount = Math.max(
+      thinkProfile.min,
+      Math.min(thinkProfile.max, seq.length + Math.floor(Math.random() * 3))
+    );
 
     aiTimeoutsRef.current.forEach((t) => clearTimeout(t));
     aiTimeoutsRef.current = [];
     let accumulated = 0;
-    const baseDelay = aiLevel === "hard" ? 360 : aiLevel === "medium" ? 320 : 240;
-    for (let i = 0; i < seq.length; i++) {
-      const col = seq[i];
-      accumulated += baseDelay + i * 60;
-      const t = window.setTimeout(() => setCursorCol(col), accumulated) as unknown as number;
+    const nonFinalSteps = Math.max(0, pulseCount - 1);
+    const thinkPath = seq.length > 1
+      ? [...seq.slice(0, Math.min(seq.length - 1, nonFinalSteps)), chosen]
+      : [chosen];
+    for (let i = 0; i < thinkPath.length; i++) {
+      const col = thinkPath[i];
+      const stepDelay = pulseSpacing + Math.floor(Math.random() * 120) - i * 18;
+      accumulated += stepDelay;
+      const t = window.setTimeout(() => {
+        setCursorCol(col);
+        setAiFocusCol(col);
+      }, accumulated) as unknown as number;
       aiTimeoutsRef.current.push(t);
     }
 
-    const finalDelay = accumulated + 260;
+    const finalThinkPause = 180 + Math.floor(Math.random() * 260);
+    const finalDelay = accumulated + finalThinkPause;
     const finalT = window.setTimeout(() => {
       handleDropAnimated(chosen);
       setIsAiThinking(false);
-      setTurnTimer(perMoveSeconds);
-      if (turnTimerRef.current) clearInterval(turnTimerRef.current);
-      turnTimerRef.current = window.setInterval(() => {
-        setTurnTimer((t) => {
-          if (t <= 1) {
-            if (turnTimerRef.current) { clearInterval(turnTimerRef.current); turnTimerRef.current = null; }
-            handleTimeout();
-            return perMoveSeconds;
-          }
-          return t - 1;
-        });
-      }, 1000) as unknown as number;
+      setAiFocusCol(null);
     }, finalDelay) as unknown as number;
     aiTimeoutsRef.current.push(finalT);
   }
@@ -566,12 +602,14 @@ export default function ConnectFourPage() {
   function cancelAiTimeouts() {
     aiTimeoutsRef.current.forEach((t) => clearTimeout(t));
     aiTimeoutsRef.current = [];
+    setAiFocusCol(null);
   }
 
   // restart match — now strictly restart (does NOT open settings)
   function restartMatch() {
     cancelAiTimeouts();
     setBoard(createEmptyBoard(boardRows, boardCols));
+    didTrackMatchStartRef.current = false;
     setWinnerLine(null);
     setGameOverDraw(false);
     setMatchWins({ 1: 0, 2: 0 });
@@ -591,56 +629,13 @@ export default function ConnectFourPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchWins]);
 
-  // TimerBadge - dramatic when <= 5
-  const TimerBadge = () => {
-    const danger = turnTimer <= 5;
-    const colorClass = currentPlayer === 1 ? (danger ? "bg-red-600 text-white" : "bg-red-500 text-white") : (danger ? "bg-yellow-400 text-black" : "bg-yellow-400 text-black");
-    const sizeClass = danger ? "text-4xl font-extrabold animate-pulse" : "text-2xl font-bold";
-    const ring = danger ? "ring-4 ring-red-300" : "";
-    return (
-      <div className={`flex items-center gap-3`}>
-        <div className={`${colorClass} px-4 py-2 rounded-full flex items-center justify-center ${ring}`}>
-          <div className={sizeClass}>{turnTimer}</div>
-        </div>
-      </div>
-    );
-  };
-
-  const TurnBadge = () => (
-    <div className="flex items-center gap-4">
-      <div className={`px-3 py-1 rounded-full font-semibold ${currentPlayer === 1 ? "bg-red-500 text-white" : "bg-yellow-400 text-black"}`}>
-        {currentPlayer === 1 ? "Red's turn" : "Yellow's turn"}
-      </div>
-      <TimerBadge />
-    </div>
-  );
-
   useEffect(() => {
     return () => {
       cancelAiTimeouts();
-      if (turnTimerRef.current) clearInterval(turnTimerRef.current);
       if (musicIntervalRef.current) clearInterval(musicIntervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function handleSceneEvent(event: ConnectFourSceneEvent) {
-    if (event.type === "column-click") {
-      handleColumnClick(event.col);
-    }
-  }
-
-  useEffect(() => {
-    sceneApiRef.current?.sync({
-      rows: boardRows,
-      cols: boardCols,
-      board,
-      cursorCol,
-      currentPlayer,
-      winnerLine,
-      falling,
-    });
-  }, [boardRows, boardCols, board, cursorCol, currentPlayer, winnerLine, falling]);
 
   // UI
   return (
@@ -656,13 +651,7 @@ export default function ConnectFourPage() {
           }}
           settingsOpen={showSettings}
           onToggleSettings={() => setShowSettings((s) => !s)}
-          extraActions={(
-            <>
-              <div className="hidden lg:block"><TurnBadge /></div>
-              <button onClick={() => restartMatch()} className={CBUTTON}><RefreshCw size={14} />Restart</button>
-              <button onClick={() => toggleMusic()} className={CBUTTON}><Music size={14} />{musicOn ? "Music On" : "Music Off"}</button>
-            </>
-          )}
+          trackGameKey="connect-four"
         />
 
         <div className="flex items-start gap-6">
@@ -674,24 +663,160 @@ export default function ConnectFourPage() {
                 <div className="flex justify-between"><div>Player 1</div><div className="font-bold">{matchWins[1] ?? 0}</div></div>
                 <div className="flex justify-between"><div>{aiLevel === "none" ? "Player 2" : `Player ${aiPlaysAs === 2 ? "AI" : "2"}`}</div><div className="font-bold">{matchWins[2] ?? 0}</div></div>
               </div>
-              <div className="mt-3 text-sm">
-                <div>Turn time left: <span className="font-semibold">{turnTimer}s</span></div>
-                <div className="mt-2 text-xs text-gray-500">Use number keys or arrows to choose column, click number to see image, then ✅/❌.</div>
-              </div>
+              <div className="mt-3 text-xs text-gray-500">Use number keys or arrows to choose column, click number to see image, then ✅/❌.</div>
             </div>
           </div>
 
           <div className="flex-1">
-            <div className={`bg-gray-100 p-4 rounded shadow ${inFullscreen ? "min-h-[80vh]" : ""}`}>
-              <div className="mt-2 rounded-2xl overflow-hidden bg-white shadow-inner" style={{ height: inFullscreen ? "78vh" : "620px" }}>
-                <PhaserGameHost
-                  className="w-full h-full"
-                  createGame={createConnectFourGame}
-                  onEvent={handleSceneEvent}
-                  onApiReady={(api) => {
-                    sceneApiRef.current = api as ConnectFourSceneApi | null;
-                  }}
-                />
+            <div
+              className="p-4 rounded-[32px] border shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+              style={{
+                height: inFullscreen ? "78vh" : "620px",
+                background: activeBoardTheme.shell,
+                borderColor: activeBoardTheme.border,
+                boxShadow: `${activeBoardTheme.glow}, 0 18px 50px rgba(0,0,0,0.08)`,
+              }}
+            >
+              <div
+                className="mt-2 rounded-[28px] overflow-hidden border shadow-inner p-4 h-full"
+                style={{
+                  background: activeBoardTheme.inner,
+                  borderColor: activeBoardTheme.border,
+                  boxShadow: `${activeBoardTheme.glow}, inset 0 1px 0 rgba(255,255,255,0.72)`,
+                }}
+              >
+                <div className="h-full w-full flex flex-col min-h-0">
+                  <div className="grid shrink-0" style={{ gridTemplateColumns: `repeat(${boardCols}, minmax(0, 1fr))`, gap: 10 }}>
+                    {Array.from({ length: boardCols }, (_, col) => {
+                      const active = col === cursorCol;
+                      const aiFocused = isAiThinking && aiFocusCol === col;
+                      const columnHasSpace = board[0]?.[col] === 0;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => handleColumnClick(col)}
+                          disabled={showSettings || showNoCardsModal || !!winnerLine || isAiThinking || !columnHasSpace}
+                          className={`rounded-full border px-2 py-2 font-extrabold transition-transform ${
+                            aiFocused
+                              ? "bg-[var(--color-accent)] text-white border-transparent scale-110 shadow-[0_12px_30px_rgba(37,99,235,0.35)]"
+                              : active
+                                ? "bg-[var(--color-accent)] text-white border-transparent scale-105 shadow-md"
+                                : "bg-white text-black border-black/10"
+                          } ${columnHasSpace ? "hover:-translate-y-0.5" : "opacity-40 cursor-not-allowed"}`}
+                          style={{ minHeight: 44 }}
+                        >
+                          {col + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="relative mt-3 flex-1 min-h-0">
+                    <div
+                      className="absolute inset-0 rounded-[28px] overflow-hidden border border-black/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+                      }}
+                    >
+                      <div
+                        className="grid h-full w-full p-2"
+                        style={{
+                          gridTemplateColumns: `repeat(${boardCols}, minmax(0, 1fr))`,
+                          gridTemplateRows: `repeat(${boardRows}, minmax(0, 1fr))`,
+                          gap: 8,
+                        }}
+                      >
+                        {board.map((row, r) =>
+                          row.map((cell, c) => {
+                            const isWinning = !!winnerLine?.some(([wr, wc]) => wr === r && wc === c);
+                            const isActiveColumn = c === cursorCol;
+                            const aiFocused = isAiThinking && aiFocusCol === c;
+                            const isDropped = cell !== 0;
+                            return (
+                              <button
+                                key={`${r}-${c}`}
+                                type="button"
+                                onClick={() => handleColumnClick(c)}
+                                disabled={showSettings || showNoCardsModal || !!winnerLine || isAiThinking || r !== 0}
+                                className={`relative rounded-[22px] border-2 transition-all duration-200 overflow-hidden ${
+                                  isActiveColumn ? "ring-2 ring-[var(--color-accent)] ring-offset-2" : ""
+                                } ${isWinning ? "scale-[1.04]" : ""} ${aiFocused ? "ring-4 ring-blue-300 ring-offset-2" : ""}`}
+                                style={{
+                                  background: isWinning
+                                    ? "rgba(253,224,71,0.22)"
+                                    : aiFocused
+                                      ? "rgba(191,219,254,0.24)"
+                                      : "rgba(255,255,255,0.22)",
+                                  borderColor: isWinning
+                                    ? "rgba(250,204,21,0.95)"
+                                    : aiFocused
+                                      ? "rgba(96,165,250,0.95)"
+                                      : "rgba(15,23,42,0.08)",
+                                  boxShadow: isWinning
+                                    ? "0 0 0 6px rgba(250, 204, 21, 0.22), 0 18px 40px rgba(250, 204, 21, 0.18)"
+                                    : aiFocused
+                                      ? "0 0 0 6px rgba(96,165,250,0.18), 0 18px 36px rgba(37,99,235,0.14)"
+                                      : undefined,
+                                  minHeight: 0,
+                                }}
+                              >
+                                <div
+                                  className={`absolute inset-0 rounded-[18px] bg-[linear-gradient(180deg,#2563eb,#1d4ed8)] ${
+                                    isWinning || aiFocused ? "animate-pulse" : ""
+                                  }`}
+                                />
+                                {(isWinning || aiFocused) && (
+                                  <div className="absolute inset-0 rounded-[18px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.42),transparent_58%)] animate-pulse" />
+                                )}
+                                <div
+                                  className={`absolute inset-0 rounded-[18px] flex items-center justify-center transition-transform duration-300 ${
+                                    isDropped ? "scale-100" : "scale-95"
+                                  }`}
+                                >
+                                  <div
+                                    className={`rounded-full shadow-[0_10px_25px_rgba(15,23,42,0.12)] ${
+                                      isWinning || aiFocused ? "animate-pulse" : ""
+                                    }`}
+                                    style={{
+                                      width: isWinning || aiFocused ? "76%" : "72%",
+                                      height: isWinning || aiFocused ? "76%" : "72%",
+                                      background: cell === 0 ? "rgba(255,255,255,0.92)" : cell === 1 ? "#ef4444" : "#facc15",
+                                      border: isWinning || aiFocused ? "6px solid rgba(255,255,255,0.98)" : "4px solid rgba(255,255,255,0.85)",
+                                    }}
+                                  />
+                                </div>
+                                {(isWinning || aiFocused) && (
+                                  <div className="pointer-events-none absolute inset-0 rounded-[18px] border-2 border-amber-200/80" />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {falling && (
+                        <motion.div
+                          key={`${falling.col}-${falling.player}-${falling.row}`}
+                          className="absolute z-20 pointer-events-none"
+                          initial={false}
+                          animate={{
+                            left: `${((falling.col + 0.5) / boardCols) * 100}%`,
+                            top: `${Math.max(8, 6 + ((Math.max(falling.row, 0) + 0.5) / boardRows) * 86)}%`,
+                          }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
+                          style={{ width: "10%", aspectRatio: "1 / 1", transform: "translate(-50%, -50%)" }}
+                        >
+                          <div
+                            className="w-full h-full rounded-full shadow-[0_12px_30px_rgba(15,23,42,0.18)]"
+                            style={{ background: falling.player === 1 ? "#ef4444" : "#facc15", border: "4px solid rgba(255,255,255,0.9)" }}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
             </div>
@@ -708,20 +833,38 @@ export default function ConnectFourPage() {
                   <div className="text-sm text-gray-600">Click the image to reveal the word. ✅ lets you drop; ❌ misses your turn. Timer continues while modal is open.</div>
                 </div>
 
-                <div className="flex flex-col items-center gap-3">
-                  <div
-                    className="w-64 h-48 bg-gray-100 rounded shadow flex items-center justify-center cursor-pointer"
-                    onClick={() => setShowLearningLabel((s) => !s)}
-                  >
-                    {learningCard.image ? (
-                      <img src={learningCard.image} alt={learningCard.word} className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <div className="text-gray-400">No image available</div>
-                    )}
+                  <div className="flex flex-col items-center gap-3">
+                  <div className="w-full flex justify-center">
+                    <div
+                      className="w-[min(82vw,40rem)] min-h-[20rem] bg-gray-100 rounded-[2rem] shadow flex items-center justify-center cursor-pointer overflow-hidden border border-black/5"
+                      onClick={() => setShowLearningLabel((s) => !s)}
+                    >
+                      {modalDisplayMode !== "text" && learningCard.image ? (
+                        <img
+                          src={learningCard.image}
+                          alt={learningCard.word}
+                          className={`max-w-full max-h-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
+                        />
+                      ) : modalDisplayMode !== "text" ? (
+                        <div className="text-gray-400">No image available</div>
+                      ) : null}
+                      {modalDisplayMode === "text" && (
+                        <div className="w-full h-full flex items-center justify-center px-6 py-8">
+                          <div className="text-5xl md:text-6xl font-extrabold text-center leading-tight">
+                            {learningCard.word}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="min-h-[2rem]">
-                    {showLearningLabel && <div className="text-xl font-semibold">{learningCard.word}</div>}
+                    {modalDisplayMode === "image+text" && showLearningLabel && (
+                      <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                    )}
+                    {modalDisplayMode === "image" && showLearningLabel && (
+                      <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                    )}
                   </div>
 
                   <div className="flex gap-4 mt-4">
@@ -802,15 +945,40 @@ export default function ConnectFourPage() {
                     </div>
 
                     <div className="mt-3">
-                      <label className="text-sm">Per-move seconds</label>
-                      <input type="number" min={5} max={60} value={perMoveSeconds} onChange={(e) => setPerMoveSeconds(Number(e.target.value || 20))} className="ml-2 w-20 border px-2 py-1 rounded" />
+                      <div className="text-sm font-medium mb-2">Game controls</div>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => restartMatch()} className={CBUTTON}>
+                          Restart Match
+                        </button>
+                        <button onClick={() => toggleMusic()} className={CBUTTON}>
+                          {musicOn ? "Music On" : "Music Off"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div className="text-sm font-medium mb-2">Card display</div>
+                      <div className="flex flex-col gap-1">
+                        <label className={`px-3 py-2 rounded border cursor-pointer ${modalDisplayMode === "image+text" ? "bg-[var(--color-accent)] text-white border-transparent" : "bg-white"}`}>
+                          <input type="radio" name="modal-display" hidden checked={modalDisplayMode === "image+text"} onChange={() => setModalDisplayMode("image+text")} />
+                          Image + text
+                        </label>
+                        <label className={`px-3 py-2 rounded border cursor-pointer ${modalDisplayMode === "image" ? "bg-[var(--color-accent)] text-white border-transparent" : "bg-white"}`}>
+                          <input type="radio" name="modal-display" hidden checked={modalDisplayMode === "image"} onChange={() => setModalDisplayMode("image")} />
+                          Image only
+                        </label>
+                        <label className={`px-3 py-2 rounded border cursor-pointer ${modalDisplayMode === "text" ? "bg-[var(--color-accent)] text-white border-transparent" : "bg-white"}`}>
+                          <input type="radio" name="modal-display" hidden checked={modalDisplayMode === "text"} onChange={() => setModalDisplayMode("text")} />
+                          Text only
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
                   <motion.button whileTap={{ scale: 0.96 }} onClick={() => setShowSettings(false)} className={CBUTTON}>Close</motion.button>
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => { setShowSettings(false); setBoard(createEmptyBoard(boardRows, boardCols)); }} className={CBUTTON}>Start</motion.button>
+                  <motion.button whileTap={{ scale: 0.96 }} onClick={() => { didTrackMatchStartRef.current = false; setShowSettings(false); setBoard(createEmptyBoard(boardRows, boardCols)); }} className={CBUTTON}>Start</motion.button>
                 </div>
               </GameSettingsModal>
             </motion.div>
@@ -840,7 +1008,7 @@ export default function ConnectFourPage() {
                 ) : null}
 
                 <div className="flex justify-center gap-3 mt-2">
-                  <button onClick={() => { setBoard(createEmptyBoard(boardRows, boardCols)); setWinnerLine(null); setGameOverDraw(false); setCurrentPlayer(1); }} className={CBUTTON}>Play Again</button>
+                  <button onClick={() => { didTrackMatchStartRef.current = false; setBoard(createEmptyBoard(boardRows, boardCols)); setWinnerLine(null); setGameOverDraw(false); setCurrentPlayer(1); }} className={CBUTTON}>Play Again</button>
                   <button onClick={() => { restartMatch(); }} className={CBUTTON}>Restart Match</button>
                   <button onClick={() => router.push("/games")} className={CBUTTON}>Back to Games</button>
                 </div>

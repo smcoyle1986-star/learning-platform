@@ -1,6 +1,7 @@
 "use client";
 
 import { CommunityCardPreview, CommunityLessonSet } from "@/lib/community/types";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 type CommunityPreviewModalProps = {
   setItem: CommunityLessonSet | null;
@@ -65,7 +66,7 @@ export default function CommunityPreviewModal({
                 {card.back ? (
                   <div className="mb-3 aspect-video rounded-md overflow-hidden bg-white border">
                     <img
-                      src={card.back}
+                      src={resolveLessonImageUrl(card.back)}
                       alt={card.front}
                       className="w-full h-full object-cover"
                     />

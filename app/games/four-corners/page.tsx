@@ -4,12 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
-import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
-import {
-  createFourCornersGame,
-  type FourCornersSceneApi,
-  type FourCornersSceneEvent,
-} from "@/lib/games/phaser/four-corners";
+import { trackGameStart } from "@/lib/games/track-game-start";
 
 /*
   Four Corners — blackout selection with optional bomb animation (v-update)
@@ -40,7 +35,6 @@ const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/co
 
 export default function FourCornersPage() {
   const router = useRouter();
-  const sceneApiRef = useRef<FourCornersSceneApi | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -169,7 +163,9 @@ export default function FourCornersPage() {
   const countdownIntervalRef = useRef<number | null>(null);
 
   const [spotlightIndex, setSpotlightIndex] = useState<number | null>(null);
+  const [previousSpotlightIndex, setPreviousSpotlightIndex] = useState<number | null>(null);
   const spotlightIntervalRef = useRef<number | null>(null);
+  const spotlightCurrentRef = useRef<number | null>(null);
 
   // blackout animation state (temporary per-round)
   const [blackedOut, setBlackedOut] = useState<boolean[]>([false, false, false, false]);
@@ -242,8 +238,16 @@ export default function FourCornersPage() {
     if (spotlightIntervalRef.current) window.clearInterval(spotlightIntervalRef.current);
     const tick = () => {
       const active = eliminated.map((e,i) => !e ? i : -1).filter(i => i>=0);
-      if (active.length === 0) { setSpotlightIndex(null); return; }
-      setSpotlightIndex(active[Math.floor(Math.random() * active.length)]);
+      if (active.length === 0) {
+        setPreviousSpotlightIndex(null);
+        setSpotlightIndex(null);
+        spotlightCurrentRef.current = null;
+        return;
+      }
+      const nextSpotlight = active[Math.floor(Math.random() * active.length)];
+      setPreviousSpotlightIndex(spotlightCurrentRef.current);
+      spotlightCurrentRef.current = nextSpotlight;
+      setSpotlightIndex(nextSpotlight);
     };
     tick();
     spotlightIntervalRef.current = window.setInterval(tick, 350 + Math.floor(Math.random()*350));
@@ -252,7 +256,9 @@ export default function FourCornersPage() {
   function clearCountdownAndSpotlight() {
     if (countdownIntervalRef.current) { window.clearInterval(countdownIntervalRef.current); countdownIntervalRef.current = null; }
     if (spotlightIntervalRef.current) { window.clearInterval(spotlightIntervalRef.current); spotlightIntervalRef.current = null; }
+    setPreviousSpotlightIndex(null);
     setSpotlightIndex(null);
+    spotlightCurrentRef.current = null;
   }
 
   /* ---------- blackout animation & bomb handling ---------- */
@@ -379,36 +385,25 @@ export default function FourCornersPage() {
     };
   }, []);
 
-  function handleSceneEvent(event: FourCornersSceneEvent) {
-    if (event.type === "start-click" && phase === "idle") {
-      setPhase("countdown");
-      startCountdown();
-      startSpotlight();
-      audio.playStart();
-    }
-
-    if (event.type === "next-click" && (phase === "bomb" || phase === "showcard")) {
-      onNextPressedByTeacher();
-    }
+  function handleStartGameClick() {
+    if (phase !== "idle") return;
+    trackGameStart("four-corners");
+    setPhase("countdown");
+    startCountdown();
+    startSpotlight();
+    audio.playStart();
   }
 
-  useEffect(() => {
-    const currentCard = currentFlashcardIndex !== null ? tray[currentFlashcardIndex] : null;
-    sceneApiRef.current?.sync({
-      phase,
-      count,
-      spotlightIndex,
-      blackedOut,
-      eliminated,
-      currentCardWord: currentCard?.word ?? null,
-      currentCardImage: currentCard?.image ?? null,
-    });
-  }, [phase, count, spotlightIndex, blackedOut, eliminated, currentFlashcardIndex, tray]);
+  function handleNextClick() {
+    if (phase !== "bomb" && phase !== "showcard") return;
+    onNextPressedByTeacher();
+  }
 
   /* ---------- render UI ---------- */
 
   // If game selected but lesson tray empty -> show message with two buttons
   const trayIsEmpty = tray.length === 0;
+  const currentCard = currentFlashcardIndex !== null ? tray[currentFlashcardIndex] : null;
 
   return (
     <div className="min-h-screen bg-gray-50 text-black">
@@ -422,17 +417,7 @@ export default function FourCornersPage() {
         }}
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
-        extraActions={(
-          <>
-            <button onClick={resetAll} className="btn btn-secondary px-3 py-2 text-sm">Reset game</button>
-            <button
-              onClick={() => audio.toggleMusic()}
-              className={`btn px-3 py-2 text-sm ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
-            >
-              {audio.musicOn ? "Music On" : "Music Off"}
-            </button>
-          </>
-        )}
+        trackGameKey="four-corners"
       />
 
       {trayIsEmpty ? (
@@ -450,15 +435,139 @@ export default function FourCornersPage() {
         </main>
       ) : (
         <main style={{ paddingTop: 80 }} className="max-w-7xl mx-auto px-6 pb-12">
-          <div className="relative rounded-2xl shadow-xl overflow-hidden" style={{ height: "calc(100vh - 120px)" }}>
-            <PhaserGameHost
-              className="w-full h-full"
-              createGame={createFourCornersGame}
-              onEvent={handleSceneEvent}
-              onApiReady={(api) => {
-                sceneApiRef.current = api as FourCornersSceneApi | null;
-              }}
-            />
+          <div className="relative rounded-2xl shadow-xl overflow-hidden bg-[#f8fafc]" style={{ height: "calc(100vh - 120px)" }}>
+            <div className="relative w-full h-full p-4 md:p-5">
+              <div className="relative w-full h-full rounded-[28px] border border-slate-200 bg-[#f7faf7] shadow-inner overflow-hidden">
+                <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                  {[
+                    { title: "Make a sentence", caption: "Create a sentence", icon: "📝", color: "#6366f1" },
+                    { title: "Make a question", caption: "Turn it into a question", icon: "❓", color: "#10b981" },
+                    { title: "Do an action", caption: "Act it out", icon: "🎭", color: "#f59e0b" },
+                    { title: "Make a negative", caption: "Say the negative form", icon: "🚫", color: "#f43f5e" },
+                  ].map((quarter, index) => {
+                    const isSpotlight = phase === "countdown" && spotlightIndex === index;
+                    const wasSpotlight = phase === "countdown" && previousSpotlightIndex === index && !isSpotlight;
+                    const isBlack = blackedOut[index];
+                    return (
+                      <div
+                        key={quarter.title}
+                        className={`relative flex items-center justify-center border border-white/70 transition-all duration-500 ease-out ${
+                          isSpotlight ? "scale-[1.04] brightness-110" : wasSpotlight ? "scale-[0.99] brightness-90" : "scale-100"
+                        }`}
+                        style={{ backgroundColor: quarter.color }}
+                      >
+                        <div className={`absolute inset-0 transition-opacity duration-500 ${isSpotlight ? "opacity-100" : "opacity-0"}`}>
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.28),transparent_64%)]" />
+                          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.22),transparent_35%,rgba(255,255,255,0.06)_65%,transparent)] animate-pulse" />
+                        </div>
+                        <div className="absolute left-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/70 bg-white/28 text-2xl font-black text-white shadow-[0_10px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm md:h-14 md:w-14 md:text-3xl">
+                          {index + 1}
+                        </div>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-6">
+                          <div className={`transition-transform duration-500 ${isSpotlight ? "scale-110" : "scale-100"}`}>
+                            <div className="text-5xl md:text-6xl mb-2">{quarter.icon}</div>
+                          </div>
+                          <div className="text-2xl md:text-3xl font-extrabold leading-tight max-w-[260px]">{quarter.title}</div>
+                          <div className="mt-1 text-sm md:text-base opacity-90 max-w-[260px]">{quarter.caption}</div>
+                        </div>
+                        <div className={`absolute inset-0 transition-opacity duration-500 ${wasSpotlight ? "opacity-100" : "opacity-0"}`}>
+                          <div className="absolute inset-0 ring-4 ring-white/60" />
+                        </div>
+                        <div className={`absolute inset-0 bg-black transition-opacity duration-300 ${isBlack ? "opacity-[0.96]" : "opacity-0"}`} />
+                        <div className={`absolute inset-0 ring-4 ring-yellow-200/0 transition-opacity duration-300 ${isSpotlight ? "ring-yellow-200/90" : ""}`} />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="relative w-full max-w-[920px] flex flex-col items-center justify-center px-8">
+                    {phase === "idle" && (
+                      <button
+                        onClick={handleStartGameClick}
+                        className="pointer-events-auto w-48 h-48 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
+                        title="Start"
+                      >
+                        <span className="text-3xl font-extrabold leading-tight">Start</span>
+                      </button>
+                    )}
+
+                    {phase === "countdown" && (
+                      <div className="pointer-events-none flex flex-col items-center justify-center">
+                        <div
+                          className={`inline-flex items-center justify-center min-w-[180px] px-8 py-6 rounded-[28px] text-white font-extrabold text-[56px] md:text-[72px] shadow-2xl transition-transform ${
+                            count <= 3
+                              ? "bg-[linear-gradient(90deg,#ff2d55,#ff0000)] animate-pulse"
+                              : "bg-[linear-gradient(90deg,#ff7a18,#ff2d55)]"
+                          }`}
+                        >
+                          {count}
+                        </div>
+                        <div className="mt-4 text-2xl md:text-3xl font-bold text-slate-700">Quick! Find a corner!</div>
+                      </div>
+                    )}
+
+                    {phase === "animating" && (
+                      <div className="pointer-events-none rounded-[32px] border border-white/30 bg-[rgba(15,23,42,0.76)] px-10 py-6 shadow-2xl text-white text-3xl md:text-4xl font-extrabold">
+                        Selecting...
+                      </div>
+                    )}
+
+                    {phase === "bomb" && (
+                      <div className="pointer-events-auto flex flex-col items-center justify-center gap-6">
+                        <div className="w-56 h-56 md:w-64 md:h-64 rounded-full bg-[linear-gradient(180deg,#fb923c,#ef4444)] border-[10px] border-white shadow-2xl flex items-center justify-center text-white text-5xl md:text-6xl font-extrabold">
+                          BOOM!
+                        </div>
+                        <button
+                          onClick={handleNextClick}
+                          className="w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
+                        >
+                          <span className="text-3xl font-extrabold leading-tight">Next</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {phase === "showcard" && (
+                      <div className="pointer-events-auto flex flex-col items-center justify-center gap-4">
+                        <div className="w-[min(76vw,720px)] h-[min(42vh,330px)] rounded-[32px] border-2 border-slate-200 bg-white shadow-2xl flex items-center justify-center overflow-hidden">
+                          {currentCard?.image ? (
+                            <img
+                              src={currentCard.image}
+                              alt={currentCard.word}
+                              className="w-full h-full object-contain select-none"
+                              draggable={false}
+                            />
+                          ) : (
+                            <div className="px-8 text-center">
+                              <div className="text-4xl md:text-6xl font-extrabold text-slate-800">{currentCard?.word ?? ""}</div>
+                            </div>
+                          )}
+                        </div>
+                        {currentCard?.word && (
+                          <div className="max-w-[min(90vw,760px)] rounded-[24px] border-2 border-slate-200 bg-white/96 px-6 py-3 shadow-xl">
+                            <div className="text-2xl md:text-4xl font-extrabold text-slate-800 text-center leading-tight">
+                              {currentCard.word}
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          onClick={handleNextClick}
+                          className="w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
+                        >
+                          <span className="text-3xl font-extrabold leading-tight">Next</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="absolute top-4 right-4 z-20">
+                  <div className="rounded-2xl border-2 border-white bg-white/95 shadow-xl px-4 py-2 text-sm md:text-base font-semibold text-slate-800">
+                    Bomb: {(bombProb * 100).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       )}
@@ -467,10 +576,33 @@ export default function FourCornersPage() {
       {settingsOpen && (
         <GameSettingsModal className="max-w-md">
             <h3 className="text-lg font-bold mb-2">Settings</h3>
-            <div className="mb-4">
-              <label className="text-sm text-gray-700">Bomb probability: {(bombProb*100).toFixed(0)}%</label>
-              <input type="range" min={0} max={50} value={Math.round(bombProb*100)} onChange={(e) => setBombProb(Number(e.target.value)/100)} className="w-full mt-2" />
-              <div className="text-xs text-gray-500 mt-1">Adjust how often a bomb animation appears (0% - 50%). Default 20%</div>
+            <p className="text-sm text-[var(--color-text-muted)] mb-4">
+              Adjust how often the bomb animation appears.
+            </p>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button onClick={resetAll} className="btn btn-secondary px-3 py-2 text-sm">Reset game</button>
+              <button
+                onClick={() => audio.toggleMusic()}
+                className={`btn px-3 py-2 text-sm ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
+              >
+                {audio.musicOn ? "Music On" : "Music Off"}
+              </button>
+            </div>
+            <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm mb-4">
+              <label className="block text-sm font-semibold text-[var(--color-text-main)]">
+                Bomb probability: {(bombProb * 100).toFixed(0)}%
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                value={Math.round(bombProb * 100)}
+                onChange={(e) => setBombProb(Number(e.target.value) / 100)}
+                className="w-full mt-3"
+              />
+              <div className="text-xs text-[var(--color-text-muted)] mt-2">
+                Adjust how often a bomb animation appears (0% - 50%). Default 20%.
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1">Close</button>

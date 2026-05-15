@@ -4,6 +4,8 @@ import { FileSpreadsheet, Printer, X } from "lucide-react";
 
 import { TrayItem } from "@/lib/flashcards/types";
 import FlashcardsNavActions from "@/components/flashcards/FlashcardsNavActions";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 type LessonTrayBarProps = {
   openDropdown: string | null;
@@ -24,7 +26,6 @@ type LessonTrayBarProps = {
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
   onGoDashboard: () => void;
-  onGoEditor: () => void;
   onGoGames: () => void;
   onGoCommunity: () => void;
   onGoClassroom: () => void;
@@ -52,11 +53,10 @@ export default function LessonTrayBar({
   onRemoveFromTray,
   onOpenSaveModal,
   onGoDashboard,
-  onGoEditor,
   onGoGames,
+  onGoWorksheets,
   onGoCommunity,
   onGoClassroom,
-  onGoWorksheets,
   onPrint,
   onClearTray,
 }: LessonTrayBarProps) {
@@ -68,8 +68,8 @@ export default function LessonTrayBar({
             openDropdown={openDropdown}
             onSetOpenDropdown={onSetOpenDropdown}
             onGoDashboard={onGoDashboard}
-            onGoEditor={onGoEditor}
             onGoGames={onGoGames}
+            onGoWorksheets={onGoWorksheets}
             onGoCommunity={onGoCommunity}
             onGoClassroom={onGoClassroom}
           />
@@ -82,7 +82,7 @@ export default function LessonTrayBar({
           </div>
         )}
 
-        <div className="flex items-center gap-2 overflow-x-auto scroll-smooth">
+        <LessonTrayScroller className="lesson-tray-scroll" contentClassName="gap-2">
           {lessonTray.length === 0 && (
             <div className="px-3 py-1 rounded-lg border border-dashed border-black/20 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
               Click flashcards to add
@@ -104,14 +104,14 @@ export default function LessonTrayBar({
               onKeyDown={(event) => onTrayItemKeyDown(event, index)}
               aria-label={`Tray card ${formatWord(card.word)} — position ${index + 1}`}
               role="button"
-              className={`relative flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-xl border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform will-change-transform
+              className={`relative flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-xl border bg-[var(--color-bg-soft)] text-sm whitespace-nowrap select-none transition transform
                 ${draggedIndex === index ? "opacity-60 scale-95 cursor-grabbing" : "cursor-grab"}
                 ${dragOverIndex === index && draggedIndex !== null ? "ring-2 ring-dashed ring-[var(--color-accent)]" : ""}`}
               title={`${formatWord(card.word)} — use Left/Right to move, Delete to remove`}
             >
               {card.image ? (
                 <img
-                  src={card.image}
+                  src={resolveLessonImageUrl(card.image)}
                   alt={formatWord(card.word)}
                   className="w-8 h-8 rounded-md object-cover border border-black/10 bg-white shrink-0"
                 />
@@ -128,7 +128,7 @@ export default function LessonTrayBar({
               </button>
             </div>
           ))}
-        </div>
+        </LessonTrayScroller>
 
         <div className="flex items-center gap-2 flex-wrap">
           {lessonTray.length > 0 && (
