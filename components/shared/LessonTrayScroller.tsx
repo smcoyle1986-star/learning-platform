@@ -13,6 +13,7 @@ export default function LessonTrayScroller({
   className = "",
   contentClassName = "",
 }: LessonTrayScrollerProps) {
+  const THUMB_SIZE = 28;
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
@@ -24,6 +25,7 @@ export default function LessonTrayScroller({
   const [hasOverflow, setHasOverflow] = useState(false);
   const [isRailHovered, setIsRailHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [railWidth, setRailWidth] = useState(0);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -35,6 +37,7 @@ export default function LessonTrayScroller({
       setMaxScroll(nextMax);
       setHasOverflow(nextMax > 0);
       setScrollLeft(viewport.scrollLeft);
+      setRailWidth(railRef.current?.clientWidth ?? 0);
     };
 
     sync();
@@ -52,7 +55,9 @@ export default function LessonTrayScroller({
     };
   }, [children]);
 
-  const thumbLeft = hasOverflow && maxScroll > 0 ? Math.min(scrollLeft / maxScroll, 1) : 0;
+  const thumbRatio = hasOverflow && maxScroll > 0 ? Math.min(Math.max(scrollLeft / maxScroll, 0), 1) : 0;
+  const thumbTravel = Math.max(0, railWidth - THUMB_SIZE);
+  const thumbLeft = thumbRatio * thumbTravel;
 
   const updateScrollFromClientX = (clientX: number) => {
     const rail = railRef.current;
@@ -60,7 +65,7 @@ export default function LessonTrayScroller({
     if (!rail || !viewport || maxScroll <= 0) return;
 
     const rect = rail.getBoundingClientRect();
-    const usableWidth = Math.max(1, rect.width - 28);
+    const usableWidth = Math.max(1, rect.width - THUMB_SIZE);
     const deltaX = clientX - dragStartXRef.current;
     const nextScroll = dragStartScrollRef.current + (deltaX / usableWidth) * maxScroll;
     viewport.scrollLeft = nextScroll;
@@ -127,9 +132,9 @@ export default function LessonTrayScroller({
             <div className="lesson-tray-rail-track absolute inset-0 rounded-full" />
             <button
               type="button"
-              className={`lesson-tray-thumb pointer-events-none absolute top-1/2 h-7 w-7 -translate-y-1/2 -translate-x-1/2 rounded-full shadow-md ${isDragging ? "is-dragging" : ""}`}
+              className={`lesson-tray-thumb pointer-events-none absolute top-1/2 h-7 w-7 -translate-y-1/2 rounded-full shadow-md ${isDragging ? "is-dragging" : ""}`}
               style={{
-                left: `${thumbLeft * 100}%`,
+                left: `${thumbLeft}px`,
               }}
               aria-hidden="true"
             />

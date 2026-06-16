@@ -212,19 +212,11 @@ export default function GamesLandingPage() {
     <div className="relative min-h-screen overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(127,163,106,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(30,64,175,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.22),transparent_14%)]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-16 top-24 h-64 w-64 rounded-full bg-[rgba(127,163,106,0.08)] blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute right-[-3rem] top-40 h-72 w-72 rounded-full bg-[rgba(30,64,175,0.08)] blur-3xl"
+        className="pointer-events-none sticky top-0 z-[45] h-px bg-black/20"
       />
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
+      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/96 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
@@ -245,7 +237,7 @@ export default function GamesLandingPage() {
       </header>
 
       {/* Lesson Tray */}
-      <section className="sticky top-[72px] z-40 border-b border-black/5 bg-[rgba(247,246,242,0.88)] backdrop-blur-md">
+      <section className="sticky top-[73px] z-40 border-b border-black/5 bg-[var(--color-bg-main)]/96 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between gap-4 rounded-2xl border border-black/5 bg-white/80 px-4 py-3 shadow-sm">
             <div className="min-w-0">
@@ -306,7 +298,7 @@ export default function GamesLandingPage() {
       </section>
 
       {/* Main content */}
-      <main className="pt-[176px] pb-32">
+      <main className="pb-32">
         <div className="max-w-7xl mx-auto px-6">
           <section className="relative overflow-hidden rounded-[2rem] border border-black/5 bg-white/80 p-8 shadow-sm backdrop-blur-sm animate-fade-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(127,163,106,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.08),transparent_28%)]" />

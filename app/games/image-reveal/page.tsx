@@ -76,6 +76,54 @@ export default function CardRevealPage() {
     else enterFullscreen();
   }
 
+  async function persistTraySnapshot() {
+    try {
+      const toWrite = gameTrayRef.current;
+      if (Array.isArray(toWrite) && toWrite.length > 0) {
+        localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+      }
+    } catch {}
+  }
+
+  async function leaveGame(path: string) {
+    await persistTraySnapshot();
+
+    const fullscreenRoot = document.fullscreenElement;
+    const ownsFullscreen =
+      !!fullscreenRoot &&
+      !!containerRef.current &&
+      (fullscreenRoot === containerRef.current || containerRef.current.contains(fullscreenRoot));
+
+    if (ownsFullscreen) {
+      try {
+        await document.exitFullscreen();
+      } catch {}
+
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          document.removeEventListener("fullscreenchange", onFullscreenSettled);
+          window.clearTimeout(timeoutId);
+          resolve();
+        };
+        const onFullscreenSettled = () => {
+          if (!document.fullscreenElement) {
+            finish();
+          }
+        };
+        const timeoutId = window.setTimeout(finish, 240);
+        document.addEventListener("fullscreenchange", onFullscreenSettled);
+        if (!document.fullscreenElement) {
+          finish();
+        }
+      });
+    }
+
+    router.push(path);
+  }
+
   /* ----------------------
      PERSISTENCE FIX DETAILS (key change here)
      ---------------------- */
@@ -647,7 +695,9 @@ export default function CardRevealPage() {
       <div className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`} ref={containerRef}>
         <GameHeader
           title="Card Reveal"
-          onExit={() => router.push("/games")}
+          onExit={() => {
+            void leaveGame("/games");
+          }}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           trackGameKey="image-reveal"
@@ -658,8 +708,8 @@ export default function CardRevealPage() {
             <h2 className="text-lg font-semibold mb-2">No cards selected</h2>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">Add cards from Flashcards or choose a saved set in Dashboard then open Games → Card Reveal.</p>
             <div className="flex gap-3 justify-center">
-              <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1 text-sm">Go to Flashcards</button>
-              <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to Dashboard</button>
+              <button onClick={() => void leaveGame("/flashcards")} className="btn btn-primary px-3 py-1 text-sm">Go to Flashcards</button>
+              <button onClick={() => void leaveGame("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to Dashboard</button>
             </div>
           </div>
         </main>
@@ -675,13 +725,7 @@ export default function CardRevealPage() {
       <GameHeader
         title="Card Reveal"
         onExit={() => {
-          try {
-            const toWrite = gameTrayRef.current;
-            if (Array.isArray(toWrite) && toWrite.length > 0) {
-              localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
-            }
-          } catch {}
-          router.push("/games");
+          void leaveGame("/games");
         }}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
@@ -691,7 +735,7 @@ export default function CardRevealPage() {
       />
 
       {settingsOpen && (
-        <div className="fixed top-[72px] right-4 z-[70]">
+        <div className="fixed top-[84px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[340px]">
             <div className="mb-4">
               <div className="text-sm font-semibold mb-2">Teams</div>
@@ -760,7 +804,7 @@ export default function CardRevealPage() {
       )}
 
       {/* Compact scoreboard */}
-      <div className={`pt-[36px] max-w-7xl mx-auto px-4`}>
+      <div className={`pt-[92px] max-w-7xl mx-auto px-4`}>
         <div className="flex items-center justify-between gap-3 mb-1">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -818,7 +862,7 @@ export default function CardRevealPage() {
       </div>
 
       {/* Main game grid */}
-      <main className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 160px)" }}>
+      <main className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>
         <div className="flex justify-center items-start h-full">
           <div className={`w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border`} style={{ aspectRatio: isFullscreen ? "16/9" : "16/9" }}>
             <div className="relative w-full h-full bg-gray-100">
@@ -867,19 +911,19 @@ export default function CardRevealPage() {
                 )}
 
                 {(showPointsPrompt || showPointsSpinner) && (
-                  <div className="absolute inset-0 z-70 flex items-center justify-center pointer-events-auto">
+                  <div className="absolute inset-x-0 bottom-8 z-70 flex justify-center px-6 pointer-events-none">
                     {!showPointsSpinner ? (
-                      <div className="flex items-center gap-4">
+                      <div className="pointer-events-auto flex items-end gap-4 rounded-[2rem] border border-white/70 bg-white/78 px-6 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-md">
                         <button
                           onClick={() => startPointsSpinner("gain")}
-                          className="w-52 h-52 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
+                          className="w-44 h-44 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
                           title="Get points"
                         >
-                          <span className="text-3xl font-extrabold leading-tight">Get points!</span>
+                          <span className="text-[28px] font-extrabold leading-tight">Get points!</span>
                         </button>
                         <button
                           onClick={() => startPointsSpinner("loss")}
-                          className="w-36 h-36 rounded-full bg-[#ef4444] text-white shadow-2xl border-[8px] border-white/90 flex flex-col items-center justify-center text-center px-4 hover:scale-105 hover:shadow-[0_18px_40px_rgba(239,68,68,0.28)] transition-transform"
+                          className="w-32 h-32 rounded-full bg-[#ef4444] text-white shadow-2xl border-[8px] border-white/90 flex flex-col items-center justify-center text-center px-4 hover:scale-105 hover:shadow-[0_18px_40px_rgba(239,68,68,0.28)] transition-transform"
                           title="Lose points"
                         >
                           <span className="text-xl font-extrabold leading-tight">Lose</span>
@@ -888,7 +932,7 @@ export default function CardRevealPage() {
                       </div>
                     ) : (
                       <div
-                        className={`w-52 h-52 rounded-full shadow-2xl flex flex-col items-center justify-center border-[10px] ${
+                        className={`pointer-events-auto w-44 h-44 rounded-full shadow-2xl flex flex-col items-center justify-center border-[10px] ${
                           pointsMode === "loss"
                             ? "bg-[color:rgba(255,255,255,0.97)] border-[#ef4444]"
                             : "bg-white/96 border-[var(--color-accent)]"

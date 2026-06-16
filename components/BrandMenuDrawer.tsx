@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useBrandMenu } from "@/components/BrandMenuContext";
 import { supabase } from "@/lib/supabase/client";
+import { getProfileDisplayName } from "@/lib/auth/profile";
+import { resolveBrandTheme } from "@/lib/brand/theme";
 
 const LINKS = [
   { label: "Landing", href: "/" },
@@ -18,15 +20,44 @@ const LINKS = [
   { label: "Editor", href: "/teacher/editor" },
 ];
 
+function FaceBadge({ mood }: { mood: "happy" | "sad" }) {
+  const isHappy = mood === "happy";
+
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+      className="h-8 w-8"
+      fill="none"
+    >
+      <circle cx="24" cy="24" r="20" fill="rgba(255,255,255,0.34)" />
+      <circle cx="24" cy="24" r="18.5" stroke="rgba(255,255,255,0.62)" strokeWidth="2" />
+      <circle cx="17" cy="19" r="2.25" fill="currentColor" />
+      <circle cx="31" cy="19" r="2.25" fill="currentColor" />
+      {isHappy ? (
+        <path
+          d="M15.5 28.5c2.7 4.8 14.3 4.8 17 0"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      ) : (
+        <path
+          d="M15.5 31.5c2.7-4.8 14.3-4.8 17 0"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      )}
+    </svg>
+  );
+}
+
 export default function BrandMenuDrawer() {
   const { isOpen, close } = useBrandMenu();
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
-  const displayName =
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email ||
-    "Guest";
+  const displayName = getProfileDisplayName(profile, user?.email);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -61,27 +92,48 @@ export default function BrandMenuDrawer() {
         </div>
 
         <div className="px-6 py-5 max-w-4xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-11 w-11 rounded-full bg-gray-100 border" />
-            <div>
-              <div className="text-xs text-gray-500">Signed in as</div>
-              <div className="text-sm font-semibold text-gray-800">
-                {loading ? "Loading..." : displayName}
+          {user ? (
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(127,163,106,0.16))] text-[#6b756b] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <FaceBadge mood="happy" />
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Signed in as</div>
+                <div className="text-sm font-semibold text-gray-800">
+                  {loading ? "Loading..." : displayName}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="mb-6 flex items-center justify-start">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(203,213,225,0.22))] text-[#8b95a3] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                <FaceBadge mood="sad" />
+              </div>
+            </div>
+          )}
 
           <nav className="flex flex-col gap-3">
             {LINKS.map((item) => (
+              (() => {
+                const theme = resolveBrandTheme(item.href);
+                return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={close}
                 className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition"
               >
-                <div className="h-9 w-9 rounded-lg bg-gray-100 border flex-shrink-0" />
+                <div
+                  className="h-9 w-9 rounded-full border flex-shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                  style={{
+                    background: `linear-gradient(180deg, rgba(255,255,255,0.9), ${theme.circle})`,
+                    borderColor: theme.circleBorder,
+                  }}
+                />
                 <span className="text-sm font-medium text-gray-800">{item.label}</span>
               </Link>
+                );
+              })()
             ))}
 
             {user ? (
@@ -90,7 +142,7 @@ export default function BrandMenuDrawer() {
                 onClick={signOut}
                 className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition text-left"
               >
-                <div className="h-9 w-9 rounded-lg bg-gray-100 border flex-shrink-0" />
+                <div className="h-9 w-9 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))] flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-800">Log out</span>
               </button>
             ) : (
@@ -99,7 +151,7 @@ export default function BrandMenuDrawer() {
                 onClick={close}
                 className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition"
               >
-                <div className="h-9 w-9 rounded-lg bg-gray-100 border flex-shrink-0" />
+                <div className="h-9 w-9 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))] flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-800">Log in</span>
               </Link>
             )}

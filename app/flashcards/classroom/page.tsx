@@ -35,6 +35,7 @@ export default function ClassroomMode() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
   const drawingsRef = useRef<Map<string, string>>(new Map());
+  const requestAnimationFrameIds = useRef<number[]>([]);
 
   // allow "none" to disable drawing so toolbar is always clickable
   const [tool, setTool] = useState<"pen" | "eraser" | "none">("none");
@@ -141,13 +142,26 @@ export default function ClassroomMode() {
 
   useLayoutEffect(() => {
     // recompute when entering/exiting fullscreen or on resize
+    // Run once immediately, then again on the next frames so the initial
+    // non-fullscreen layout can settle before we size the card.
     recomputeAvailableCardHeight();
+    const raf1 = window.requestAnimationFrame(() => {
+      recomputeAvailableCardHeight();
+      const raf2 = window.requestAnimationFrame(() => {
+        recomputeAvailableCardHeight();
+      });
+      requestAnimationFrameIds.current.push(raf2);
+    });
+    requestAnimationFrameIds.current.push(raf1);
+
     function onResize() {
       recomputeAvailableCardHeight();
     }
     window.addEventListener("resize", onResize);
     document.addEventListener("fullscreenchange", recomputeAvailableCardHeight);
     return () => {
+      requestAnimationFrameIds.current.forEach((id) => window.cancelAnimationFrame(id));
+      requestAnimationFrameIds.current = [];
       window.removeEventListener("resize", onResize);
       document.removeEventListener("fullscreenchange", recomputeAvailableCardHeight);
     };
@@ -238,6 +252,13 @@ export default function ClassroomMode() {
     cardStyle.width = `${Math.max(520, maxWidth)}px`;
     cardStyle.maxWidth = "calc(100vw - 88px)";
     cardStyle.padding = "24px";
+  } else if (cardAvailableHeight) {
+    const fittedHeight = Math.max(220, Math.floor(cardAvailableHeight * 0.9));
+    const maxWidth = Math.min(fittedHeight * 1.62, window.innerWidth - 48);
+    cardStyle.height = `${fittedHeight}px`;
+    cardStyle.width = `${Math.max(320, maxWidth)}px`;
+    cardStyle.maxWidth = "calc(100vw - 48px)";
+    cardStyle.padding = "20px";
   } else {
     cardStyle.height = undefined;
     cardStyle.width = undefined;
@@ -381,7 +402,7 @@ export default function ClassroomMode() {
         onTouchEnd={handleTouchEnd}
         key={index}
         className={`cursor-pointer mx-auto my-6 bg-white rounded-3xl shadow-2xl border-[10px] border-gray-300
-          ${inFullscreen ? "max-w-none" : "max-w-7xl w-[min(96vw,104rem)] aspect-[16/9]"} transition-all duration-300 ease-out`}
+          ${inFullscreen ? "max-w-none" : "max-w-none"} transition-all duration-300 ease-out`}
         style={{ ...cardStyle }}
       >
         {/* Conditional rendering for text-only centered mode */}
@@ -402,7 +423,7 @@ export default function ClassroomMode() {
                   <img
                     src={resolveLessonImageUrl(card.image || "/placeholder.png")}
                     alt={card.word}
-                    className="object-contain w-full h-full scale-[1.08] md:scale-[1.12]"
+                    className={`object-contain w-full h-full ${inFullscreen ? "scale-[1.08] md:scale-[1.12]" : "scale-[1.01] md:scale-[1.03]"}`}
                   />
                 ) : (
                   <div className="text-2xl text-gray-400"> </div>

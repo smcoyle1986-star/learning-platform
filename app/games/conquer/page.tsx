@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { HelpCircle, RefreshCcw, Shield, Swords, X } from "lucide-react";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown, GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -204,6 +205,7 @@ export default function ConquerPage() {
     null
   );
   const [scoresOpen, setScoresOpen] = useState(false);
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false);
   const bannerTimeoutRef = useRef<number | null>(null);
   const actionTimeoutRef = useRef<number | null>(null);
   const lastAutoContestRef = useRef<string | null>(null);
@@ -221,8 +223,8 @@ export default function ConquerPage() {
   const [boardMetrics, setBoardMetrics] = useState({
     frameWidth: 1120,
     frameHeight: 760,
-    labelWidth: 18,
-    labelHeight: 18,
+    labelWidth: 28,
+    labelHeight: 28,
     gap: 6,
     cellWidth: 120,
     cellHeight: 76,
@@ -243,8 +245,8 @@ export default function ConquerPage() {
       const availableHeight = window.innerHeight - (isFullscreen ? 108 : 300);
       const padding = isFullscreen ? 14 : 16;
       const gap = isFullscreen ? 6 : 6;
-      const labelWidth = isFullscreen ? 18 : 16;
-      const labelHeight = isFullscreen ? 18 : 16;
+      const labelWidth = isFullscreen ? 28 : 24;
+      const labelHeight = isFullscreen ? 28 : 24;
 
       const maxCellHeightFromViewport = Math.max(
         70,
@@ -353,6 +355,8 @@ export default function ConquerPage() {
     setAttackFlickerOn(false);
     setPendingAttackResolution(null);
     setBombAnimation(null);
+    setScoresOpen(false);
+    setWinnerModalOpen(false);
   }
 
   function clearAllTimers() {
@@ -418,13 +422,6 @@ export default function ConquerPage() {
 
     attackResolveTimeoutRef.current = window.setTimeout(() => {
       setContestResultPopup({ text: popupText, tone: popupTone });
-      if (result === "attacker") {
-        setPendingAttackResolution({ index, teamId: attackerTeamId });
-        setAttackFlickerOn(true);
-        attackFlickerIntervalRef.current = window.setInterval(() => {
-          setAttackFlickerOn((prev) => !prev);
-        }, 110);
-      }
 
       attackPopupTimeoutRef.current = window.setTimeout(() => {
         setContestResultPopup(null);
@@ -432,30 +429,31 @@ export default function ConquerPage() {
         setPromptOpen(false);
         setSelectedIndex(null);
 
-        if (result === "attacker") {
-          if (attackFlickerIntervalRef.current) {
-            clearInterval(attackFlickerIntervalRef.current);
-            attackFlickerIntervalRef.current = null;
+        window.setTimeout(() => {
+          if (result === "attacker") {
+            setPendingAttackResolution({ index, teamId: attackerTeamId });
+            setAttackFlickerOn(true);
+            attackFlickerIntervalRef.current = window.setInterval(() => {
+              setAttackFlickerOn((prev) => !prev);
+            }, 110);
+            applyAttackSuccess(index, attackerTeamId);
+            attackOutcomeRef.current = null;
+            finishTurn(undefined, "neutral", 720);
+            return;
           }
-          setAttackFlickerOn(false);
-          applyAttackSuccess(index, attackerTeamId);
-          setPendingAttackResolution(null);
-          attackOutcomeRef.current = null;
-          finishTurn(undefined, "neutral", 0);
-          return;
-        }
 
-        if (result === "defender") {
-          defendedSafeRef.current.add(index);
-          setPendingAttackResolution(null);
-          attackOutcomeRef.current = null;
-          finishTurn(undefined, "neutral", 0);
-          return;
-        }
+          if (result === "defender") {
+            defendedSafeRef.current.add(index);
+            setPendingAttackResolution(null);
+            attackOutcomeRef.current = null;
+            finishTurn(undefined, "neutral", 650);
+            return;
+          }
 
-        attackOutcomeRef.current = null;
-        setPendingAttackResolution(null);
-        finishTurn(undefined, "neutral", 0);
+          attackOutcomeRef.current = null;
+          setPendingAttackResolution(null);
+          finishTurn(undefined, "neutral", 650);
+        }, 280);
       }, 1500);
     }, 1000);
   }
@@ -670,40 +668,44 @@ export default function ConquerPage() {
     setPendingAttackResolution(null);
     setAttackFlickerOn(false);
     setSelectedIndex(index);
-    setBombAnimation({ index, stage: "warning" });
+    setBombAnimation(null);
     showBanner("BOOM!", "bad", 1200);
 
-    bombWarningTimeoutRef.current = window.setTimeout(() => {
-      setBombAnimation((current) => (current && current.index === index ? { ...current, stage: "impact" } : current));
-      applyBomb(index);
-    }, 260);
+    window.setTimeout(() => {
+      setBombAnimation({ index, stage: "warning" });
 
-    bombImpactTimeoutRef.current = window.setTimeout(() => {
-      setBombAnimation((current) => (current && current.index === index ? { ...current, stage: "aftershock" } : current));
-    }, 760);
+      bombWarningTimeoutRef.current = window.setTimeout(() => {
+        setBombAnimation((current) => (current && current.index === index ? { ...current, stage: "impact" } : current));
+        applyBomb(index);
+      }, 260);
 
-    bombResolveTimeoutRef.current = window.setTimeout(() => {
-      setBombAnimation(null);
-      setSelectedIndex(null);
-      setPromptOpen(false);
-      setRpsOpen(false);
-      setRpsTargetIndex(null);
-      setRpsAttackerTeamId(null);
-      setRpsDefenderTeamId(null);
-      setAttackMode("slots");
-      setSlotAttackerFace("rock");
-      setSlotDefenderFace("rock");
-      setSlotAttackerLocked(false);
-      setSlotDefenderLocked(false);
-      setContestResultPopup(null);
-      setPendingAttackResolution(null);
-      setAttackFlickerOn(false);
-      lastAutoContestRef.current = null;
-      advanceTeam();
-      advancePromptCard();
-      setRoundLocked(false);
-      bombResolveTimeoutRef.current = null;
-    }, 1550);
+      bombImpactTimeoutRef.current = window.setTimeout(() => {
+        setBombAnimation((current) => (current && current.index === index ? { ...current, stage: "aftershock" } : current));
+      }, 760);
+
+      bombResolveTimeoutRef.current = window.setTimeout(() => {
+        setBombAnimation(null);
+        setSelectedIndex(null);
+        setPromptOpen(false);
+        setRpsOpen(false);
+        setRpsTargetIndex(null);
+        setRpsAttackerTeamId(null);
+        setRpsDefenderTeamId(null);
+        setAttackMode("slots");
+        setSlotAttackerFace("rock");
+        setSlotDefenderFace("rock");
+        setSlotAttackerLocked(false);
+        setSlotDefenderLocked(false);
+        setContestResultPopup(null);
+        setPendingAttackResolution(null);
+        setAttackFlickerOn(false);
+        lastAutoContestRef.current = null;
+        advanceTeam();
+        advancePromptCard();
+        setRoundLocked(false);
+        bombResolveTimeoutRef.current = null;
+      }, 1550);
+    }, 280);
   }
 
   function applyAttackSuccess(index: number, teamId: string) {
@@ -887,6 +889,34 @@ export default function ConquerPage() {
     return counts;
   }, [board, teams]);
 
+  const boardCompleted = useMemo(
+    () => board.length > 0 && board.every((cell) => cell.crater || cell.ownerId !== null),
+    [board]
+  );
+
+  const winningTeams = useMemo(() => {
+    const bestScore = Math.max(...teams.map((team) => totalOwned[team.id] ?? 0), 0);
+    return teams.filter((team) => (totalOwned[team.id] ?? 0) === bestScore);
+  }, [teams, totalOwned]);
+
+  useEffect(() => {
+    if (!boardCompleted || winnerModalOpen) return;
+    clearAllTimers();
+    setPromptOpen(false);
+    setRpsOpen(false);
+    setSelectedIndex(null);
+    setRpsTargetIndex(null);
+    setRpsAttackerTeamId(null);
+    setRpsDefenderTeamId(null);
+    setRoundLocked(true);
+    setBanner(null);
+    setContestResultPopup(null);
+    setPendingAttackResolution(null);
+    setAttackFlickerOn(false);
+    setBombAnimation(null);
+    setWinnerModalOpen(true);
+  }, [boardCompleted, winnerModalOpen]);
+
   function resetBoardOnly() {
     rebuildGame();
   }
@@ -897,14 +927,14 @@ export default function ConquerPage() {
 
     if (cardDisplayMode === "text") {
       return (
-        <div className="flex min-h-[18rem] w-[min(82vw,42rem)] items-center justify-center rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-8 py-10 text-center shadow-sm">
+        <div className="mx-auto flex min-h-[18rem] w-[min(92vw,56rem)] items-center justify-center rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-8 py-10 text-center shadow-sm">
           <div className="text-4xl font-black tracking-tight text-[var(--color-text-main)] md:text-6xl">{label}</div>
         </div>
       );
     }
 
     return (
-      <div className="flex min-h-[18rem] w-[min(82vw,42rem)] flex-col items-center justify-center gap-5 rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-8 py-8 text-center shadow-sm">
+      <div className="mx-auto flex min-h-[18rem] w-[min(92vw,56rem)] flex-col items-center justify-center gap-5 rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-8 py-8 text-center shadow-sm">
         <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded-[1.8rem] bg-white/80">
           {image ? (
             <img src={image} alt={label} className="h-full w-full object-contain" />
@@ -1121,7 +1151,7 @@ export default function ConquerPage() {
                     {columnLabels.map((label) => (
                       <div
                         key={label}
-                        className="flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]"
+                        className="flex items-center justify-center text-[13px] font-black uppercase tracking-[0.24em] text-[var(--color-text-main)] drop-shadow-[0_1px_0_rgba(255,255,255,0.55)]"
                       >
                         {label}
                       </div>
@@ -1129,7 +1159,7 @@ export default function ConquerPage() {
 
                     {rowLabels.map((label, row) => (
                       <React.Fragment key={label}>
-                        <div className="flex items-center justify-center text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                        <div className="flex items-center justify-center text-[13px] font-black uppercase tracking-[0.24em] text-[var(--color-text-main)] drop-shadow-[0_1px_0_rgba(255,255,255,0.55)]">
                           {label}
                         </div>
                         {Array.from({ length: BOARD_SIZE }, (_, col) => {
@@ -1155,7 +1185,7 @@ export default function ConquerPage() {
                               key={index}
                               onClick={() => openPrompt(index)}
                               disabled={roundLocked || promptOpen || rpsOpen}
-                              className={`group relative h-full w-full overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
+                              className={`group relative h-full w-full overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.015] disabled:cursor-not-allowed disabled:hover:translate-y-0`}
                               style={{
                                 backgroundColor: cell.crater
                                   ? "rgba(71, 85, 105, 0.92)"
@@ -1232,12 +1262,30 @@ export default function ConquerPage() {
                                             : `0 0 0 2px ${attackPreview.theme.glow}, 0 10px 20px rgba(15,23,42,0.10)`
                                           : isSelected
                                             ? `0 0 0 3px rgba(30,64,175,0.10), 0 10px 20px rgba(15,23,42,0.12)`
-                                            : canAttack
+                                          : canAttack
                                               ? `0 0 0 2px ${team?.theme.glow ?? "rgba(30,64,175,0.16)"}, 0 8px 16px rgba(15,23,42,0.08)`
                                               : "0 8px 16px rgba(15,23,42,0.06)",
+                                cursor: roundLocked || promptOpen || rpsOpen ? "not-allowed" : "pointer",
                               }}
                               aria-label={`Square ${indexToCoord(index).label}`}
                             >
+                              {!cell.crater && (
+                                <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+                                  <div
+                                    className="rounded-full border border-white/55 bg-white/58 px-2.5 py-1 text-center font-black uppercase tracking-[0.22em] text-[var(--color-text-main)] shadow-[0_2px_10px_rgba(255,255,255,0.38)] transition-all duration-200 group-hover:scale-105 group-hover:bg-white/76 group-hover:shadow-[0_4px_14px_rgba(15,23,42,0.14)]"
+                                    style={{
+                                      fontSize: `${Math.max(16, Math.floor(Math.min(boardMetrics.cellWidth, boardMetrics.cellHeight) * 0.32))}px`,
+                                      lineHeight: 1,
+                                    }}
+                                  >
+                                    {indexToCoord(index).label}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-all duration-200 group-hover:opacity-100">
+                                <div className="absolute inset-[7%] rounded-[1.4rem] border-2 border-white/80 shadow-[0_0_0_4px_rgba(255,255,255,0.16)] animate-pulse" />
+                                <div className="absolute inset-[14%] rounded-[1.1rem] bg-white/10 blur-[1px]" />
+                              </div>
                               {bombActive && (
                                 <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
                                   <div
@@ -1302,8 +1350,32 @@ export default function ConquerPage() {
                                 </div>
                               ) : cell.ownerId ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
+                                  {defendedSafe && (
+                                    <>
+                                      <div
+                                        className="pointer-events-none absolute inset-[6%] rounded-[1.3rem]"
+                                        style={{
+                                          background:
+                                            "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(226,232,240,0.92) 45%, rgba(203,213,225,0.96) 100%)",
+                                          boxShadow:
+                                            "inset 0 0 0 4px rgba(255,255,255,0.82), inset 0 -8px 0 rgba(148,163,184,0.25), 0 10px 16px rgba(15,23,42,0.08)",
+                                        }}
+                                      />
+                                      <div
+                                        className="pointer-events-none absolute inset-[7.5%] rounded-[1.15rem]"
+                                        style={{
+                                          backgroundImage:
+                                            "repeating-linear-gradient(90deg, rgba(148,163,184,0.18) 0 12px, rgba(255,255,255,0.0) 12px 20px), repeating-linear-gradient(0deg, rgba(148,163,184,0.1) 0 10px, rgba(255,255,255,0.0) 10px 20px)",
+                                          boxShadow: "inset 0 0 0 2px rgba(148,163,184,0.18)",
+                                        }}
+                                      />
+                                      <div className="pointer-events-none absolute left-1/2 top-[13%] z-20 -translate-x-1/2 rounded-full border border-slate-400/20 bg-white/90 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.28em] text-slate-500 shadow-sm">
+                                        Safe
+                                      </div>
+                                    </>
+                                  )}
                                   <div
-                                    className={`h-[60%] w-[60%] rounded-full border-4 ${isSelected ? "animate-pulse" : ""}`}
+                                    className={`relative z-10 h-[60%] w-[60%] rounded-full border-4 ${isSelected ? "animate-pulse" : ""}`}
                                     style={{
                                       backgroundColor: team?.theme.border ?? "rgba(30,64,175,0.26)",
                                       borderColor: "rgba(255,255,255,0.82)",
@@ -1311,13 +1383,7 @@ export default function ConquerPage() {
                                     }}
                                   />
                                 </div>
-                              ) : (
-                                <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                                  <div className="rounded-full border border-black/10 bg-white/92 px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.28em] text-[var(--color-text-main)] shadow-lg backdrop-blur-sm sm:text-[13px]">
-                                  {indexToCoord(index).label}
-                                  </div>
-                                </div>
-                              )}
+                              ) : null}
                             </button>
                           );
                         })}
@@ -1357,50 +1423,19 @@ export default function ConquerPage() {
       )}
 
       {promptOpen && selectedIndex !== null && currentCard && (
-        <GameSettingsModal className="max-w-4xl">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black tracking-tight text-[var(--color-text-main)]">Answer to claim the square</h2>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-                Correct answers claim open territory. Attack contests appear automatically when a square is surrounded.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setPromptOpen(false);
-                setSelectedIndex(null);
-              }}
-              className="rounded-full border border-black/10 bg-white p-2 text-[var(--color-text-muted)] transition hover:-translate-y-0.5 hover:text-[var(--color-text-main)]"
-              aria-label="Close prompt"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="mt-5 flex justify-center">
-            <div className="w-full">{renderPromptCard(currentCard)}</div>
-          </div>
-
-          <div className="mt-5 flex items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-[var(--color-bg-main)] px-3 py-1.5">
-              <HelpCircle size={14} className="text-[var(--color-accent)]" />
-              {selectedIndex !== null ? `Target ${indexToCoord(selectedIndex).label}` : "No square selected"}
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-[var(--color-bg-main)] px-3 py-1.5">
-              <Shield size={14} className="text-[var(--color-accent)]" />
-              {currentCard.word}
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button onClick={handleWrongAnswer} className="btn btn-secondary px-5 py-3 text-sm">
-              Wrong
-            </button>
-            <button onClick={handleCorrectAnswer} className="btn btn-primary px-5 py-3 text-sm">
-              Correct
-            </button>
-          </div>
-        </GameSettingsModal>
+        <KaboomStyleDecisionModal
+          open
+          title="Answer to claim the square"
+          description="Correct answers claim open territory. Attack contests appear automatically when a square is surrounded."
+          onIncorrect={handleWrongAnswer}
+          onCorrect={handleCorrectAnswer}
+          incorrectLabel="❌"
+          correctLabel="⭕"
+          incorrectAriaLabel="Wrong answer"
+          correctAriaLabel="Correct answer"
+        >
+          {renderPromptCard(currentCard)}
+        </KaboomStyleDecisionModal>
       )}
 
       {rpsOpen && selectedIndex !== null && rpsTargetIndex !== null && rpsDefenderTeamId && (
@@ -1606,6 +1641,57 @@ export default function ConquerPage() {
           >
             <div className="text-[0.7rem] font-black uppercase tracking-[0.5em] text-red-500">CONQUER</div>
             <div className="mt-3 text-3xl font-black tracking-tight md:text-5xl">{contestResultPopup.text}</div>
+          </div>
+        </div>
+      )}
+
+      {winnerModalOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-2xl rounded-[2rem] border border-black/8 bg-white p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.24)]">
+            <div className="text-[0.72rem] font-black uppercase tracking-[0.42em] text-[var(--color-text-muted)]">
+              Conquer Complete
+            </div>
+            <div className="mt-3 text-4xl font-black tracking-tight text-[var(--color-text-main)] md:text-5xl">
+              {winningTeams.length > 1 ? "It's a tie!" : `${winningTeams[0]?.name ?? "Team 1"} wins!`}
+            </div>
+            <p className="mt-3 text-base text-[var(--color-text-muted)]">
+              {winningTeams.length > 1
+                ? winningTeams.map((team) => team.name).join(" and ")
+                : winningTeams[0]?.name} finished with the most territory.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {winningTeams.map((team) => (
+                <div
+                  key={team.id}
+                  className="rounded-[1.35rem] border px-4 py-4 shadow-sm"
+                  style={{
+                    borderColor: team.theme.border,
+                    background: `linear-gradient(180deg, ${team.theme.fill}, rgba(255,255,255,0.98) 82%)`,
+                  }}
+                >
+                  <div className="text-lg font-black tracking-tight text-[var(--color-text-main)]">{team.name}</div>
+                  <div className="mt-1 text-sm font-semibold" style={{ color: team.theme.text }}>
+                    {totalOwned[team.id] ?? 0} squares
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => router.push("/games")}
+                className="btn btn-secondary px-5 py-3 text-sm"
+              >
+                Return to Games
+              </button>
+              <button
+                onClick={() => rebuildGame()}
+                className="btn btn-primary px-5 py-3 text-sm"
+              >
+                Play Again
+              </button>
+            </div>
           </div>
         </div>
       )}

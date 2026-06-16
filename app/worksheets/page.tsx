@@ -346,7 +346,7 @@ export default function WorksheetsPage() {
 
   return (
     <div className="h-screen overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-      <header className="bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
+      <header className="bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 

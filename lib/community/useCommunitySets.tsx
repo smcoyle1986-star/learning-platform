@@ -139,7 +139,7 @@ export function useCommunitySets() {
         try {
           const { data: profiles, error: profilesError } = await supabase
             .from("profiles")
-            .select("id, display_name")
+            .select("id, display_name, username")
             .in("id", userIds);
 
           if (profilesError) {
@@ -147,7 +147,7 @@ export function useCommunitySets() {
           } else if (profiles) {
             const nextAuthors: Record<string, string> = {};
             profiles.forEach((profile: any) => {
-              nextAuthors[profile.id] = profile.display_name || profile.id;
+              nextAuthors[profile.id] = profile.username || profile.display_name || profile.id;
             });
             setAuthors((prev) => ({ ...prev, ...nextAuthors }));
           }

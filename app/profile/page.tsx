@@ -1,0 +1,68 @@
+"use client";
+
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/lib/supabase/client";
+
+export default function ProfilePage() {
+  const { user, profile, loading } = useAuth();
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    window.location.replace("/");
+  };
+
+  const displayName = profile?.username || profile?.display_name || user?.email || "Guest";
+
+  if (loading) {
+    return <p className="p-10">Loading...</p>;
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f7f6f2] px-6 py-10 text-[#2f3a2f]">
+      <section className="mx-auto max-w-4xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
+        <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
+          Account profile
+        </div>
+
+        <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[#2f3a2f]">
+          {displayName}
+        </h1>
+        <p className="mt-3 text-base leading-7 text-[#5c665c]">
+          Your username is what other teachers see across Classendo.
+        </p>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div className="rounded-3xl border border-[#e5e8de] bg-[#fbfbf8] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Public display</p>
+            <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">{displayName}</p>
+          </div>
+          <div className="rounded-3xl border border-[#e5e8de] bg-[#fbfbf8] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Email</p>
+            <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">{user?.email ?? "Not set"}</p>
+          </div>
+          <div className="rounded-3xl border border-[#e5e8de] bg-[#fbfbf8] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Country / region</p>
+            <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">{profile?.country_region ?? "Not set"}</p>
+          </div>
+          <div className="rounded-3xl border border-[#e5e8de] bg-[#fbfbf8] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Avatar</p>
+            <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">{profile?.avatar_url ? "Uploaded" : "Not set"}</p>
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/dashboard" className="btn btn-primary px-6 py-3">
+            Go to Dashboard
+          </Link>
+          <Link href="/flashcards" className="btn btn-secondary px-6 py-3">
+            Open Flashcards
+          </Link>
+          <button type="button" onClick={signOut} className="btn btn-secondary px-6 py-3">
+            Sign out
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}

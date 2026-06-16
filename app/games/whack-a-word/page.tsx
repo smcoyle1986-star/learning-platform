@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
+import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   createWhackWordGame,
@@ -352,58 +353,38 @@ export default function WhackAWordPage() {
         </div>
       </div>
 
-      {/* Pre-round modal (teacher prompt) */}
       {gameState === "preprompt" && targetCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full text-center shadow-lg">
-            <h2 className="text-xl font-bold mb-2">Pre‑Round: Is this correct?</h2>
-            <p className="text-sm text-slate-600 mb-4">Show the student this card and mark whether they identified it.</p>
-
-            <div className="mb-4">
-              {useImages && targetCard.image ? (
-                <img src={resolveLessonImageUrl(targetCard.image)} alt={targetCard.word} className="mx-auto w-44 h-36 object-cover rounded-md shadow" />
-              ) : (
-                <div className="mx-auto w-44 h-36 flex items-center justify-center bg-[#C7E7FF] rounded-md text-2xl font-semibold">{targetCard.word}</div>
-              )}
-            </div>
-
-            <div className="flex gap-4 justify-center">
-              <button
-                className="px-4 py-2 bg-green-500 text-white rounded-lg"
-                onClick={() => {
-                  // teacher says student got it right: start playing with a points boost
-                  setTeacherMarkedCorrect(true);
-                  startRound(true);
-                }}
-              >
-                ✅ Correct — Start Round
-              </button>
-              <button
-                className="px-4 py-2 bg-yellow-400 text-black rounded-lg"
-                onClick={() => {
-                  // teacher marks not correct but still start
-                  setTeacherMarkedCorrect(false);
-                  startRound(false);
-                }}
-              >
-                ❌ Not Yet — Start (Weaker)
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-100 text-black rounded-lg"
-                onClick={() => {
-                  // pick another target
-                  if (cards.length > 1) {
-                    const next = cards[Math.floor(Math.random() * cards.length)];
-                    setTargetCard(next);
-                    setShowCardReveal(false);
-                  }
-                }}
-              >
-                🔁 Next Card
-              </button>
-            </div>
+        <KaboomStyleDecisionModal
+          open
+          title="Pre‑Round: Is this correct?"
+          description="Show the student this card and mark whether they identified it."
+          onCorrect={() => {
+            setTeacherMarkedCorrect(true);
+            startRound(true);
+          }}
+          onIncorrect={() => {
+            setTeacherMarkedCorrect(false);
+            startRound(false);
+          }}
+          incorrectLabel="❌"
+          correctLabel="⭕"
+          incorrectAriaLabel="Not yet — start weaker"
+          correctAriaLabel="Correct — start round"
+        >
+          <div className="flex w-full justify-center">
+            {useImages && targetCard.image ? (
+              <img
+                src={resolveLessonImageUrl(targetCard.image)}
+                alt={targetCard.word}
+                className="mx-auto max-h-[56vh] w-full max-w-[82vw] object-contain rounded-2xl"
+              />
+            ) : (
+              <div className="mx-auto flex h-[22rem] w-full max-w-[40rem] items-center justify-center rounded-2xl bg-[#C7E7FF] text-2xl font-semibold md:text-4xl">
+                {targetCard.word}
+              </div>
+            )}
           </div>
-        </div>
+        </KaboomStyleDecisionModal>
       )}
 
       {/* Summary modal */}

@@ -267,7 +267,7 @@ export default function FlashcardsPage() {
         } as React.CSSProperties
       }
     >
-      <header className="bg-[var(--color-bg-main)] border-b border-black/5">
+      <header className="bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 

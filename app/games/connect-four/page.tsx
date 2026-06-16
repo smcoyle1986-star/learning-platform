@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -823,63 +824,63 @@ export default function ConnectFourPage() {
           </div>
         </div>
 
-        {/* Learning modal (timer continues running) */}
         <AnimatePresence>
           {selectedColForModal !== null && learningCard && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4">
-              <motion.div initial={{ scale: 0.98 }} animate={{ scale: 1 }} exit={{ scale: 0.98 }} className="bg-white rounded-xl p-6 w-full max-w-3xl text-center">
-                <div className="mb-4">
-                  <div className="text-lg font-bold">Identify the image</div>
-                  <div className="text-sm text-gray-600">Click the image to reveal the word. ✅ lets you drop; ❌ misses your turn. Timer continues while modal is open.</div>
-                </div>
-
-                  <div className="flex flex-col items-center gap-3">
-                  <div className="w-full flex justify-center">
-                    <div
-                      className="w-[min(82vw,40rem)] min-h-[20rem] bg-gray-100 rounded-[2rem] shadow flex items-center justify-center cursor-pointer overflow-hidden border border-black/5"
-                      onClick={() => setShowLearningLabel((s) => !s)}
-                    >
-                      {modalDisplayMode !== "text" && learningCard.image ? (
+            <KaboomStyleDecisionModal
+              open
+              title="Identify the image"
+              description="Click the image to reveal the word. ✅ lets you drop; ❌ misses your turn. Timer continues while modal is open."
+              onCorrect={confirmLearningAndDrop}
+              onIncorrect={denyLearningAndMissTurn}
+              incorrectLabel="❌"
+              correctLabel="⭕"
+              incorrectAriaLabel="Miss turn"
+              correctAriaLabel="Correct and drop"
+            >
+              <motion.div
+                initial={{ scale: 0.98 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.98 }}
+                className="flex w-full flex-col items-center gap-3"
+              >
+                <div className="w-full flex justify-center">
+                  <div
+                    className="w-[min(82vw,40rem)] min-h-[20rem] bg-gray-100 rounded-[2rem] shadow flex items-center justify-center cursor-pointer overflow-hidden border border-black/5"
+                    onClick={() => setShowLearningLabel((s) => !s)}
+                  >
+                    {modalDisplayMode !== "text" && learningCard.image ? (
+                      <div className="flex h-full w-full items-center justify-center p-4 md:p-6">
                         <img
                           src={learningCard.image}
                           alt={learningCard.word}
-                          className={`max-w-full max-h-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
+                          className={`h-full w-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
                         />
-                      ) : modalDisplayMode !== "text" ? (
-                        <div className="text-gray-400">No image available</div>
-                      ) : null}
-                      {modalDisplayMode === "text" && (
-                        <div className="w-full h-full flex items-center justify-center px-6 py-8">
-                          <div className="text-5xl md:text-6xl font-extrabold text-center leading-tight">
-                            {learningCard.word}
-                          </div>
+                      </div>
+                    ) : modalDisplayMode !== "text" ? (
+                      <div className="text-gray-400">No image available</div>
+                    ) : null}
+                    {modalDisplayMode === "text" && (
+                      <div className="w-full h-full flex items-center justify-center px-6 py-8">
+                        <div className="text-5xl md:text-6xl font-extrabold text-center leading-tight">
+                          {learningCard.word}
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="min-h-[2rem]">
-                    {modalDisplayMode === "image+text" && showLearningLabel && (
-                      <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
-                    )}
-                    {modalDisplayMode === "image" && showLearningLabel && (
-                      <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                      </div>
                     )}
                   </div>
-
-                  <div className="flex gap-4 mt-4">
-                    <button className={CBUTTON} onClick={() => { confirmLearningAndDrop(); }} aria-label="confirm">
-                      ✅ Correct — Drop
-                    </button>
-                    <button className={RBUTTON} onClick={() => { denyLearningAndMissTurn(); }} aria-label="deny">
-                      ❌ Miss Turn
-                    </button>
-                  </div>
-
-                  <div className="text-xs text-gray-500 mt-3">Selected column: {selectedColForModal + 1}</div>
                 </div>
+
+                <div className="min-h-[2rem]">
+                  {modalDisplayMode === "image+text" && showLearningLabel && (
+                    <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                  )}
+                  {modalDisplayMode === "image" && showLearningLabel && (
+                    <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                  )}
+                </div>
+
+                <div className="text-xs text-gray-500 mt-3">Selected column: {selectedColForModal + 1}</div>
               </motion.div>
-            </motion.div>
+            </KaboomStyleDecisionModal>
           )}
         </AnimatePresence>
 

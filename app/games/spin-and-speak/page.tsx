@@ -391,6 +391,7 @@ export default function SpinAndSpeakPage() {
     currentCard && typeof currentCard.image === "string" && currentCard.image.trim().length > 0
       ? currentCard.image.trim()
       : null;
+  const shouldBlurCardImage = !showCardWord;
 
   return (
     <div className="min-h-screen bg-[hsl(140,40%,95%)] text-black antialiased"> {/* pastel green background */}
@@ -440,7 +441,13 @@ export default function SpinAndSpeakPage() {
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl h-[22rem] md:h-[30rem] flex items-center justify-center overflow-hidden">
               {currentCard ? (
                 imgSrc ? (
-                  <img src={imgSrc} alt={currentCard.word ?? ""} className="object-contain w-full h-full p-3 md:p-4" />
+                  <img
+                    src={imgSrc}
+                    alt={currentCard.word ?? ""}
+                    className={`object-contain w-full h-full p-3 md:p-4 transition-all duration-300 ${
+                      shouldBlurCardImage ? "blur-xl scale-[1.03]" : "blur-0 scale-100"
+                    }`}
+                  />
                 ) : (
                   <div className="text-2xl text-gray-400">No image</div>
                 )

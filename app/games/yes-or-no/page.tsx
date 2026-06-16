@@ -752,6 +752,7 @@ export default function YesOrNoPage() {
   const canAnswer = roundPhase === "timing";
   const timerLabel = roundPhase === "timing" && timerSeconds !== null ? `${timerSeconds}s` : "Ready";
   const showPrompt = roundPhase === "timing" || (roundPhase === "feedback" && !showPointsPrompt && !showPointsSpinner);
+  const shouldBlurCardImage = !showPrompt;
 
   // UI
   return (
@@ -811,7 +812,9 @@ export default function YesOrNoPage() {
                   <img
                     src={currentCard.image}
                     alt={currentCard.word}
-                    className="w-full h-full object-contain select-none"
+                    className={`w-full h-full object-contain select-none transition-all duration-300 ${
+                      shouldBlurCardImage ? "blur-xl scale-[1.08] md:scale-[1.12]" : "blur-0 scale-[1.16] md:scale-[1.22]"
+                    }`}
                     draggable={false}
                   />
                 ) : (

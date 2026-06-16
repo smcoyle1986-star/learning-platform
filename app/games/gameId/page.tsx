@@ -188,7 +188,7 @@ export default function GamePage() {
   if (!gameMeta) {
     return (
       <div className="min-h-screen">
-        <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
@@ -232,7 +232,7 @@ export default function GamePage() {
   return (
     <div>
       {/* Header (matches site) */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 

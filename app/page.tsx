@@ -7,43 +7,15 @@ import BrandButton from "@/components/BrandButton";
 import { supabase } from "@/lib/supabase/client";
 import HeaderAuth from "@/components/HeaderAuth";
 import PersistentToast from "@/components/PersistentToast";
-import NavBar from "@/components/NavBar";
-import AIToolsSection from "@/components/AIToolsSection";
-import { useFadeInOnScroll } from "@/components/useFadeInOnScroll";
-
-/* ---------------------------
-   Feature card data (marketing)
-   - Smart Cards restored to the original name/description
----------------------------- */
-const FEATURE_CARDS = [
-  {
-    title: "Flashcards",
-    desc: "Simple, focused vocabulary learning",
-    href: "/flashcards",
-  },
-  {
-    title: "Printables",
-    desc: "Worksheets made from your content",
-    href: "/printables",
-  },
-  {
-    title: "Smart Cards (AI)",
-    desc: "Generate and adapt learning content",
-    href: "/ai-tools",
-  },
-  {
-    title: "Community",
-    desc: "Teacher-created sets, shared simply",
-    href: "/teacher/community",
-  },
-];
+import LandingCarousel from "@/components/landing/LandingCarousel";
+import { LANDING_HERO_DESCRIPTION, LANDING_HERO_TITLE, LANDING_SECTIONS } from "@/lib/landing/content";
+import LandingHomepageSections from "@/components/landing/LandingHomepageSections";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const hero = useFadeInOnScroll();
-  const features = useFadeInOnScroll();
+  const { profile } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
@@ -130,19 +102,16 @@ export default function HomePage() {
   }
 
   const isLoggedIn = Boolean(email);
+  const displayName = profile?.username || profile?.display_name || email;
 
   /* ---------------------------------
      Shared helpers for header links
   ----------------------------------*/
-  const goToFlashcards = () => {
-    if (isLoggedIn) router.push("/flashcards");
-    else router.push("/login");
-  };
-  const goToDashboard = () => {
-    if (isLoggedIn) router.push("/dashboard");
-    else router.push("/login");
-  };
-  const goToSignup = () => router.push("/signup");
+  const getSectionHref = (section: (typeof LANDING_SECTIONS)[number]) =>
+    isLoggedIn ? section.href : `/preview/${section.slug}`;
+  const goToSection = (section: (typeof LANDING_SECTIONS)[number]) => router.push(getSectionHref(section));
+  const goToFlashcards = () => router.push(isLoggedIn ? "/flashcards" : "/preview/flashcards");
+  const heroButtonLabel = isLoggedIn ? "Start with Flashcards" : "Preview Flashcards";
 
   /* =====================================================
      LOGGED-IN APP HOMEPAGE
@@ -156,18 +125,18 @@ export default function HomePage() {
         <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
-          <nav className="flex items-center gap-3 text-sm">
-            {/* Lessons removed */}
-            <button onClick={goToDashboard} className="btn btn-secondary">
-              Dashboard
-            </button>
+          <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
+            {LANDING_SECTIONS.map((section) => (
+              <button
+                key={section.slug}
+                onClick={() => goToSection(section)}
+                className="btn btn-secondary"
+              >
+                {section.title}
+              </button>
+            ))}
 
-            <button onClick={goToFlashcards} className="btn btn-secondary">
-              Flashcards
-            </button>
-
-            {/* HeaderAuth replaces Teacher Login for logged-in users */}
-            <div className="ml-4">
+            <div className="ml-2">
               <HeaderAuth />
             </div>
           </nav>
@@ -177,159 +146,32 @@ export default function HomePage() {
         <main className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
           {/* Text */}
           <div>
-            <h2 className="text-5xl font-semibold leading-tight mb-6">
-              Interactive teaching tools
-              <br />
-              for English classrooms
+            <h2 className="text-5xl font-semibold leading-tight mb-6 whitespace-pre-line">
+              {LANDING_HERO_TITLE}
             </h2>
 
             <p className="text-lg text-[#5c665c] mb-8 max-w-xl">
-              Explore flashcards, classroom games, worksheets, lesson plans, and printable activities designed for English teachers and young learners.
+              {LANDING_HERO_DESCRIPTION}
             </p>
 
             <div className="flex items-center gap-4">
               <button onClick={goToFlashcards} className="btn btn-primary px-8 py-4">
-                Start Free
+                {heroButtonLabel}
               </button>
-
               <span className="text-sm font-medium text-[var(--color-text-muted)]">
-                Welcome{email ? `, ${email}` : ""}
+                Welcome{displayName ? `, ${displayName}` : ""}
               </span>
             </div>
           </div>
 
-          {/* Illustration placeholder */}
-          <div className="h-[360px] rounded-3xl bg-[#e8eadf] flex items-center justify-center text-sm text-[#6b756b]">
-           <img
-    src="https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/ClassBloom%20images/ChatGPT%20Image%20Mar%2028,%202026,%2006_15_38%20PM.png"
-    alt="Classendo homepage illustration"
-    className="w-full h-full object-contain"
-  />
-          </div>
+          <LandingCarousel />
         </main>
 
-        {/* ---------------- Feature Cards ---------------- */}
-        <section className="max-w-6xl mx-auto px-6 py-20">
-          <h3 className="text-center text-3xl font-semibold mb-12">
-            A learning platform built for real classrooms
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              {
-                title: "Flashcards",
-                desc: "Simple, focused vocabulary learning",
-                onClick: () => router.push("/flashcards"),
-              },
-              {
-                title: "Dashboard",
-                desc: "Manage lessons, students, and classes",
-                onClick: () => router.push("/dashboard"),
-              },
-              {
-                title: "Printables",
-                desc: "Worksheets made from your content",
-                onClick: () => router.push("/printables"),
-              },
-              {
-                title: "Community",
-                desc: "Teacher-created sets, shared simply",
-                onClick: () => router.push("/teacher/community"),
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                onClick={item.onClick}
-                className="rounded-2xl bg-white p-6 text-center shadow-sm border cursor-pointer"
-              >
-                <div className="h-12 mb-4 bg-[#eef0e7] rounded-xl" />
-                <h4 className="font-semibold mb-2">{item.title}</h4>
-                <p className="text-sm text-[#6b756b]">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ---------------- How it works ---------------- */}
-        <section className="max-w-6xl mx-auto px-6 py-20">
-          <h3 className="text-center text-3xl font-semibold mb-12">How it works</h3>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                title: "Flashcards",
-                desc: "Focused, distraction-free learning",
-                onClick: () => router.push("/flashcards"),
-              },
-              {
-                title: "Smart Cards (AI)",
-                desc: "Generate and adapt learning content",
-                onClick: () => router.push("/ai-tools"),
-              },
-              {
-                title: "Games",
-                desc: "Light, rewarding-style practice",
-                onClick: () => router.push("/games"),
-              },
-              {
-                title: "Community Cards",
-                desc: "Teacher-made sets with shared images",
-                onClick: () => router.push("/teacher/community"),
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                onClick={item.onClick}
-                className="rounded-2xl bg-white p-6 flex items-center gap-4 border cursor-pointer"
-              >
-                <div className="h-10 w-10 rounded-xl bg-[#eef0e7]" />
-                <div>
-                  <h4 className="font-semibold">{item.title}</h4>
-                  <p className="text-sm text-[#6b756b]">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-sm text-[#6b756b] mt-10">
-            All tools share the same calm design and structure.
-          </p>
-        </section>
-
-        {/* ---------------- Calm Learning Section ---------------- */}
-        <section className="max-w-6xl mx-auto px-6 py-24 text-center">
-          <h3 className="text-3xl font-semibold mb-6">Designed for calm learning</h3>
-
-          <ul className="text-[#5c665c] space-y-2 mb-10">
-            <li>• No flashing distractions</li>
-            <li>• No noisy animations</li>
-            <li>• No unnecessary competition</li>
-          </ul>
-
-          <p className="max-w-xl mx-auto text-[#6b756b] mb-12">
-            Classendo supports focus, independence, and confidence — for both teachers and students.
-          </p>
-
-          {/* Mascot placeholder */}
-          <div className="h-32 bg-[#e8eadf] rounded-3xl flex items-center justify-center text-sm text-[#6b756b]">
-            Mascot illustration here
-          </div>
-        </section>
-
-        {/* ---------------- CTA ---------------- */}
-        <section className="py-24 text-center">
-          <h3 className="text-3xl font-semibold mb-6">Ready to grow your classroom materials?</h3>
-
-          <button onClick={() => router.push("/dashboard")} className="btn btn-primary px-10 py-4">
-            Go to Dashboard
-          </button>
-
-          <p className="text-sm text-[#6b756b] mt-4">No credit card. Teacher-friendly.</p>
-        </section>
-
-        <footer className="border-t border-black/10 py-10 text-center text-sm text-[#6b756b]">
-          © {new Date().getFullYear()} Classendo. Built for teachers.
-        </footer>
+        <LandingHomepageSections
+          isLoggedIn={true}
+          primaryCtaHref="/flashcards"
+          primaryCtaLabel="Start Free"
+        />
       </div>
     );
   }
@@ -348,179 +190,57 @@ export default function HomePage() {
       <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
         <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
-        <nav className="flex items-center gap-3 text-sm">
-          {/* Dashboard replaces Games in the nav but routes to login when logged out */}
-          <button
-            onClick={() => router.push("/login")}
-            className="btn btn-secondary"
-          >
-            Dashboard
-          </button>
+        <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
+          {LANDING_SECTIONS.map((section) => (
+            <button
+              key={section.slug}
+              onClick={() => goToSection(section)}
+              className="btn btn-secondary"
+            >
+              {section.title}
+            </button>
+          ))}
 
-          <button
-            onClick={() => router.push("/login")}
-            className="btn btn-secondary"
-          >
-            Flashcards
-          </button>
-
-          {/* Teacher Login (visible only when logged out) */}
           <a href="/login" className="btn btn-secondary ml-1">
             Teacher Login
           </a>
         </nav>
       </header>
 
-      {/* ---------------- Hero ---------------- */}
+        {/* ---------------- Hero ---------------- */}
       <section className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
         {/* Text */}
         <div>
-          <h2 className="text-5xl font-semibold leading-tight mb-6">
-            A calm space for
-            <br />
-            meaningful learning
+          <h2 className="text-5xl font-semibold leading-tight mb-6 whitespace-pre-line">
+            {LANDING_HERO_TITLE}
           </h2>
 
           <p className="text-lg text-[#5c665c] mb-8 max-w-xl">
-            Create, explore, and share classroom materials — designed for focus,
-            curiosity, and growth.
+            {LANDING_HERO_DESCRIPTION}
           </p>
 
           <div className="flex items-center gap-4">
-            <button onClick={() => router.push("/signup")} className="btn btn-primary px-8 py-4">
-              Start Free
+            <button onClick={goToFlashcards} className="btn btn-primary px-8 py-4">
+              {heroButtonLabel}
             </button>
 
             <a
               onClick={() => router.push("/login")}
               className="text-sm font-medium underline underline-offset-4 cursor-pointer"
             >
-              Explore as a Teacher →
+              Sign in as a Teacher →
             </a>
           </div>
         </div>
 
-        {/* Illustration placeholder */}
-        <div className="h-[360px] rounded-3xl bg-[#e8eadf] flex items-center justify-center text-sm text-[#6b756b]">
-          Illustration goes here
-        </div>
+        <LandingCarousel />
       </section>
 
-      {/* ---------------- Feature Cards ---------------- */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h3 className="text-center text-3xl font-semibold mb-12">
-          A learning platform built for real classrooms
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Flashcards",
-              desc: "Simple, focused vocabulary learning",
-            },
-            {
-              title: "Dashboard",
-              desc: "Manage lessons, students, and classes",
-            },
-            {
-              title: "Printables",
-              desc: "Worksheets made from your content",
-            },
-            {
-              title: "Community",
-              desc: "Teacher-created sets, shared simply",
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              onClick={() => router.push("/login")}
-              className="rounded-2xl bg-white p-6 text-center shadow-sm border cursor-pointer"
-            >
-              <div className="h-12 mb-4 bg-[#eef0e7] rounded-xl" />
-              <h4 className="font-semibold mb-2">{item.title}</h4>
-              <p className="text-sm text-[#6b756b]">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- How it works ---------------- */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h3 className="text-center text-3xl font-semibold mb-12">How it works</h3>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {[
-            {
-              title: "Flashcards",
-              desc: "Focused, distraction-free learning",
-            },
-            {
-              title: "Smart Cards (AI)",
-              desc: "Generate and adapt learning content",
-            },
-            {
-              title: "Games",
-              desc: "Light, rewarding-style practice",
-            },
-            {
-              title: "Community Cards",
-              desc: "Teacher-made sets with shared images",
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              onClick={() => router.push("/login")}
-              className="rounded-2xl bg-white p-6 flex items-center gap-4 border cursor-pointer"
-            >
-              <div className="h-10 w-10 rounded-xl bg-[#eef0e7]" />
-              <div>
-                <h4 className="font-semibold">{item.title}</h4>
-                <p className="text-sm text-[#6b756b]">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-center text-sm text-[#6b756b] mt-10">
-          All tools share the same calm design and structure.
-        </p>
-      </section>
-
-      {/* ---------------- Calm Learning Section ---------------- */}
-      <section className="max-w-6xl mx-auto px-6 py-24 text-center">
-        <h3 className="text-3xl font-semibold mb-6">Designed for calm learning</h3>
-
-        <ul className="text-[#5c665c] space-y-2 mb-10">
-          <li>• No flashing distractions</li>
-          <li>• No noisy animations</li>
-          <li>• No unnecessary competition</li>
-        </ul>
-
-        <p className="max-w-xl mx-auto text-[#6b756b] mb-12">
-          Classendo supports focus, independence, and confidence — for both teachers and students.
-        </p>
-
-        {/* Mascot placeholder */}
-        <div className="h-32 bg-[#e8eadf] rounded-3xl flex items-center justify-center text-sm text-[#6b756b]">
-          Mascot illustration here
-        </div>
-      </section>
-
-      {/* ---------------- CTA ---------------- */}
-      <section className="py-24 text-center">
-        <h3 className="text-3xl font-semibold mb-6">Ready to grow your classroom materials?</h3>
-
-        <button onClick={() => router.push("/signup")} className="btn btn-primary px-10 py-4">
-          Create your free account
-        </button>
-
-        <p className="text-sm text-[#6b756b] mt-4">No credit card. Teacher-friendly.</p>
-      </section>
-
-      {/* ---------------- Footer ---------------- */}
-      <footer className="border-t border-black/10 py-10 text-center text-sm text-[#6b756b]">
-        © {new Date().getFullYear()} Classendo. Built for teachers.
-      </footer>
+      <LandingHomepageSections
+        isLoggedIn={false}
+        primaryCtaHref="/signup"
+        primaryCtaLabel="Start Free"
+      />
     </div>
   );
 }

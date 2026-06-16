@@ -29,7 +29,6 @@ export async function createImageRevealGame({
   parent,
   width,
   height,
-  emit,
   exposeApi,
 }: {
   Phaser: typeof import("phaser");
@@ -62,12 +61,12 @@ export async function createImageRevealGame({
     private image?: Phaser.GameObjects.Image;
     private stageFrame?: Phaser.GameObjects.Graphics;
     private vignette?: Phaser.GameObjects.Graphics;
-    private revealMaskGraphics?: Phaser.GameObjects.Graphics;
-    private revealMask?: Phaser.Display.Masks.GeometryMask;
+    private imageMatte?: Phaser.GameObjects.Graphics;
     private tileShadows: Phaser.GameObjects.Graphics[] = [];
     private tileGraphics: Phaser.GameObjects.Graphics[] = [];
     private sparkleBurst: Phaser.GameObjects.Graphics[] = [];
     private tileBounds: { x: number; y: number; width: number; height: number; radius: number }[] = [];
+    private boardRect = { x: 0, y: 0, width: 0, height: 0 };
     private imageRevealTween?: Phaser.Tweens.Tween;
     private tileCountText?: Phaser.GameObjects.Text;
     private softHighlight?: Phaser.GameObjects.Graphics;
@@ -76,14 +75,11 @@ export async function createImageRevealGame({
       this.cameras.main.setBackgroundColor("#f6f7fb");
       this.stageFrame = this.add.graphics();
       this.vignette = this.add.graphics();
+      this.imageMatte = this.add.graphics();
       this.softHighlight = this.add.graphics();
-      this.revealMaskGraphics = this.add.graphics();
-      this.revealMaskGraphics.setVisible(false);
 
       this.image = this.add.image(0, 0, "__MISSING");
       this.image.setVisible(false);
-      this.revealMask = this.revealMaskGraphics.createGeometryMask();
-      this.image.setMask(this.revealMask);
 
       for (let i = 0; i < COLS * ROWS; i += 1) {
         const shadow = this.add.graphics();
@@ -135,6 +131,13 @@ export async function createImageRevealGame({
       const overlap = 10;
       const radius = 0;
 
+      this.boardRect = {
+        x: paddingX,
+        y: paddingTop,
+        width: Math.max(1, sceneWidth - paddingX * 2),
+        height: Math.max(1, sceneHeight - paddingTop - paddingBottom),
+      };
+
       this.updateImageDisplay();
       this.image?.setDepth(0);
       this.tileCountText?.setPosition(sceneWidth - 156, sceneHeight - 34);
@@ -156,6 +159,24 @@ export async function createImageRevealGame({
         this.vignette?.strokeRoundedRect(inset, inset, sceneWidth - inset * 2, sceneHeight - inset * 2, 26);
       }
       this.vignette?.setDepth(2);
+
+      const boardLeft = Math.round(paddingX);
+      const boardTop = Math.round(paddingTop);
+      const boardRight = Math.round(sceneWidth - paddingX);
+      const boardBottom = Math.round(sceneHeight - paddingBottom);
+
+      this.imageMatte?.clear();
+      this.imageMatte?.fillStyle(0xf6f7fb, 1);
+      this.imageMatte?.fillRect(0, 0, sceneWidth, boardTop);
+      this.imageMatte?.fillRect(0, boardBottom, sceneWidth, Math.max(0, sceneHeight - boardBottom));
+      this.imageMatte?.fillRect(0, boardTop, boardLeft, Math.max(0, boardBottom - boardTop));
+      this.imageMatte?.fillRect(
+        boardRight,
+        boardTop,
+        Math.max(0, sceneWidth - boardRight),
+        Math.max(0, boardBottom - boardTop)
+      );
+      this.imageMatte?.setDepth(3);
 
       this.tileGraphics.forEach((_, index) => {
         const col = index % COLS;
@@ -191,8 +212,6 @@ export async function createImageRevealGame({
         28
       );
       this.softHighlight?.setDepth(5);
-
-      this.updateRevealMask();
     }
 
     private renderState() {
@@ -240,24 +259,6 @@ export async function createImageRevealGame({
         this.tileShadows[index]?.setDepth(shadowDepth);
       });
       this.tileCountText?.setText(`${this.state.removedCount}/${this.state.totalTiles} tiles`);
-      this.updateRevealMask();
-    }
-
-    private updateRevealMask() {
-      if (!this.revealMaskGraphics) return;
-      this.revealMaskGraphics.clear();
-      this.revealMaskGraphics.fillStyle(0xffffff, 1);
-      this.state.tilesRemoved.forEach((removed, index) => {
-        if (!removed) return;
-        const bounds = this.tileBounds[index];
-        if (!bounds) return;
-        this.revealMaskGraphics?.fillRect(
-          Math.round(bounds.x - bounds.width / 2),
-          Math.round(bounds.y - bounds.height / 2),
-          Math.ceil(bounds.width),
-          Math.ceil(bounds.height)
-        );
-      });
     }
 
     private animateTransitions(previous: ImageRevealState | null, next: ImageRevealState) {
@@ -369,12 +370,12 @@ export async function createImageRevealGame({
       const textureKey = this.state.imageUrl ? makeTextureKey("reveal", this.state.imageUrl) : null;
       this.updateImageDisplay(textureKey);
       this.image.setAlpha(1);
-      this.image.setScale(1);
+      this.image.setScale(0.98);
       this.imageRevealTween = this.tweens.add({
         targets: this.image,
         alpha: { from: 0.92, to: 1 },
-        scale: { from: 1, to: 1 },
-        duration: 260,
+        scale: { from: 0.98, to: 1.03 },
+        duration: 220,
         ease: "Cubic.out",
       });
 
@@ -383,8 +384,10 @@ export async function createImageRevealGame({
 
     private updateImageDisplay(textureKey?: string | null) {
       if (!this.image || !this.sceneWidth || !this.sceneHeight) return;
-      const maxW = this.sceneWidth * 0.72;
-      const maxH = this.sceneHeight * 0.72;
+      const boardWidth = this.boardRect.width || this.sceneWidth;
+      const boardHeight = this.boardRect.height || this.sceneHeight;
+      const maxW = boardWidth * 0.84;
+      const maxH = boardHeight * 0.84;
       let sourceWidth = maxW;
       let sourceHeight = maxH;
 
@@ -400,7 +403,10 @@ export async function createImageRevealGame({
       const scale = Math.min(maxW / sourceWidth, maxH / sourceHeight);
       const displayWidth = Math.max(1, Math.floor(sourceWidth * scale));
       const displayHeight = Math.max(1, Math.floor(sourceHeight * scale));
-      this.image.setPosition(this.sceneWidth / 2, this.sceneHeight / 2);
+      this.image.setPosition(
+        this.boardRect.x + this.boardRect.width / 2,
+        this.boardRect.y + this.boardRect.height / 2
+      );
       this.image.setDisplaySize(displayWidth, displayHeight);
     }
 

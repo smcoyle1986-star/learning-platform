@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
+import { getProfileDisplayName } from "@/lib/auth/profile";
 
 export default function HeaderAuth() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
 
   useEffect(() => {
     console.log(
@@ -31,7 +32,7 @@ export default function HeaderAuth() {
     return (
       <div className="flex items-center gap-3">
         <Link href="/profile" className="text-sm hover:underline">
-          {user.email}
+          {getProfileDisplayName(profile, user.email)}
         </Link>
         <button
           onClick={signOut}

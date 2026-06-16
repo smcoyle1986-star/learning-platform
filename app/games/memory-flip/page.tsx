@@ -489,6 +489,10 @@ export default function MemoryFlipPage() {
 
   // Render helpers
   function renderFace(card: Card) {
+    const faceImage = typeof card.faceImage === "string" && card.faceImage.trim().length > 0
+      ? card.faceImage
+      : null;
+
     if (gameStyle === "text-text")
       return (
         <div
@@ -517,26 +521,52 @@ export default function MemoryFlipPage() {
       );
     if (gameStyle === "image-image")
       return (
-        <img
-          src={card.faceImage ?? ""}
-          alt={card.faceText}
-          style={{
-            width: "100%",
-            height: "100%",
-            maxWidth: "100%",
-            maxHeight: "100%",
-            objectFit: "contain",
-            borderRadius: 8,
-            display: "block",
-            transform: "scale(1.06)",
-            transformOrigin: "center center",
-          }}
-        />
+        faceImage ? (
+          <img
+            src={faceImage}
+            alt={card.faceText}
+            style={{
+              width: "100%",
+              height: "100%",
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              borderRadius: 8,
+              display: "block",
+              transform: "scale(1.06)",
+              transformOrigin: "center center",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 12,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(2rem, 3.5vw, 3.4rem)",
+                lineHeight: 0.96,
+                maxWidth: "92%",
+                wordBreak: "break-word",
+              }}
+            >
+              {card.faceText}
+            </div>
+          </div>
+        )
       );
     if (gameStyle === "image-text") {
-      return card.faceMode === "image" ? (
+      return card.faceMode === "image" && faceImage ? (
         <img
-          src={card.faceImage ?? ""}
+          src={faceImage}
           alt={card.faceText}
           style={{
             width: "100%",
@@ -913,12 +943,12 @@ export default function MemoryFlipPage() {
           <AnimatePresence>
             {matchedPair && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 150 }}>
-                <div style={{ width: "80%", maxWidth: 980, background: "white", padding: 20, borderRadius: 12, boxShadow: "0 30px 80px rgba(2,6,23,0.2)" }}>
+                <div style={{ width: "88%", maxWidth: 1180, background: "white", padding: 24, borderRadius: 12, boxShadow: "0 30px 80px rgba(2,6,23,0.2)" }}>
                   <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center" }}>
-                    <motion.div layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                    <motion.div layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.a])}
                     </motion.div>
-                    <motion.div layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 260, height: 180, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                    <motion.div layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.b])}
                     </motion.div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { BrandMenuProvider } from "@/components/BrandMenuContext";
 import BrandMenuDrawer from "@/components/BrandMenuDrawer";
 import HeaderAuth from "@/components/HeaderAuth";
+import BrandPageTheme from "@/components/BrandPageTheme";
 
 export const metadata: Metadata = {
   title: "Classendo",
@@ -21,12 +22,15 @@ export default function RootLayout({
         <AuthProvider>
           <BrandMenuProvider>
             <BrandMenuDrawer />
-            {/* GLOBAL HEADER — THIS WAS MISSING */}
-            <header className="p-4 border-b flex justify-end">
-              <HeaderAuth />
-            </header>
+            <BrandPageTheme />
+            <div className="relative z-10">
+              {/* GLOBAL HEADER — THIS WAS MISSING */}
+              <header className="p-4 border-b flex justify-end">
+                <HeaderAuth />
+              </header>
 
-            {children}
+              {children}
+            </div>
           </BrandMenuProvider>
         </AuthProvider>
       </body>

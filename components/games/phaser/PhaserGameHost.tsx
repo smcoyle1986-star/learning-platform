@@ -46,6 +46,10 @@ export default function PhaserGameHost<TApi, TEvent>({
   useEffect(() => {
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
+    let resizeFrame: number | null = null;
+    let resizePending: { width: number; height: number } | null = null;
+    let detachFullscreenListener: (() => void) | null = null;
+    let fullscreenResizeGuardUntil = 0;
 
     const destroyGameSafely = (game: PhaserNamespace.Game | null) => {
       if (!game) return;
@@ -56,6 +60,45 @@ export default function PhaserGameHost<TApi, TEvent>({
           // ignore shutdown timing errors during route transitions
         }
       }, 0);
+    };
+
+    const scheduleResize = (width: number, height: number) => {
+      if (width <= 0 || height <= 0) return;
+      if (Date.now() < fullscreenResizeGuardUntil) return;
+      resizePending = { width, height };
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        const pending = resizePending;
+        resizePending = null;
+        if (!pending || disposed || !gameRef.current) return;
+        try {
+          gameRef.current.scale.resize(pending.width, pending.height);
+        } catch {
+          // ignore transient WebGL resize errors during fullscreen transitions
+        }
+      });
+    };
+
+    const onFullChange = () => {
+      if (disposed || !gameRef.current || !mountRef.current) return;
+      fullscreenResizeGuardUntil = Date.now() + 300;
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = window.requestAnimationFrame(() => {
+          resizeFrame = null;
+          if (disposed || !gameRef.current || !mountRef.current) return;
+          const box = mountRef.current.getBoundingClientRect();
+          window.setTimeout(() => {
+            if (disposed || !gameRef.current || !mountRef.current) return;
+            const settledBox = mountRef.current.getBoundingClientRect();
+            scheduleResize(
+              Math.max(320, Math.floor(settledBox.width || box.width)),
+              Math.max(320, Math.floor(settledBox.height || box.height))
+            );
+          }, 220);
+        });
+      });
     };
 
     async function mount() {
@@ -88,11 +131,11 @@ export default function PhaserGameHost<TApi, TEvent>({
         const entry = entries[0];
         const box = entry?.contentRect;
         if (!box || !gameRef.current) return;
-        const nextWidth = Math.max(320, Math.floor(box.width));
-        const nextHeight = Math.max(320, Math.floor(box.height));
-        gameRef.current.scale.resize(nextWidth, nextHeight);
+        scheduleResize(Math.max(320, Math.floor(box.width)), Math.max(320, Math.floor(box.height)));
       });
       resizeObserver.observe(parent);
+      document.addEventListener("fullscreenchange", onFullChange);
+      detachFullscreenListener = () => document.removeEventListener("fullscreenchange", onFullChange);
     }
 
     mount();
@@ -100,6 +143,8 @@ export default function PhaserGameHost<TApi, TEvent>({
     return () => {
       disposed = true;
       resizeObserver?.disconnect();
+      detachFullscreenListener?.();
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       onApiReadyRef.current?.(null);
       if (gameRef.current) {
         destroyGameSafely(gameRef.current);
