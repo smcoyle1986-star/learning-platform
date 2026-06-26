@@ -24,6 +24,11 @@ export type CarouselEntry = {
   phase: "start" | "move";
 };
 
+export type FlashcardImageVariant = {
+  url: string;
+  isPremium: boolean;
+};
+
 export type ThemeOption = {
   label: string;
   value: string;
@@ -131,5 +136,5 @@ export const FLASHCARD_THEMES: Record<WordType, string[]> = {
     "double vowel",
     "sight words",
   ],
-  preposition: ["place", "movement"],
+  preposition: ["place", "movement", "directions"],
 };

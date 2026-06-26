@@ -55,7 +55,7 @@ export default function FaqPage() {
               { label: "Worksheets", href: "/worksheets" },
               { label: "Printables", href: "/printables" },
               { label: "Community", href: "/teacher/community" },
-              { label: "Pricing", href: "/#pricing" },
+              { label: "Pricing", href: "/upgrade" },
             ].map((item) => (
               <Link key={item.label} href={item.href} className="transition-colors hover:text-[#2f3a2f]">
                 {item.label}

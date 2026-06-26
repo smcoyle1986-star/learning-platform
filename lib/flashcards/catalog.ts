@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { Card, WordType } from "@/lib/flashcards/types";
+import { Card, FlashcardImageVariant, WordType } from "@/lib/flashcards/types";
 
 type ThemeArrayRow = {
   id: string;
@@ -205,6 +205,7 @@ type VocabImageRow = {
   category?: Card["type"] | null;
   image_path?: string | null;
   is_default?: boolean | null;
+  is_premium?: boolean | null;
 };
 
 const IRREGULAR_NOUNS: Record<string, string> = {
@@ -412,9 +413,6 @@ export async function fetchSearchResults(params: {
   if (!raw && !activeTheme) return [];
 
   if (activeWordType === "noun") {
-    let data;
-    let error;
-
     const queryBuilder = supabase
       .from("nouns")
       .select("id, lemma, image_id, countability, themes");
@@ -425,7 +423,7 @@ export async function fetchSearchResults(params: {
       queryBuilder.or(`lemma.ilike.%${raw}%,themes.cs.{${raw}}`);
     }
 
-    ({ data, error } = await queryBuilder);
+    const { data, error } = await queryBuilder;
     if (error) throw error;
 
     return sortByPopularity(
@@ -589,7 +587,7 @@ export async function loadImageVariants(params: {
   if (nounIds.length > 0) {
     const { data, error } = await supabase
       .from("vocab_images")
-      .select("noun_id, lemma, category, image_path, is_default")
+      .select("noun_id, lemma, category, image_path, is_default, is_premium")
       .in("noun_id", nounIds)
       .eq("category", category)
       .order("is_default", { ascending: false })
@@ -613,7 +611,7 @@ export async function loadImageVariants(params: {
   if (legacyLemmaKeys.length > 0) {
     const { data, error } = await supabase
       .from("vocab_images")
-      .select("noun_id, lemma, category, image_path, is_default")
+      .select("noun_id, lemma, category, image_path, is_default, is_premium")
       .in("lemma", legacyLemmaKeys)
       .eq("category", category)
       .is("noun_id", null)
@@ -639,7 +637,7 @@ export async function loadImageVariants(params: {
     rowsByLemma[lemma].push(row);
   });
 
-  const nextMap: Record<string, string[]> = {};
+  const nextMap: Record<string, FlashcardImageVariant[]> = {};
 
   cards.forEach((card) => {
     const key = lemmaKey(card);
@@ -677,12 +675,22 @@ export async function loadImageVariants(params: {
       const publicUrl = raw.startsWith("http")
         ? raw
         : supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
-      nextMap[key].push(publicUrl);
+      nextMap[key].push({
+        url: publicUrl,
+        isPremium: Boolean(row.is_premium),
+      });
     });
   });
 
   Object.keys(nextMap).forEach((key) => {
-    nextMap[key] = Array.from(new Set(nextMap[key])).sort();
+    const seen = new Set<string>();
+    nextMap[key] = nextMap[key]
+      .filter((variant) => {
+        if (seen.has(variant.url)) return false;
+        seen.add(variant.url);
+        return true;
+      })
+      .sort((left, right) => left.url.localeCompare(right.url));
   });
 
   return nextMap;

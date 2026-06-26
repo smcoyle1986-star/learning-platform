@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import BrandButton from "@/components/BrandButton";
+import PageHeader from "@/components/navigation/PageHeader";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel";
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
 import { useAuth } from "@/components/AuthProvider";
+import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { supabase } from "@/lib/supabase/client";
 import { LessonCard } from "@/lib/lessons/types";
@@ -14,7 +15,7 @@ import { clearLessonTray, readLessonTray, subscribeToLessonTray, writeLessonTray
 import { buildWorksheetPrintHtml, openWorksheetPrintWindow } from "@/lib/worksheets/export";
 import { generateCrosswordLayout } from "@/lib/worksheets/crossword";
 import { generateWordsearchLayout } from "@/lib/worksheets/wordsearch";
-import { loadWorksheetById, saveWorksheet } from "@/lib/worksheets/repository";
+import { loadWorksheetById, saveWorksheetFromClient } from "@/lib/worksheets/repository";
 import { scrambleSentenceLine } from "@/lib/worksheets/scramble";
 import {
   buildWorksheetDraft,
@@ -24,6 +25,7 @@ import {
   WorksheetDraft,
   WorksheetType,
 } from "@/lib/worksheets/types";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 function buildReadingLinesFromCards(nextCards: LessonCard[]) {
   if (nextCards.length === 0) {
@@ -44,6 +46,7 @@ function buildWritingLinesFromCards(nextCards: LessonCard[]) {
 export default function WorksheetsPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const { access, canAccessWorksheetType } = useBillingAccess();
 
   const [cards, setCards] = useState<LessonCard[]>([]);
   const [draft, setDraft] = useState<WorksheetDraft>(DEFAULT_WORKSHEET_DRAFT);
@@ -110,6 +113,8 @@ export default function WorksheetsPage() {
     () => WORKSHEET_TYPES.find((item) => item.id === draft.type) ?? null,
     [draft.type]
   );
+  const activeWorksheetLocked =
+    Boolean(selectedType && access && !canAccessWorksheetType(selectedType.id));
   const isQuestionBuilder = draft.type === "questions";
   const isSentenceScramble = draft.type === "sentence-scramble";
   const worksheetCards = cards;
@@ -261,7 +266,7 @@ export default function WorksheetsPage() {
     setIsSaving(true);
     setSaveError("");
     try {
-      const saved = await saveWorksheet(supabase, {
+      const saved = await saveWorksheetFromClient(supabase, {
         worksheetId,
         userId: user.id,
         name: worksheetName.trim(),
@@ -345,24 +350,21 @@ export default function WorksheetsPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-      <header className="bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
+    <div className={`${activeWorksheetLocked ? "min-h-screen overflow-x-hidden" : "h-screen overflow-hidden"} bg-[var(--color-bg-main)] text-[var(--color-text-main)]`}>
+      <PageHeader
+        title="Worksheets"
+        sticky={false}
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Community", href: "/teacher/community" },
+        ]}
+      />
 
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-4xl font-bold text-black">Worksheets</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-secondary">
-              Flashcards
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-4 h-[calc(100vh-89px)] flex flex-col gap-3 overflow-hidden">
+      <main className={`max-w-7xl mx-auto px-6 py-4 ${activeWorksheetLocked ? "min-h-[calc(100vh-89px)]" : "h-[calc(100vh-89px)] overflow-hidden"} flex flex-col gap-3`}>
         <section className="bg-white rounded-2xl border shadow-sm px-4 py-2.5 shrink-0">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div>
@@ -417,7 +419,7 @@ export default function WorksheetsPage() {
         </section>
 
         <section className="shrink-0">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <LessonTrayScroller className="pb-1" contentClassName="gap-2">
             {WORKSHEET_TYPES.map((item) => {
               const isSelected = selectedType?.id === item.id;
               return (
@@ -426,7 +428,11 @@ export default function WorksheetsPage() {
                   onClick={() => item.available && selectWorksheetType(item.id)}
                   disabled={!item.available}
                   className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    isSelected
+                    access && !access.isPremium && access.featuredWorksheetType === item.id
+                      ? isSelected
+                        ? "border-[#cfb25a] bg-[linear-gradient(135deg,#ffe7a8,#ffd46b)] text-[#744f0f] shadow-[0_16px_34px_rgba(190,160,74,0.26)] ring-2 ring-[#f2df99]/80"
+                        : "border-[#d8c27e] bg-[linear-gradient(135deg,#fff8e2,#fff0b8)] text-[#8a6117] shadow-[0_12px_28px_rgba(190,160,74,0.18)] hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(190,160,74,0.24)]"
+                      : isSelected
                       ? "bg-[var(--color-primary,#1d4ed8)] text-white border-[var(--color-primary,#1d4ed8)] shadow-sm"
                       : item.available
                         ? "bg-white text-[var(--color-text-main)] border-black/10 hover:bg-[var(--color-bg-soft)]"
@@ -435,18 +441,30 @@ export default function WorksheetsPage() {
                   title={item.description}
                 >
                   <span>{item.label}</span>
+                  {access && !access.isPremium && access.featuredWorksheetType === item.id ? (
+                    <span className="ml-2 rounded-full border border-[#e1c97b] bg-white/70 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#9a6b14]">
+                      Free this week
+                    </span>
+                  ) : null}
+                  {access && !access.isPremium && access.featuredWorksheetType !== item.id ? (
+                    <span className="ml-2 text-[10px] font-medium opacity-80">Premium</span>
+                  ) : null}
                   {!item.available ? <span className="ml-2 text-[10px] font-medium opacity-80">Soon</span> : null}
                 </button>
               );
             })}
-          </div>
+          </LessonTrayScroller>
         </section>
 
-        <div className="grid grid-cols-12 gap-4 min-h-0 flex-1 overflow-hidden">
-          <aside className="col-span-12 lg:col-span-4 xl:col-span-3 min-h-0 overflow-hidden">
+        <div className={`relative grid grid-cols-12 gap-4 ${activeWorksheetLocked ? "" : "min-h-0 flex-1 overflow-hidden"}`}>
+          <aside className={`${activeWorksheetLocked ? "hidden" : "col-span-12 lg:col-span-4 xl:col-span-3 min-h-0 overflow-hidden"}`}>
             <div className="h-full flex flex-col gap-4">
               <div className="min-h-0 overflow-y-auto pr-1">
-                {selectedType ? (
+                {selectedType && !activeWorksheetLocked && access && !access.isPremium ? (
+                  <div className="bg-white rounded-2xl border shadow-sm p-4 text-sm text-[var(--color-text-muted)]">
+                    Advanced worksheet controls are part of Premium. Free accounts can still use the featured weekly worksheet with its default layout.
+                  </div>
+                ) : selectedType ? (
                 <WorksheetOptionsPanel
                   worksheetType={selectedType}
                   draft={draft}
@@ -468,8 +486,8 @@ export default function WorksheetsPage() {
             </div>
           </aside>
 
-          <section className="col-span-12 lg:col-span-8 xl:col-span-9 min-h-0 overflow-hidden">
-            <div className="relative h-full group">
+          <section className={`${activeWorksheetLocked ? "col-span-12" : "col-span-12 lg:col-span-8 xl:col-span-9 min-h-0 overflow-hidden"}`}>
+            <div className={`relative ${activeWorksheetLocked ? "min-h-[1200px]" : "h-full group"}`}>
               <WorksheetPreview
               cards={cards}
               draft={{ ...draft, title: worksheetName || draft.title }}
@@ -477,29 +495,29 @@ export default function WorksheetsPage() {
               onReadingLinesChange={updateReadingLines}
               onWritingLinesChange={updateWritingLines}
               onSentenceScrambleLinesChange={updateSentenceScrambleLines}
-              className="h-full"
+              className={activeWorksheetLocked ? "h-auto min-h-[1200px]" : "h-full"}
             />
 
-              <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none">
+              <div className={`absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none ${activeWorksheetLocked ? "hidden" : ""}`}>
                 <div className="w-full max-w-3xl px-6 pt-6 pb-1 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
                   <div className="pointer-events-auto mx-auto flex items-center justify-center gap-3 px-4 py-3">
                     <button
                       onClick={() => setShowSaveModal(true)}
-                    disabled={!draft.type || (!isQuestionBuilder && cards.length === 0)}
+                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
                       className="btn btn-primary px-4 py-2 text-sm shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       Save Worksheet
                     </button>
                     <button
                       onClick={handleExportPdf}
-                      disabled={!draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
+                      disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
                       className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       {isExporting ? "Exporting…" : "Export PDF"}
                     </button>
                     <button
                       onClick={handlePrintNow}
-                      disabled={!draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
+                      disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
                       className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
                     >
                       {isPrinting ? "Printing…" : "Print Now"}
@@ -508,9 +526,18 @@ export default function WorksheetsPage() {
                 </div>
               </div>
 
-              <div className="absolute inset-x-0 bottom-0 h-28 z-10 group" />
+              <div className={`absolute inset-x-0 bottom-0 h-28 z-10 group ${activeWorksheetLocked ? "hidden" : ""}`} />
             </div>
           </section>
+
+          {activeWorksheetLocked && selectedType ? (
+            <PremiumPreviewOverlay
+              title="This worksheet is locked on the Free plan"
+              description={`You can preview ${selectedType.label} here. Upgrade to Premium to unlock this worksheet type, every worksheet style, and the full builder controls.`}
+              secondaryHref="/flashcards"
+              secondaryLabel="Return to Flashcards"
+            />
+          ) : null}
         </div>
       </main>
 

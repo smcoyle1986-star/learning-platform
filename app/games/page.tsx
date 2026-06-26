@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import BrandButton from "@/components/BrandButton";
 import { useRouter } from "next/navigation";
 import { ArrowDown, Gamepad2, HelpCircle, Play, Sparkles, X } from "lucide-react";
 import { GameHowToModal } from "@/components/games/GameHowToModal";
+import PageHeader from "@/components/navigation/PageHeader";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
@@ -13,6 +13,7 @@ import {
   subscribeToLessonTray,
   writeLessonTray,
 } from "@/lib/lessons/tray";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 /**
  * Games Landing Page
@@ -134,6 +135,7 @@ export default function GamesLandingPage() {
   const [popularity, setPopularity] = useState<GamePopularityPayload | null>(null);
   const gameGridRef = useRef<HTMLDivElement | null>(null);
   const gameCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const { access, canAccessGame } = useBillingAccess();
 
   useEffect(() => {
     setLessonTray(readLessonTray() as GameCard[]);
@@ -216,25 +218,18 @@ export default function GamesLandingPage() {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/96 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-4xl font-bold text-black">Games</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-secondary">
-              Flashcards
-            </button>
-
-            <button onClick={() => (window.location.href = "/dashboard")} className="btn btn-secondary">
-              Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Games"
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Community", href: "/teacher/community" },
+        ]}
+        className="bg-[var(--color-bg-main)]/96"
+      />
 
       {/* Lesson Tray */}
       <section className="sticky top-[73px] z-40 border-b border-black/5 bg-[var(--color-bg-main)]/96 backdrop-blur-md">
@@ -341,6 +336,11 @@ export default function GamesLandingPage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Games</div>
                   <div className="mt-2 text-3xl font-black text-[var(--color-text-main)]">{GAMES.length}</div>
                   <div className="mt-1 text-sm text-[var(--color-text-muted)]">Ready to play now</div>
+                  {access && !access.isPremium ? (
+                    <div className="mt-2 text-xs font-semibold text-[#6d8160]">
+                      Free this week: {access.featuredGameId.replaceAll("-", " ")}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="rounded-2xl border border-black/5 bg-white/90 p-4 shadow-sm">
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Most popular this week</div>
@@ -408,14 +408,41 @@ export default function GamesLandingPage() {
             </div>
           </div>
 
+          {access && !access.isPremium ? (
+            <div className="mb-6 overflow-hidden rounded-[1.8rem] border border-[#e4d5ae] bg-[linear-gradient(135deg,#fff8e7_0%,#fffdf6_48%,#eef7df_100%)] px-5 py-4 text-sm text-[#6e5a2c] shadow-[0_16px_38px_rgba(190,160,74,0.16)]">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full border border-[#dfc77b] bg-white/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#9a6b14]">
+                  Featured Free Game
+                </span>
+                <span className="text-base font-semibold text-[#5f4c26]">
+                  This week’s unlocked game is <span className="text-[#315b2a]">{access.featuredGameId.replaceAll("-", " ")}</span>.
+                </span>
+              </div>
+              <p className="mt-2 text-[13px] text-[#7a6543]">
+                Free accounts can jump into this special pick right now. Upgrade to unlock every classroom game any time.
+              </p>
+            </div>
+          ) : null}
+
           <div ref={gameGridRef} id="games-grid" className="scroll-mt-[180px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {GAMES.map((g, index) => (
+              (() => {
+                const isLocked = access ? !canAccessGame(g.id) : false;
+                const isFeaturedFree = access ? access.featuredGameId === g.id : false;
+                const highlightFeatured = Boolean(access && !access.isPremium && isFeaturedFree);
+                return (
               <div
                 key={g.id}
                 ref={(el) => {
                   gameCardRefs.current[g.id] = el;
                 }}
-                className="group cursor-pointer scroll-mt-[180px] bg-white/90 rounded-[1.6rem] p-4 shadow-sm border border-black/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[rgba(30,64,175,0.18)] animate-fade-up"
+                className={`group scroll-mt-[180px] rounded-[1.6rem] p-4 shadow-sm border transition-all duration-300 animate-fade-up ${
+                  highlightFeatured
+                    ? "cursor-pointer border-[#d7c27f] bg-[linear-gradient(180deg,#fffdf6_0%,#fff6df_100%)] shadow-[0_20px_46px_rgba(190,160,74,0.22)] ring-2 ring-[#f2df99]/80 hover:-translate-y-2 hover:shadow-[0_28px_58px_rgba(190,160,74,0.28)]"
+                    : isLocked
+                    ? "cursor-not-allowed border-[#eadfc6] bg-[#fffaf4]"
+                    : "cursor-pointer border-black/5 bg-white/90 hover:-translate-y-2 hover:shadow-xl hover:border-[rgba(30,64,175,0.18)]"
+                }`}
                 style={{ animationDelay: `${index * 90}ms` }}
                 role="button"
                 tabIndex={0}
@@ -429,14 +456,47 @@ export default function GamesLandingPage() {
                 aria-label={`Enter ${g.title}`}
               >
                 <div className="space-y-3">
-                  <div className="inline-flex max-w-full items-center rounded-2xl border border-black/5 bg-white/95 px-4 py-2 text-xl font-semibold shadow-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className={`inline-flex max-w-full items-center rounded-2xl px-4 py-2 text-xl font-semibold shadow-sm ${
+                      highlightFeatured
+                        ? "border border-[#e0ca87] bg-white text-[#7a5513] shadow-[0_10px_24px_rgba(190,160,74,0.16)]"
+                        : "border border-black/5 bg-white/95"
+                    }`}>
                     <span className="truncate">{g.title}</span>
+                    </div>
+                    {isFeaturedFree ? (
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.16em] ${
+                        highlightFeatured
+                          ? "border border-[#dfc77b] bg-[#fff2c7] text-[#9a6b14] shadow-sm"
+                          : "border border-[#dbe3d1] bg-[#f7faf4] text-[#6d8160]"
+                      }`}>
+                        Free this week
+                      </span>
+                    ) : null}
+                    {isLocked ? (
+                      <span className="rounded-full border border-[#eadfc6] bg-[#fff6ea] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8b6a3f]">
+                        Premium
+                      </span>
+                    ) : null}
                   </div>
 
                   {g.subtitle && <p className="text-sm text-[var(--color-text-muted)]">{g.subtitle}</p>}
 
-                  <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 via-white to-emerald-50 flex items-center justify-center relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.10),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(127,163,106,0.10),transparent_30%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className={`aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center relative ${
+                    highlightFeatured
+                      ? "bg-[linear-gradient(135deg,#fff4ce_0%,#fffdf5_54%,#edf7de_100%)] ring-1 ring-[#ead9a3]"
+                      : "bg-gradient-to-br from-blue-50 via-white to-emerald-50"
+                  }`}>
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${
+                      highlightFeatured
+                        ? "bg-[radial-gradient(circle_at_top_right,rgba(231,190,74,0.24),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(127,163,106,0.16),transparent_34%)] opacity-100"
+                        : "bg-[radial-gradient(circle_at_top_right,rgba(30,64,175,0.10),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(127,163,106,0.10),transparent_30%)] opacity-0 group-hover:opacity-100"
+                    }`} />
+                    {highlightFeatured ? (
+                      <div className="absolute left-3 top-3 z-20 rounded-full border border-[#e1c97b] bg-white/88 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#9a6b14] shadow-sm">
+                        Special this week
+                      </div>
+                    ) : null}
                     <img
                       src={g.image ?? "/placeholder.png"}
                       alt={g.title}
@@ -450,10 +510,12 @@ export default function GamesLandingPage() {
                         e.stopPropagation();
                         enterGame(g.id);
                       }}
-                      className="btn btn-primary px-4 py-2.5 text-sm flex items-center gap-2 shadow-sm transition-transform group-hover:translate-x-0.5"
+                      className={`px-4 py-2.5 text-sm flex items-center gap-2 shadow-sm transition-transform ${
+                        isLocked ? "btn btn-secondary" : "btn btn-primary group-hover:translate-x-0.5"
+                      }`}
                     >
                       <Play size={14} />
-                      Play
+                      {isLocked ? "Preview" : "Play"}
                     </button>
                     <button
                       onClick={(e) => {
@@ -468,6 +530,8 @@ export default function GamesLandingPage() {
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         </div>

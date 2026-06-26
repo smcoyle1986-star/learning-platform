@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
+import { openBillingPortal } from "@/lib/billing/client";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
+  const { access } = useBillingAccess();
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -49,6 +52,12 @@ export default function ProfilePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Avatar</p>
             <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">{profile?.avatar_url ? "Uploaded" : "Not set"}</p>
           </div>
+          <div className="rounded-3xl border border-[#e5e8de] bg-[#fbfbf8] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Plan</p>
+            <p className="mt-3 text-lg font-semibold text-[#2f3a2f]">
+              {access?.isPremium ? "Premium" : "Free"}
+            </p>
+          </div>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -58,6 +67,15 @@ export default function ProfilePage() {
           <Link href="/flashcards" className="btn btn-secondary px-6 py-3">
             Open Flashcards
           </Link>
+          {access?.isPremium ? (
+            <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
+              Manage Billing
+            </button>
+          ) : (
+            <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
+              Upgrade to Premium
+            </Link>
+          )}
           <button type="button" onClick={signOut} className="btn btn-secondary px-6 py-3">
             Sign out
           </button>

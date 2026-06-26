@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import BrandButton from "@/components/BrandButton";
+import PageHeader from "@/components/navigation/PageHeader";
 import { useSearchParams } from "next/navigation";
+import UpgradeModal from "@/components/billing/UpgradeModal";
 import PrintablesOptionsPanel from "@/components/printables/PrintablesOptionsPanel";
 import PrintablesPreview from "@/components/printables/PrintablesPreview";
 import {
@@ -14,6 +15,7 @@ import { PrintableContentOption } from "@/lib/printables/types";
 import { usePrintableCards } from "@/lib/printables/usePrintableCards";
 import { buildWorksheetPreviewHtml } from "@/lib/worksheets/export";
 import { clearWorksheetPrintJob, readWorksheetPrintJob } from "@/lib/worksheets/print-job";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 export default function PrintablesPage() {
   const searchParams = useSearchParams();
@@ -32,6 +34,8 @@ export default function PrintablesPage() {
   const [printing, setPrinting] = useState<boolean>(false);
   const [exporting, setExporting] = useState<boolean>(false);
   const [worksheetHtml, setWorksheetHtml] = useState("<!doctype html><html><body></body></html>");
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const { canUsePrintableOptions } = useBillingAccess();
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +74,10 @@ export default function PrintablesPage() {
 
   // helpers
   const toggleCardsPerPage = (n: number) => {
+    if (!canUsePrintableOptions) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     if (selectedCardsPerPage === n) {
       setSelectedCardsPerPage(null);
     } else {
@@ -175,34 +183,20 @@ export default function PrintablesPage() {
   if (worksheetJob) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-        <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <nav className="flex items-center text-4xl font-bold text-black">Printables</nav>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => (window.location.href = "/worksheets")}
-                className="btn btn-secondary"
-              >
-                Return to Worksheets
-              </button>
-
-              <button
-                onClick={() => {
-                  clearWorksheetPrintJob();
-                  window.location.href = "/dashboard";
-                }}
-                className="btn btn-secondary"
-              >
-                Dashboard
-              </button>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          title="Printables"
+          primaryItems={[
+            { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+          ]}
+          secondaryItems={[
+            { label: "Flashcards", href: "/flashcards" },
+            { label: "Dashboard", onClick: () => {
+              clearWorksheetPrintJob();
+              window.location.href = "/dashboard";
+            } },
+            { label: "Community", href: "/teacher/community" },
+          ]}
+        />
 
         <div className="max-w-7xl mx-auto px-6 pt-6 pb-32 grid grid-cols-12 gap-6">
           <aside className="col-span-12 lg:col-span-3 self-start">
@@ -258,31 +252,17 @@ export default function PrintablesPage() {
   if (!cards || cards.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-        <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <nav className="flex items-center text-4xl font-bold text-black">Printables</nav>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => (window.location.href = "/flashcards")}
-                className="btn btn-secondary"
-              >
-                Return to Flashcards
-              </button>
-
-              <button
-                onClick={() => (window.location.href = "/dashboard")}
-                className="btn btn-secondary"
-              >
-                Return to Dashboard
-              </button>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          title="Printables"
+          primaryItems={[
+            { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+          ]}
+          secondaryItems={[
+            { label: "Flashcards", href: "/flashcards" },
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Community", href: "/teacher/community" },
+          ]}
+        />
 
         <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
           <div className="text-center py-32 text-[var(--color-text-muted)]">
@@ -317,36 +297,27 @@ export default function PrintablesPage() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <nav className="flex items-center text-4xl font-bold text-black">Printables</nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => (window.location.href = "/flashcards")}
-              className="btn btn-secondary"
-            >
-              Return to Flashcards
-            </button>
-
-            <button
-              onClick={() => (window.location.href = "/dashboard")}
-              className="btn btn-secondary"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Printables"
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Community", href: "/teacher/community" },
+        ]}
+      />
 
       {/* Layout: left options + main content (tray + preview). Main is wider. */}
       <div className="max-w-7xl mx-auto px-6 pt-6 pb-32 grid grid-cols-12 gap-6">
         {/* LEFT: Print Options */}
         <aside className="col-span-12 lg:col-span-3 self-start">
+          {!canUsePrintableOptions ? (
+            <div className="mb-4 rounded-2xl border border-[#eadfc6] bg-[#fff9f2] px-4 py-3 text-sm text-[#7a6543]">
+              Advanced printables options are part of Premium. Free accounts can still print the default classroom set.
+            </div>
+          ) : null}
           <PrintablesOptionsPanel
             selectedCardsPerPage={selectedCardsPerPage}
             contentOption={contentOption}
@@ -354,8 +325,20 @@ export default function PrintablesPage() {
             printing={printing}
             exporting={exporting}
             onToggleCardsPerPage={toggleCardsPerPage}
-            onSetContentOption={setContentOption}
-            onSetInkSaving={setInkSaving}
+            onSetContentOption={(value) => {
+              if (!canUsePrintableOptions) {
+                setUpgradeModalOpen(true);
+                return;
+              }
+              setContentOption(value);
+            }}
+            onSetInkSaving={(value) => {
+              if (!canUsePrintableOptions) {
+                setUpgradeModalOpen(true);
+                return;
+              }
+              setInkSaving(value);
+            }}
             onPrintNow={handlePrintNow}
             onExportPdf={handleExportPdf}
           />
@@ -433,6 +416,12 @@ export default function PrintablesPage() {
           border-radius: 8px;
         }
       `}</style>
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        title="Unlock advanced printables"
+        description="Premium unlocks alternate print layouts, content modes, and low-ink print settings."
+      />
     </div>
   );
 }

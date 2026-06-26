@@ -309,6 +309,14 @@ export default function SignupPage() {
               alt="Classendo premium monthly and yearly pricing"
               caption="Start free, then upgrade when you need more."
             />
+            <div className="flex flex-wrap gap-3">
+              <Link href="/upgrade" className="btn btn-primary px-6 py-3">
+                Go Premium
+              </Link>
+              <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
+                View Pricing
+              </Link>
+            </div>
           </div>
 
           <div className="rounded-[1.75rem] border border-[#e5e8de] bg-white/70 px-6 py-5 shadow-[0_14px_30px_rgba(54,64,46,0.06)]">

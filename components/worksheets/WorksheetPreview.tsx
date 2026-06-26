@@ -33,6 +33,7 @@ export default function WorksheetPreview({
   const previewFrameRef = useRef<HTMLDivElement | null>(null);
   const [crosswordScale, setCrosswordScale] = useState(1);
   const isFitPreview =
+    draft.type === "bullseye" ||
     draft.type === "crossword" ||
     draft.type === "matching" ||
     draft.type === "tic-tac-toe" ||
@@ -67,7 +68,10 @@ export default function WorksheetPreview({
       const bounds = element.getBoundingClientRect();
       if (!bounds.width || !bounds.height) return;
 
-      const baseSize = draft.type === "tic-tac-toe" || draft.type === "battleship" ? LANDSCAPE_PREVIEW_BASE_SIZE : PORTRAIT_PREVIEW_BASE_SIZE;
+      const baseSize =
+        draft.type === "bullseye" || draft.type === "tic-tac-toe" || draft.type === "battleship"
+          ? LANDSCAPE_PREVIEW_BASE_SIZE
+          : PORTRAIT_PREVIEW_BASE_SIZE;
       const nextScale = Math.min((bounds.width - 8) / baseSize.width, (bounds.height - 8) / baseSize.height, 1);
       setCrosswordScale(Math.max(nextScale, 0.1));
     };
@@ -146,7 +150,7 @@ export default function WorksheetPreview({
               onLinesChange={onSentenceScrambleLinesChange ?? (() => undefined)}
             />
           </div>
-        ) : draft.type === "tic-tac-toe" || draft.type === "battleship" ? (
+        ) : draft.type === "bullseye" || draft.type === "tic-tac-toe" || draft.type === "battleship" ? (
           <div
             className="absolute left-1/2 top-1/2"
             style={{

@@ -29,15 +29,20 @@ function normalizeWorksheetType(value: unknown): WorksheetType {
   return "crossword";
 }
 
-function normalizeWorksheet(raw: any): SavedWorksheetRecord {
-  const draft = raw.draft ?? {};
+function enumOrFallback<T extends string>(value: unknown, fallback: T): T {
+  return typeof value === "string" && value.trim() ? (value as T) : fallback;
+}
+
+function normalizeWorksheet(raw: unknown): SavedWorksheetRecord {
+  const source = (raw ?? {}) as Record<string, unknown>;
+  const draft = (source.draft ?? {}) as Record<string, unknown>;
   return {
-    id: String(raw.id),
-    name: String(raw.name ?? "Untitled Worksheet"),
-    userId: String(raw.user_id),
-    worksheetType: normalizeWorksheetType(raw.worksheet_type),
-    isPublic: Boolean(raw.is_public ?? true),
-    cards: Array.isArray(raw.cards) ? raw.cards.map(normalizeLessonCard) : [],
+    id: String(source.id),
+    name: String(source.name ?? "Untitled Worksheet"),
+    userId: String(source.user_id),
+    worksheetType: normalizeWorksheetType(source.worksheet_type),
+    isPublic: Boolean(source.is_public ?? true),
+    cards: Array.isArray(source.cards) ? source.cards.map(normalizeLessonCard) : [],
     draft: {
       type: normalizeWorksheetType(draft.type),
       title: String(draft.title ?? ""),
@@ -51,7 +56,7 @@ function normalizeWorksheet(raw: any): SavedWorksheetRecord {
       writingLines: Array.isArray(draft.writingLines)
         ? draft.writingLines.map((item: unknown) => String(item ?? ""))
         : [],
-      writingImageMode: draft.writingImageMode ?? "both",
+      writingImageMode: enumOrFallback(draft.writingImageMode, "both"),
       writingTraceable: Boolean(draft.writingTraceable ?? false),
       writingTraceRepeats: [1, 2, 3].includes(Number(draft.writingTraceRepeats))
         ? (Number(draft.writingTraceRepeats) as 1 | 2 | 3)
@@ -59,27 +64,27 @@ function normalizeWorksheet(raw: any): SavedWorksheetRecord {
       sentenceScrambleLines: Array.isArray(draft.sentenceScrambleLines)
         ? draft.sentenceScrambleLines.map((item: unknown) => String(item ?? ""))
         : [],
-      sentenceScrambleLevel: draft.sentenceScrambleLevel ?? "medium",
-      ticTacToeImageMode: draft.ticTacToeImageMode ?? "both",
+      sentenceScrambleLevel: enumOrFallback(draft.sentenceScrambleLevel, "medium"),
+      ticTacToeImageMode: enumOrFallback(draft.ticTacToeImageMode, "both"),
       ticTacToeBoardCount: [1, 2, 4, 8].includes(Number(draft.ticTacToeBoardCount))
         ? (Number(draft.ticTacToeBoardCount) as 1 | 2 | 4 | 8)
         : 1,
-      battleshipImageMode: draft.battleshipImageMode ?? "image",
+      battleshipImageMode: enumOrFallback(draft.battleshipImageMode, "image"),
       battleshipBoardMode: draft.battleshipBoardMode === "ships" ? "ships" : "empty",
       battleshipWorksheetCount: Number.isFinite(Number(draft.battleshipWorksheetCount))
         ? Math.max(1, Math.floor(Number(draft.battleshipWorksheetCount)))
         : 1,
-      wordsearchListMode: draft.wordsearchListMode ?? "both",
+      wordsearchListMode: enumOrFallback(draft.wordsearchListMode, "both"),
       wordsearchAddRandomLetters: Boolean(draft.wordsearchAddRandomLetters ?? false),
-      difficulty: draft.difficulty ?? "medium",
-      clueMode: draft.clueMode ?? "both",
-      bullseyeVersion: draft.bullseyeVersion ?? "points",
-      bullseyeImageMode: draft.bullseyeImageMode ?? "image",
+      difficulty: enumOrFallback(draft.difficulty, "medium"),
+      clueMode: enumOrFallback(draft.clueMode, "both"),
+      bullseyeVersion: enumOrFallback(draft.bullseyeVersion, "points"),
+      bullseyeImageMode: enumOrFallback(draft.bullseyeImageMode, "image"),
       bullseyeInkSaver: Boolean(draft.bullseyeInkSaver ?? false),
       shuffleSeed: Number(draft.shuffleSeed ?? Date.now()),
     },
-    createdAt: raw.created_at,
-    updatedAt: raw.updated_at,
+    createdAt: typeof source.created_at === "string" ? source.created_at : undefined,
+    updatedAt: typeof source.updated_at === "string" ? source.updated_at : undefined,
   };
 }
 
@@ -120,6 +125,31 @@ export async function saveWorksheet(
     .single();
   if (error || !data) throw error ?? new Error("Failed to create worksheet");
   return normalizeWorksheet(data);
+}
+
+export async function saveWorksheetFromClient(
+  supabase: SupabaseClient,
+  input: SaveWorksheetInput
+) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch("/api/worksheets/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload) {
+    throw new Error(String(payload?.error ?? "Failed to save worksheet."));
+  }
+
+  return normalizeWorksheet(payload);
 }
 
 export async function loadWorksheetById(supabase: SupabaseClient, worksheetId: string) {

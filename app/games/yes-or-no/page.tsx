@@ -28,6 +28,8 @@ type Team = {
   score: number;
 };
 
+type PlayMode = "team" | "classroom-sides";
+
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /*
@@ -95,6 +97,7 @@ export default function YesOrNoPage() {
   }, []);
 
   // Teams / Scoreboard
+  const [playMode, setPlayMode] = useState<PlayMode>("team");
   const [teams, setTeams] = useState<Team[]>([
     { id: "team-1", name: "Team 1", score: 0 },
     { id: "team-2", name: "Team 2", score: 0 },
@@ -353,14 +356,19 @@ export default function YesOrNoPage() {
     if (timerSeconds <= 0) {
       if (!roundEndHandledRef.current) {
         roundEndHandledRef.current = true;
-        void handleYesNo(false);
+        if (playMode === "classroom-sides") {
+          handleClassroomSideReveal();
+        } else {
+          void handleYesNo(false);
+        }
       }
       return;
     }
     const id = window.setTimeout(() => setTimerSeconds((s) => (s !== null ? s - 1 : s)), 1000);
     timerRef.current = id;
     return () => clearTimeout(id);
-  }, [roundPhase, timerSeconds, turnLength]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playMode, roundPhase, timerSeconds, turnLength]);
 
   function startTimer() {
     roundEndHandledRef.current = false;
@@ -614,6 +622,23 @@ export default function YesOrNoPage() {
     }
   }
 
+  function handleClassroomSideReveal() {
+    if (roundPhase !== "timing") return;
+    stopTimer();
+    setRoundPhase("feedback");
+    if (correctAnswerIsYes) playYesJingle();
+    else playNoJingle();
+
+    if (currentCardIndex !== null && !usedIndices.includes(currentCardIndex)) {
+      setUsedIndices((u) => [...u, currentCardIndex]);
+    }
+
+    clearPopupTimeout();
+    popupTimeoutRef.current = window.setTimeout(() => {
+      advanceAfterRound();
+    }, 2200);
+  }
+
   function advanceAfterRound() {
     clearPointsSpinnerTimers();
     if (popupTimeoutRef.current) {
@@ -624,7 +649,9 @@ export default function YesOrNoPage() {
     setShowPointsSpinner(false);
     setAwardedPoints(null);
     setShowNoPoints(false);
-    setActiveTeamIndex((i) => (i + 1) % teams.length);
+    if (playMode === "team") {
+      setActiveTeamIndex((i) => (i + 1) % teams.length);
+    }
     const nextUnused = pickRandomCardIndex(true);
     if (nextUnused === null) {
       resetForNextCard(null);
@@ -638,14 +665,14 @@ export default function YesOrNoPage() {
   const [winnerOpen, setWinnerOpen] = useState(false);
   const [winnerTeam, setWinnerTeam] = useState<Team | null>(null);
   useEffect(() => {
-    if (allUsed) {
+    if (allUsed && playMode === "team") {
       const winner = teams.reduce((best, t) => (t.score > best.score ? t : best), teams[0]);
       setWinnerTeam(winner);
       setWinnerOpen(true);
       playCorrectSound();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allUsed]);
+  }, [allUsed, playMode]);
 
   // Modal "Finished" behavior: teacher closes manually; requires all filled
   function handleModalFinished() {
@@ -733,6 +760,23 @@ export default function YesOrNoPage() {
     });
   }
 
+  function switchPlayMode(nextMode: PlayMode) {
+    if (nextMode === playMode) return;
+    clearPopupTimeout();
+    clearPointsSpinnerTimers();
+    setShowPointsPrompt(false);
+    setShowPointsSpinner(false);
+    setAwardedPoints(null);
+    setShowNoPoints(false);
+    stopTimer();
+    roundEndHandledRef.current = false;
+    setRoundPhase("hidden");
+    setGameStarted(false);
+    setWinnerOpen(false);
+    setWinnerTeam(null);
+    setPlayMode(nextMode);
+  }
+
   // Edge: no cards
   if (!tray || tray.length === 0) {
     return (
@@ -767,43 +811,82 @@ export default function YesOrNoPage() {
         trackGameKey="yes-or-no"
       />
 
-      {/* Scoreboard */}
-      <div className="pt-[72px] max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between gap-4 mb-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-base md:text-lg font-semibold">Scoreboard</h2>
-            <div className="text-xs md:text-sm text-gray-600">Teams</div>
+      <div className="fixed left-1/2 top-[78px] z-[75] -translate-x-1/2 -translate-y-4 opacity-25 transition-all duration-300 hover:translate-y-0 hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100">
+        <div className="rounded-full border border-white/80 bg-white/82 px-2 py-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl">
+          <div className="flex items-center gap-2 rounded-full bg-[#eef5ee] p-1">
+            <button
+              onClick={() => switchPlayMode("team")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                playMode === "team"
+                  ? "bg-[var(--color-accent)] text-white shadow"
+                  : "text-slate-600 hover:bg-white hover:text-slate-900"
+              }`}
+            >
+              Team Game
+            </button>
+            <button
+              onClick={() => switchPlayMode("classroom-sides")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                playMode === "classroom-sides"
+                  ? "bg-[#89ad70] text-white shadow"
+                  : "text-slate-600 hover:bg-white hover:text-slate-900"
+              }`}
+            >
+              Classroom Sides
+            </button>
+          </div>
+        </div>
+      </div>
 
+      {playMode === "team" ? (
+        <div className="pt-[72px] max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base md:text-lg font-semibold">Scoreboard</h2>
+              <div className="text-xs md:text-sm text-gray-600">Teams</div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-white text-sm">
+                <div className="text-xs text-gray-500">Active</div>
+                <div className="font-semibold">{teams[activeTeamIndex]?.name}</div>
+                <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse ml-2" />
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md border bg-white text-sm">
-              <div className="text-xs text-gray-500">Active</div>
-              <div className="font-semibold">{teams[activeTeamIndex]?.name}</div>
-              <div className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse ml-2" />
+          <div className="mb-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            {teams.map((team, idx) => {
+              const isActive = idx === activeTeamIndex;
+              return (
+                <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-accent)]" : "bg-white"}`}>
+                  <div>
+                    <div className="text-xs md:text-sm font-semibold">{team.name}</div>
+                  </div>
+                  <div className="text-lg md:text-xl font-bold w-10 md:w-12 text-center">{team.score}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="pt-[72px] max-w-7xl mx-auto px-4">
+          <div className="mb-2 rounded-[24px] border border-white/80 bg-white/78 px-5 py-3 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base md:text-lg font-semibold text-slate-800">Classroom Sides</h2>
+                <p className="text-sm text-slate-600">Students move to the YES side or the NO side. When the timer ends, the correct side reveals automatically.</p>
+              </div>
+              <div className="rounded-full border border-[#89ad70]/30 bg-[#eef5e6] px-4 py-2 text-sm font-semibold text-[#587446]">
+                {remainingCount} cards left
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Team boxes */}
-        <div className="mb-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-          {teams.map((team, idx) => {
-            const isActive = idx === activeTeamIndex;
-            return (
-              <div key={team.id} className={`p-2 rounded-md border flex items-center justify-between transition-transform ${isActive ? "scale-105 ring-2 ring-[var(--color-accent)]" : "bg-white"}`}>
-                <div>
-                  <div className="text-xs md:text-sm font-semibold">{team.name}</div>
-                </div>
-                <div className="text-lg md:text-xl font-bold w-10 md:w-12 text-center">{team.score}</div>
-              </div>
-            );
-          })}
-        </div>
-
-      </div>
+      )}
 
       {/* Main game grid */}
-      <main className="max-w-7xl mx-auto px-4 pb-4 h-[calc(100vh-220px)] min-h-0">
+      <main className={`max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
         <div className="flex justify-center items-start h-full min-h-0">
           <div className="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-4 md:p-5 flex flex-col items-center overflow-hidden h-full min-h-0">
             <div className="relative w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 py-1">
@@ -843,32 +926,83 @@ export default function YesOrNoPage() {
               </div>
             </div>
 
-            <div className="relative z-10 flex items-center justify-center gap-4 pb-2 mt-auto">
-              <button
-                onClick={() => void handleYesNo(true)}
-                disabled={!canAnswer}
-                className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
-                  canAnswer
-                    ? "bg-[linear-gradient(180deg,#6ee7a8,#16a34a)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(22,163,74,0.35)]"
-                    : "bg-[#a7f3d0] opacity-75 cursor-not-allowed"
-                }`}
-                aria-label="Yes"
-              >
-                YES
-              </button>
-              <button
-                onClick={() => void handleYesNo(false)}
-                disabled={!canAnswer}
-                className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
-                  canAnswer
-                    ? "bg-[linear-gradient(180deg,#fca5a5,#ef4444)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(239,68,68,0.35)]"
-                    : "bg-[#fbcaca] opacity-75 cursor-not-allowed"
-                }`}
-                aria-label="No"
-              >
-                NO
-              </button>
-            </div>
+            {playMode === "team" ? (
+              <div className="relative z-10 flex items-center justify-center gap-4 pb-2 mt-auto">
+                <button
+                  onClick={() => void handleYesNo(true)}
+                  disabled={!canAnswer}
+                  className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
+                    canAnswer
+                      ? "bg-[linear-gradient(180deg,#6ee7a8,#16a34a)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(22,163,74,0.35)]"
+                      : "bg-[#a7f3d0] opacity-75 cursor-not-allowed"
+                  }`}
+                  aria-label="Yes"
+                >
+                  YES
+                </button>
+                <button
+                  onClick={() => void handleYesNo(false)}
+                  disabled={!canAnswer}
+                  className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
+                    canAnswer
+                      ? "bg-[linear-gradient(180deg,#fca5a5,#ef4444)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(239,68,68,0.35)]"
+                      : "bg-[#fbcaca] opacity-75 cursor-not-allowed"
+                  }`}
+                  aria-label="No"
+                >
+                  NO
+                </button>
+              </div>
+            ) : (
+              <div className="relative z-10 mt-auto w-full max-w-[980px] pb-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div
+                    className={`min-h-[130px] rounded-[28px] border-[3px] p-5 text-left shadow-xl transition-all duration-300 ${
+                      roundPhase === "feedback" && correctAnswerIsYes
+                        ? "border-[#2f8a46] bg-[linear-gradient(180deg,#d5f7df,#8dd59d)] text-[#174c26] scale-[1.01]"
+                        : "border-[#b7e1bf] bg-[linear-gradient(180deg,#effcf2,#c8f0d4)] text-[#245231]"
+                    } ${
+                      roundPhase === "feedback" && !correctAnswerIsYes
+                        ? "pointer-events-none opacity-0 scale-95 md:-translate-x-8"
+                        : ""
+                    } ${roundPhase === "timing" ? "animate-pulse" : ""}`}
+                  >
+                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Left side</div>
+                    <div className="mt-3 text-4xl md:text-5xl font-black tracking-tight">YES</div>
+                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Students move to the YES side of the classroom.</p>
+                  </div>
+                  <div
+                    className={`min-h-[130px] rounded-[28px] border-[3px] p-5 text-left shadow-xl transition-all duration-300 ${
+                      roundPhase === "feedback" && !correctAnswerIsYes
+                        ? "border-[#d13d52] bg-[linear-gradient(180deg,#ffe0e4,#f7a4af)] text-[#6d1020] scale-[1.01]"
+                        : "border-[#f1c6ce] bg-[linear-gradient(180deg,#fff3f5,#ffd9de)] text-[#7b2130]"
+                    } ${
+                      roundPhase === "feedback" && correctAnswerIsYes
+                        ? "pointer-events-none opacity-0 scale-95 md:translate-x-8"
+                        : ""
+                    } ${roundPhase === "timing" ? "animate-pulse" : ""}`}
+                  >
+                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Right side</div>
+                    <div className="mt-3 text-4xl md:text-5xl font-black tracking-tight">NO</div>
+                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Students move to the NO side of the classroom.</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 min-h-[52px] flex items-center justify-center">
+                  {roundPhase === "feedback" ? (
+                    <div className={`rounded-full px-6 py-3 text-lg md:text-xl font-extrabold shadow-lg ${
+                      correctAnswerIsYes ? "bg-[#e6f8ea] text-[#1e6c34]" : "bg-[#fff0f2] text-[#b4233b]"
+                    }`}>
+                      Answer: {correctAnswerIsYes ? "YES" : "NO"}
+                    </div>
+                  ) : (
+                    <div className="rounded-full border border-slate-200 bg-slate-50 px-5 py-2 text-sm font-semibold text-slate-600">
+                      Answer reveals automatically when the timer finishes
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {!gameStarted && !sentencesModalOpen && currentCardIndex !== null && (
               <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-auto">
@@ -936,20 +1070,26 @@ export default function YesOrNoPage() {
 
             <div className="mb-5">
               <div className="mb-2 font-semibold">Teams</div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={addTeam} disabled={teams.length >= 6} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
-                  Add team
-                </button>
-                <button onClick={removeTeam} disabled={teams.length <= 1} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
-                  Remove team
-                </button>
-                <button onClick={resetScores} className="btn btn-secondary px-3 py-2 text-sm">
-                  Reset scores
-                </button>
-                <button onClick={() => resetGameState(true)} className="btn btn-secondary px-3 py-2 text-sm">
-                  Reset game
-                </button>
-              </div>
+              {playMode === "team" ? (
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={addTeam} disabled={teams.length >= 6} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
+                    Add team
+                  </button>
+                  <button onClick={removeTeam} disabled={teams.length <= 1} className="btn btn-secondary px-3 py-2 text-sm disabled:opacity-50">
+                    Remove team
+                  </button>
+                  <button onClick={resetScores} className="btn btn-secondary px-3 py-2 text-sm">
+                    Reset scores
+                  </button>
+                  <button onClick={() => resetGameState(true)} className="btn btn-secondary px-3 py-2 text-sm">
+                    Reset game
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#89ad70]/20 bg-[#f4f9f0] px-4 py-3 text-sm text-[#587446]">
+                  Team scoring stays in Team Game. Classroom Sides keeps the same prompts and timer, then reveals the answer automatically.
+                </div>
+              )}
             </div>
 
             <div className="mb-5">
@@ -993,7 +1133,7 @@ export default function YesOrNoPage() {
           </div>
         </div>
       )}
-      {(showPointsPrompt || showPointsSpinner) && (
+      {playMode === "team" && (showPointsPrompt || showPointsSpinner) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto">
           {!showPointsSpinner ? (
             <button
@@ -1022,8 +1162,8 @@ export default function YesOrNoPage() {
       {/* Sentences modal */}
       {sentencesModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div ref={modalRef} className="relative bg-white rounded-2xl shadow-xl w-full max-w-5xl p-6 overflow-hidden max-h-[90vh]" tabIndex={-1}>
-            <div className="flex items-start justify-between gap-4 mb-4">
+          <div ref={modalRef} className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[30px] bg-[#fffdf8] shadow-[0_28px_80px_rgba(15,23,42,0.22)]" tabIndex={-1}>
+            <div className="flex items-start justify-between gap-4 border-b border-[#eadfcb] px-6 py-5">
               <div>
                 <h3 className="text-2xl font-bold">Enter sentences for each card</h3>
                 <p className="text-sm text-gray-600 mt-1">
@@ -1051,24 +1191,24 @@ export default function YesOrNoPage() {
 
             {sentencesModalView === "edit" ? (
               <>
-                <div className="mb-4 flex flex-wrap items-center gap-3">
-                  <label className="text-sm font-semibold text-gray-700">Set name</label>
-                  <input
-                    value={promptSetName}
-                    onChange={(e) => setPromptSetName(e.target.value)}
-                    className="min-w-[16rem] flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
-                    placeholder="Name this set"
-                  />
-                  <button
-                    onClick={() => void handleSavePromptSet()}
-                    disabled={savingPromptSet}
-                    className="px-4 py-2 rounded-full bg-[var(--color-primary)] text-white text-sm font-semibold shadow hover:-translate-y-0.5 transition-transform disabled:opacity-60"
-                  >
-                    {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
-                  </button>
-                </div>
+                <div className="flex-1 overflow-auto px-6 py-5">
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <label className="text-sm font-semibold text-gray-700">Set name</label>
+                    <input
+                      value={promptSetName}
+                      onChange={(e) => setPromptSetName(e.target.value)}
+                      className="min-w-[16rem] flex-1 rounded-full border border-[#e3d7c2] bg-white px-4 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
+                      placeholder="Name this set"
+                    />
+                    <button
+                      onClick={() => void handleSavePromptSet()}
+                      disabled={savingPromptSet}
+                      className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,150,86,0.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+                    >
+                      {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
+                    </button>
+                  </div>
 
-                <div className="max-h-[62vh] overflow-auto pr-1">
                   <div className="grid grid-cols-1 gap-4">
                     {tray.map((c) => (
                       <div key={c.id} data-card-id={c.id} className="flex gap-3 items-start p-3 border rounded">
@@ -1116,18 +1256,24 @@ export default function YesOrNoPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2 items-center">
-                  <button onClick={handleModalFinished} className="px-4 py-2 rounded bg-green-600 text-white shadow">
-                    Finished
-                  </button>
-                  <button onClick={() => setSentencesModalOpen(false)} className="px-4 py-2 rounded bg-white border">
+                <div className="flex items-center justify-end gap-3 border-t border-[#eadfcb] bg-[#fffaf0] px-6 py-4">
+                  <button
+                    onClick={() => setSentencesModalOpen(false)}
+                    className="rounded-full border border-[#d8ccb6] bg-white px-5 py-2.5 text-sm font-semibold text-[#4d5b4d] shadow-sm transition-transform hover:-translate-y-0.5"
+                  >
                     Close
+                  </button>
+                  <button
+                    onClick={handleModalFinished}
+                    className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-6 py-2.5 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(111,150,86,0.28)] transition-transform hover:-translate-y-0.5"
+                  >
+                    Finished
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <div className="max-h-[62vh] overflow-auto pr-1">
+                <div className="flex-1 overflow-auto px-6 py-5">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <div className="flex rounded-full bg-gray-100 p-1">
                       <button
@@ -1221,8 +1367,11 @@ export default function YesOrNoPage() {
                   )}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2 items-center">
-                  <button onClick={() => setSentencesModalOpen(false)} className="px-4 py-2 rounded bg-white border">
+                <div className="flex items-center justify-end gap-3 border-t border-[#eadfcb] bg-[#fffaf0] px-6 py-4">
+                  <button
+                    onClick={() => setSentencesModalOpen(false)}
+                    className="rounded-full border border-[#d8ccb6] bg-white px-5 py-2.5 text-sm font-semibold text-[#4d5b4d] shadow-sm transition-transform hover:-translate-y-0.5"
+                  >
                     Close
                   </button>
                 </div>

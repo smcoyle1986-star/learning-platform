@@ -4,8 +4,10 @@ import { LessonRecord } from "@/lib/lessons/types";
 
 type DashboardLessonCardProps = {
   lesson: LessonRecord;
+  selected?: boolean;
   enterLabel?: string;
   enterButtonClassName?: string;
+  onSelect: (lesson: LessonRecord) => void;
   onPreview: (lesson: LessonRecord) => void;
   onEdit: (lesson: LessonRecord) => void;
   onOpenGames: (lesson: LessonRecord) => void;
@@ -17,8 +19,10 @@ type DashboardLessonCardProps = {
 
 export default function DashboardLessonCard({
   lesson,
+  selected = false,
   enterLabel = "Enter Classroom",
   enterButtonClassName = "btn btn-primary flex-1 px-3 py-2 text-sm",
+  onSelect,
   onPreview,
   onEdit,
   onOpenGames,
@@ -28,11 +32,27 @@ export default function DashboardLessonCard({
   onPrint,
 }: DashboardLessonCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-5 transition relative border shadow-sm hover:shadow-md">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(lesson)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(lesson);
+        }
+      }}
+      className={`bg-white rounded-2xl p-5 transition relative border shadow-sm hover:shadow-md cursor-pointer ${
+        selected ? "border-blue-600 ring-2 ring-blue-100 shadow-md" : ""
+      }`}
+    >
       <div className="flex items-center gap-2 mb-2">
         <button
           type="button"
-          onClick={() => onPreview(lesson)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onPreview(lesson);
+          }}
           className="group inline-flex items-center gap-2 font-semibold text-[var(--color-text-main)] truncate text-left cursor-pointer hover:text-blue-700"
           title={lesson.name}
           aria-label={lesson.name}
@@ -47,7 +67,10 @@ export default function DashboardLessonCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2 mt-7">
           <button
-            onClick={() => onOpenWorksheets(lesson)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenWorksheets(lesson);
+            }}
             className="btn btn-secondary px-2 py-1.5 text-xs"
             title="Worksheets"
           >
@@ -55,7 +78,10 @@ export default function DashboardLessonCard({
           </button>
 
           <button
-            onClick={() => onOpenGames(lesson)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenGames(lesson);
+            }}
             className="btn btn-secondary px-2 py-1.5 text-xs"
             title="Games"
             aria-label="Open Games"
@@ -83,7 +109,10 @@ export default function DashboardLessonCard({
           </button>
 
           <button
-            onClick={() => onEdit(lesson)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(lesson);
+            }}
             className="btn btn-secondary px-2 py-1.5 text-xs"
             title="Edit"
           >
@@ -91,7 +120,10 @@ export default function DashboardLessonCard({
           </button>
 
           <button
-            onClick={() => onDelete(lesson.id)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(lesson.id);
+            }}
             className="btn btn-secondary px-2 py-1.5 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
             title="Delete"
           >
@@ -114,7 +146,10 @@ export default function DashboardLessonCard({
 
       <div className="flex gap-2">
         <button
-          onClick={() => onEnterClassroom(lesson)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEnterClassroom(lesson);
+          }}
           className={enterButtonClassName}
         >
           <Play size={14} />
@@ -122,7 +157,10 @@ export default function DashboardLessonCard({
         </button>
 
         <button
-          onClick={() => onPrint(lesson)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onPrint(lesson);
+          }}
           className="btn btn-secondary px-3 py-2 flex items-center gap-2 text-sm"
         >
           <Printer size={14} />

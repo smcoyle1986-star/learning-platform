@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import BrandButton from "@/components/BrandButton";
+import PageHeader from "@/components/navigation/PageHeader";
 import { supabase } from "@/lib/supabase/client";
 // removed duplicate createClient import to avoid creating a second client that triggers refresh token errors
 import { useAuth } from "@/components/AuthProvider";
@@ -31,6 +31,7 @@ import {
 import { useFlashcardCarousel } from "@/lib/flashcards/useFlashcardCarousel";
 import { useFlashcardLessonSave } from "@/lib/flashcards/useFlashcardLessonSave";
 import { useLessonTrayInteractions } from "@/lib/flashcards/useLessonTrayInteractions";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 export default function FlashcardsPage() {
   const router = useRouter();
@@ -46,12 +47,13 @@ export default function FlashcardsPage() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [imageVariants, setImageVariants] = useState<Record<string, string[]>>({});
+  const [imageVariants, setImageVariants] = useState<Record<string, import("@/lib/flashcards/types").FlashcardImageVariant[]>>({});
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
   const addToastTimeoutRef = useRef<number | null>(null);
 
   // useAuth from context (authentication requirement)
   const { user } = useAuth();
+  const { access, canUsePremiumImageVariations } = useBillingAccess();
 
   const {
     showSaveModal,
@@ -61,6 +63,10 @@ export default function FlashcardsPage() {
     nameError,
     showReplaceConfirm,
     setShowReplaceConfirm,
+    showSaveLimitModal,
+    setShowSaveLimitModal,
+    showSaveSuccessModal,
+    setShowSaveSuccessModal,
     showSavedIndicator,
     editingLessonSetId,
     setEditingLessonSetId,
@@ -150,6 +156,7 @@ export default function FlashcardsPage() {
     getCarouselKey,
     getCardImages,
     getActiveImage,
+    getActiveVariant,
     startCarouselSlide,
     finishCarouselSlide,
   } = useFlashcardCarousel({
@@ -193,6 +200,8 @@ export default function FlashcardsPage() {
   }
 
   function addToLessonTray(card: Card) {
+    const activeVariant = getActiveVariant(card);
+    if (activeVariant?.isPremium && !canUsePremiumImageVariations) return;
     const imagePath = getActiveImage(card);
     if (!imagePath) return;
     const displayWord = getDisplayWord(card);
@@ -267,18 +276,48 @@ export default function FlashcardsPage() {
         } as React.CSSProperties
       }
     >
-      <header className="bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--color-text-main)]">
-            Flashcards
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Flashcards"
+        sticky={false}
+        primaryItems={[
+          { label: "Classroom", onClick: () => {
+            persistLessonTray();
+            router.push("/flashcards/classroom");
+          }, tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Dashboard", onClick: () => {
+            persistLessonTray();
+            router.push("/dashboard");
+          } },
+          { label: "Community", onClick: () => {
+            persistLessonTray();
+            router.push("/teacher/community");
+          } },
+          { label: "Editor", onClick: () => {
+            persistLessonTray();
+            router.push("/teacher/editor");
+          } },
+          { label: "Printables", onClick: () => {
+            persistLessonTray();
+            router.push("/printables?from=flashcards");
+          } },
+          { label: "Worksheets", onClick: () => {
+            persistLessonTray();
+            router.push("/worksheets");
+          } },
+          { label: "Lesson Plans", onClick: () => {
+            persistLessonTray();
+            router.push("/lessons");
+          } },
+          { label: "Games", onClick: () => {
+            persistLessonTray();
+            router.push("/games");
+          } },
+        ]}
+      />
 
       <LessonTrayBar
-        openDropdown={openDropdown}
         editingLessonSetId={editingLessonSetId}
         lessonName={lessonName}
         lessonTray={lessonTray}
@@ -292,28 +331,11 @@ export default function FlashcardsPage() {
         onDrop={onDrop}
         onDragEnd={onDragEnd}
         onTrayItemKeyDown={onTrayItemKeyDown}
-        onSetOpenDropdown={setOpenDropdown}
         onRemoveFromTray={removeFromLessonTray}
         onOpenSaveModal={() => setShowSaveModal(true)}
-        onGoDashboard={() => {
-          setOpenDropdown(null);
-          router.push("/dashboard");
-        }}
-        onGoGames={() => {
-          setOpenDropdown(null);
-          router.push("/games");
-        }}
         onGoWorksheets={() => {
           setOpenDropdown(null);
           router.push("/worksheets");
-        }}
-        onGoCommunity={() => {
-          setOpenDropdown(null);
-          router.push("/teacher/community");
-        }}
-        onGoClassroom={() => {
-          persistLessonTray();
-          router.push("/flashcards/classroom");
         }}
         onPrint={() => {
           persistLessonTray();
@@ -351,13 +373,13 @@ export default function FlashcardsPage() {
       />
 
       <main className="bg-[var(--color-bg-main)] border-b border-black/5">
-
         <FlashcardResultsGrid
           results={results}
           lastAddedId={lastAddedId}
           getCarouselKey={getCarouselKey}
           getCardImages={getCardImages}
           getActiveImage={getActiveImage}
+          getActiveVariant={getActiveVariant}
           getDisplayWord={getDisplayWord}
           carouselState={carouselState}
           onAddToLessonTray={addToLessonTray}
@@ -369,6 +391,7 @@ export default function FlashcardsPage() {
           showSaveModal={showSaveModal}
           lessonName={lessonName}
           isPublic={isPublic}
+          nameError={nameError}
           onLessonNameChange={setLessonName}
           onTogglePublic={() => setIsPublic((value) => !value)}
           onCancelSave={() => {
@@ -379,6 +402,24 @@ export default function FlashcardsPage() {
           showReplaceConfirm={showReplaceConfirm}
           onCancelReplace={() => setShowReplaceConfirm(false)}
           onReplaceLesson={replaceLesson}
+          showSaveLimitModal={showSaveLimitModal}
+          onCloseSaveLimitModal={() => setShowSaveLimitModal(false)}
+          onGoDashboardToDelete={() => {
+            setShowSaveLimitModal(false);
+            router.push("/dashboard");
+          }}
+          onReturnToFlashcards={() => {
+            setShowSaveLimitModal(false);
+          }}
+          showSaveSuccessModal={showSaveSuccessModal}
+          onCloseSaveSuccessModal={() => setShowSaveSuccessModal(false)}
+          onGoDashboardAfterSave={() => {
+            setShowSaveSuccessModal(false);
+            router.push("/dashboard");
+          }}
+          onReturnToFlashcardsAfterSave={() => {
+            setShowSaveSuccessModal(false);
+          }}
         />
       </main>
     </div>

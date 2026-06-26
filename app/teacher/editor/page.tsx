@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import BrandButton from "@/components/BrandButton";
+import PageHeader from "@/components/navigation/PageHeader";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { X, Printer } from "lucide-react";
 import EditorCardRow from "@/components/teacher/editor/EditorCardRow";
@@ -10,7 +10,7 @@ import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   findExistingLessonIdByName,
   loadLessonMetadata,
-  saveLesson,
+  saveLessonFromClient,
 } from "@/lib/lessons/repository";
 import {
   clearLessonTray,
@@ -202,7 +202,7 @@ export default function TeacherLessonTrayEditor() {
         }
       }
 
-      const savedLesson = await saveLesson(supabase, {
+      const savedLesson = await saveLessonFromClient(supabase, {
         lessonId: editingLessonSetId,
         userId: user.id,
         name: trimmedName,
@@ -236,7 +236,7 @@ export default function TeacherLessonTrayEditor() {
         return;
       }
 
-      const savedLesson = await saveLesson(supabase, {
+      const savedLesson = await saveLessonFromClient(supabase, {
         lessonId: existingLessonId,
         userId: user.id,
         name: lessonName.trim(),
@@ -280,11 +280,19 @@ export default function TeacherLessonTrayEditor() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-        <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700" />
-          </div>
-        </header>
+        <PageHeader
+          title="Editor"
+          primaryItems={[
+            { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+          ]}
+          secondaryItems={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Printables", href: "/printables" },
+            { label: "Worksheets", href: "/worksheets" },
+            { label: "Lesson Plans", href: "/lessons" },
+            { label: "Games", href: "/games" },
+          ]}
+        />
 
         <main className="max-w-7xl mx-auto px-6 pt-12 pb-32">
           <p>Loading lesson tray…</p>
@@ -295,32 +303,19 @@ export default function TeacherLessonTrayEditor() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-      {/* Header (matches Flashcards/Dashboard) */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <nav className="flex items-center text-4xl font-bold text-black">
-              Edit Lesson Tray
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigateDirect("/games")} className="btn btn-secondary">
-              Games
-            </button>
-
-            <button onClick={() => navigateDirect("/dashboard")} className="btn btn-secondary">
-              Dashboard
-            </button>
-
-            <button onClick={() => navigateDirect("/flashcards/classroom")} className="btn btn-secondary">
-              Classroom
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Editor"
+        primaryItems={[
+          { label: "Classroom", onClick: () => navigateDirect("/flashcards/classroom"), tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Dashboard", onClick: () => navigateDirect("/dashboard") },
+          { label: "Printables", onClick: () => navigateDirect("/printables") },
+          { label: "Worksheets", onClick: () => navigateDirect("/worksheets") },
+          { label: "Lesson Plans", onClick: () => navigateDirect("/lessons") },
+          { label: "Games", onClick: () => navigateDirect("/games") },
+        ]}
+      />
 
       {/* Sticky lesson tray header */}
       <section className="sticky top-[72px] z-40 bg-white border-b border-black/5">

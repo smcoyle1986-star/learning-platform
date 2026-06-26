@@ -70,6 +70,20 @@ export default function LandingHomepageSections({
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-[#5c665c]">
             Choose the plan that works for your classroom. Start free, then upgrade when you need more games, worksheets, saves, images, and classroom tools.
           </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href="/upgrade"
+              className="inline-flex items-center justify-center rounded-full bg-[#86a96a] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(134,169,106,0.28)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#7a9b61]"
+            >
+              Go Premium
+            </Link>
+            <Link
+              href="/upgrade"
+              className="inline-flex items-center justify-center rounded-full border border-[#d7ddd1] bg-white px-8 py-4 text-base font-semibold text-[#2f3a2f] shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#fbfbf8]"
+            >
+              View pricing
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -175,7 +189,7 @@ export default function LandingHomepageSections({
               { label: "Worksheets", href: getPreviewHref(isLoggedIn, "worksheets") },
               { label: "Printables", href: getPreviewHref(isLoggedIn, "printables") },
               { label: "Community", href: getPreviewHref(isLoggedIn, "community") },
-              { label: "Pricing", href: "#pricing" },
+              { label: "Pricing", href: "/upgrade" },
             ].map((item) => (
               <Link key={item.label} href={item.href} className="transition-colors hover:text-[#2f3a2f]">
                 {item.label}

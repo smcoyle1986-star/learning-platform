@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import BrandButton from "@/components/BrandButton";
 import HeaderAuth from "@/components/HeaderAuth";
 import LandingCarousel from "@/components/landing/LandingCarousel";
-import { LANDING_HERO_DESCRIPTION, LANDING_HERO_TITLE, LANDING_SECTIONS } from "@/lib/landing/content";
+import PageHeader from "@/components/navigation/PageHeader";
+import { LANDING_HERO_DESCRIPTION, LANDING_HERO_TITLE } from "@/lib/landing/content";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 function QuickLinkCard({
   title,
@@ -41,11 +42,11 @@ export default function LandingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile } = useAuth();
+  const { access } = useBillingAccess();
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [premiumWelcomeDismissed, setPremiumWelcomeDismissed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -84,16 +85,6 @@ export default function LandingPage() {
         return;
       }
 
-      if (signedIn) {
-        setToastMsg("You are now signed in.");
-        setToastVisible(true);
-      }
-
-      if (signedUp) {
-        setToastMsg("Signup successful — check your email if confirmation is required.");
-        setToastVisible(true);
-      }
-
       router.replace("/");
     };
 
@@ -102,6 +93,10 @@ export default function LandingPage() {
   }, [searchParams, router]);
 
   const displayName = profile?.username || profile?.display_name || email;
+  const showPremiumWelcome =
+    searchParams.get("premium") === "welcome" &&
+    Boolean(access?.isPremium) &&
+    !premiumWelcomeDismissed;
   const quickLinks = useMemo(
     () => [
       {
@@ -142,24 +137,23 @@ export default function LandingPage() {
     return <p className="p-10">Loading...</p>;
   }
 
+  const closePremiumWelcome = () => {
+    setPremiumWelcomeDismissed(true);
+    router.replace("/landing");
+  };
+
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-        <BrandButton className="text-4xl font-extrabold text-blue-700 hover:opacity-80 md:text-5xl" />
-
-        <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
-          {LANDING_SECTIONS.map((section) => (
-            <button
-              key={section.slug}
-              onClick={() => router.push(section.href)}
-              className="btn btn-secondary"
-            >
-              {section.title}
-            </button>
-          ))}
-          <HeaderAuth />
-        </nav>
-      </header>
+      <PageHeader
+        sticky={false}
+        primaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Community", href: "/teacher/community" },
+        ]}
+        rightSlot={<HeaderAuth />}
+        className="mx-auto max-w-7xl border-b-0 bg-transparent backdrop-blur-none"
+      />
 
       <section className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:py-20 lg:grid-cols-2 lg:items-center">
         <div>
@@ -214,6 +208,52 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
+
+      {showPremiumWelcome ? (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-2xl rounded-[2rem] border border-[#dbe3d1] bg-white p-6 shadow-[0_28px_90px_rgba(15,23,42,0.24)] md:p-8">
+            <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
+              Welcome to Classendo Premium
+            </div>
+
+            <h2 className="mt-5 text-3xl font-semibold tracking-tight text-[#2f3a2f] md:text-4xl">
+              Your Premium features are now unlocked
+            </h2>
+            <p className="mt-4 text-base leading-8 text-[#5c665c]">
+              You now have access to the full Classendo teaching toolkit across games, worksheets, saving, sharing, and image options.
+            </p>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {[
+                "All classroom games",
+                "All worksheet types",
+                "Community access",
+                "Teacher editor access",
+                "Unlimited dashboard saves",
+                "Premium image variations",
+                "Advanced printables options",
+                "Featured tools unlocked year-round",
+              ].map((feature) => (
+                <div
+                  key={feature}
+                  className="rounded-2xl border border-[#e5e8de] bg-[#fbfbf8] px-4 py-3 text-sm font-medium text-[#425042]"
+                >
+                  {feature}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button type="button" onClick={closePremiumWelcome} className="btn btn-primary px-6 py-3">
+                Start Exploring
+              </button>
+              <button type="button" onClick={closePremiumWelcome} className="btn btn-secondary px-6 py-3">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

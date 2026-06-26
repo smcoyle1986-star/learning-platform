@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { lemmaKey } from "@/lib/flashcards/catalog";
-import { Card, CarouselEntry } from "@/lib/flashcards/types";
+import { Card, CarouselEntry, FlashcardImageVariant } from "@/lib/flashcards/types";
 
 const DEFAULT_CAROUSEL_ENTRY: CarouselEntry = {
   index: 0,
@@ -15,9 +15,9 @@ const DEFAULT_CAROUSEL_ENTRY: CarouselEntry = {
 
 export function useFlashcardCarousel(params: {
   results: Card[];
-  imageVariants: Record<string, string[]>;
+  imageVariants: Record<string, FlashcardImageVariant[]>;
 }) {
-  const { results, imageVariants } = params;
+  const { imageVariants } = params;
   const [carouselState, setCarouselState] = useState<Record<string, CarouselEntry>>({});
 
   function getCarouselKey(card: Card) {
@@ -28,14 +28,21 @@ export function useFlashcardCarousel(params: {
     const key = getCarouselKey(card);
     const variants = imageVariants[key];
     if (variants && variants.length > 0) return variants;
-    return card.image ? [card.image] : [];
+    return card.image ? [{ url: card.image, isPremium: false }] : [];
   }
 
   function getActiveImage(card: Card) {
     const key = getCarouselKey(card);
     const images = getCardImages(card);
     const index = carouselState[key]?.index ?? 0;
-    return images[index] ?? images[0] ?? card.image;
+    return images[index]?.url ?? images[0]?.url ?? card.image;
+  }
+
+  function getActiveVariant(card: Card) {
+    const key = getCarouselKey(card);
+    const images = getCardImages(card);
+    const index = carouselState[key]?.index ?? 0;
+    return images[index] ?? images[0] ?? { url: card.image, isPremium: false };
   }
 
   useEffect(() => {
@@ -59,26 +66,6 @@ export function useFlashcardCarousel(params: {
 
     return () => clearTimeout(timer);
   }, [carouselState]);
-
-  useEffect(() => {
-    if (results.length === 0) return;
-
-    setCarouselState((prev) => {
-      const next = { ...prev };
-      results.forEach((card) => {
-        const key = getCarouselKey(card);
-        const images = getCardImages(card);
-        if (!next[key]) {
-          next[key] = { ...DEFAULT_CAROUSEL_ENTRY };
-          return;
-        }
-        if (images.length > 0 && next[key].index >= images.length) {
-          next[key] = { ...next[key], index: 0, nextIndex: 0, animating: false, phase: "start" };
-        }
-      });
-      return next;
-    });
-  }, [results, imageVariants]);
 
   function startCarouselSlide(card: Card, direction: "left" | "right") {
     const key = getCarouselKey(card);
@@ -113,6 +100,7 @@ export function useFlashcardCarousel(params: {
     getCarouselKey,
     getCardImages,
     getActiveImage,
+    getActiveVariant,
     startCarouselSlide,
     finishCarouselSlide,
   };

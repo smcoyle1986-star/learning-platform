@@ -11,6 +11,7 @@
     "noun-images:batch": "tsx scripts/generate-noun-images.ts"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.27.5",
@@ -22,6 +23,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sharp": "^0.34.4",
+    "stripe": "^22.2.1",
     "tone": "^15.1.22"
   },
   "devDependencies": {

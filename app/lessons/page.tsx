@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import BrandButton from "@/components/BrandButton";
+import PageHeader from "@/components/navigation/PageHeader";
 import LessonPlanSection from "@/components/lessons/LessonPlanSection";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
@@ -148,24 +148,17 @@ export default function LessonsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-4xl font-bold text-black">Lesson Plans</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => (window.location.href = "/dashboard")} className="btn btn-secondary">
-              Dashboard
-            </button>
-            <button onClick={() => (window.location.href = "/printables")} className="btn btn-secondary">
-              Printables
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Lesson Plans"
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Community", href: "/teacher/community" },
+        ]}
+      />
 
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32 grid grid-cols-12 gap-6">
         <aside className="col-span-12 lg:col-span-4 space-y-4">

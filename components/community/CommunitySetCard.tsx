@@ -6,9 +6,11 @@ import { CommunityLessonSet } from "@/lib/community/types";
 
 type CommunitySetCardProps = {
   setItem: CommunityLessonSet;
+  selected?: boolean;
   authorName?: string;
   previewImage?: string;
   isOwner: boolean;
+  onSelect: (setItem: CommunityLessonSet) => void;
   onPreview: (setItem: CommunityLessonSet) => void;
   onAddToDashboard: (setItem: CommunityLessonSet) => void;
   onReport: (setItem: CommunityLessonSet) => void;
@@ -16,9 +18,11 @@ type CommunitySetCardProps = {
 
 export default function CommunitySetCard({
   setItem,
+  selected = false,
   authorName,
   previewImage,
   isOwner,
+  onSelect,
   onPreview,
   onAddToDashboard,
   onReport,
@@ -26,9 +30,25 @@ export default function CommunitySetCard({
   const tagLabel = setItem.tags && setItem.tags.length > 0 ? setItem.tags.slice(0, 3) : [];
 
   return (
-    <div className="bg-white rounded-2xl p-5 relative border shadow-sm hover:shadow-md transition">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(setItem)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(setItem);
+        }
+      }}
+      className={`bg-white rounded-2xl p-5 relative border shadow-sm hover:shadow-md transition cursor-pointer ${
+        selected ? "border-blue-600 ring-2 ring-blue-100 shadow-md" : ""
+      }`}
+    >
       <button
-        onClick={() => onPreview(setItem)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onPreview(setItem);
+        }}
         className="group relative aspect-video w-full rounded-xl bg-gradient-to-br from-[var(--color-bg-soft)] to-white mb-4 border overflow-hidden flex items-center justify-center text-gray-400"
         title={`Preview ${setItem.name}`}
       >
@@ -62,7 +82,10 @@ export default function CommunitySetCard({
 
           {!isOwner && (
             <button
-              onClick={() => onReport(setItem)}
+              onClick={(event) => {
+                event.stopPropagation();
+                onReport(setItem);
+              }}
               title="Report set"
               className="btn px-3 py-2 text-sm border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 shrink-0"
             >
@@ -91,7 +114,10 @@ export default function CommunitySetCard({
 
       <div className="flex items-center gap-3 mt-4">
         <button
-          onClick={() => onAddToDashboard(setItem)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onAddToDashboard(setItem);
+          }}
           className="btn btn-primary flex-1 px-3 py-2"
         >
           {isOwner ? "Open in Dashboard" : "Add to Dashboard"}

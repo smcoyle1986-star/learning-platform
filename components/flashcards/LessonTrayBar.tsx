@@ -3,12 +3,10 @@
 import { FileSpreadsheet, Printer, X } from "lucide-react";
 
 import { TrayItem } from "@/lib/flashcards/types";
-import FlashcardsNavActions from "@/components/flashcards/FlashcardsNavActions";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 type LessonTrayBarProps = {
-  openDropdown: string | null;
   editingLessonSetId: string | null;
   lessonName: string;
   lessonTray: TrayItem[];
@@ -22,20 +20,14 @@ type LessonTrayBarProps = {
   onDrop: (event: React.DragEvent, index: number) => void;
   onDragEnd: () => void;
   onTrayItemKeyDown: (event: React.KeyboardEvent, index: number) => void;
-  onSetOpenDropdown: (value: string | null) => void;
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
-  onGoDashboard: () => void;
-  onGoGames: () => void;
-  onGoCommunity: () => void;
-  onGoClassroom: () => void;
   onGoWorksheets: () => void;
   onPrint: () => void;
   onClearTray: () => void;
 };
 
 export default function LessonTrayBar({
-  openDropdown,
   editingLessonSetId,
   lessonName,
   lessonTray,
@@ -49,32 +41,15 @@ export default function LessonTrayBar({
   onDrop,
   onDragEnd,
   onTrayItemKeyDown,
-  onSetOpenDropdown,
   onRemoveFromTray,
   onOpenSaveModal,
-  onGoDashboard,
-  onGoGames,
   onGoWorksheets,
-  onGoCommunity,
-  onGoClassroom,
   onPrint,
   onClearTray,
 }: LessonTrayBarProps) {
   return (
     <section className="sticky top-0 z-40 bg-[var(--color-bg-main)] border-b border-black/5">
       <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col gap-1">
-        <div className="flex items-center justify-end">
-          <FlashcardsNavActions
-            openDropdown={openDropdown}
-            onSetOpenDropdown={onSetOpenDropdown}
-            onGoDashboard={onGoDashboard}
-            onGoGames={onGoGames}
-            onGoWorksheets={onGoWorksheets}
-            onGoCommunity={onGoCommunity}
-            onGoClassroom={onGoClassroom}
-          />
-        </div>
-
         {editingLessonSetId && (
           <div className="text-[11px] leading-tight text-[var(--color-text-muted)]">
             <span className="font-medium mr-2">Editing:</span>

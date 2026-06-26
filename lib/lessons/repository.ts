@@ -134,6 +134,45 @@ export async function saveLesson(
   return saved;
 }
 
+export async function saveLessonFromClient(
+  supabase: SupabaseClient,
+  input: SaveLessonInput
+) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const response = await fetch("/api/lessons/save", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify(input),
+  });
+
+  const rawText = await response.text();
+  let payload: Record<string, unknown> | null = null;
+
+  try {
+    payload = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || !payload) {
+    throw new Error(
+      String(
+        payload?.error ??
+          rawText?.trim() ??
+          `Failed to save lesson (status ${response.status}).`
+      )
+    );
+  }
+
+  return normalizeLesson(payload);
+}
+
 export async function loadLessonsForUser(
   supabase: SupabaseClient,
   userId: string

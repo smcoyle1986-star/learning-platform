@@ -2,11 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import BrandButton from "@/components/BrandButton";
 import CommunityControls from "@/components/community/CommunityControls";
 import CommunityPreviewModal from "@/components/community/CommunityPreviewModal";
 import CommunitySetCard from "@/components/community/CommunitySetCard";
+import PageHeader from "@/components/navigation/PageHeader";
+import { LessonCard } from "@/lib/lessons/types";
 import { useCommunitySets } from "@/lib/community/useCommunitySets";
+import { writeLessonTray } from "@/lib/lessons/tray";
+import { supabase } from "@/lib/supabase/client";
 
 export default function CommunityPage() {
   const {
@@ -35,35 +38,62 @@ export default function CommunityPage() {
     addToDashboard,
     reportSet,
   } = useCommunitySets();
+  const [selectedSetId, setSelectedSetId] = React.useState<string | null>(null);
+
+  async function selectSetForTray(setItem: typeof sets[number]) {
+    try {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("id, front, back, position")
+        .eq("lesson_set_id", setItem.id)
+        .order("position", { ascending: true });
+
+      if (error) {
+        console.error("Failed to load community set cards for tray:", error);
+        setToast({ message: "Could not load this lesson set into the tray." });
+        return;
+      }
+
+      const cards: LessonCard[] = (data ?? []).map((card) => ({
+        id: card.id,
+        word: card.front,
+        front: card.front,
+        back: card.back,
+        image: card.back,
+        position: card.position,
+      }));
+
+      if (!cards.length) {
+        setToast({ message: "This lesson set does not have any cards yet." });
+        return;
+      }
+
+      writeLessonTray(cards);
+      setSelectedSetId(setItem.id);
+      setToast({ message: `"${setItem.name}" is ready to use from the lesson tray.` });
+    } catch (error) {
+      console.error("Unexpected community tray selection error:", error);
+      setToast({ message: "Could not prepare that set for the lesson tray." });
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <h1 className="text-4xl font-bold text-black">Community</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => (window.location.href = "/flashcards")}
-              className="btn btn-secondary"
-            >
-              Flashcards
-            </button>
-
-            <button
-              onClick={() => (window.location.href = "/dashboard")}
-              className="btn btn-secondary"
-            >
-              Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Community"
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Editor", href: "/teacher/editor" },
+          { label: "Printables", href: "/printables" },
+          { label: "Worksheets", href: "/worksheets" },
+          { label: "Lesson Plans", href: "/lessons" },
+          { label: "Games", href: "/games" },
+        ]}
+      />
 
       {/* Controls */}
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
@@ -107,9 +137,11 @@ export default function CommunityPage() {
                 <CommunitySetCard
                   key={setItem.id}
                   setItem={setItem}
+                  selected={selectedSetId === setItem.id}
                   authorName={authors[setItem.user_id]}
                   previewImage={previewImages[setItem.id]}
                   isOwner={currentUserId === setItem.user_id}
+                  onSelect={selectSetForTray}
                   onPreview={openPreview}
                   onAddToDashboard={addToDashboard}
                   onReport={reportSet}

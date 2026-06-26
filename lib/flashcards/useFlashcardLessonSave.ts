@@ -6,7 +6,7 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 import {
   findExistingLessonIdByName,
   loadLessonMetadata,
-  saveLesson,
+  saveLessonFromClient,
 } from "@/lib/lessons/repository";
 import { writeLastSavedTray } from "@/lib/lessons/tray";
 import { LessonCard } from "@/lib/lessons/types";
@@ -23,6 +23,8 @@ export function useFlashcardLessonSave(params: {
   const [nameError, setNameError] = useState("");
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const [existingLessonId, setExistingLessonId] = useState<string | null>(null);
+  const [showSaveLimitModal, setShowSaveLimitModal] = useState(false);
+  const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
   const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
@@ -75,6 +77,15 @@ export function useFlashcardLessonSave(params: {
     setEditingLessonSetId(null);
   }
 
+  function isDashboardSaveLimitError(error: unknown) {
+    const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+    return /free accounts can save up to \d+ (dashboard resources|lesson sets|worksheets)/.test(message);
+  }
+
+  function getErrorMessage(error: unknown) {
+    return error instanceof Error ? error.message : "Save failed. Please try again.";
+  }
+
   async function handleSaveLesson() {
     if (!lessonName.trim()) {
       setNameError("Lesson name is required");
@@ -98,7 +109,7 @@ export function useFlashcardLessonSave(params: {
         }
       }
 
-      await saveLesson(supabase, {
+      await saveLessonFromClient(supabase, {
         lessonId: editingLessonSetId,
         userId: user.id,
         name: trimmedName,
@@ -108,9 +119,16 @@ export function useFlashcardLessonSave(params: {
 
       markSaved();
       finishSave();
-    } catch (error: any) {
+      setShowSaveSuccessModal(true);
+    } catch (error: unknown) {
+      if (isDashboardSaveLimitError(error)) {
+        setShowSaveModal(false);
+        setNameError("");
+        setShowSaveLimitModal(true);
+        return;
+      }
       console.error("Save failed:", error);
-      setNameError(error?.message || "Save failed. Please try again.");
+      setNameError(getErrorMessage(error));
     }
   }
 
@@ -126,7 +144,7 @@ export function useFlashcardLessonSave(params: {
         return;
       }
 
-      await saveLesson(supabase, {
+      await saveLessonFromClient(supabase, {
         lessonId: existingLessonId,
         userId: user.id,
         name: lessonName.trim(),
@@ -138,9 +156,16 @@ export function useFlashcardLessonSave(params: {
       setExistingLessonId(null);
       markSaved();
       finishSave();
-    } catch (error: any) {
+      setShowSaveSuccessModal(true);
+    } catch (error: unknown) {
+      if (isDashboardSaveLimitError(error)) {
+        setShowReplaceConfirm(false);
+        setNameError("");
+        setShowSaveLimitModal(true);
+        return;
+      }
       console.error("Replace failed:", error);
-      setNameError(error?.message || "Replace failed. Please try again.");
+      setNameError(error instanceof Error ? error.message : "Replace failed. Please try again.");
     }
   }
 
@@ -152,6 +177,10 @@ export function useFlashcardLessonSave(params: {
     nameError,
     showReplaceConfirm,
     setShowReplaceConfirm,
+    showSaveLimitModal,
+    setShowSaveLimitModal,
+    showSaveSuccessModal,
+    setShowSaveSuccessModal,
     showSavedIndicator,
     editingLessonSetId,
     setEditingLessonSetId,

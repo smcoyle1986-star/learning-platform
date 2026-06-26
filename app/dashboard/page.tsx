@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import BrandButton from "@/components/BrandButton";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import PageHeader from "@/components/navigation/PageHeader";
 import { supabase } from "@/lib/supabase/client";
-import Button from "@/components/ui/Button"; // ADDED: use design-system Button for header actions
 import DashboardLessonCard from "@/components/dashboard/DashboardLessonCard";
 import DashboardWorksheetCard from "@/components/dashboard/DashboardWorksheetCard";
 import DashboardPreviewModal from "@/components/dashboard/DashboardPreviewModal";
@@ -29,6 +28,7 @@ export default function DashboardPage() {
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [worksheets, setWorksheets] = useState<SavedWorksheetRecord[]>([]);
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   
 
   // Delete modal state (new)
@@ -214,6 +214,14 @@ export default function DashboardPage() {
     window.location.href = `/worksheets?worksheet_id=${worksheet.id}`;
   };
 
+  const selectLessonForTray = (lesson: LessonRecord) => {
+    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    if (!cards.length) return;
+
+    writeLessonTray(cards);
+    setSelectedLessonId(lesson.id);
+  };
+
   const removeSavedWorksheet = async (worksheetId: string) => {
     try {
       await deleteWorksheet(supabase, worksheetId);
@@ -301,36 +309,21 @@ export default function DashboardPage() {
         .cb-badge-icon { width: 28px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
       `}</style>
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Brand */}
-          <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
-
-          {/* Center title */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-4xl font-bold text-black">Dashboard</h1>
-          </div>
-          
-
-          <div className="flex items-center gap-3">
-            <Button
-              variant="primary"
-              onClick={() => (window.location.href = "/flashcards")}
-            >
-              Flashcards
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={() => (window.location.href = "/teacher/community")}
-              aria-label="Community"
-            >
-              Community
-            </Button>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title="Dashboard"
+        primaryItems={[
+          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+        ]}
+        secondaryItems={[
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Community", href: "/teacher/community" },
+          { label: "Editor", href: "/teacher/editor" },
+          { label: "Printables", href: "/printables" },
+          { label: "Worksheets", href: "/worksheets" },
+          { label: "Lesson Plans", href: "/lessons" },
+          { label: "Games", href: "/games" },
+        ]}
+      />
 
       {/* MAIN */}
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-32 space-y-16">
@@ -348,7 +341,9 @@ export default function DashboardPage() {
                 <div key={lesson.id} className="min-w-[360px] w-[360px]">
                   <DashboardLessonCard
                     lesson={lesson}
+                    selected={selectedLessonId === lesson.id}
                     enterButtonClassName="btn btn-primary flex-1 px-2.5 py-1.5 text-xs"
+                    onSelect={selectLessonForTray}
                     onPreview={setPreviewLesson}
                     onEdit={editLesson}
                     onOpenGames={openGames}
@@ -384,6 +379,8 @@ export default function DashboardPage() {
                   <DashboardLessonCard
                     key={lesson.id}
                     lesson={lesson}
+                    selected={selectedLessonId === lesson.id}
+                    onSelect={selectLessonForTray}
                     onPreview={setPreviewLesson}
                     onEdit={editLesson}
                     onOpenGames={openGames}

@@ -4,6 +4,7 @@ type SaveLessonDialogsProps = {
   showSaveModal: boolean;
   lessonName: string;
   isPublic: boolean;
+  nameError?: string;
   onLessonNameChange: (value: string) => void;
   onTogglePublic: () => void;
   onCancelSave: () => void;
@@ -11,12 +12,21 @@ type SaveLessonDialogsProps = {
   showReplaceConfirm: boolean;
   onCancelReplace: () => void;
   onReplaceLesson: () => void;
+  showSaveLimitModal: boolean;
+  onCloseSaveLimitModal: () => void;
+  onGoDashboardToDelete: () => void;
+  onReturnToFlashcards: () => void;
+  showSaveSuccessModal: boolean;
+  onCloseSaveSuccessModal: () => void;
+  onGoDashboardAfterSave: () => void;
+  onReturnToFlashcardsAfterSave: () => void;
 };
 
 export default function SaveLessonDialogs({
   showSaveModal,
   lessonName,
   isPublic,
+  nameError,
   onLessonNameChange,
   onTogglePublic,
   onCancelSave,
@@ -24,6 +34,14 @@ export default function SaveLessonDialogs({
   showReplaceConfirm,
   onCancelReplace,
   onReplaceLesson,
+  showSaveLimitModal,
+  onCloseSaveLimitModal,
+  onGoDashboardToDelete,
+  onReturnToFlashcards,
+  showSaveSuccessModal,
+  onCloseSaveSuccessModal,
+  onGoDashboardAfterSave,
+  onReturnToFlashcardsAfterSave,
 }: SaveLessonDialogsProps) {
   return (
     <>
@@ -39,6 +57,10 @@ export default function SaveLessonDialogs({
               placeholder="Enter lesson name"
               className="w-full mb-3 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
             />
+
+            {nameError ? (
+              <p className="mb-3 text-sm text-red-600">{nameError}</p>
+            ) : null}
 
             <div className="flex items-center justify-between mb-5">
               <label className="flex items-center gap-2 text-sm">
@@ -99,6 +121,78 @@ export default function SaveLessonDialogs({
                 Replace
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showSaveLimitModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold mb-2">Maximum saves reached</h3>
+
+            <p className="text-sm text-[var(--color-text-muted)] mb-6">
+              This account has reached the maximum number of dashboard saves. Delete a saved set in
+              Dashboard to make space, or return to Flashcards.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={onReturnToFlashcards}
+                className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
+              >
+                Back to Flashcards
+              </button>
+
+              <button
+                onClick={onGoDashboardToDelete}
+                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+
+            <button
+              onClick={onCloseSaveLimitModal}
+              className="mt-4 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSaveSuccessModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold mb-2">Saved to Dashboard</h3>
+
+            <p className="text-sm text-[var(--color-text-muted)] mb-6">
+              Your lesson set was saved successfully. You can go to Dashboard now or stay in
+              Flashcards and keep building.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={onReturnToFlashcardsAfterSave}
+                className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
+              >
+                Back to Flashcards
+              </button>
+
+              <button
+                onClick={onGoDashboardAfterSave}
+                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+
+            <button
+              onClick={onCloseSaveSuccessModal}
+              className="mt-4 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+import { assertCanCreateDashboardResource } from "@/lib/billing/access";
+
 type AiSaveRequest = {
   title?: string;
   cards?: any[];
@@ -95,6 +97,8 @@ export async function POST(req: Request) {
     if (!user || !user.id) return NextResponse.json({ error: "Invalid token / user not found" }, { status: 401 });
     const teacherId = user.id;
 
+    await assertCanCreateDashboardResource(supabase, teacherId);
+
     // Build cards array (client-sent or generated)
     let cards: any[] = Array.isArray(body.cards) ? body.cards : [];
     if ((!cards || cards.length === 0) && body.prompt) {
@@ -147,6 +151,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, id: String(lessonSetId), cards: normalized });
   } catch (err: any) {
     console.error("AI save-set error:", err);
-    return NextResponse.json({ error: err?.message ?? "Unknown error" }, { status: 500 });
+    const message = err?.message ?? "Unknown error";
+    return NextResponse.json(
+      { error: message },
+      { status: /upgrade to premium|free accounts can save/i.test(message) ? 403 : 500 }
+    );
   }
 }
