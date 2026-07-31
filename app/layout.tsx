@@ -5,6 +5,7 @@ import { BrandMenuProvider } from "@/components/BrandMenuContext";
 import BrandMenuDrawer from "@/components/BrandMenuDrawer";
 import HeaderAuth from "@/components/HeaderAuth";
 import BrandPageTheme from "@/components/BrandPageTheme";
+import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 
 export const metadata: Metadata = {
   title: "Classendo",
@@ -30,6 +31,7 @@ export default function RootLayout({
               </header>
 
               {children}
+              <FeedbackLauncher />
             </div>
           </BrandMenuProvider>
         </AuthProvider>
