@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseReady } from "@/lib/supabase/client";
 import {
   canAccessGame,
   canAccessWorksheetType,
@@ -33,6 +33,7 @@ export function useBillingAccess(): BillingState {
     setError(null);
 
     try {
+      await supabaseReady;
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
 

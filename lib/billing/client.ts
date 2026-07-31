@@ -1,8 +1,9 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseReady } from "@/lib/supabase/client";
 
 async function getAuthHeaders() {
+  await supabaseReady;
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return token ? { Authorization: `Bearer ${token}` } : {};

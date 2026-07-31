@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseReady } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { fetchProfileByUserId, type UserProfile } from "@/lib/auth/profile";
 
@@ -23,15 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log(
-      "AuthProvider: window.__SUPABASE_CLIENT_ID__",
-      (window as any).__SUPABASE_CLIENT_ID__
-    );
-    console.log(
-      "AuthProvider: supabase === window.__SUPABASE_CLIENT__?",
-      supabase === (window as any).__SUPABASE_CLIENT__
-    );
-
     let mounted = true;
 
     const syncProfile = async (nextUser: User | null) => {
@@ -56,13 +47,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    supabase.auth.getSession().then(({ data }) => {
-      console.log("AuthProvider: initial session", data.session);
-      void syncProfile(data.session?.user ?? null);
-    });
+    const loadInitialSession = async () => {
+      try {
+        await supabaseReady;
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (!mounted) return;
+        await syncProfile(data.session?.user ?? null);
+      } catch (error) {
+        // A paused or temporarily unreachable Supabase project must not leave
+        // the entire application stuck on its authentication loading state.
+        console.warn("AuthProvider: authentication is unavailable:", error);
+        if (!mounted) return;
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      }
+    };
+
+    void loadInitialSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("AuthProvider: auth state change", session);
       void syncProfile(session?.user ?? null);
     });
 
