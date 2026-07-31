@@ -166,5 +166,6 @@ begin
 end;
 $$;
 
-revoke all on function public.bootstrap_first_admin_owner(uuid) from public;
+revoke all on function public.bootstrap_first_admin_owner(uuid)
+  from public, anon, authenticated;
 grant execute on function public.bootstrap_first_admin_owner(uuid) to service_role;
