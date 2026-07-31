@@ -4,6 +4,7 @@ import { FREE_DASHBOARD_SAVE_LIMIT, PREMIUM_ACTIVE_STATUSES } from "@/lib/billin
 import { getFeaturedWeeklyGameId, getFeaturedWeeklyWorksheetType } from "@/lib/billing/featured";
 import type {
   BillingAccessSnapshot,
+  ComplimentaryPremiumAccess,
   SubscriptionRecord,
   SubscriptionStatus,
   SubscriptionTier,
@@ -63,23 +64,71 @@ export function normalizeSubscriptionRecord(raw: unknown): SubscriptionRecord | 
 export function buildBillingAccessSnapshot(params: {
   userId?: string | null;
   subscription?: SubscriptionRecord | null;
+  complimentaryPremiumAccess?: ComplimentaryPremiumAccess | null;
   now?: Date;
 }): BillingAccessSnapshot {
   const now = params.now ?? new Date();
   const featuredGameId = getFeaturedWeeklyGameId(now);
   const featuredWorksheetType = getFeaturedWeeklyWorksheetType(now);
   const subscription = params.subscription ?? null;
-  const isPremium = isPremiumSubscription(subscription);
+  const complimentaryPremiumAccess = params.complimentaryPremiumAccess ?? null;
+  const hasStripePremium = isPremiumSubscription(subscription);
+  const hasComplimentaryPremium = Boolean(
+    complimentaryPremiumAccess?.active
+    && (
+      !complimentaryPremiumAccess.expiresAt
+      || new Date(complimentaryPremiumAccess.expiresAt).getTime() > now.getTime()
+    ),
+  );
+  const isPremium = hasStripePremium || hasComplimentaryPremium;
 
   return {
     userId: params.userId ?? null,
     isAuthenticated: Boolean(params.userId),
     isPremium,
+    premiumAccessSource: hasStripePremium
+      ? "stripe"
+      : hasComplimentaryPremium
+        ? "complimentary"
+        : null,
+    complimentaryPremiumAccess,
     featuredGameId,
     featuredWorksheetType,
     dashboardSaveLimit: isPremium ? null : FREE_DASHBOARD_SAVE_LIMIT,
     subscription,
   };
+}
+
+function normalizeComplimentaryPremiumAccess(
+  raw: unknown,
+  now = new Date(),
+): ComplimentaryPremiumAccess | null {
+  const source = (raw ?? {}) as Record<string, unknown>;
+  if (!source.user_id || !source.granted_at) return null;
+
+  const expiresAt = source.expires_at ? String(source.expires_at) : null;
+  const revokedAt = source.revoked_at ? String(source.revoked_at) : null;
+
+  return {
+    active: !revokedAt && (!expiresAt || new Date(expiresAt).getTime() > now.getTime()),
+    expiresAt,
+    grantedAt: String(source.granted_at),
+    revokedAt,
+  };
+}
+
+export async function getComplimentaryPremiumAccess(
+  supabase: SupabaseClient,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("admin_user_entitlements")
+    .select("user_id,expires_at,granted_at,revoked_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return normalizeComplimentaryPremiumAccess(data);
 }
 
 export async function getUserSubscription(
@@ -100,8 +149,15 @@ export async function getBillingAccessForUser(
   supabase: SupabaseClient,
   userId: string
 ) {
-  const subscription = await getUserSubscription(supabase, userId);
-  return buildBillingAccessSnapshot({ userId, subscription });
+  const [subscription, complimentaryPremiumAccess] = await Promise.all([
+    getUserSubscription(supabase, userId),
+    getComplimentaryPremiumAccess(supabase, userId),
+  ]);
+  return buildBillingAccessSnapshot({
+    userId,
+    subscription,
+    complimentaryPremiumAccess,
+  });
 }
 
 export function canAccessGame(access: BillingAccessSnapshot, gameId: string) {

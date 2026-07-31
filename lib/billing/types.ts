@@ -28,10 +28,19 @@ export type SubscriptionRecord = {
   updatedAt: string | null;
 };
 
+export type ComplimentaryPremiumAccess = {
+  active: boolean;
+  expiresAt: string | null;
+  grantedAt: string;
+  revokedAt: string | null;
+};
+
 export type BillingAccessSnapshot = {
   userId: string | null;
   isAuthenticated: boolean;
   isPremium: boolean;
+  premiumAccessSource: "stripe" | "complimentary" | null;
+  complimentaryPremiumAccess: ComplimentaryPremiumAccess | null;
   featuredGameId: string;
   featuredWorksheetType: WorksheetType;
   dashboardSaveLimit: number | null;

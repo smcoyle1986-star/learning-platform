@@ -43,11 +43,33 @@ begin
     into total_users, new_users_30d
     from auth.users;
 
-  select count(*)
-    into premium_users
-    from public.user_subscriptions
-   where lower(coalesce(subscription_tier, 'free')) = 'premium'
-     and lower(coalesce(subscription_status, '')) in ('active', 'trialing', 'past_due');
+  if to_regclass('public.admin_user_entitlements') is not null then
+    execute
+      'select count(*)
+         from auth.users au
+        where exists (
+          select 1
+            from public.user_subscriptions us
+           where us.user_id = au.id
+             and lower(coalesce(us.subscription_tier, ''free'')) = ''premium''
+             and lower(coalesce(us.subscription_status, '''')) in (''active'', ''trialing'', ''past_due'')
+        )
+        or exists (
+          select 1
+            from public.admin_user_entitlements aue
+           where aue.user_id = au.id
+             and aue.entitlement = ''premium''
+             and aue.revoked_at is null
+             and (aue.expires_at is null or aue.expires_at > now())
+        )'
+      into premium_users;
+  else
+    select count(*)
+      into premium_users
+      from public.user_subscriptions
+     where lower(coalesce(subscription_tier, 'free')) = 'premium'
+       and lower(coalesce(subscription_status, '')) in ('active', 'trialing', 'past_due');
+  end if;
 
   select
     count(*) filter (
