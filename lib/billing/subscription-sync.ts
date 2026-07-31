@@ -10,11 +10,13 @@ export async function upsertStripeCustomerLink(params: {
   supabase: SupabaseClient;
   userId: string;
   stripeCustomerId: string;
+  stripeLivemode?: boolean | null;
 }) {
   const { error } = await params.supabase.from("user_subscriptions").upsert(
     {
       user_id: params.userId,
       stripe_customer_id: params.stripeCustomerId,
+      stripe_livemode: params.stripeLivemode ?? null,
       subscription_tier: "free",
       updated_at: new Date().toISOString(),
     },
@@ -58,9 +60,6 @@ export async function syncStripeSubscription(params: {
   subscription: Stripe.Subscription;
   fallbackUserId?: string | null;
 }) {
-  const subscriptionWithPeriod = params.subscription as Stripe.Subscription & {
-    current_period_end?: number | null;
-  };
   const userId = await findUserIdForSubscription(params);
   if (!userId) {
     throw new Error(`Could not determine Classendo user for Stripe subscription ${params.subscription.id}.`);
@@ -71,7 +70,9 @@ export async function syncStripeSubscription(params: {
       ? params.subscription.customer
       : params.subscription.customer?.id ?? null;
 
-  const priceId = params.subscription.items.data[0]?.price?.id ?? null;
+  const subscriptionItem = params.subscription.items.data[0];
+  const priceId = subscriptionItem?.price?.id ?? null;
+  const billingInterval = subscriptionItem?.price?.recurring?.interval ?? null;
   const { error } = await params.supabase.from("user_subscriptions").upsert(
     {
       user_id: userId,
@@ -80,8 +81,14 @@ export async function syncStripeSubscription(params: {
       subscription_status: params.subscription.status,
       subscription_tier: params.subscription.status === "canceled" ? "free" : "premium",
       price_id: priceId,
-      current_period_end: toIsoDate(subscriptionWithPeriod.current_period_end),
+      billing_interval:
+        billingInterval === "month" || billingInterval === "year"
+          ? billingInterval
+          : null,
+      current_period_end: toIsoDate(subscriptionItem?.current_period_end),
       cancel_at_period_end: Boolean(params.subscription.cancel_at_period_end),
+      stripe_livemode: Boolean(params.subscription.livemode),
+      last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

@@ -7,6 +7,9 @@ create table if not exists public.user_subscriptions (
   price_id text,
   current_period_end timestamptz,
   cancel_at_period_end boolean not null default false,
+  billing_interval text check (billing_interval is null or billing_interval in ('month', 'year')),
+  stripe_livemode boolean,
+  last_synced_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

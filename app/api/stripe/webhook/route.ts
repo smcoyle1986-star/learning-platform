@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
             supabase,
             userId,
             stripeCustomerId: customerId,
+            stripeLivemode: session.livemode,
           });
         }
 

@@ -20,7 +20,7 @@ import { usePathname } from "next/navigation";
 const primaryItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, available: true },
   { label: "Users", href: "/admin/users", icon: Users, available: true },
-  { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard, available: false },
+  { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard, available: true },
   { label: "Feedback", href: "/admin/feedback", icon: MessageSquareText, available: false },
   { label: "Community", href: "/admin/community", icon: ShieldAlert, available: false },
   { label: "Creator", href: "/admin/creator", icon: Images, available: false },
