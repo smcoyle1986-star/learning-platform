@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "playwright install chromium",
+    "admin:bootstrap-owner": "tsx scripts/bootstrap-admin-owner.ts",
     "noun-images:batch": "tsx scripts/generate-noun-images.ts"
   },
   "dependencies": {

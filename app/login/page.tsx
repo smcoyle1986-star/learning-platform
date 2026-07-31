@@ -28,7 +28,13 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/?signed_in=1");
+      const requestedPath = new URLSearchParams(window.location.search).get("next");
+      const safePath =
+        requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
+          ? requestedPath
+          : "/?signed_in=1";
+
+      router.replace(safePath);
     } finally {
       setSubmitting(false);
     }
