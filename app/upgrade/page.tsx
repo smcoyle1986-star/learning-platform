@@ -159,6 +159,7 @@ function UpgradePageContent() {
               US dollars (USD)
             </div>
             <div className="mt-4 min-h-[58px]" />
+            <p className="mb-5 text-sm leading-6 text-[#667066]">Renews monthly until cancelled. Taxes may apply at checkout.</p>
             <button
               type="button"
               onClick={() => void startPremiumCheckout("monthly")}
@@ -189,6 +190,7 @@ function UpgradePageContent() {
                 Save {yearlySavings.amount} a year, about {yearlySavings.percent}% off
               </div>
             ) : null}
+            <p className="mb-5 mt-4 text-sm leading-6 text-[#667066]">Renews yearly until cancelled. Taxes may apply at checkout.</p>
             <button
               type="button"
               onClick={() => void startPremiumCheckout("yearly")}
@@ -197,6 +199,23 @@ function UpgradePageContent() {
               Start Yearly Plan
             </button>
           </article>
+        </div>
+
+        <p className="mt-5 text-center text-sm leading-6 text-[#667066]">
+          Prices are shown in US dollars. Stripe may display and charge the local equivalent at checkout. Applicable
+          taxes are added where required.
+        </p>
+
+        <div className="mt-8 rounded-2xl border border-[#dce4d5] bg-[#f3f7f0] p-5 text-sm leading-7 text-[#566056]">
+          <p className="font-semibold text-[#334033]">Subscription terms</p>
+          <p className="mt-2">
+            By continuing to Stripe checkout, you authorise recurring charges at the displayed price and interval until
+            you cancel. Cancel from Manage Billing before the next renewal. Eligible first-subscription refunds may be
+            requested within 14 days. See our{" "}
+            <Link href="/legal/terms" className="font-semibold underline underline-offset-4">Terms</Link>,{" "}
+            <Link href="/legal/refunds" className="font-semibold underline underline-offset-4">Refund Policy</Link> and{" "}
+            <Link href="/legal/privacy" className="font-semibold underline underline-offset-4">Privacy Notice</Link>.
+          </p>
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">

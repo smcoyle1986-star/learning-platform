@@ -27,6 +27,7 @@ export function useFlashcardLessonSave(params: {
   const [showSaveLimitModal, setShowSaveLimitModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [lastSavedTray, setLastSavedTray] = useState<LessonCard[]>([]);
@@ -88,11 +89,13 @@ export function useFlashcardLessonSave(params: {
   }
 
   async function handleSaveLesson() {
+    if (isSaving) return;
     if (!lessonName.trim()) {
       setNameError("Lesson name is required");
       return;
     }
 
+    setIsSaving(true);
     try {
       if (!user) {
         setNameError("You must be signed in to save lessons");
@@ -139,10 +142,14 @@ export function useFlashcardLessonSave(params: {
       }
       console.error("Save failed:", error);
       setNameError(getErrorMessage(error));
+    } finally {
+      setIsSaving(false);
     }
   }
 
   async function replaceLesson() {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       if (!existingLessonId) {
         setShowReplaceConfirm(false);
@@ -176,6 +183,8 @@ export function useFlashcardLessonSave(params: {
       }
       console.error("Replace failed:", error);
       setNameError(error instanceof Error ? error.message : "Replace failed. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -192,6 +201,7 @@ export function useFlashcardLessonSave(params: {
     showSaveSuccessModal,
     setShowSaveSuccessModal,
     showSavedIndicator,
+    isSaving,
     editingLessonSetId,
     setEditingLessonSetId,
     isPublic,

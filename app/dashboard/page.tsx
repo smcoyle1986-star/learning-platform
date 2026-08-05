@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Grid2X2, List, Search } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
@@ -15,8 +16,13 @@ import {
   loadLessonsWithAccessFromServer,
   normalizeLesson,
   recordLessonUsage,
+  updateLessonLibraryStateFromServer,
 } from "@/lib/lessons/repository";
-import { writeLessonTray } from "@/lib/lessons/tray";
+import {
+  setEditingLessonSetId as persistEditingLessonSetId,
+  writeLastSavedTray,
+  writeLessonTray,
+} from "@/lib/lessons/tray";
 import { LessonRecord } from "@/lib/lessons/types";
 import { deleteWorksheet, loadWorksheetsForUser } from "@/lib/worksheets/repository";
 import { SavedWorksheetRecord } from "@/lib/worksheets/types";
@@ -24,6 +30,17 @@ import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 const RECENT_LIMIT = 8;
+const PAGE_SIZE_OPTIONS = [12, 24, 36] as const;
+
+type LessonFilter = "all" | "favorites" | "public" | "private" | "locked" | "archive";
+type LessonSort = "recent" | "newest" | "oldest" | "name" | "popular" | "cards";
+type LessonView = "grid" | "list";
+
+function lessonTimestamp(value: number | string | null | undefined) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") return Date.parse(value) || 0;
+  return 0;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -34,6 +51,16 @@ export default function DashboardPage() {
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [conversionMessage, setConversionMessage] = useState("");
+  const [libraryMessage, setLibraryMessage] = useState("");
+  const [libraryNotice, setLibraryNotice] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [lessonFilter, setLessonFilter] = useState<LessonFilter>("all");
+  const [lessonSort, setLessonSort] = useState<LessonSort>("recent");
+  const [lessonView, setLessonView] = useState<LessonView>("grid");
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [libraryStatePendingIds, setLibraryStatePendingIds] = useState<Set<string>>(new Set());
+  const openedLessonFromQueryRef = useRef(false);
   
 
   // Delete modal state (new)
@@ -88,13 +115,91 @@ export default function DashboardPage() {
      Derived views
   -----------------------------------*/
   const recentlyUsed = useMemo(() => {
-    return [...lessons]
+    return lessons
+      .filter((lesson) => !lesson.archivedAt)
+      .slice()
       .sort((a, b) => (b.lastUsed ?? 0) - (a.lastUsed ?? 0))
       .slice(0, RECENT_LIMIT);
   }, [lessons]);
 
-  const popularLessons = useMemo(() => {
-    return [...lessons].sort((a, b) => (b.useCount ?? 0) - (a.useCount ?? 0));
+  const filterCounts = useMemo(() => {
+    const activeLessons = lessons.filter((lesson) => !lesson.archivedAt);
+    return {
+      all: activeLessons.length,
+      favorites: activeLessons.filter((lesson) => lesson.isFavorite).length,
+      public: activeLessons.filter((lesson) => lesson.isPublic).length,
+      private: activeLessons.filter((lesson) => !lesson.isPublic).length,
+      locked: activeLessons.filter((lesson) => lesson.isLocked).length,
+      archive: lessons.filter((lesson) => lesson.archivedAt).length,
+    } satisfies Record<LessonFilter, number>;
+  }, [lessons]);
+
+  const filteredLessons = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+    const matchesFilter = (lesson: LessonRecord) => {
+      if (lessonFilter === "archive") return Boolean(lesson.archivedAt);
+      if (lesson.archivedAt) return false;
+      if (lessonFilter === "favorites") return Boolean(lesson.isFavorite);
+      if (lessonFilter === "public") return Boolean(lesson.isPublic);
+      if (lessonFilter === "private") return !lesson.isPublic;
+      if (lessonFilter === "locked") return Boolean(lesson.isLocked);
+      return true;
+    };
+
+    return lessons
+      .filter(matchesFilter)
+      .filter((lesson) => {
+        if (!normalizedQuery) return true;
+        return lesson.name.toLocaleLowerCase().includes(normalizedQuery)
+          || lesson.cards.some((card) => card.word.toLocaleLowerCase().includes(normalizedQuery));
+      })
+      .sort((left, right) => {
+        if (lessonSort === "newest") return lessonTimestamp(right.createdAt) - lessonTimestamp(left.createdAt);
+        if (lessonSort === "oldest") return lessonTimestamp(left.createdAt) - lessonTimestamp(right.createdAt);
+        if (lessonSort === "name") return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+        if (lessonSort === "popular") return (right.useCount ?? 0) - (left.useCount ?? 0);
+        if (lessonSort === "cards") return right.cards.length - left.cards.length;
+        return (right.lastUsed ?? 0) - (left.lastUsed ?? 0);
+      });
+  }, [lessonFilter, lessonSort, lessons, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLessons.length / pageSize));
+  const pagedLessons = useMemo(
+    () => filteredLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [currentPage, filteredLessons, pageSize],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [lessonFilter, lessonSort, pageSize, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  useEffect(() => {
+    if (openedLessonFromQueryRef.current || lessons.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const lessonId = params.get("lesson_set_id");
+    if (!lessonId) return;
+
+    const lesson = lessons.find((item) => item.id === lessonId);
+    if (!lesson) return;
+    openedLessonFromQueryRef.current = true;
+    setSelectedLessonId(lesson.id);
+    setLessonFilter(lesson.archivedAt ? "archive" : "all");
+    setSearchQuery(lesson.name);
+
+    const notice = params.get("notice");
+    if (notice === "already_saved") {
+      setLibraryNotice(`“${lesson.name}” is already saved. We opened the existing set instead.`);
+    } else if (notice === "owned") {
+      setLibraryNotice(`“${lesson.name}” is already yours. We opened it without making a copy.`);
+    }
+
+    window.requestAnimationFrame(() => {
+      document.getElementById("saved-lessons")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }, [lessons]);
 
   /* ----------------------------------
@@ -142,6 +247,8 @@ export default function DashboardPage() {
     }
 
     writeLessonTray(cards);
+    writeLastSavedTray(cards);
+    persistEditingLessonSetId(lesson.id);
     window.location.href = `/teacher/editor?lesson_set_id=${lesson.id}`;
   };
 
@@ -205,6 +312,49 @@ export default function DashboardPage() {
       setIsDeleting(false);
     }
   }
+
+  async function updateLessonLibraryState(
+    lesson: LessonRecord,
+    changes: { isFavorite?: boolean; archived?: boolean },
+  ) {
+    if (libraryStatePendingIds.has(lesson.id)) return;
+    setLibraryMessage("");
+    setLibraryStatePendingIds((current) => new Set(current).add(lesson.id));
+
+    try {
+      const updated = await updateLessonLibraryStateFromServer(lesson.id, changes);
+      setLessons((current) => current.map((item) => {
+        if (item.id !== lesson.id) return item;
+        return normalizeLesson({
+          ...item,
+          isFavorite: changes.isFavorite ?? updated.isFavorite ?? item.isFavorite,
+          archivedAt: changes.archived === undefined
+            ? item.archivedAt
+            : changes.archived
+              ? updated.archivedAt ?? Date.now()
+              : null,
+        });
+      }));
+    } catch (error) {
+      setLibraryMessage(
+        error instanceof Error ? error.message : "Could not update this lesson set.",
+      );
+    } finally {
+      setLibraryStatePendingIds((current) => {
+        const next = new Set(current);
+        next.delete(lesson.id);
+        return next;
+      });
+    }
+  }
+
+  const toggleFavorite = (lesson: LessonRecord) => {
+    void updateLessonLibraryState(lesson, { isFavorite: !lesson.isFavorite });
+  };
+
+  const toggleArchived = (lesson: LessonRecord) => {
+    void updateLessonLibraryState(lesson, { archived: !lesson.archivedAt });
+  };
 
   // Print lesson — writes to lesson tray and navigates to printables
   const printLesson = (lesson: LessonRecord) => {
@@ -384,7 +534,7 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-[#d5e2cf] bg-[#f4f8f1] px-5 py-4 text-sm text-[#496143]">{conversionMessage}</div>
         ) : null}
         {/* RECENTLY USED */}
-        <section>
+        <section id="saved-lessons">
           <h2 className="text-xl font-semibold mb-4">Recently Used</h2>
 
           {recentlyUsed.length === 0 ? (
@@ -419,9 +569,32 @@ export default function DashboardPage() {
 
         {/* SAVED LESSONS */}
         <section>
-          <h2 className="text-xl font-semibold mb-6">Saved Lessons</h2>
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Saved Lessons</h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Search, filter, favourite, and archive your lesson library.
+              </p>
+            </div>
+            {filteredLessons.length > 0 ? (
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredLessons.length)} of {filteredLessons.length}
+              </p>
+            ) : null}
+          </div>
 
-          {popularLessons.length === 0 ? (
+          {libraryMessage ? (
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {libraryMessage}
+            </div>
+          ) : null}
+          {libraryNotice ? (
+            <div className="mb-4 rounded-2xl border border-[#cbdcc3] bg-[#f2f8ee] px-4 py-3 text-sm text-[#3f6338]">
+              {libraryNotice}
+            </div>
+          ) : null}
+
+          {lessons.length === 0 ? (
             <div className="text-center py-20 text-[var(--color-text-muted)]">
               <p className="text-lg mb-3">You haven’t saved any lessons yet.</p>
               <Link
@@ -432,9 +605,75 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="overflow-y-auto" style={{ maxHeight: "calc(12 * 8rem)" }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
-                {popularLessons.map((lesson) => (
+            <>
+              <div className="mb-5 rounded-2xl border border-[#dfe5d9] bg-white/75 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                  <label className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                    <span className="sr-only">Search saved lessons</span>
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Search set names or card words"
+                      className="w-full rounded-xl border border-[#d7ddd1] bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </label>
+
+                  <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                    <span>Sort</span>
+                    <select value={lessonSort} onChange={(event) => setLessonSort(event.target.value as LessonSort)} className="rounded-xl border border-[#d7ddd1] bg-white px-3 py-2.5 text-sm text-[var(--color-text-main)]">
+                      <option value="recent">Recently used</option>
+                      <option value="newest">Newest created</option>
+                      <option value="oldest">Oldest created</option>
+                      <option value="name">Name A–Z</option>
+                      <option value="popular">Most used</option>
+                      <option value="cards">Most cards</option>
+                    </select>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                    <span>Per page</span>
+                    <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])} className="rounded-xl border border-[#d7ddd1] bg-white px-3 py-2.5 text-sm text-[var(--color-text-main)]">
+                      {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size}</option>)}
+                    </select>
+                  </label>
+
+                  <div className="flex rounded-xl border border-[#d7ddd1] bg-white p-1" aria-label="Lesson display style">
+                    <button type="button" onClick={() => setLessonView("grid")} aria-label="Grid view" aria-pressed={lessonView === "grid"} className={`rounded-lg p-2 transition ${lessonView === "grid" ? "bg-blue-100 text-blue-800" : "text-slate-500 hover:bg-slate-50"}`}><Grid2X2 size={17} /></button>
+                    <button type="button" onClick={() => setLessonView("list")} aria-label="List view" aria-pressed={lessonView === "list"} className={`rounded-lg p-2 transition ${lessonView === "list" ? "bg-blue-100 text-blue-800" : "text-slate-500 hover:bg-slate-50"}`}><List size={18} /></button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2" aria-label="Lesson filters">
+                  {([
+                    ["all", "All"],
+                    ["favorites", "Favourites"],
+                    ["public", "Public"],
+                    ["private", "Private"],
+                    ["locked", "Locked"],
+                    ["archive", "Archive"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setLessonFilter(value)}
+                      aria-pressed={lessonFilter === value}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${lessonFilter === value ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-[#d7ddd1] bg-white text-[#596459] hover:border-blue-300 hover:text-blue-700"}`}
+                    >
+                      {label} <span className="ml-1 opacity-75">{filterCounts[value]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredLessons.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">
+                  No lesson sets match this search and filter.
+                </div>
+              ) : (
+                <div className={lessonView === "grid" ? "grid grid-cols-1 gap-6 p-1 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-3"}>
+                {pagedLessons.map((lesson) => (
                   <DashboardLessonCard
                     key={lesson.id}
                     lesson={lesson}
@@ -450,10 +689,25 @@ export default function DashboardPage() {
                     onConvertToBasic={convertLessonToBasic}
                     onUpgrade={() => { window.location.href = "/upgrade"; }}
                     isPremium={Boolean(access?.isPremium)}
+                    viewMode={lessonView}
+                    showLibraryControls
+                    libraryStatePending={libraryStatePendingIds.has(lesson.id)}
+                    onToggleFavorite={toggleFavorite}
+                    onToggleArchived={toggleArchived}
                   />
                 ))}
               </div>
-            </div>
+
+              )}
+
+              {totalPages > 1 ? (
+                <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Saved lesson pages">
+                  <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className="btn btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft size={16} /> Previous</button>
+                  <span className="text-sm text-[var(--color-text-muted)]">Page {currentPage} of {totalPages}</span>
+                  <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} className="btn btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40">Next <ChevronRight size={16} /></button>
+                </nav>
+              ) : null}
+            </>
           )}
         </section>
 

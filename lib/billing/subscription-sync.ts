@@ -26,7 +26,6 @@ export async function upsertStripeCustomerLink(params: {
       user_id: params.userId,
       stripe_customer_id: params.stripeCustomerId,
       stripe_livemode: params.stripeLivemode ?? null,
-      subscription_tier: "free",
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

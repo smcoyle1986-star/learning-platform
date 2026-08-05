@@ -29,7 +29,7 @@ export default function CommunitySetCard({
   onAddToDashboard,
   onReport,
 }: CommunitySetCardProps) {
-  const tagLabel = setItem.tags && setItem.tags.length > 0 ? setItem.tags.slice(0, 3) : [];
+  const tagLabel = setItem.tags && setItem.tags.length > 0 ? setItem.tags.slice(0, 2) : [];
 
   return (
     <div
@@ -42,7 +42,7 @@ export default function CommunitySetCard({
           onSelect(setItem);
         }
       }}
-      className={`bg-white rounded-2xl p-5 relative border shadow-sm hover:shadow-md transition cursor-pointer ${
+      className={`relative flex h-full flex-col rounded-xl border bg-white p-3 shadow-sm transition hover:shadow-md cursor-pointer ${
         selected ? "border-blue-600 ring-2 ring-blue-100 shadow-md" : ""
       }`}
     >
@@ -51,32 +51,32 @@ export default function CommunitySetCard({
           event.stopPropagation();
           onPreview(setItem);
         }}
-        className="group relative aspect-video w-full rounded-xl bg-gradient-to-br from-[var(--color-bg-soft)] to-white mb-4 border overflow-hidden flex items-center justify-center text-gray-400"
+        className="group relative mb-2 flex h-20 w-full items-center justify-center overflow-hidden rounded-lg border bg-gradient-to-br from-[var(--color-bg-soft)] to-white text-gray-400"
         title={`Preview ${setItem.name}`}
       >
         {previewImage ? (
           <img
             src={previewImage}
             alt={`${setItem.name} preview`}
-            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            className="h-full w-full bg-white object-contain p-1 transition-transform duration-200 group-hover:scale-[1.02]"
           />
         ) : (
-          <span className="text-sm font-medium">Lesson Preview</span>
+          <span className="text-xs font-medium">Lesson Preview</span>
         )}
 
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-colors flex items-center justify-center">
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-semibold tracking-wide">
+          <span className="text-xs font-semibold tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
             Click to preview
           </span>
         </div>
       </button>
 
       <div>
-        <div className="flex items-start justify-between gap-3 mb-1">
+        <div className="mb-1 flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-          <h3 className="font-semibold text-lg leading-tight">{setItem.name}</h3>
+          <h3 className="line-clamp-1 text-sm font-semibold leading-tight">{setItem.name}</h3>
             {isOwner && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--color-bg-soft)] text-[var(--color-text-main)] border shrink-0">
+              <span className="shrink-0 rounded-full border bg-[var(--color-bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--color-text-main)]">
                 Yours
               </span>
             )}
@@ -89,23 +89,23 @@ export default function CommunitySetCard({
                 onReport(setItem);
               }}
               title="Report set"
-              className="btn px-3 py-2 text-sm border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 shrink-0"
+              className="btn shrink-0 border border-red-200 bg-red-50 p-1 text-red-700 hover:bg-red-100"
             >
               <AlertTriangle size={14} />
             </button>
           )}
         </div>
 
-        <p className="text-xs text-[var(--color-text-muted)] mb-3">
+        <p className="mb-1.5 truncate text-[10px] text-[var(--color-text-muted)]">
           {authorName ? `By ${authorName}` : `By ${setItem.user_id?.slice(0, 8)}`}
         </p>
 
         {tagLabel.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="mb-1 flex flex-wrap gap-1">
             {tagLabel.map((tag) => (
               <span
                 key={tag}
-                className="text-[11px] px-2 py-1 rounded-full bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] border"
+                className="rounded-full border bg-[var(--color-bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--color-text-muted)]"
               >
                 {tag}
               </span>
@@ -114,7 +114,7 @@ export default function CommunitySetCard({
         )}
       </div>
 
-      <div className="flex items-center gap-3 mt-4">
+      <div className="mt-auto flex items-center gap-2 pt-1.5">
         <button
           disabled={!canAddToDashboard}
           onClick={(event) => {
@@ -128,7 +128,7 @@ export default function CommunitySetCard({
                 : "Add this set to your Dashboard"
               : "Upgrade to Premium to use Community sets in your Dashboard"
           }
-          className="btn btn-primary flex-1 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-55"
+          className="btn btn-primary flex-1 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-55"
         >
           {canAddToDashboard
             ? isOwner
@@ -137,7 +137,7 @@ export default function CommunitySetCard({
             : "Premium required"}
         </button>
 
-        <div className="text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+        <div className="whitespace-nowrap text-[10px] text-[var(--color-text-muted)]">
           {setItem.download_count ?? 0} copies
         </div>
       </div>

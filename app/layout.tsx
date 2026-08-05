@@ -9,6 +9,8 @@ import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
 import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
+import { SiteFooter } from "@/components/SiteFooter";
+import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.classendo.com"),
@@ -48,7 +50,9 @@ export default function RootLayout({
               </header>
 
               {children}
+              <SiteFooter />
               <FeedbackLauncher />
+              <CookieConsentBanner />
             </div>
           </BrandMenuProvider>
         </AuthProvider>

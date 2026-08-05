@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { openBillingPortal } from "@/lib/billing/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { COMPANY } from "@/lib/legal/constants";
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
@@ -108,9 +109,17 @@ export default function ProfilePage() {
             </>
           ) : null}
           {access?.premiumAccessSource === "stripe" ? (
-            <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
-              Manage Billing
-            </button>
+            <>
+              <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
+                Manage Billing
+              </button>
+              <a
+                href={`mailto:${COMPANY.supportEmail}?subject=${encodeURIComponent("Classendo refund request")}`}
+                className="btn btn-secondary px-6 py-3"
+              >
+                Request a refund
+              </a>
+            </>
           ) : !access?.isPremium || access?.premiumAccessSource === "welcome_trial" ? (
             <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
               {access?.premiumAccessSource === "welcome_trial" ? "Continue Premium after trial" : "Upgrade to Premium"}
@@ -120,6 +129,12 @@ export default function ProfilePage() {
             Sign out
           </button>
         </div>
+        {access?.premiumAccessSource === "stripe" ? (
+          <p className="mt-5 text-sm leading-6 text-[#657065]">
+            Manage Billing cancels future renewal. Refunds are reviewed separately under our{" "}
+            <Link href="/legal/refunds" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
+          </p>
+        ) : null}
       </section>
     </main>
   );

@@ -9,6 +9,7 @@ type CommunityPreviewModalProps = {
   cards: CommunityCardPreview[];
   loading: boolean;
   canAddToDashboard: boolean;
+  isOwner?: boolean;
   onClose: () => void;
   onAddToDashboard: (setItem: CommunityLessonSet) => void;
 };
@@ -19,6 +20,7 @@ export default function CommunityPreviewModal({
   cards,
   loading,
   canAddToDashboard,
+  isOwner = false,
   onClose,
   onAddToDashboard,
 }: CommunityPreviewModalProps) {
@@ -42,12 +44,18 @@ export default function CommunityPreviewModal({
               onClick={() => onAddToDashboard(setItem)}
               title={
                 canAddToDashboard
-                  ? "Add this set to your Dashboard"
+                  ? isOwner
+                    ? "Open this set in your Dashboard"
+                    : "Add this set to your Dashboard"
                   : "Upgrade to Premium to use Community sets in your Dashboard"
               }
               className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-55"
             >
-              {canAddToDashboard ? "Add to Dashboard" : "Premium required"}
+              {canAddToDashboard
+                ? isOwner
+                  ? "Open in Dashboard"
+                  : "Add to Dashboard"
+                : "Premium required"}
             </button>
 
             <button
@@ -76,7 +84,7 @@ export default function CommunityPreviewModal({
                     <img
                       src={resolveLessonImageUrl(card.back)}
                       alt={card.front}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full bg-white object-contain p-1"
                     />
                   </div>
                 ) : null}

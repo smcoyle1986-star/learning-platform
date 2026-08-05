@@ -57,6 +57,11 @@ export function normalizeLesson(raw: unknown): LessonRecord {
         : source.is_public !== undefined
           ? Boolean(source.is_public)
           : undefined,
+    isFavorite:
+      source.isFavorite !== undefined
+        ? Boolean(source.isFavorite)
+        : Boolean(source.is_favorite),
+    archivedAt: normalizeTimestamp(source.archivedAt ?? source.archived_at),
     basicActive: source.basicActive !== undefined ? Boolean(source.basicActive) : source.basic_active !== undefined ? Boolean(source.basic_active) : true,
     containsPremiumImages: Boolean(source.containsPremiumImages ?? source.contains_premium_images),
     basicVersionAvailable: Boolean(source.basicVersionAvailable ?? source.basic_version_available),
@@ -247,7 +252,7 @@ export async function loadLessonsForUser(
 ) {
   const { data: sets, error: setsError } = await supabase
     .from("lesson_sets")
-    .select("id, name, created_at, last_used, is_public, use_count")
+    .select("id, name, created_at, last_used, is_public, use_count, is_favorite, archived_at")
     .eq("user_id", userId)
     .order("last_used", { ascending: false });
 
@@ -323,7 +328,7 @@ async function loadLessonsByIds(
 
   const { data: sets, error: setError } = await supabase
     .from("lesson_sets")
-    .select("id, name, created_at, last_used, is_public, use_count")
+    .select("id, name, created_at, last_used, is_public, use_count, is_favorite, archived_at")
     .in("id", lessonIds);
 
   if (setError) throw setError;
@@ -391,4 +396,32 @@ export async function recordLessonUsage(
     useCount: nextUseCount,
     lastUsed: nextLastUsed,
   });
+}
+
+export async function updateLessonLibraryStateFromServer(
+  lessonId: string,
+  changes: { isFavorite?: boolean; archived?: boolean },
+) {
+  const {
+    data: { session },
+  } = await import("@/lib/supabase/client").then(({ supabase }) => supabase.auth.getSession());
+
+  const response = await fetch(
+    `/api/lessons/${encodeURIComponent(lessonId)}/library-state`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
+      },
+      body: JSON.stringify(changes),
+    },
+  );
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload) {
+    throw new Error(String(payload?.error ?? "Could not update this lesson set."));
+  }
+  return normalizeLesson(payload);
 }

@@ -16,6 +16,8 @@ import {
   GUEST_LESSON_TRAY_LIMIT,
   readLastSavedTray,
   readLessonTray,
+  setEditingLessonSetId as persistEditingLessonSetId,
+  writeLastSavedTray,
   writeLessonTray,
 } from "@/lib/lessons/tray";
 import { LessonCard } from "@/lib/lessons/types";
@@ -77,6 +79,7 @@ export default function FlashcardsPage() {
     showSaveSuccessModal,
     setShowSaveSuccessModal,
     showSavedIndicator,
+    isSaving,
     editingLessonSetId,
     setEditingLessonSetId,
     isPublic,
@@ -384,6 +387,8 @@ export default function FlashcardsPage() {
           } },
           { label: "Editor", onClick: () => {
             persistLessonTray();
+            writeLastSavedTray(lessonTray as LessonCard[]);
+            persistEditingLessonSetId(null);
             router.push("/teacher/editor");
           } },
           { label: "Printables", onClick: () => {
@@ -497,7 +502,9 @@ export default function FlashcardsPage() {
         <SaveLessonDialogs
           showSaveModal={showSaveModal}
           lessonName={lessonName}
+          lessonCardCount={lessonTray.length}
           isPublic={isPublic}
+          isSaving={isSaving}
           nameError={nameError}
           onLessonNameChange={setLessonName}
           onTogglePublic={() => setIsPublic((value) => !value)}
@@ -515,6 +522,10 @@ export default function FlashcardsPage() {
             setShowSaveLimitModal(false);
             router.push("/dashboard");
           }}
+          onUpgradeFromLimit={() => {
+            setShowSaveLimitModal(false);
+            router.push("/upgrade");
+          }}
           onReturnToFlashcards={() => {
             setShowSaveLimitModal(false);
           }}
@@ -523,6 +534,11 @@ export default function FlashcardsPage() {
           onGoDashboardAfterSave={() => {
             setShowSaveSuccessModal(false);
             router.push("/dashboard");
+          }}
+          onGoClassroomAfterSave={() => {
+            setShowSaveSuccessModal(false);
+            persistLessonTray();
+            router.push("/flashcards/classroom?from=flashcards");
           }}
           onReturnToFlashcardsAfterSave={() => {
             setShowSaveSuccessModal(false);

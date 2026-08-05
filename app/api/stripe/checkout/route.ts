@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       },
       customer: customerId,
       client_reference_id: user.id,
-      success_url: `${baseUrl}/landing?premium=welcome`,
+      success_url: `${baseUrl}/landing?premium=welcome&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/upgrade?checkout=cancelled`,
       line_items: [
         {

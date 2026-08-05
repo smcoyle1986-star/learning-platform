@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
+import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
 type AnalyticsEvent = {
   eventType: "vocabulary_search" | "flashcard_view" | "worksheet_generated";
@@ -24,7 +25,7 @@ function analyticsSessionKey() {
 }
 
 export async function trackAnalyticsEvent(event: AnalyticsEvent) {
-  if (typeof window === "undefined" || navigator.doNotTrack === "1") return;
+  if (typeof window === "undefined" || navigator.doNotTrack === "1" || !hasAnalyticsConsent()) return;
   try {
     const { data } = await supabase.auth.getSession();
     await fetch("/api/analytics/events", {

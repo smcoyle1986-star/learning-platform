@@ -20,6 +20,8 @@ export type LessonRecord = {
   lastUsed?: number | null;
   useCount?: number;
   isPublic?: boolean;
+  isFavorite?: boolean;
+  archivedAt?: number | null;
   basicActive?: boolean;
   containsPremiumImages?: boolean;
   basicVersionAvailable?: boolean;

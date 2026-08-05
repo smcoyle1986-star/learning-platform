@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import HeaderAuth from "@/components/HeaderAuth";
 import LandingCarousel from "@/components/landing/LandingCarousel";
@@ -42,11 +42,13 @@ function LandingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile } = useAuth();
-  const { access } = useBillingAccess();
+  const { access, refresh: refreshBillingAccess } = useBillingAccess();
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [premiumWelcomeDismissed, setPremiumWelcomeDismissed] = useState(false);
+  const [premiumSyncError, setPremiumSyncError] = useState<string | null>(null);
+  const checkoutConfirmationStarted = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -107,11 +109,65 @@ function LandingPageContent() {
     return () => clearTimeout(timeout);
   }, [searchParams, router]);
 
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (
+      searchParams.get("premium") !== "welcome"
+      || !sessionId
+      || checkoutConfirmationStarted.current
+    ) {
+      return;
+    }
+
+    checkoutConfirmationStarted.current = true;
+    let cancelled = false;
+
+    const confirmCheckout = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        const token = data.session?.access_token;
+        if (!token) throw new Error("Please sign in again to confirm your Premium upgrade.");
+
+        const response = await fetch("/api/stripe/checkout/confirm", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(String(payload?.error ?? "Premium checkout could not be confirmed."));
+        }
+
+        await refreshBillingAccess();
+      } catch (error: unknown) {
+        if (!cancelled) {
+          setPremiumSyncError(
+            error instanceof Error ? error.message : "Premium checkout could not be confirmed.",
+          );
+        }
+      }
+    };
+
+    void confirmCheckout();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshBillingAccess, searchParams]);
+
   const displayName = profile?.username || profile?.display_name || email;
   const showPremiumWelcome =
     searchParams.get("premium") === "welcome" &&
     Boolean(access?.isPremium) &&
     !premiumWelcomeDismissed;
+  const premiumCheckoutPending =
+    searchParams.get("premium") === "welcome" &&
+    Boolean(searchParams.get("session_id")) &&
+    !access?.isPremium &&
+    !premiumSyncError;
   const quickLinks = useMemo(
     () => [
       {
@@ -198,6 +254,16 @@ function LandingPageContent() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-8 md:py-12">
+        {premiumCheckoutPending ? (
+          <div className="mb-6 rounded-2xl border border-[#dbe3d1] bg-white px-5 py-4 text-sm font-medium text-[#47613a] shadow-sm" role="status">
+            Confirming your Premium upgrade…
+          </div>
+        ) : null}
+        {premiumSyncError ? (
+          <div className="mb-6 rounded-2xl border border-[#eadfc6] bg-[#fffaf1] px-5 py-4 text-sm text-[#7f6842]" role="alert">
+            Your payment succeeded, but Classendo could not confirm Premium automatically. Please refresh once; if this continues, contact support with your Stripe receipt. ({premiumSyncError})
+          </div>
+        ) : null}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {quickLinks.map((item) => (
             <QuickLinkCard key={item.title} {...item} />
@@ -225,13 +291,18 @@ function LandingPageContent() {
       </section>
 
       {showPremiumWelcome ? (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-2xl rounded-[2rem] border border-[#dbe3d1] bg-white p-6 shadow-[0_28px_90px_rgba(15,23,42,0.24)] md:p-8">
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/45 px-4" role="presentation">
+          <div
+            aria-labelledby="premium-welcome-title"
+            aria-modal="true"
+            className="w-full max-w-2xl rounded-[2rem] border border-[#dbe3d1] bg-white p-6 shadow-[0_28px_90px_rgba(15,23,42,0.24)] md:p-8"
+            role="dialog"
+          >
             <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
               Welcome to Classendo Premium
             </div>
 
-            <h2 className="mt-5 text-3xl font-semibold tracking-tight text-[#2f3a2f] md:text-4xl">
+            <h2 id="premium-welcome-title" className="mt-5 text-3xl font-semibold tracking-tight text-[#2f3a2f] md:text-4xl">
               Your Premium features are now unlocked
             </h2>
             <p className="mt-4 text-base leading-8 text-[#5c665c]">

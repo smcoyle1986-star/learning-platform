@@ -10,6 +10,7 @@ import {
   normalizeUsername,
   suggestUsernameFromEmail,
 } from "@/lib/auth/username";
+import { LEGAL_VERSION } from "@/lib/legal/constants";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
@@ -125,6 +126,7 @@ export default function SignupPage() {
   const [usernameState, setUsernameState] = useState<UsernameState>("idle");
   const [usernameHint, setUsernameHint] = useState("");
   const [usernameOptions, setUsernameOptions] = useState<string[]>([]);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
   const countryOptions = useMemo(() => {
@@ -228,6 +230,11 @@ export default function SignupPage() {
       return;
     }
 
+    if (!legalAccepted) {
+      setMessage("Please confirm that you are at least 18 and accept the Terms of Service and Refund Policy.");
+      return;
+    }
+
     if (!cleanUsername || !isValidUsername(cleanUsername)) {
       setMessage("Username must be 3–24 characters and use only lowercase letters, numbers, underscores, or hyphens.");
       return;
@@ -266,6 +273,10 @@ export default function SignupPage() {
           data: {
             username: cleanUsername,
             country_region: cleanCountry,
+            age_confirmed: true,
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: LEGAL_VERSION,
+            privacy_notice_version: LEGAL_VERSION,
           },
         },
       });
@@ -316,9 +327,9 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:py-14">
-        <div className="space-y-8">
+    <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f] lg:h-[calc(100dvh-65px)] lg:min-h-0 lg:overflow-hidden">
+      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:h-full lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:py-8">
+        <div className="space-y-8 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]">
           <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-white px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
             Create your account
           </div>
@@ -365,8 +376,8 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <div className="lg:sticky lg:top-8">
-          <div className="rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
+        <div className="lg:min-h-0">
+          <div className="rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]">
             <h2 className="text-3xl font-semibold text-[#2f3a2f]">
               Create your free account
             </h2>
@@ -500,6 +511,28 @@ export default function SignupPage() {
                   Use the password you’ll keep for Classendo.
                 </p>
               </div>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] p-4 text-sm leading-6 text-[#566056]">
+                <input
+                  type="checkbox"
+                  checked={legalAccepted}
+                  onChange={(event) => setLegalAccepted(event.target.checked)}
+                  required
+                  className="mt-1 h-4 w-4 shrink-0 accent-[#6c8f58]"
+                />
+                <span>
+                  I confirm that I am at least 18 and agree to the{" "}
+                  <Link href="/legal/terms" target="_blank" className="font-semibold underline underline-offset-4">Terms of Service</Link>
+                  {" "}and{" "}
+                  <Link href="/legal/refunds" target="_blank" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
+                  I acknowledge the{" "}
+                  <Link href="/legal/privacy" target="_blank" className="font-semibold underline underline-offset-4">Privacy Notice</Link>.
+                </span>
+              </label>
+
+              <p className="text-sm leading-6 text-[#6b756b]">
+                Classendo accounts are for adult teachers. Do not upload identifiable or sensitive pupil information.
+              </p>
 
               {message && (
                 <p className="rounded-2xl border border-[#dbe3d1] bg-[#f7faf4] px-4 py-3 text-sm leading-6 text-[#4c5f49]">

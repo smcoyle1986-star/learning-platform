@@ -330,19 +330,61 @@ export function useCommunitySets() {
     }
 
     try {
+      if (!currentUserId) {
+        setToast({ message: "Please sign in again to use Community sets." });
+        return;
+      }
+
+      const openExistingDashboardSet = (lessonSetId: string, reason: "owned" | "already_saved") => {
+        const params = new URLSearchParams({
+          lesson_set_id: lessonSetId,
+          notice: reason,
+        });
+        window.location.assign(`/dashboard?${params.toString()}`);
+      };
+
+      if (setItem.user_id === currentUserId) {
+        openExistingDashboardSet(setItem.id, "owned");
+        return;
+      }
+
       setToast({ message: "Adding to your Dashboard..." });
 
-      const { data: rpcData, error: rpcErr } = await supabase.rpc("copy_lesson_set", {
+      const { data: existingCopy, error: existingCopyError } = await supabase
+        .from("lesson_sets")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("copied_from", setItem.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (existingCopyError) throw existingCopyError;
+      if (existingCopy?.id) {
+        openExistingDashboardSet(String(existingCopy.id), "already_saved");
+        return;
+      }
+
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("copy_lesson_set_once", {
         original_set: setItem.id,
       });
 
       if (rpcErr) {
-        console.error("copy_lesson_set RPC failed:", rpcErr);
+        console.error("copy_lesson_set_once RPC failed:", rpcErr);
         setToast({ message: "Failed to copy set. Try again." });
         return;
       }
 
-      const newId = String(rpcData);
+      const copyResult = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      const newId = String(copyResult?.lesson_set_id ?? "");
+      const copyOutcome = String(copyResult?.outcome ?? "copied");
+      if (!newId) throw new Error("Community copy did not return a lesson set.");
+      if (copyOutcome === "owned" || copyOutcome === "already_saved") {
+        openExistingDashboardSet(
+          newId,
+          copyOutcome === "owned" ? "owned" : "already_saved",
+        );
+        return;
+      }
       let newSetName = setItem.name;
       let newCreatedAt = new Date().toISOString();
       let newCards: CommunityCardPreview[] = [];

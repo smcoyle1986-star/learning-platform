@@ -103,7 +103,7 @@ export default function CommunityPage() {
       />
 
       {/* Controls */}
-      <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
+      <main className="mx-auto max-w-[1500px] px-6 pb-16 pt-6">
         <CommunityControls
           query={query}
           sort={sort}
@@ -144,7 +144,7 @@ export default function CommunityPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {sets.map((setItem) => (
                 <CommunitySetCard
                   key={setItem.id}
@@ -197,6 +197,7 @@ export default function CommunityPage() {
         cards={previewCards}
         loading={previewLoading}
         canAddToDashboard={canCopyToDashboard}
+        isOwner={Boolean(previewSet && currentUserId === previewSet.user_id)}
         onClose={() => setPreviewSet(null)}
         onAddToDashboard={async (setItem) => {
           await addToDashboard(setItem);

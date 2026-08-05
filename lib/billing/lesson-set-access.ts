@@ -19,9 +19,36 @@ type RawCard = {
   front: string | null;
   back: string | null;
   creator_image_id: string | null;
+  content_type: string | null;
   position: number | null;
   basic_back_override: string | null;
 };
+
+const CARD_QUERY_PAGE_SIZE = 1000;
+
+async function loadAllOwnedCards(
+  supabase: SupabaseClient,
+  lessonIds: string[],
+) {
+  const cards: RawCard[] = [];
+
+  for (let from = 0; ; from += CARD_QUERY_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("cards")
+      .select("id,lesson_set_id,front,back,creator_image_id,content_type,position,basic_back_override")
+      .in("lesson_set_id", lessonIds)
+      .order("lesson_set_id", { ascending: true })
+      .order("position", { ascending: true })
+      .range(from, from + CARD_QUERY_PAGE_SIZE - 1);
+    if (error) throw error;
+
+    const page = (data ?? []) as RawCard[];
+    cards.push(...page);
+    if (page.length < CARD_QUERY_PAGE_SIZE) break;
+  }
+
+  return cards;
+}
 
 function matchesImagePath(stored: string | null, path: string | null | undefined) {
   if (!stored || !path) return false;
@@ -53,7 +80,7 @@ async function loadOwnedSetsAndImages(supabase: SupabaseClient, userId: string) 
   const [{ data: sets, error: setsError }, { data: images, error: imagesError }] = await Promise.all([
     supabase
       .from("lesson_sets")
-      .select("id,name,created_at,last_used,is_public,use_count,basic_active,basic_locked_at")
+      .select("id,name,created_at,last_used,is_public,use_count,basic_active,basic_locked_at,is_favorite,archived_at")
       .eq("user_id", userId)
       .order("last_used", { ascending: false }),
     supabase
@@ -66,16 +93,11 @@ async function loadOwnedSetsAndImages(supabase: SupabaseClient, userId: string) 
   const lessonIds = (sets ?? []).map((row) => String(row.id));
   if (!lessonIds.length) return { sets: [], cards: [] as RawCard[], images: (images ?? []) as VocabImageRow[] };
 
-  const { data: cards, error: cardsError } = await supabase
-    .from("cards")
-    .select("id,lesson_set_id,front,back,creator_image_id,position,basic_back_override")
-    .in("lesson_set_id", lessonIds)
-    .order("position", { ascending: true });
-  if (cardsError) throw cardsError;
+  const cards = await loadAllOwnedCards(supabase, lessonIds);
 
   return {
     sets: sets ?? [],
-    cards: (cards ?? []) as RawCard[],
+    cards,
     images: (images ?? []) as VocabImageRow[],
   };
 }
@@ -117,6 +139,7 @@ export async function loadLessonSetsWithAccess(
         back: effectiveBack,
         creator_image_id: access.isPremium ? card.creator_image_id : null,
         position: card.position ?? 0,
+        type: card.content_type ?? undefined,
       };
     });
 

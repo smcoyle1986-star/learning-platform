@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
+import SaveLessonDialogs from "@/components/flashcards/SaveLessonDialogs";
 import { X, Printer } from "lucide-react";
 import EditorCardRow from "@/components/teacher/editor/EditorCardRow";
 import { supabase } from "@/lib/supabase/client";
@@ -11,13 +12,16 @@ import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   findExistingLessonIdByName,
   LessonNameConflictError,
+  loadLessonById,
   loadLessonMetadata,
   saveLessonFromClient,
 } from "@/lib/lessons/repository";
 import {
   clearLessonTray,
+  normalizeLessonCard,
   readLastSavedTray,
   readLessonTray,
+  setEditingLessonSetId as persistEditingLessonSetId,
   writeLastSavedTray,
   writeLessonTray,
 } from "@/lib/lessons/tray";
@@ -60,6 +64,9 @@ export default function TeacherLessonTrayEditor() {
   const [nameError, setNameError] = useState("");
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const [existingLessonId, setExistingLessonId] = useState<string | null>(null);
+  const [showSaveLimitModal, setShowSaveLimitModal] = useState(false);
+  const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // NEW: Editing mode detection (lesson_set id passed when Dashboard -> Edit)
   const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
@@ -71,23 +78,6 @@ export default function TeacherLessonTrayEditor() {
   const [lastSavedTray, setLastSavedTray] = useState<LessonCard[]>([]);
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  useEffect(() => {
-    // Try to detect editing lesson_set id passed via query or localStorage (same pattern as Flashcards)
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const idFromQuery =
-        params.get("lesson_set_id") ||
-        params.get("lessonSetId") ||
-        params.get("id") ||
-        null;
-      if (idFromQuery) {
-        setEditingLessonSetId(idFromQuery);
-      }
-    } catch (e) {
-      /* ignore */
-    }
-  }, []);
 
   useEffect(() => {
     // If we detected an editingLessonSetId, load its name + is_public so the modal preloads correctly
@@ -106,16 +96,49 @@ export default function TeacherLessonTrayEditor() {
   }, [editingLessonSetId]);
 
   useEffect(() => {
-    try {
-      setTrayCards(readLessonTray());
-      setLastSavedTray(readLastSavedTray());
-    } catch (err) {
-      console.error("Failed to load lesson tray:", err);
-      setTrayCards([]);
-      setLastSavedTray([]);
-    } finally {
-      setLoading(false);
-    }
+    let active = true;
+
+    const initializeEditor = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const idFromQuery =
+          params.get("lesson_set_id") ||
+          params.get("lessonSetId") ||
+          params.get("id") ||
+          null;
+        if (active) setEditingLessonSetId(idFromQuery);
+
+        let nextTray = readLessonTray();
+        if (idFromQuery && nextTray.length === 0) {
+          const savedLesson = await loadLessonById(supabase, idFromQuery);
+          nextTray = savedLesson?.cards ?? [];
+        }
+        if (!active) return;
+
+        // The tray as it enters the Editor is the reset/unsaved-change baseline.
+        // This is important for both Dashboard edits and unsaved Flashcards trays.
+        const baseline = nextTray;
+        setTrayCards(nextTray);
+        setLastSavedTray(baseline);
+        if (nextTray.length > 0) {
+          writeLessonTray(nextTray);
+          writeLastSavedTray(nextTray);
+        }
+      } catch (err) {
+        console.error("Failed to load lesson tray:", err);
+        if (active) {
+          setTrayCards([]);
+          setLastSavedTray([]);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void initializeEditor();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -143,8 +166,9 @@ export default function TeacherLessonTrayEditor() {
 
   // persist lesson tray to localStorage so other pages can pick it up
   useEffect(() => {
+    if (loading) return;
     writeLessonTray(trayCards);
-  }, [trayCards]);
+  }, [loading, trayCards]);
 
   // track unsaved changes similar to Flashcards (visual only; no blocking)
   useEffect(() => {
@@ -178,12 +202,14 @@ export default function TeacherLessonTrayEditor() {
      ------------------------------- */
 
   async function handleSaveLesson() {
+    if (isSaving) return;
     setNameError("");
     if (!lessonName.trim()) {
       setNameError("Lesson name is required");
       return;
     }
 
+    setIsSaving(true);
     try {
       // Ensure user is authenticated
       const { data, error: userErr } = await supabase.auth.getUser();
@@ -217,6 +243,7 @@ export default function TeacherLessonTrayEditor() {
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
       finishSave();
+      setShowSaveSuccessModal(true);
     } catch (err: unknown) {
       if (err instanceof LessonNameConflictError) {
         if (err.existingLessonId) {
@@ -227,13 +254,23 @@ export default function TeacherLessonTrayEditor() {
         }
         return;
       }
+      if (isDashboardSaveLimitError(err)) {
+        setShowSaveModal(false);
+        setNameError("");
+        setShowSaveLimitModal(true);
+        return;
+      }
       console.error("Save failed:", err);
       setNameError(err instanceof Error ? err.message : "Save failed. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
   // Replace existing lesson flow (same as Flashcards) but includes is_public update
   async function replaceLesson() {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       if (!existingLessonId) {
         setShowReplaceConfirm(false);
@@ -263,18 +300,51 @@ export default function TeacherLessonTrayEditor() {
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
       finishSave();
+      setShowSaveSuccessModal(true);
     } catch (err: unknown) {
+      if (isDashboardSaveLimitError(err)) {
+        setShowReplaceConfirm(false);
+        setNameError("");
+        setShowSaveLimitModal(true);
+        return;
+      }
       console.error("Replace failed:", err);
       setNameError(err instanceof Error ? err.message : "Replace failed. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
+  function isDashboardSaveLimitError(error: unknown) {
+    const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
+    return /free accounts can save up to \d+ (dashboard resources|lesson sets|worksheets)/.test(message);
+  }
+
   function applySavedLessonState(savedLesson: { id: string; name: string; cards: LessonCard[]; isPublic?: boolean }) {
-    setTrayCards(savedLesson.cards);
-    setLastSavedTray(savedLesson.cards);
-    writeLessonTray(savedLesson.cards);
-    writeLastSavedTray(savedLesson.cards);
+    const persistedCards = savedLesson.cards.map((savedCard, index) => {
+      const editedCard = trayCards[index];
+      const preservedImage = savedCard.image
+        ?? savedCard.back
+        ?? editedCard?.image
+        ?? editedCard?.back
+        ?? null;
+
+      return normalizeLessonCard({
+        ...editedCard,
+        ...savedCard,
+        word: savedCard.word || editedCard?.word || "",
+        image: preservedImage,
+        back: savedCard.back ?? preservedImage,
+        type: savedCard.type ?? editedCard?.type,
+      });
+    });
+
+    setTrayCards(persistedCards);
+    setLastSavedTray(persistedCards);
+    writeLessonTray(persistedCards);
+    writeLastSavedTray(persistedCards);
     setEditingLessonSetId(savedLesson.id);
+    persistEditingLessonSetId(savedLesson.id);
     setLessonName(savedLesson.name);
     setIsPublic(Boolean(savedLesson.isPublic ?? true));
   }
@@ -444,89 +514,47 @@ export default function TeacherLessonTrayEditor() {
         )}
       </main>
 
-      {/* Save Modal */}
-      {showSaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Save To Dashboard</h2>
-
-            <input
-              type="text"
-              value={lessonName}
-              onChange={(e) => setLessonName(e.target.value)}
-              placeholder="Enter lesson name"
-              className="w-full mb-3 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-
-            {/* Public / Private toggle (matches Flashcards wording/behavior) */}
-            <div className="flex items-center justify-between mb-5">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={() => setIsPublic((p) => !p)}
-                  aria-label="Make lesson public"
-                  className="w-4 h-4"
-                />
-                <span className="select-none">
-                  {isPublic ? "Public — visible in Community" : "Private — only visible to you"}
-                </span>
-              </label>
-            </div>
-
-            {nameError && <div className="text-sm text-red-600 mb-3">{nameError}</div>}
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setLessonName("");
-                  setShowSaveModal(false);
-                }}
-                className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSaveLesson}
-                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
-              >
-                Save Lesson
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Replace confirm modal */}
-      {showReplaceConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-semibold mb-2">Lesson already exists</h3>
-
-            <p className="text-sm text-[var(--color-text-muted)] mb-6">
-              A lesson with this name is already saved. Do you want to replace it
-              or change the name?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowReplaceConfirm(false)}
-                className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
-              >
-                Change name
-              </button>
-
-              <button
-                onClick={replaceLesson}
-                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition"
-              >
-                Replace
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SaveLessonDialogs
+        showSaveModal={showSaveModal}
+        lessonName={lessonName}
+        lessonCardCount={trayCards.length}
+        isPublic={isPublic}
+        isSaving={isSaving}
+        nameError={nameError}
+        onLessonNameChange={setLessonName}
+        onTogglePublic={() => setIsPublic((value) => !value)}
+        onCancelSave={() => {
+          setNameError("");
+          setShowSaveModal(false);
+        }}
+        onSaveLesson={handleSaveLesson}
+        showReplaceConfirm={showReplaceConfirm}
+        onCancelReplace={() => setShowReplaceConfirm(false)}
+        onReplaceLesson={replaceLesson}
+        showSaveLimitModal={showSaveLimitModal}
+        onCloseSaveLimitModal={() => setShowSaveLimitModal(false)}
+        onGoDashboardToDelete={() => {
+          setShowSaveLimitModal(false);
+          navigateDirect("/dashboard");
+        }}
+        onUpgradeFromLimit={() => {
+          setShowSaveLimitModal(false);
+          navigateDirect("/upgrade");
+        }}
+        onReturnToFlashcards={() => setShowSaveLimitModal(false)}
+        showSaveSuccessModal={showSaveSuccessModal}
+        onCloseSaveSuccessModal={() => setShowSaveSuccessModal(false)}
+        onGoDashboardAfterSave={() => {
+          setShowSaveSuccessModal(false);
+          navigateDirect("/dashboard");
+        }}
+        onGoClassroomAfterSave={() => {
+          setShowSaveSuccessModal(false);
+          writeLessonTray(trayCards);
+          navigateDirect("/flashcards/classroom?from=editor");
+        }}
+        onReturnToFlashcardsAfterSave={() => setShowSaveSuccessModal(false)}
+      />
     </div>
   );
 }
