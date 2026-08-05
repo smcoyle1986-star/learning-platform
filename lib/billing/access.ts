@@ -58,6 +58,11 @@ export function normalizeSubscriptionRecord(raw: unknown): SubscriptionRecord | 
     cancelAtPeriodEnd: Boolean(source.cancel_at_period_end),
     createdAt: source.created_at ? String(source.created_at) : null,
     updatedAt: source.updated_at ? String(source.updated_at) : null,
+    premiumTrialStartedAt: source.premium_trial_started_at ? String(source.premium_trial_started_at) : null,
+    premiumTrialEndsAt: source.premium_trial_ends_at ? String(source.premium_trial_ends_at) : null,
+    premiumTrialUsed: Boolean(source.premium_trial_used),
+    premiumTrialExpirySeenAt: source.premium_trial_expiry_seen_at ? String(source.premium_trial_expiry_seen_at) : null,
+    basicLessonAccessAssignedAt: source.basic_lesson_access_assigned_at ? String(source.basic_lesson_access_assigned_at) : null,
   };
 }
 
@@ -75,6 +80,13 @@ export function buildBillingAccessSnapshot(params: {
   const complimentaryPremiumAccess = params.complimentaryPremiumAccess ?? null;
   const administratorRole = params.administratorRole ?? null;
   const hasStripePremium = isPremiumSubscription(subscription);
+  const trialEndsAt = subscription?.premiumTrialEndsAt ?? null;
+  const hasWelcomeTrial = Boolean(
+    subscription?.premiumTrialUsed
+    && subscription.premiumTrialStartedAt
+    && trialEndsAt
+    && new Date(trialEndsAt).getTime() > now.getTime()
+  );
   const hasComplimentaryPremium = Boolean(
     complimentaryPremiumAccess?.active
     && (
@@ -82,17 +94,40 @@ export function buildBillingAccessSnapshot(params: {
       || new Date(complimentaryPremiumAccess.expiresAt).getTime() > now.getTime()
     ),
   );
-  const isPremium = hasStripePremium || hasComplimentaryPremium;
+  const isPremium = hasStripePremium || hasComplimentaryPremium || hasWelcomeTrial;
+  const trialMillisecondsRemaining = trialEndsAt
+    ? Math.max(0, new Date(trialEndsAt).getTime() - now.getTime())
+    : 0;
+  const trialExpired = Boolean(
+    subscription?.premiumTrialUsed
+    && trialEndsAt
+    && new Date(trialEndsAt).getTime() <= now.getTime()
+  );
+  const normalizedSubscriptionStatus = String(subscription?.subscriptionStatus ?? "").toLowerCase();
+  const accountPlan = !params.userId
+    ? "guest"
+    : hasStripePremium
+      ? normalizedSubscriptionStatus === "past_due" ? "past_due" : "premium"
+      : hasComplimentaryPremium
+        ? "premium"
+        : hasWelcomeTrial
+          ? "welcome_trial"
+          : ["canceled", "cancelled", "unpaid", "incomplete_expired"].includes(normalizedSubscriptionStatus)
+            ? "cancelled"
+            : "basic";
 
   return {
     userId: params.userId ?? null,
     isAuthenticated: Boolean(params.userId),
     isPremium,
+    accountPlan,
     premiumAccessSource: hasStripePremium
       ? "stripe"
       : hasComplimentaryPremium
         ? "complimentary"
-        : null,
+        : hasWelcomeTrial
+          ? "welcome_trial"
+          : null,
     administratorRole,
     isAdministrator: administratorRole !== null,
     complimentaryPremiumAccess,
@@ -100,6 +135,21 @@ export function buildBillingAccessSnapshot(params: {
     featuredWorksheetType,
     dashboardSaveLimit: isPremium ? null : FREE_DASHBOARD_SAVE_LIMIT,
     subscription,
+    welcomeTrial: {
+      active: hasWelcomeTrial,
+      startedAt: subscription?.premiumTrialStartedAt ?? null,
+      endsAt: trialEndsAt,
+      used: Boolean(subscription?.premiumTrialUsed),
+      daysRemaining: hasWelcomeTrial
+        ? Math.max(1, Math.ceil(trialMillisecondsRemaining / (24 * 60 * 60 * 1000)))
+        : 0,
+      expiredNoticeRequired: Boolean(
+        params.userId
+        && trialExpired
+        && !isPremium
+        && !subscription?.premiumTrialExpirySeenAt
+      ),
+    },
   };
 }
 
@@ -168,12 +218,19 @@ export async function getBillingAccessForUser(
   )
     ? membership.data?.role as "owner" | "admin" | "moderator"
     : null;
-  return buildBillingAccessSnapshot({
+  const access = buildBillingAccessSnapshot({
     userId,
     subscription,
     complimentaryPremiumAccess,
     administratorRole,
   });
+  if (!access.isPremium) {
+    const { error } = await supabase.rpc("reconcile_basic_lesson_set_access", {
+      target_user_id: userId,
+    });
+    if (error) throw error;
+  }
+  return access;
 }
 
 export function canAccessGame(access: BillingAccessSnapshot, gameId: string) {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import PageHeader from "@/components/navigation/PageHeader";
 import { supabase } from "@/lib/supabase/client";
@@ -11,7 +11,7 @@ import DashboardPreviewModal from "@/components/dashboard/DashboardPreviewModal"
 import DeleteLessonModal from "@/components/dashboard/DeleteLessonModal";
 import {
   deleteLesson,
-  loadLessonsForUser,
+  loadLessonsWithAccessFromServer,
   normalizeLesson,
   recordLessonUsage,
 } from "@/lib/lessons/repository";
@@ -19,16 +19,20 @@ import { writeLessonTray } from "@/lib/lessons/tray";
 import { LessonRecord } from "@/lib/lessons/types";
 import { deleteWorksheet, loadWorksheetsForUser } from "@/lib/worksheets/repository";
 import { SavedWorksheetRecord } from "@/lib/worksheets/types";
+import { hydrateCreatorLessonCards } from "@/lib/creator/client";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 const RECENT_LIMIT = 8;
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { access } = useBillingAccess();
 
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [worksheets, setWorksheets] = useState<SavedWorksheetRecord[]>([]);
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [conversionMessage, setConversionMessage] = useState("");
   
 
   // Delete modal state (new)
@@ -36,14 +40,26 @@ export default function DashboardPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const refreshLessons = useCallback(async () => {
+    if (!user?.id) {
+      setLessons([]);
+      return;
+    }
+    const data = await loadLessonsWithAccessFromServer();
+    const hydrated = await Promise.all(
+      data.map(async (lesson) => ({
+        ...lesson,
+        cards: await hydrateCreatorLessonCards(lesson.cards),
+      }))
+    );
+    setLessons(hydrated);
+  }, [user?.id]);
+
   useEffect(() => {
     let mounted = true;
 
     if (user?.id) {
-      loadLessonsForUser(supabase, user.id)
-        .then((data) => {
-          if (mounted) setLessons(data);
-        })
+      refreshLessons()
         .catch((error) => {
           console.error("Unexpected error loading lessons from Supabase:", error);
           if (mounted) setLessons([]);
@@ -65,7 +81,7 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [refreshLessons, user?.id]);
 
   /* ----------------------------------
      Derived views
@@ -86,6 +102,7 @@ export default function DashboardPage() {
      to avoid changing backend write patterns beyond needed fix.
   -----------------------------------*/
   const enterClassroom = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
     const cardsToCopy = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!Array.isArray(cardsToCopy) || cardsToCopy.length === 0) {
       console.warn("enterClassroom: lesson has no cards, skipping tray update and navigation.");
@@ -116,6 +133,7 @@ export default function DashboardPage() {
   };
 
   const editLesson = (lesson: LessonRecord) => {
+    if (lesson.isLocked || (!access?.isPremium && lesson.containsPremiumImages)) return;
     const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("editLesson: lesson has no cards, aborting edit navigation.");
@@ -127,6 +145,7 @@ export default function DashboardPage() {
   };
 
   const openGames = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
     const cardsToCopy = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!cardsToCopy.length) {
       console.warn("Games: lesson has no cards, aborting navigation.");
@@ -188,6 +207,7 @@ export default function DashboardPage() {
 
   // Print lesson — writes to lesson tray and navigates to printables
   const printLesson = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
     const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("printLesson: lesson has no cards, aborting print.");
@@ -199,6 +219,7 @@ export default function DashboardPage() {
   };
 
   const openWorksheets = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
     const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("openWorksheets: lesson has no cards, aborting worksheets.");
@@ -215,6 +236,7 @@ export default function DashboardPage() {
   };
 
   const selectLessonForTray = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
     const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
     if (!cards.length) return;
 
@@ -228,6 +250,27 @@ export default function DashboardPage() {
       setWorksheets((current) => current.filter((item) => item.id !== worksheetId));
     } catch (error) {
       console.error("Failed to delete worksheet:", error);
+    }
+  };
+
+  const convertLessonToBasic = async (lesson: LessonRecord) => {
+    const confirmed = window.confirm(
+      `Convert "${lesson.name}" to a Basic-compatible version? Classendo will use free Image 1 alternatives while keeping the original Premium image configuration for a future upgrade.`
+    );
+    if (!confirmed) return;
+    setConversionMessage("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch(`/api/lessons/${encodeURIComponent(lesson.id)}/convert-basic`, {
+        method: "POST",
+        headers: data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {},
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(String(payload?.error ?? "Conversion failed."));
+      setConversionMessage(`"${lesson.name}" now has a Basic-compatible Image 1 version. The original Premium choices are preserved.`);
+      await refreshLessons();
+    } catch (error) {
+      setConversionMessage(error instanceof Error ? error.message : "Could not convert this set.");
     }
   };
 
@@ -317,6 +360,7 @@ export default function DashboardPage() {
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
           { label: "Community", href: "/teacher/community" },
+          { label: "Creator", href: "/creator" },
           { label: "Editor", href: "/teacher/editor" },
           { label: "Printables", href: "/printables" },
           { label: "Worksheets", href: "/worksheets" },
@@ -327,6 +371,16 @@ export default function DashboardPage() {
 
       {/* MAIN */}
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-32 space-y-16">
+        {access?.welcomeTrial.active ? (
+          <section className="rounded-[2rem] border border-[#e3cf91] bg-[linear-gradient(135deg,#fff9df,#fff3c2)] p-6 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#98701f]">Premium welcome trial · {access.welcomeTrial.daysRemaining} days remaining</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#5f491a]">Enjoy Premium on us for 14 days</h2>
+            <p className="mt-2 text-sm leading-6 text-[#765f2b]">You have full Premium access with no payment details required. You’ll automatically move to Basic when the welcome period ends unless you choose Premium.</p>
+          </section>
+        ) : null}
+        {conversionMessage ? (
+          <div className="rounded-2xl border border-[#d5e2cf] bg-[#f4f8f1] px-5 py-4 text-sm text-[#496143]">{conversionMessage}</div>
+        ) : null}
         {/* RECENTLY USED */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Recently Used</h2>
@@ -351,6 +405,9 @@ export default function DashboardPage() {
                   onEnterClassroom={enterClassroom}
                   onOpenWorksheets={openWorksheets}
                   onPrint={printLesson}
+                  onConvertToBasic={convertLessonToBasic}
+                  onUpgrade={() => { window.location.href = "/upgrade"; }}
+                  isPremium={Boolean(access?.isPremium)}
                 />
               </div>
               ))}
@@ -388,6 +445,9 @@ export default function DashboardPage() {
                     onEnterClassroom={enterClassroom}
                     onOpenWorksheets={openWorksheets}
                     onPrint={printLesson}
+                    onConvertToBasic={convertLessonToBasic}
+                    onUpgrade={() => { window.location.href = "/upgrade"; }}
+                    isPremium={Boolean(access?.isPremium)}
                   />
                 ))}
               </div>

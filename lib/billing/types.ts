@@ -26,7 +26,29 @@ export type SubscriptionRecord = {
   cancelAtPeriodEnd: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+  premiumTrialStartedAt: string | null;
+  premiumTrialEndsAt: string | null;
+  premiumTrialUsed: boolean;
+  premiumTrialExpirySeenAt: string | null;
+  basicLessonAccessAssignedAt: string | null;
 };
+
+export type WelcomeTrialAccess = {
+  active: boolean;
+  startedAt: string | null;
+  endsAt: string | null;
+  used: boolean;
+  daysRemaining: number;
+  expiredNoticeRequired: boolean;
+};
+
+export type AccountPlanState =
+  | "guest"
+  | "basic"
+  | "welcome_trial"
+  | "premium"
+  | "past_due"
+  | "cancelled";
 
 export type ComplimentaryPremiumAccess = {
   active: boolean;
@@ -39,7 +61,8 @@ export type BillingAccessSnapshot = {
   userId: string | null;
   isAuthenticated: boolean;
   isPremium: boolean;
-  premiumAccessSource: "stripe" | "complimentary" | null;
+  accountPlan: AccountPlanState;
+  premiumAccessSource: "stripe" | "complimentary" | "welcome_trial" | null;
   administratorRole: "owner" | "admin" | "moderator" | null;
   isAdministrator: boolean;
   complimentaryPremiumAccess: ComplimentaryPremiumAccess | null;
@@ -47,4 +70,5 @@ export type BillingAccessSnapshot = {
   featuredWorksheetType: WorksheetType;
   dashboardSaveLimit: number | null;
   subscription: SubscriptionRecord | null;
+  welcomeTrial: WelcomeTrialAccess;
 };

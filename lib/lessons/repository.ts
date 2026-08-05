@@ -3,6 +3,32 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { LessonCard, LessonRecord, SaveLessonInput } from "@/lib/lessons/types";
 import { normalizeLessonCard } from "@/lib/lessons/tray";
 
+const LESSON_NAME_CONFLICT_CODE = "LESSON_NAME_CONFLICT";
+
+export class LessonNameConflictError extends Error {
+  readonly code = LESSON_NAME_CONFLICT_CODE;
+  readonly existingLessonId: string | null;
+
+  constructor(existingLessonId: string | null) {
+    super("A lesson with this name is already saved.");
+    this.name = "LessonNameConflictError";
+    this.existingLessonId = existingLessonId;
+  }
+}
+
+function normalizeLessonNameKey(value: string) {
+  return value.trim().toLocaleLowerCase();
+}
+
+function isLessonNameUniqueViolation(error: unknown) {
+  const source = (error ?? {}) as { code?: unknown; message?: unknown; constraint?: unknown };
+  return (
+    String(source.code ?? "") === "23505" ||
+    String(source.constraint ?? "") === "lesson_sets_user_name_idx" ||
+    String(source.message ?? "").includes("lesson_sets_user_name_idx")
+  );
+}
+
 function normalizeTimestamp(value: unknown) {
   if (value === undefined || value === null) return null;
   if (typeof value === "string") return Date.parse(value) || null;
@@ -31,6 +57,14 @@ export function normalizeLesson(raw: unknown): LessonRecord {
         : source.is_public !== undefined
           ? Boolean(source.is_public)
           : undefined,
+    basicActive: source.basicActive !== undefined ? Boolean(source.basicActive) : source.basic_active !== undefined ? Boolean(source.basic_active) : true,
+    containsPremiumImages: Boolean(source.containsPremiumImages ?? source.contains_premium_images),
+    basicVersionAvailable: Boolean(source.basicVersionAvailable ?? source.basic_version_available),
+    basicConversionAvailable: Boolean(source.basicConversionAvailable ?? source.basic_conversion_available),
+    isLocked: Boolean(source.isLocked ?? source.is_locked),
+    lockReasons: Array.isArray(source.lockReasons)
+      ? source.lockReasons.filter((reason): reason is "set_limit" | "premium_images" => reason === "set_limit" || reason === "premium_images")
+      : [],
   };
 }
 
@@ -47,7 +81,8 @@ async function replaceLessonCards(
   const rows = cards.map((card, index) => ({
     lesson_set_id: lessonId,
     front: card.word,
-    back: card.image ?? card.back ?? null,
+    back: card.creator_image_id ? null : card.image ?? card.back ?? null,
+    creator_image_id: card.creator_image_id ?? null,
     position: index,
   }));
 
@@ -76,13 +111,15 @@ export async function findExistingLessonIdByName(
 ) {
   const { data, error } = await supabase
     .from("lesson_sets")
-    .select("id")
-    .eq("user_id", userId)
-    .ilike("name", lessonName)
-    .limit(1);
+    .select("id,name")
+    .eq("user_id", userId);
 
   if (error) throw error;
-  return data?.[0]?.id ? String(data[0].id) : null;
+  const requestedName = normalizeLessonNameKey(lessonName);
+  const existing = (data ?? []).find(
+    (row) => normalizeLessonNameKey(String(row.name ?? "")) === requestedName
+  );
+  return existing?.id ? String(existing.id) : null;
 }
 
 export async function saveLesson(
@@ -95,16 +132,27 @@ export async function saveLesson(
   const normalizedCards = input.cards.map(normalizeLessonCard);
 
   if (input.lessonId) {
-    const { error: updateError } = await supabase
+    const { data: updatedLesson, error: updateError } = await supabase
       .from("lesson_sets")
       .update({
         name: trimmedName,
         last_used: new Date().toISOString(),
         is_public: input.isPublic,
       })
-      .eq("id", input.lessonId);
+      .eq("id", input.lessonId)
+      .eq("user_id", input.userId)
+      .select("id")
+      .maybeSingle();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      if (isLessonNameUniqueViolation(updateError)) {
+        throw new LessonNameConflictError(
+          await findExistingLessonIdByName(supabase, input.userId, trimmedName)
+        );
+      }
+      throw updateError;
+    }
+    if (!updatedLesson) throw new Error("Lesson not found or does not belong to this account.");
 
     await replaceLessonCards(supabase, input.lessonId, normalizedCards);
 
@@ -124,7 +172,15 @@ export async function saveLesson(
     .select("id")
     .single();
 
-  if (error || !data?.id) throw error ?? new Error("Failed to create lesson");
+  if (error) {
+    if (isLessonNameUniqueViolation(error)) {
+      throw new LessonNameConflictError(
+        await findExistingLessonIdByName(supabase, input.userId, trimmedName)
+      );
+    }
+    throw error;
+  }
+  if (!data?.id) throw new Error("Failed to create lesson");
 
   const lessonId = String(data.id);
   await replaceLessonCards(supabase, lessonId, normalizedCards);
@@ -161,6 +217,14 @@ export async function saveLessonFromClient(
   }
 
   if (!response.ok || !payload) {
+    if (
+      response.status === 409 &&
+      String(payload?.code ?? "") === LESSON_NAME_CONFLICT_CODE
+    ) {
+      throw new LessonNameConflictError(
+        payload?.existingLessonId ? String(payload.existingLessonId) : null
+      );
+    }
     throw new Error(
       String(
         payload?.error ??
@@ -191,7 +255,7 @@ export async function loadLessonsForUser(
   if (lessonIds.length > 0) {
     const { data: cards, error: cardsError } = await supabase
       .from("cards")
-      .select("id, lesson_set_id, front, back, position")
+      .select("id, lesson_set_id, front, back, creator_image_id, position")
       .in("lesson_set_id", lessonIds)
       .order("position", { ascending: true });
 
@@ -206,6 +270,7 @@ export async function loadLessonsForUser(
           word: row.front,
           image: row.back,
           back: row.back,
+          creator_image_id: row.creator_image_id,
           position: row.position,
         })
       );
@@ -219,6 +284,22 @@ export async function loadLessonsForUser(
       cards: cardsByLessonId[String(row.id)] ?? [],
     })
   );
+}
+
+export async function loadLessonsWithAccessFromServer() {
+  const {
+    data: { session },
+  } = await import("@/lib/supabase/client").then(({ supabase }) => supabase.auth.getSession());
+
+  const response = await fetch("/api/lessons", {
+    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !Array.isArray(payload)) {
+    throw new Error(String(payload?.error ?? "Could not load saved lesson sets."));
+  }
+  return payload.map(normalizeLesson);
 }
 
 export async function loadLessonById(
@@ -244,7 +325,7 @@ async function loadLessonsByIds(
 
   const { data: cards, error: cardsError } = await supabase
     .from("cards")
-    .select("id, lesson_set_id, front, back, position")
+    .select("id, lesson_set_id, front, back, creator_image_id, position")
     .in("lesson_set_id", lessonIds)
     .order("position", { ascending: true });
 
@@ -259,6 +340,7 @@ async function loadLessonsByIds(
         word: row.front,
         image: row.back,
         back: row.back,
+        creator_image_id: row.creator_image_id,
         position: row.position,
       })
     );

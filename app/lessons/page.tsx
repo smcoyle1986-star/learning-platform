@@ -4,11 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
 import LessonPlanSection from "@/components/lessons/LessonPlanSection";
 import { useAuth } from "@/components/AuthProvider";
-import { supabase } from "@/lib/supabase/client";
-import { loadLessonsForUser } from "@/lib/lessons/repository";
+import { loadLessonsWithAccessFromServer } from "@/lib/lessons/repository";
 import { LessonRecord } from "@/lib/lessons/types";
 import { writeLessonTray } from "@/lib/lessons/tray";
-import { EMPTY_LESSON_PLAN_DRAFT, LESSON_PLAN_DRAFT_KEY, LessonLevel, LessonPlanDraft } from "@/lib/lesson-plans/types";
+import {
+  DEFAULT_LESSON_PLAN_PREFERENCES,
+  EMPTY_LESSON_PLAN_DRAFT,
+  LESSON_PLAN_DRAFT_KEY,
+  LessonAgeGroup,
+  LessonClassFormat,
+  LessonDurationMinutes,
+  LessonLevel,
+  LessonPlanDraft,
+  LessonPlanPreferences,
+  LessonPurpose,
+  LessonSkillFocus,
+  LessonSupportLevel,
+} from "@/lib/lesson-plans/types";
 import { buildLessonPlanDraft } from "@/lib/lesson-plans/generate";
 
 function readDraft(): LessonPlanDraft {
@@ -16,7 +28,16 @@ function readDraft(): LessonPlanDraft {
     const raw = localStorage.getItem(LESSON_PLAN_DRAFT_KEY);
     if (!raw) return EMPTY_LESSON_PLAN_DRAFT;
     const parsed = JSON.parse(raw);
-    return { ...EMPTY_LESSON_PLAN_DRAFT, ...parsed };
+    return {
+      ...EMPTY_LESSON_PLAN_DRAFT,
+      ...parsed,
+      preferences: {
+        ...DEFAULT_LESSON_PLAN_PREFERENCES,
+        ...(parsed.preferences ?? {}),
+      },
+      stages: Array.isArray(parsed.stages) ? parsed.stages : [],
+      recommendedTools: Array.isArray(parsed.recommendedTools) ? parsed.recommendedTools : [],
+    };
   } catch {
     return EMPTY_LESSON_PLAN_DRAFT;
   }
@@ -43,9 +64,9 @@ export default function LessonsPage() {
     let mounted = true;
     setLoading(true);
 
-    loadLessonsForUser(supabase, user.id)
+    loadLessonsWithAccessFromServer()
       .then((nextLessons) => {
-        if (mounted) setLessons(nextLessons);
+        if (mounted) setLessons(nextLessons.filter((lesson) => !lesson.isLocked));
       })
       .catch((error) => {
         console.error("Failed to load lessons for lesson planning:", error);
@@ -70,7 +91,14 @@ export default function LessonsPage() {
   );
 
   function applyLesson(lesson: LessonRecord) {
-    setDraft(buildLessonPlanDraft(lesson, draft.level, draft.variant + 1));
+    setDraft(
+      buildLessonPlanDraft(
+        lesson,
+        draft.level,
+        draft.variant + 1,
+        draft.preferences,
+      ),
+    );
   }
 
   function regeneratePlan(nextLevel = draft.level) {
@@ -82,11 +110,40 @@ export default function LessonsPage() {
       }));
       return;
     }
-    setDraft(buildLessonPlanDraft(selectedLesson, nextLevel, draft.variant + 1));
+    setDraft(
+      buildLessonPlanDraft(
+        selectedLesson,
+        nextLevel,
+        draft.variant + 1,
+        draft.preferences,
+      ),
+    );
   }
 
   function updateDraft<K extends keyof LessonPlanDraft>(key: K, value: LessonPlanDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function updatePreference<K extends keyof LessonPlanPreferences>(
+    key: K,
+    value: LessonPlanPreferences[K],
+  ) {
+    const nextPreferences = { ...draft.preferences, [key]: value };
+    if (selectedLesson) {
+      setDraft(
+        buildLessonPlanDraft(
+          selectedLesson,
+          draft.level,
+          draft.variant + 1,
+          nextPreferences,
+        ),
+      );
+      return;
+    }
+    setDraft((current) => ({
+      ...current,
+      preferences: nextPreferences,
+    }));
   }
 
   function clearDraft() {
@@ -104,6 +161,12 @@ export default function LessonsPage() {
     if (!selectedLesson) return;
     writeLessonTray(selectedLesson.cards);
     window.location.href = `/flashcards?lesson_set_id=${selectedLesson.id}`;
+  }
+
+  function openLessonInClassroom() {
+    if (!selectedLesson) return;
+    writeLessonTray(selectedLesson.cards);
+    window.location.href = "/flashcards/classroom?from=lessons";
   }
 
   async function exportLessonPlanPdf() {
@@ -216,6 +279,14 @@ export default function LessonsPage() {
             </button>
 
             <button
+              onClick={openLessonInClassroom}
+              disabled={!selectedLesson}
+              className="btn btn-secondary w-full border-[#7ea76a] bg-[#89ad70] text-white hover:bg-[#7ea76a] disabled:opacity-50"
+            >
+              Teach Selected Lesson in Classroom
+            </button>
+
+            <button
               onClick={openLessonInPrintables}
               disabled={!selectedLesson}
               className="btn btn-secondary w-full disabled:opacity-50"
@@ -296,59 +367,310 @@ export default function LessonsPage() {
                 </button>
               </div>
 
+              <details className="mt-5 rounded-2xl border border-black/5 bg-white shadow-sm">
+                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--color-text-main)]">
+                  <span className="flex items-center justify-between gap-3">
+                    Customise lesson
+                    <span className="rounded-full bg-[var(--color-bg-soft)] px-3 py-1 text-xs font-medium text-[var(--color-text-muted)]">
+                      {draft.preferences.durationMinutes} min · {draft.preferences.purpose}
+                    </span>
+                  </span>
+                </summary>
+
+                <div className="border-t border-black/5 p-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                      Duration
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {([30, 40, 50, 60, 90, 120] as LessonDurationMinutes[]).map((duration) => (
+                        <button
+                          key={duration}
+                          type="button"
+                          onClick={() => updatePreference("durationMinutes", duration)}
+                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                            draft.preferences.durationMinutes === duration
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                              : "border-black/10 bg-[var(--color-bg-main)] hover:bg-[var(--color-bg-soft)]"
+                          }`}
+                        >
+                          {duration} min
+                        </button>
+                      ))}
+                    </div>
+                    {draft.preferences.durationMinutes >= 90 ? (
+                      <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
+                        Includes a 10-minute midpoint break and two{" "}
+                        {(draft.preferences.durationMinutes - 10) / 2}-minute teaching blocks.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <label className="text-sm font-semibold">
+                      Lesson purpose
+                      <select
+                        value={draft.preferences.purpose}
+                        onChange={(event) =>
+                          updatePreference("purpose", event.target.value as LessonPurpose)
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                      >
+                        <option value="teach">Teach new content</option>
+                        <option value="practice">Practise</option>
+                        <option value="review">Review</option>
+                      </select>
+                    </label>
+
+                    <label className="text-sm font-semibold">
+                      Class format
+                      <select
+                        value={draft.preferences.classFormat}
+                        onChange={(event) =>
+                          updatePreference(
+                            "classFormat",
+                            event.target.value as LessonClassFormat,
+                          )
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                      >
+                        <option value="individual">Individual</option>
+                        <option value="small-group">Small group</option>
+                        <option value="whole-class">Whole class</option>
+                      </select>
+                    </label>
+
+                    <label className="text-sm font-semibold">
+                      Age group
+                      <select
+                        value={draft.preferences.ageGroup}
+                        onChange={(event) =>
+                          updatePreference("ageGroup", event.target.value as LessonAgeGroup)
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                      >
+                        <option value="early-years">Early years</option>
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="adult">Adult</option>
+                      </select>
+                    </label>
+
+                    <label className="text-sm font-semibold">
+                      Skill focus
+                      <select
+                        value={draft.preferences.skillFocus}
+                        onChange={(event) =>
+                          updatePreference(
+                            "skillFocus",
+                            event.target.value as LessonSkillFocus,
+                          )
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                      >
+                        <option value="balanced">Balanced</option>
+                        <option value="speaking">Speaking</option>
+                        <option value="reading">Reading</option>
+                        <option value="writing">Writing</option>
+                        <option value="phonics">Phonics</option>
+                      </select>
+                    </label>
+
+                    <label className="text-sm font-semibold">
+                      Support level
+                      <select
+                        value={draft.preferences.supportLevel}
+                        onChange={(event) =>
+                          updatePreference(
+                            "supportLevel",
+                            event.target.value as LessonSupportLevel,
+                          )
+                        }
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                      >
+                        <option value="high">High support</option>
+                        <option value="standard">Standard</option>
+                        <option value="challenge">Challenge</option>
+                      </select>
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="text-sm font-semibold">
+                        Games
+                        <select
+                          value={draft.preferences.gameCount}
+                          onChange={(event) =>
+                            updatePreference(
+                              "gameCount",
+                              Number(event.target.value) as 0 | 1 | 2,
+                            )
+                          }
+                          className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                        >
+                          <option value={0}>None</option>
+                          <option value={1}>One</option>
+                          <option value={2}>Two</option>
+                        </select>
+                      </label>
+
+                      <label className="text-sm font-semibold">
+                        Worksheets
+                        <select
+                          value={draft.preferences.worksheetCount}
+                          onChange={(event) =>
+                            updatePreference(
+                              "worksheetCount",
+                              Number(event.target.value) as 0 | 1 | 2,
+                            )
+                          }
+                          className="mt-2 w-full rounded-xl border border-black/10 bg-[var(--color-bg-main)] px-3 py-2.5 text-sm font-normal"
+                        >
+                          <option value={0}>None</option>
+                          <option value={1}>One</option>
+                          <option value={2}>Two</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
               <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">50-minute flow</div>
+                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm lg:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                    {draft.preferences.durationMinutes}-minute flow
+                  </div>
                   <div className="mt-3 space-y-3">
-                    {draft.schedule
-                      .split("\n")
-                      .filter(Boolean)
-                      .map((entry) => {
-                        const [time, rest] = entry.split(" · ");
-                        const [title, detail] = (rest ?? "").split(" — ");
-                        return (
-                          <div key={entry} className="rounded-xl border border-black/5 bg-[var(--color-bg-main)] px-3 py-2">
-                            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--color-text-muted)]">{time}</div>
-                            <div className="mt-1 text-sm font-semibold text-[var(--color-text-main)]">{title}</div>
-                            <div className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">{detail}</div>
+                    {draft.stages.length > 0
+                      ? draft.stages.map((stage) => (
+                          <div
+                            key={stage.id}
+                            className="rounded-2xl border border-black/5 bg-[var(--color-bg-main)] p-3"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <div>
+                                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                                  {stage.time}
+                                </div>
+                                <div className="mt-1 text-sm font-semibold text-[var(--color-text-main)]">
+                                  {stage.title}
+                                </div>
+                              </div>
+                              {stage.tool ? (
+                                <span className="rounded-full border border-[rgba(127,163,106,0.22)] bg-[rgba(127,163,106,0.10)] px-3 py-1 text-xs font-semibold text-[#52634a]">
+                                  {stage.tool.label}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <p className="mt-2 text-xs font-medium leading-5 text-[var(--color-text-muted)]">
+                              {stage.purpose}
+                            </p>
+
+                            <div className="mt-3 grid gap-2 md:grid-cols-2">
+                              <div className="rounded-xl border border-black/5 bg-white p-3">
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                                  Teacher
+                                </div>
+                                <p className="mt-1 text-sm leading-6 text-[var(--color-text-main)]">
+                                  {stage.teacherAction}
+                                </p>
+                              </div>
+                              <div className="rounded-xl border border-black/5 bg-white p-3">
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                                  Students
+                                </div>
+                                <p className="mt-1 text-sm leading-6 text-[var(--color-text-main)]">
+                                  {stage.studentAction}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 rounded-xl border border-dashed border-[#a9bb9e] bg-white/70 px-3 py-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                              <span className="font-semibold text-[var(--color-text-main)]">Check:</span>{" "}
+                              {stage.checkForUnderstanding}
+                            </div>
                           </div>
-                        );
-                      })}
+                        ))
+                      : draft.schedule
+                          .split("\n")
+                          .filter(Boolean)
+                          .map((entry) => {
+                            const [time, rest] = entry.split(" · ");
+                            const [title, detail] = (rest ?? "").split(" — ");
+                            return (
+                              <div key={entry} className="rounded-xl border border-black/5 bg-[var(--color-bg-main)] px-3 py-2">
+                                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--color-text-muted)]">{time}</div>
+                                <div className="mt-1 text-sm font-semibold text-[var(--color-text-main)]">{title}</div>
+                                <div className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">{detail}</div>
+                              </div>
+                            );
+                          })}
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested games</div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {draft.recommendedGames.split(" · ").filter(Boolean).map((game) => (
-                      <span
-                        key={game}
-                        className="rounded-full border border-[rgba(30,64,175,0.16)] bg-[rgba(30,64,175,0.06)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
-                      >
-                        {game}
-                      </span>
-                    ))}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
+                      Classendo teaching tools
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {draft.recommendedTools.length > 0 ? (
+                        draft.recommendedTools.map((tool, index) => (
+                          <div
+                            key={`${tool.kind}-${tool.id}-${index}`}
+                            className="rounded-xl border border-black/5 bg-[var(--color-bg-main)] p-3"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-[var(--color-text-main)]">
+                                {tool.label}
+                              </span>
+                              <span className="rounded-full bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                                {tool.kind}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
+                              {tool.reason}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested games</div>
+                          <div className="flex flex-wrap gap-2">
+                            {draft.recommendedGames.split(" · ").filter(Boolean).map((game) => (
+                              <span
+                                key={game}
+                                className="rounded-full border border-[rgba(30,64,175,0.16)] bg-[rgba(30,64,175,0.06)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
+                              >
+                                {game}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested worksheets</div>
+                          <div className="flex flex-wrap gap-2">
+                            {draft.recommendedWorksheets.split(" · ").filter(Boolean).map((worksheet) => (
+                              <span
+                                key={worksheet}
+                                className="rounded-full border border-[rgba(127,163,106,0.18)] bg-[rgba(127,163,106,0.08)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
+                              >
+                                {worksheet}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Suggested worksheets</div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {draft.recommendedWorksheets.split(" · ").filter(Boolean).map((worksheet) => (
-                      <span
-                        key={worksheet}
-                        className="rounded-full border border-[rgba(127,163,106,0.18)] bg-[rgba(127,163,106,0.08)] px-3 py-1.5 text-sm font-semibold text-[var(--color-text-main)]"
-                      >
-                        {worksheet}
-                      </span>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Why this feels varied</div>
-                  <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
-                    This generator changes the lesson wording, game order, worksheet pair, and the pace of the 50-minute flow based on the selected lesson cards and student level.
-                  </p>
-                  <div className="mt-4 rounded-xl border border-black/5 bg-[var(--color-bg-main)] p-3 text-sm leading-6 text-[var(--color-text-muted)]">
-                    <span className="font-semibold text-[var(--color-text-main)]">Best fit:</span> {draft.focus || "Choose a lesson to generate a plan."}
+                  <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Why this plan fits</div>
+                    <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                      The generator analyses the lesson size, card types, available images, student level, duration, purpose, class format, age, skill focus, and support level. Classroom remains the main teaching, retrieval, and assessment tool.
+                    </p>
+                    <div className="mt-4 rounded-xl border border-black/5 bg-[var(--color-bg-main)] p-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                      <span className="font-semibold text-[var(--color-text-main)]">Best fit:</span> {draft.focus || "Choose a lesson to generate a plan."}
+                    </div>
                   </div>
                 </div>
               </div>

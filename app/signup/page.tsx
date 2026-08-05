@@ -13,6 +13,17 @@ import {
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
+const DUPLICATE_EMAIL_MESSAGE = "An account already exists with this email address. Please sign in instead.";
+
+function isDuplicateSignupError(error: unknown) {
+  const message = String((error as { message?: unknown } | null)?.message ?? "").toLowerCase();
+  return /already registered|already exists|user already|email.*taken|duplicate/.test(message);
+}
+
+function safeNextPath(value: string | null) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
 const FALLBACK_COUNTRIES = [
   "United States",
   "United Kingdom",
@@ -230,11 +241,28 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
+      const availabilityResponse = await fetch("/api/auth/email-availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+      const availability = await availabilityResponse.json().catch(() => null);
+      if (availabilityResponse.ok && availability?.available === false) {
+        setMessage(DUPLICATE_EMAIL_MESSAGE);
+        return;
+      }
+      if (!availabilityResponse.ok) {
+        setMessage("We could not verify this email right now. Please try again shortly.");
+        return;
+      }
+
+      const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+      const welcomeDestination = requestedNext ?? "/dashboard?welcome_trial=1";
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(welcomeDestination)}`,
           data: {
             username: cleanUsername,
             country_region: cleanCountry,
@@ -243,12 +271,17 @@ export default function SignupPage() {
       });
 
       if (error) {
-        setMessage(`Error: ${error.message}`);
+        setMessage(isDuplicateSignupError(error) ? DUPLICATE_EMAIL_MESSAGE : `Error: ${error.message}`);
         return;
       }
 
       if (!data.user) {
         setMessage("We could not finish creating your account just now. Please try again.");
+        return;
+      }
+
+      if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        setMessage(DUPLICATE_EMAIL_MESSAGE);
         return;
       }
 
@@ -275,8 +308,8 @@ export default function SignupPage() {
         }
       }
 
-      setMessage("Signup successful! Check your email for confirmation.");
-      router.replace("/?signed_up=1");
+      setMessage("Enjoy Premium on us for 14 days. No payment details are required; after 14 days your account moves automatically to Basic unless you choose Premium.");
+      router.replace(data.session ? welcomeDestination : "/?signed_up=1&welcome_trial=1");
     } finally {
       setSubmitting(false);
     }
@@ -338,7 +371,7 @@ export default function SignupPage() {
               Create your free account
             </h2>
             <p className="mt-3 text-base leading-7 text-[#5c665c]">
-              Use one account to save lessons, build activities, and move quickly between flashcards, games, worksheets, and lesson plans.
+              Enjoy Premium on us for 14 days. You get full Premium access with no payment details required, then automatically move to Basic unless you choose Premium.
             </p>
 
             <form onSubmit={handleSignup} className="mt-8 space-y-5">

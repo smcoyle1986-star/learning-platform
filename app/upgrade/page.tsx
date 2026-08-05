@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 
@@ -20,7 +20,7 @@ type PublicStripePrice = {
 
 const DISPLAY_CURRENCY = "USD";
 
-export default function UpgradePage() {
+function UpgradePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -173,7 +173,7 @@ export default function UpgradePage() {
           <Link href="/flashcards" className="btn btn-secondary px-6 py-3">
             Go back to free plan
           </Link>
-          {!loading && access?.isPremium ? (
+          {!loading && access?.premiumAccessSource === "stripe" ? (
             <button
               type="button"
               onClick={() => void openBillingPortal()}
@@ -185,5 +185,13 @@ export default function UpgradePage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function UpgradePage() {
+  return (
+    <Suspense fallback={<p className="p-10">Loading...</p>}>
+      <UpgradePageContent />
+    </Suspense>
   );
 }

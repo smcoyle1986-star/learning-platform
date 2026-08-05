@@ -7,6 +7,7 @@ import HeaderAuth from "@/components/HeaderAuth";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
+import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience";
 
 export const metadata: Metadata = {
   title: "Classendo",
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <AnalyticsEventTracker />
+          <PremiumTrialExperience />
           <BrandMenuProvider>
             <BrandMenuDrawer />
             <BrandPageTheme />

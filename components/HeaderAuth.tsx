@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { LayoutDashboard, Sparkles } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { AdministratorBadge } from "@/components/admin/AdministratorBadge";
@@ -9,27 +8,9 @@ import { supabase } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/auth/profile";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
-type DebugWindow = Window & {
-  __SUPABASE_CLIENT_ID__?: string;
-  __SUPABASE_CLIENT__?: unknown;
-};
-
 export default function HeaderAuth() {
   const { user, profile, loading } = useAuth();
   const { access } = useBillingAccess();
-
-  useEffect(() => {
-    const debugWindow = window as DebugWindow;
-    console.log(
-      "HeaderAuth: window.__SUPABASE_CLIENT_ID__",
-      debugWindow.__SUPABASE_CLIENT_ID__
-    );
-    console.log(
-      "HeaderAuth: supabase === window.__SUPABASE_CLIENT__?",
-      supabase === debugWindow.__SUPABASE_CLIENT__
-    );
-    console.log("HeaderAuth: user", user);
-  }, [user]);
 
   if (loading) return <div style={{ width: 140 }} />;
 
@@ -68,7 +49,9 @@ export default function HeaderAuth() {
             <AdministratorBadge role={access.administratorRole} compact />
           ) : access?.isPremium ? (
             <span className="inline-flex items-center rounded-full border border-[#d9c78a] bg-[linear-gradient(135deg,#fff6cf,#f3d97c)] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7b5b13] no-underline shadow-[0_6px_16px_rgba(217,199,138,0.28)]">
-              Premium
+              {access.premiumAccessSource === "welcome_trial"
+                ? `Premium trial · ${access.welcomeTrial.daysRemaining}d`
+                : "Premium"}
             </span>
           ) : null}
         </Link>

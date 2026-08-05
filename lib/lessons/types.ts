@@ -4,6 +4,7 @@ export type LessonCard = {
   image?: string | null;
   back?: string | null;
   image_id?: string | null;
+  creator_image_id?: string | null;
   position?: number;
   type?: string;
 };
@@ -16,6 +17,12 @@ export type LessonRecord = {
   lastUsed?: number | null;
   useCount?: number;
   isPublic?: boolean;
+  basicActive?: boolean;
+  containsPremiumImages?: boolean;
+  basicVersionAvailable?: boolean;
+  basicConversionAvailable?: boolean;
+  isLocked?: boolean;
+  lockReasons?: Array<"set_limit" | "premium_images">;
 };
 
 export type SaveLessonInput = {

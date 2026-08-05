@@ -103,6 +103,9 @@ export async function syncStripeSubscription(params: {
       stripe_livemode: Boolean(params.subscription.livemode),
       last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      ...(isPaidPremiumState(nextState)
+        ? { basic_lesson_access_assigned_at: null }
+        : {}),
     },
     { onConflict: "user_id" }
   );

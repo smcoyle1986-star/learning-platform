@@ -76,8 +76,10 @@ export default function ProfilePage() {
                   ? "Administrator · Full access"
                   : "Administrator"
                 : access?.isPremium
-                  ? "Premium"
-                  : "Free"}
+                  ? access.premiumAccessSource === "welcome_trial"
+                    ? `Premium welcome trial · ${access.welcomeTrial.daysRemaining} days left`
+                    : "Premium"
+                  : "Basic"}
             </p>
           </div>
           {accountTitle ? (
@@ -109,9 +111,9 @@ export default function ProfilePage() {
             <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
               Manage Billing
             </button>
-          ) : !access?.isPremium ? (
+          ) : !access?.isPremium || access?.premiumAccessSource === "welcome_trial" ? (
             <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
-              Upgrade to Premium
+              {access?.premiumAccessSource === "welcome_trial" ? "Continue Premium after trial" : "Upgrade to Premium"}
             </Link>
           ) : null}
           <button type="button" onClick={signOut} className="btn btn-secondary px-6 py-3">

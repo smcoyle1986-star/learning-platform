@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
     const access = await getBillingAccessForUser(supabase, user.id);
 
-    if (access.isPremium) {
+    if (access.isPremium && access.premiumAccessSource !== "welcome_trial") {
       return NextResponse.json({ error: "Your account is already Premium." }, { status: 400 });
     }
 
