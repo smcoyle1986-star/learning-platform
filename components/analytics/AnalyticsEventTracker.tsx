@@ -1,0 +1,100 @@
+"use client";
+
+import { useEffect } from "react";
+
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
+
+const WORKSHEET_KEYS: Record<string, string> = {
+  Crossword: "crossword",
+  Bullseye: "bullseye",
+  Matching: "matching",
+  Battleship: "battleship",
+  "Question Builder": "questions",
+  Reading: "reading",
+  "Sentence Scramble": "sentence-scramble",
+  "Tic-Tac-Toe": "tic-tac-toe",
+  Wordsearch: "wordsearch",
+  Writing: "writing",
+};
+
+function flashcardCategory() {
+  const selected = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-dropdown-btn]"),
+  ).find((element) => element.classList.contains("btn-primary"));
+  return selected?.dataset.dropdownBtn ?? "";
+}
+
+function trackVocabularySearch() {
+  const input = document.querySelector<HTMLInputElement>(
+    'input[placeholder="Select a tab before searching"], input[placeholder="Search My Cards"]',
+  );
+  const label = input?.value.trim() ?? "";
+  if (!label) return;
+  void trackAnalyticsEvent({
+    eventType: "vocabulary_search",
+    itemKey: label.toLocaleLowerCase(),
+    itemLabel: label,
+    category: flashcardCategory(),
+  });
+}
+
+export function AnalyticsEventTracker() {
+  useEffect(() => {
+    function onClick(event: MouseEvent) {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const path = window.location.pathname;
+
+      if (path === "/flashcards") {
+        const button = target.closest("button");
+        if (button?.textContent?.trim() === "Search") {
+          trackVocabularySearch();
+          return;
+        }
+        if (button) return;
+
+        const card = target.closest<HTMLElement>("div.group");
+        const label = card?.querySelector("h3")?.textContent?.trim() ?? "";
+        const detail = card?.querySelector("p")?.textContent?.trim() ?? "";
+        if (!label || detail.includes("locked image")) return;
+        const category = detail.split("·")[0]?.trim() ?? "";
+        void trackAnalyticsEvent({
+          eventType: "flashcard_view",
+          itemKey: `${category}:${label.toLocaleLowerCase()}`,
+          itemLabel: label,
+          category,
+        });
+        return;
+      }
+
+      if (path === "/worksheets") {
+        const button = target.closest("button");
+        const label = button?.textContent?.trim() ?? "";
+        const key = WORKSHEET_KEYS[label];
+        if (!key) return;
+        void trackAnalyticsEvent({
+          eventType: "worksheet_generated",
+          itemKey: key,
+          itemLabel: label,
+          category: "worksheet",
+        });
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (window.location.pathname !== "/flashcards" || event.key !== "Enter") return;
+      const target = event.target instanceof HTMLInputElement ? event.target : null;
+      if (!target?.placeholder.toLocaleLowerCase().includes("search")) return;
+      trackVocabularySearch();
+    }
+
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, []);
+
+  return null;
+}
