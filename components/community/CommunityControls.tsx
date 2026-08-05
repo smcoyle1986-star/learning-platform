@@ -1,15 +1,27 @@
 "use client";
 
 import { Search } from "lucide-react";
+import type { CommunityContentType } from "@/lib/community/types";
+
+const CONTENT_FILTERS: Array<{ value: CommunityContentType | "all"; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "noun", label: "Nouns" },
+  { value: "verb", label: "Verbs" },
+  { value: "adjective", label: "Adjectives" },
+  { value: "preposition", label: "Prepositions" },
+  { value: "phonics", label: "Phonics" },
+];
 
 type CommunityControlsProps = {
   query: string;
   sort: "popular" | "newest";
   totalCount: number | null;
   pageSize: number;
+  contentType: CommunityContentType | "all";
   onQueryChange: (value: string) => void;
   onSortChange: (value: "popular" | "newest") => void;
   onPageSizeChange: (value: number) => void;
+  onContentTypeChange: (value: CommunityContentType | "all") => void;
 };
 
 export default function CommunityControls({
@@ -17,9 +29,11 @@ export default function CommunityControls({
   sort,
   totalCount,
   pageSize,
+  contentType,
   onQueryChange,
   onSortChange,
   onPageSizeChange,
+  onContentTypeChange,
 }: CommunityControlsProps) {
   return (
     <div className="mb-8 space-y-4">
@@ -66,6 +80,24 @@ export default function CommunityControls({
             </select>
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2" aria-label="Filter lessons by content type">
+        {CONTENT_FILTERS.map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            aria-pressed={contentType === filter.value}
+            onClick={() => onContentTypeChange(filter.value)}
+            className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+              contentType === filter.value
+                ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                : "border-black/10 bg-white text-[var(--color-text-main)] hover:border-[var(--color-primary)]"
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex items-center justify-between gap-4 text-sm text-[var(--color-text-muted)]">

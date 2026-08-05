@@ -1,3 +1,5 @@
+export type CommunityContentType = "noun" | "verb" | "adjective" | "preposition" | "phonics";
+
 export type CommunityLessonSet = {
   id: string;
   name: string;
@@ -5,6 +7,7 @@ export type CommunityLessonSet = {
   created_at?: string;
   download_count?: number;
   tags?: string[];
+  content_types?: CommunityContentType[];
 };
 
 export type CommunityCardPreview = {

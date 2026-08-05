@@ -22,6 +22,7 @@ export default function CommunityPage() {
     totalCount,
     totalPages,
     sort,
+    contentType,
     previewSet,
     previewCards,
     previewLoading,
@@ -34,6 +35,7 @@ export default function CommunityPage() {
     setPage,
     setPageSize,
     setSort,
+    setContentType,
     setPreviewSet,
     setToast,
     openPreview,
@@ -105,6 +107,7 @@ export default function CommunityPage() {
           sort={sort}
           totalCount={totalCount}
           pageSize={pageSize}
+          contentType={contentType}
           onQueryChange={setQuery}
           onSortChange={(value) => {
             setSort(value);
@@ -112,6 +115,10 @@ export default function CommunityPage() {
           }}
           onPageSizeChange={(value) => {
             setPageSize(value);
+            setPage(1);
+          }}
+          onContentTypeChange={(value) => {
+            setContentType(value);
             setPage(1);
           }}
         />

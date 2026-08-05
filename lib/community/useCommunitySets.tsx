@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { supabase } from "@/lib/supabase/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
-import { CommunityCardPreview, CommunityLessonSet, CommunityToast } from "@/lib/community/types";
+import { CommunityCardPreview, CommunityContentType, CommunityLessonSet, CommunityToast } from "@/lib/community/types";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import type { LessonCard } from "@/lib/lessons/types";
 
@@ -50,6 +50,7 @@ export function useCommunitySets() {
   const [pageSize, setPageSize] = useState(12);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [sort, setSort] = useState<"popular" | "newest">("popular");
+  const [contentType, setContentType] = useState<CommunityContentType | "all">("all");
   const [previewSet, setPreviewSet] = useState<CommunityLessonSet | null>(null);
   const [previewCards, setPreviewCards] = useState<CommunityCardPreview[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -79,7 +80,7 @@ export function useCommunitySets() {
 
       let builder = supabase
         .from("lesson_sets")
-        .select("id, name, user_id, created_at, download_count, tags", { count: "exact" });
+        .select("id, name, user_id, created_at, download_count, tags, content_types", { count: "exact" });
 
       if (userId) {
         builder = builder.or(`is_public.eq.true,user_id.eq.${userId}`);
@@ -90,6 +91,10 @@ export function useCommunitySets() {
       const searchFilter = buildCommunitySearchFilter(query);
       if (searchFilter) {
         builder = builder.or(searchFilter);
+      }
+
+      if (contentType !== "all") {
+        builder = builder.overlaps("content_types", [contentType]);
       }
 
       if (sort === "popular") {
@@ -119,6 +124,7 @@ export function useCommunitySets() {
         created_at: row.created_at,
         download_count: row.download_count ?? 0,
         tags: row.tags ?? [],
+        content_types: row.content_types ?? [],
       }));
 
       setSets(fetched);
@@ -192,7 +198,7 @@ export function useCommunitySets() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, query, sort]);
+  }, [contentType, page, pageSize, query, sort]);
 
   useEffect(() => {
     if (query.trim()) return;
@@ -393,6 +399,7 @@ export function useCommunitySets() {
     totalCount,
     totalPages,
     sort,
+    contentType,
     previewSet,
     previewCards,
     previewLoading,
@@ -405,6 +412,7 @@ export function useCommunitySets() {
     setPage,
     setPageSize,
     setSort,
+    setContentType,
     setPreviewSet,
     setToast,
     openPreview,

@@ -1,4 +1,4 @@
-import { LessonCard } from "@/lib/lessons/types";
+import { LESSON_CONTENT_TYPES, LessonCard, type LessonContentType } from "@/lib/lessons/types";
 
 export const LESSON_TRAY_KEY = "classendo-lesson-tray";
 export const GUEST_LESSON_TRAY_KEY = "classendo-guest-lesson-tray";
@@ -42,7 +42,10 @@ export function normalizeLessonCard(raw: unknown): LessonCard {
         : null,
     position:
       typeof source.position === "number" ? source.position : 0,
-    type: typeof source.type === "string" ? source.type : undefined,
+    type:
+      typeof source.type === "string" && LESSON_CONTENT_TYPES.includes(source.type as LessonContentType)
+        ? (source.type as LessonContentType)
+        : undefined,
   };
 }
 

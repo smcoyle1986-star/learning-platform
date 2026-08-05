@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { LessonCard, LessonRecord, SaveLessonInput } from "@/lib/lessons/types";
+import { LESSON_CONTENT_TYPES, LessonCard, LessonRecord, SaveLessonInput, type LessonContentType } from "@/lib/lessons/types";
 import { normalizeLessonCard } from "@/lib/lessons/tray";
 
 const LESSON_NAME_CONFLICT_CODE = "LESSON_NAME_CONFLICT";
@@ -83,6 +83,10 @@ async function replaceLessonCards(
     front: card.word,
     back: card.creator_image_id ? null : card.image ?? card.back ?? null,
     creator_image_id: card.creator_image_id ?? null,
+    content_type:
+      typeof card.type === "string" && LESSON_CONTENT_TYPES.includes(card.type as LessonContentType)
+        ? card.type
+        : null,
     position: index,
   }));
 
@@ -255,7 +259,7 @@ export async function loadLessonsForUser(
   if (lessonIds.length > 0) {
     const { data: cards, error: cardsError } = await supabase
       .from("cards")
-      .select("id, lesson_set_id, front, back, creator_image_id, position")
+      .select("id, lesson_set_id, front, back, creator_image_id, content_type, position")
       .in("lesson_set_id", lessonIds)
       .order("position", { ascending: true });
 
@@ -271,6 +275,7 @@ export async function loadLessonsForUser(
           image: row.back,
           back: row.back,
           creator_image_id: row.creator_image_id,
+          type: row.content_type,
           position: row.position,
         })
       );
@@ -325,7 +330,7 @@ async function loadLessonsByIds(
 
   const { data: cards, error: cardsError } = await supabase
     .from("cards")
-    .select("id, lesson_set_id, front, back, creator_image_id, position")
+    .select("id, lesson_set_id, front, back, creator_image_id, content_type, position")
     .in("lesson_set_id", lessonIds)
     .order("position", { ascending: true });
 
@@ -341,6 +346,7 @@ async function loadLessonsByIds(
         image: row.back,
         back: row.back,
         creator_image_id: row.creator_image_id,
+        type: row.content_type,
         position: row.position,
       })
     );

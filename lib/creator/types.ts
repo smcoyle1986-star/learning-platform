@@ -1,3 +1,13 @@
+export const CREATOR_CARD_TYPES = [
+  "noun",
+  "verb",
+  "adjective",
+  "preposition",
+  "phonics",
+] as const;
+
+export type CreatorCardType = (typeof CREATOR_CARD_TYPES)[number];
+
 export type CreatorImageRecord = {
   id: string;
   user_id: string;
@@ -18,7 +28,7 @@ export type CreatorFlashcardRecord = {
   user_id: string;
   creator_image_id: string;
   front: string;
-  card_type: string;
+  card_type: CreatorCardType;
   created_at: string;
   updated_at: string;
 };
@@ -40,9 +50,8 @@ export type CreatorFlashcardDto = {
   id: string;
   creatorImageId: string;
   front: string;
-  cardType: string;
+  cardType: CreatorCardType;
   createdAt: string;
   updatedAt: string;
   image: CreatorImageDto;
 };
-

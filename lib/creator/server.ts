@@ -13,6 +13,7 @@ import type {
   CreatorImageDto,
   CreatorImageRecord,
 } from "@/lib/creator/types";
+import { CREATOR_CARD_TYPES, type CreatorCardType } from "@/lib/creator/types";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
@@ -202,11 +203,11 @@ export function normalizeCreatorFront(value: unknown) {
 }
 
 export function normalizeCreatorCardType(value: unknown) {
-  const cardType = String(value ?? "custom").trim() || "custom";
-  if (cardType.length > 40) {
-    throw new CreatorApiError("Card type must be 40 characters or fewer.", 400);
+  const cardType = String(value ?? "").trim();
+  if (!CREATOR_CARD_TYPES.includes(cardType as CreatorCardType)) {
+    throw new CreatorApiError("Choose noun, verb, adjective, preposition, or phonics.", 400);
   }
-  return cardType;
+  return cardType as CreatorCardType;
 }
 
 export function isUuid(value: unknown): value is string {

@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  CreatorCardType,
   CreatorFlashcardDto,
   CreatorImageDto,
 } from "@/lib/creator/types";
@@ -68,7 +69,7 @@ export async function listCreatorCards() {
 export async function createCreatorCard(input: {
   creatorImageId: string;
   front: string;
-  cardType?: string;
+  cardType: CreatorCardType;
 }) {
   const payload = await creatorFetch("/api/creator/cards", {
     method: "POST",
@@ -80,7 +81,7 @@ export async function createCreatorCard(input: {
 
 export async function updateCreatorCard(
   cardId: string,
-  input: { front?: string; cardType?: string; creatorImageId?: string }
+  input: { front?: string; cardType?: CreatorCardType; creatorImageId?: string }
 ) {
   const payload = await creatorFetch(`/api/creator/cards/${encodeURIComponent(cardId)}`, {
     method: "PATCH",
@@ -103,7 +104,7 @@ export function creatorCardToFlashcard(card: CreatorFlashcardDto): Card {
     creatorImageId: card.creatorImageId,
     word: card.front,
     image: card.image.imageUrl,
-    type: "custom",
+    type: card.cardType,
   };
 }
 
@@ -114,7 +115,7 @@ export function creatorCardToLessonCard(card: CreatorFlashcardDto): LessonCard {
     image: card.image.imageUrl,
     back: null,
     creator_image_id: card.creatorImageId,
-    type: "custom",
+    type: card.cardType,
   };
 }
 

@@ -29,6 +29,7 @@ import {
   uploadCreatorImage,
 } from "@/lib/creator/client";
 import type {
+  CreatorCardType,
   CreatorFlashcardDto,
   CreatorImageDto,
 } from "@/lib/creator/types";
@@ -44,6 +45,13 @@ type UploadJob = {
 
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const CARD_TYPE_OPTIONS: Array<{ value: CreatorCardType; label: string }> = [
+  { value: "noun", label: "Noun" },
+  { value: "verb", label: "Verb" },
+  { value: "adjective", label: "Adjective" },
+  { value: "preposition", label: "Preposition" },
+  { value: "phonics", label: "Phonics" },
+];
 
 function messageFor(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong.";
@@ -58,7 +66,9 @@ export default function CreatorPage() {
   const [images, setImages] = useState<CreatorImageDto[]>([]);
   const [cards, setCards] = useState<CreatorFlashcardDto[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [draftTypes, setDraftTypes] = useState<Record<string, CreatorCardType | "">>({});
   const [cardEdits, setCardEdits] = useState<Record<string, string>>({});
+  const [cardTypeEdits, setCardTypeEdits] = useState<Record<string, CreatorCardType>>({});
   const [uploadJobs, setUploadJobs] = useState<UploadJob[]>([]);
   const [loadingLibrary, setLoadingLibrary] = useState(false);
   const [savingImageId, setSavingImageId] = useState<string | null>(null);
@@ -90,6 +100,7 @@ export default function CreatorPage() {
         setImages(nextImages);
         setCards(nextCards);
         setCardEdits(Object.fromEntries(nextCards.map((card) => [card.id, card.front])));
+        setCardTypeEdits(Object.fromEntries(nextCards.map((card) => [card.id, card.cardType])));
       })
       .catch((nextError) => {
         if (active) setError(messageFor(nextError));
@@ -175,6 +186,7 @@ export default function CreatorPage() {
           const uploaded = await uploadCreatorImage(file);
           setImages((current) => [uploaded, ...current]);
           setDrafts((current) => ({ ...current, [uploaded.id]: "" }));
+          setDraftTypes((current) => ({ ...current, [uploaded.id]: "" }));
           setUploadJobs((current) => current.filter((item) => item.id !== job.id));
           releasePreview(job.previewUrl);
           setNotice(`${file.name} uploaded.`);
@@ -193,18 +205,25 @@ export default function CreatorPage() {
 
   async function saveCardForImage(image: CreatorImageDto) {
     const front = String(drafts[image.id] ?? "").trim();
+    const cardType = draftTypes[image.id] ?? "";
     if (!front) {
       setError("Add text before saving the card.");
+      return;
+    }
+    if (!cardType) {
+      setError("Choose noun, verb, adjective, preposition, or phonics before saving.");
       return;
     }
 
     setSavingImageId(image.id);
     setError(null);
     try {
-      const card = await createCreatorCard({ creatorImageId: image.id, front });
+      const card = await createCreatorCard({ creatorImageId: image.id, front, cardType });
       setCards((current) => [card, ...current]);
       setCardEdits((current) => ({ ...current, [card.id]: card.front }));
+      setCardTypeEdits((current) => ({ ...current, [card.id]: card.cardType }));
       setDrafts((current) => ({ ...current, [image.id]: "" }));
+      setDraftTypes((current) => ({ ...current, [image.id]: "" }));
       setNotice(`“${card.front}” saved to My Cards.`);
     } catch (nextError) {
       setError(messageFor(nextError));
@@ -215,12 +234,14 @@ export default function CreatorPage() {
 
   async function saveCardEdit(card: CreatorFlashcardDto) {
     const front = String(cardEdits[card.id] ?? "").trim();
+    const cardType = cardTypeEdits[card.id] ?? card.cardType;
     setSavingCardId(card.id);
     setError(null);
     try {
-      const updated = await updateCreatorCard(card.id, { front });
+      const updated = await updateCreatorCard(card.id, { front, cardType });
       setCards((current) => current.map((item) => (item.id === card.id ? updated : item)));
       setCardEdits((current) => ({ ...current, [card.id]: updated.front }));
+      setCardTypeEdits((current) => ({ ...current, [card.id]: updated.cardType }));
       setNotice("Card updated.");
     } catch (nextError) {
       setError(messageFor(nextError));
@@ -441,7 +462,7 @@ export default function CreatorPage() {
                               </button>
                             </div>
                             <label className="mt-3 block text-sm font-semibold" htmlFor={`draft-${image.id}`}>Card text</label>
-                            <div className="mt-2 flex gap-2">
+                            <div className="mt-2 grid gap-2">
                               <input
                                 id={`draft-${image.id}`}
                                 value={drafts[image.id] ?? ""}
@@ -451,17 +472,28 @@ export default function CreatorPage() {
                                 }}
                                 maxLength={200}
                                 placeholder="e.g. my classroom"
-                                className="min-w-0 flex-1 rounded-xl border border-black/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#8dad80]"
+                                className="min-w-0 rounded-xl border border-black/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#8dad80]"
                               />
-                              <button
-                                type="button"
-                                onClick={() => void saveCardForImage(image)}
-                                disabled={savingImageId === image.id}
-                                className="btn btn-primary px-3"
-                                aria-label="Save card"
-                              >
-                                {savingImageId === image.id ? <Loader2 size={17} className="animate-spin" /> : <Plus size={17} />}
-                              </button>
+                              <div className="flex gap-2">
+                                <select
+                                  value={draftTypes[image.id] ?? ""}
+                                  onChange={(event) => setDraftTypes((current) => ({ ...current, [image.id]: event.target.value as CreatorCardType | "" }))}
+                                  aria-label="Content type"
+                                  className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#8dad80]"
+                                >
+                                  <option value="" disabled>Choose content type</option>
+                                  {CARD_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => void saveCardForImage(image)}
+                                  disabled={savingImageId === image.id || !String(drafts[image.id] ?? "").trim() || !draftTypes[image.id]}
+                                  className="btn btn-primary px-3 disabled:opacity-50"
+                                  aria-label="Save card"
+                                >
+                                  {savingImageId === image.id ? <Loader2 size={17} className="animate-spin" /> : <Plus size={17} />}
+                                </button>
+                              </div>
                             </div>
                             <p className="mt-2 text-xs text-[#7a847a]">{usedByCards} saved {usedByCards === 1 ? "card" : "cards"} using this image</p>
                           </div>
@@ -498,12 +530,20 @@ export default function CreatorPage() {
                           maxLength={200}
                           className="mt-3 w-full rounded-xl border border-black/10 px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#8dad80]"
                         />
+                        <select
+                          value={cardTypeEdits[card.id] ?? card.cardType}
+                          onChange={(event) => setCardTypeEdits((current) => ({ ...current, [card.id]: event.target.value as CreatorCardType }))}
+                          aria-label={`Content type for ${card.front}`}
+                          className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#8dad80]"
+                        >
+                          {CARD_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button type="button" onClick={() => addCardsToTray([card])} className="btn btn-primary flex-1 px-3 py-2 text-xs">Add to tray</button>
                           <button
                             type="button"
                             onClick={() => void saveCardEdit(card)}
-                            disabled={savingCardId === card.id || (cardEdits[card.id] ?? card.front).trim() === card.front}
+                            disabled={savingCardId === card.id || ((cardEdits[card.id] ?? card.front).trim() === card.front && (cardTypeEdits[card.id] ?? card.cardType) === card.cardType)}
                             className="btn btn-secondary px-3 py-2"
                             aria-label={`Save ${card.front}`}
                           >

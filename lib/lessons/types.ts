@@ -1,3 +1,6 @@
+export const LESSON_CONTENT_TYPES = ["noun", "verb", "adjective", "preposition", "phonics"] as const;
+export type LessonContentType = (typeof LESSON_CONTENT_TYPES)[number];
+
 export type LessonCard = {
   id: string;
   word: string;
