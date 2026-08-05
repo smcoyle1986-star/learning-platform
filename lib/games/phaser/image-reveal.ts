@@ -369,12 +369,10 @@ export async function createImageRevealGame({
       this.imageRevealTween?.stop();
       const textureKey = this.state.imageUrl ? makeTextureKey("reveal", this.state.imageUrl) : null;
       this.updateImageDisplay(textureKey);
-      this.image.setAlpha(1);
-      this.image.setScale(0.98);
+      this.image.setAlpha(0.9);
       this.imageRevealTween = this.tweens.add({
         targets: this.image,
-        alpha: { from: 0.92, to: 1 },
-        scale: { from: 0.98, to: 1.03 },
+        alpha: { from: 0.9, to: 1 },
         duration: 220,
         ease: "Cubic.out",
       });
@@ -386,8 +384,8 @@ export async function createImageRevealGame({
       if (!this.image || !this.sceneWidth || !this.sceneHeight) return;
       const boardWidth = this.boardRect.width || this.sceneWidth;
       const boardHeight = this.boardRect.height || this.sceneHeight;
-      const maxW = boardWidth * 0.84;
-      const maxH = boardHeight * 0.84;
+      const maxW = boardWidth * 0.9;
+      const maxH = boardHeight * 0.9;
       let sourceWidth = maxW;
       let sourceHeight = maxH;
 
