@@ -65,6 +65,7 @@ export function buildBillingAccessSnapshot(params: {
   userId?: string | null;
   subscription?: SubscriptionRecord | null;
   complimentaryPremiumAccess?: ComplimentaryPremiumAccess | null;
+  administratorRole?: "owner" | "admin" | "moderator" | null;
   now?: Date;
 }): BillingAccessSnapshot {
   const now = params.now ?? new Date();
@@ -72,6 +73,7 @@ export function buildBillingAccessSnapshot(params: {
   const featuredWorksheetType = getFeaturedWeeklyWorksheetType(now);
   const subscription = params.subscription ?? null;
   const complimentaryPremiumAccess = params.complimentaryPremiumAccess ?? null;
+  const administratorRole = params.administratorRole ?? null;
   const hasStripePremium = isPremiumSubscription(subscription);
   const hasComplimentaryPremium = Boolean(
     complimentaryPremiumAccess?.active
@@ -91,6 +93,8 @@ export function buildBillingAccessSnapshot(params: {
       : hasComplimentaryPremium
         ? "complimentary"
         : null,
+    administratorRole,
+    isAdministrator: administratorRole !== null,
     complimentaryPremiumAccess,
     featuredGameId,
     featuredWorksheetType,
@@ -149,14 +153,26 @@ export async function getBillingAccessForUser(
   supabase: SupabaseClient,
   userId: string
 ) {
-  const [subscription, complimentaryPremiumAccess] = await Promise.all([
+  const [subscription, complimentaryPremiumAccess, membership] = await Promise.all([
     getUserSubscription(supabase, userId),
     getComplimentaryPremiumAccess(supabase, userId),
+    supabase
+      .from("admin_memberships")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle(),
   ]);
+  if (membership.error) throw membership.error;
+  const administratorRole = ["owner", "admin", "moderator"].includes(
+    String(membership.data?.role ?? ""),
+  )
+    ? membership.data?.role as "owner" | "admin" | "moderator"
+    : null;
   return buildBillingAccessSnapshot({
     userId,
     subscription,
     complimentaryPremiumAccess,
+    administratorRole,
   });
 }
 

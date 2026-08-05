@@ -40,6 +40,8 @@ export type BillingAccessSnapshot = {
   isAuthenticated: boolean;
   isPremium: boolean;
   premiumAccessSource: "stripe" | "complimentary" | null;
+  administratorRole: "owner" | "admin" | "moderator" | null;
+  isAdministrator: boolean;
   complimentaryPremiumAccess: ComplimentaryPremiumAccess | null;
   featuredGameId: string;
   featuredWorksheetType: WorksheetType;

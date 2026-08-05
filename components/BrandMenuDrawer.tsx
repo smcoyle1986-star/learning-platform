@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { LayoutDashboard, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { AdministratorBadge } from "@/components/admin/AdministratorBadge";
 import { useBrandMenu } from "@/components/BrandMenuContext";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { supabase } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/auth/profile";
 import { resolveBrandTheme } from "@/lib/brand/theme";
@@ -56,6 +58,7 @@ function FaceBadge({ mood }: { mood: "happy" | "sad" }) {
 export default function BrandMenuDrawer() {
   const { isOpen, close } = useBrandMenu();
   const { user, profile, loading } = useAuth();
+  const { access } = useBillingAccess();
 
   const displayName = getProfileDisplayName(profile, user?.email);
 
@@ -102,6 +105,11 @@ export default function BrandMenuDrawer() {
                 <div className="text-sm font-semibold text-gray-800">
                   {loading ? "Loading..." : displayName}
                 </div>
+                {access?.administratorRole ? (
+                  <div className="mt-1">
+                    <AdministratorBadge role={access.administratorRole} compact />
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : (
@@ -135,6 +143,19 @@ export default function BrandMenuDrawer() {
                 );
               })()
             ))}
+
+            {access?.isAdministrator ? (
+              <Link
+                href="/admin"
+                onClick={close}
+                className="flex items-center gap-2 rounded-xl border border-[#b8c9af] bg-[#f1f7ed] px-3 py-1 text-[#426038] transition hover:bg-[#e7f0e1]"
+              >
+                <div className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full border border-[#a7ba9d] bg-white">
+                  <LayoutDashboard aria-hidden="true" className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-xs font-semibold">Administrator Dashboard</span>
+              </Link>
+            ) : null}
 
             {user ? (
               <button

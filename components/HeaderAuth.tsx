@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { Sparkles } from "lucide-react";
+import { LayoutDashboard, Sparkles } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { AdministratorBadge } from "@/components/admin/AdministratorBadge";
 import { supabase } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/auth/profile";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
@@ -40,7 +41,7 @@ export default function HeaderAuth() {
   if (user) {
     return (
       <div className="flex items-center gap-3">
-        {!access?.isPremium ? (
+        {access && !access.isPremium ? (
           <Link
             href="/upgrade"
             className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-[#efc88d] bg-[linear-gradient(135deg,#fff8df,#ffe8b5)] px-4 py-1.5 text-sm font-semibold text-[#8b5a17] shadow-[0_10px_24px_rgba(191,132,44,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(191,132,44,0.22)]"
@@ -52,9 +53,20 @@ export default function HeaderAuth() {
             </span>
           </Link>
         ) : null}
+        {access?.isAdministrator ? (
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#abc09f] bg-[#f2f7ef] px-3 py-1.5 text-xs font-semibold text-[#48643d] transition hover:bg-[#e7f0e1]"
+          >
+            <LayoutDashboard aria-hidden="true" className="h-3.5 w-3.5" />
+            Admin Dashboard
+          </Link>
+        ) : null}
         <Link href="/profile" className="inline-flex items-center gap-2 text-sm hover:underline">
           <span>{getProfileDisplayName(profile, user.email)}</span>
-          {access?.isPremium ? (
+          {access?.administratorRole ? (
+            <AdministratorBadge role={access.administratorRole} compact />
+          ) : access?.isPremium ? (
             <span className="inline-flex items-center rounded-full border border-[#d9c78a] bg-[linear-gradient(135deg,#fff6cf,#f3d97c)] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7b5b13] no-underline shadow-[0_6px_16px_rgba(217,199,138,0.28)]">
               Premium
             </span>
