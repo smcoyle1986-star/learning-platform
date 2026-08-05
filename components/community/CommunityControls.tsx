@@ -63,7 +63,7 @@ export default function CommunityControls({
             onChange={(event) => onSortChange(event.target.value as "popular" | "newest")}
             className="px-3 py-2 rounded-lg border bg-white text-sm"
           >
-            <option value="popular">Most copied</option>
+            <option value="popular">Most popular</option>
             <option value="newest">Newest</option>
           </select>
 
