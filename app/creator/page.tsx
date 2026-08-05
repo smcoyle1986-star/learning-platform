@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import {
   createCreatorCard,
@@ -298,6 +299,7 @@ export default function CreatorPage() {
     <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       <PageHeader
         title="Creator"
+        description={PAGE_CONTENT.creator.description}
         sticky={false}
         primaryItems={[{ label: "Classroom", href: "/flashcards/classroom" }]}
         secondaryItems={[

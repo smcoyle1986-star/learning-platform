@@ -8,15 +8,24 @@ export default function SignedInFeatureGate({
   children,
   featureName,
   nextPath,
+  description,
 }: {
   children: React.ReactNode;
   featureName: string;
   nextPath: string;
+  description?: string;
 }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-[55vh] bg-[var(--color-bg-main)]" />;
+    return (
+      <main className="min-h-[55vh] bg-[var(--color-bg-main)] px-6 py-12 text-[#2f3a2f]">
+        <section className="mx-auto max-w-3xl">
+          <h1 className="text-3xl font-semibold">{featureName}</h1>
+          {description ? <p className="mt-4 text-sm leading-7 text-[#5f695e] md:text-base">{description}</p> : null}
+        </section>
+      </main>
+    );
   }
 
   if (user) return <>{children}</>;
@@ -28,6 +37,9 @@ export default function SignedInFeatureGate({
       <section className="w-full max-w-lg rounded-[2rem] border border-[#d9e2d0] bg-white p-7 text-center shadow-[0_24px_70px_rgba(15,23,42,0.12)] sm:p-10">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#6f895f]">Free account required</p>
         <h1 className="mt-3 text-3xl font-semibold text-[#2f3a2f]">Sign in to use {featureName}</h1>
+        {description ? (
+          <p className="mt-4 text-sm leading-7 text-[#5f695e]">{description}</p>
+        ) : null}
         <p className="mt-4 text-sm leading-7 text-[#5f695e]">
           Guest access is limited to a six-card flashcard lesson, Classroom Mode, and basic printing. Create a free account to unlock this area.
         </p>

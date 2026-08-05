@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { useSearchParams } from "next/navigation";
 import UpgradeModal from "@/components/billing/UpgradeModal";
 import { useAuth } from "@/components/AuthProvider";
@@ -197,6 +198,7 @@ function PrintablesPageContent() {
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
           title="Printables"
+          description={PAGE_CONTENT.printables.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
           ]}
@@ -266,6 +268,7 @@ function PrintablesPageContent() {
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
           title="Printables"
+          description={PAGE_CONTENT.printables.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
           ]}
@@ -315,6 +318,7 @@ function PrintablesPageContent() {
       {/* Header */}
       <PageHeader
         title="Printables"
+        description={PAGE_CONTENT.printables.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}

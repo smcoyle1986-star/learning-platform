@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 
 export default async function FeedbackPage() {
   const supabase = await createServerSupabaseClient();
@@ -38,8 +39,7 @@ export default async function FeedbackPage() {
               Send feedback
             </h1>
             <p className="mt-4 text-sm leading-7 text-[#697368]">
-              Report a problem, suggest an improvement, or tell us where
-              Classendo could support your teaching better.
+              {PAGE_CONTENT.feedback.description}
             </p>
             <p className="mt-4 text-xs leading-5 text-[#858d83]">
               Feedback is linked to your signed-in account so we can understand

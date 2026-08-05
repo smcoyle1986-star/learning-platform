@@ -14,6 +14,7 @@ type PageHeaderItem = {
 
 type PageHeaderProps = {
   title?: string;
+  description?: ReactNode;
   primaryItems?: PageHeaderItem[];
   secondaryItems?: PageHeaderItem[];
   rightSlot?: ReactNode;
@@ -30,6 +31,7 @@ function pillClassName(tone: PageHeaderItem["tone"]) {
 
 export default function PageHeader({
   title,
+  description,
   primaryItems = [],
   secondaryItems = [],
   rightSlot,
@@ -37,10 +39,11 @@ export default function PageHeader({
   className = "",
 }: PageHeaderProps) {
   return (
-    <header
-      className={`${sticky ? "sticky top-0 z-50" : ""} bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5 ${className}`.trim()}
-    >
-      <div className="max-w-7xl mx-auto px-6 py-4">
+    <>
+      <header
+        className={`${sticky ? "sticky top-0 z-50" : ""} bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5 ${className}`.trim()}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[auto_1fr_auto] xl:items-center">
           <div className="flex items-center justify-between gap-4 xl:justify-start">
             <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80 shrink-0" />
@@ -121,7 +124,15 @@ export default function PageHeader({
             )}
           </div>
         ) : null}
-      </div>
-    </header>
+        </div>
+      </header>
+      {description ? (
+        <section className="mx-auto w-full max-w-7xl px-6 pt-5" aria-label={title ? `About ${title}` : "About this page"}>
+          <p className="max-w-3xl text-sm leading-6 text-[var(--color-text-muted)] md:text-base">
+            {description}
+          </p>
+        </section>
+      ) : null}
+    </>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
 import DashboardLessonCard from "@/components/dashboard/DashboardLessonCard";
 import DashboardWorksheetCard from "@/components/dashboard/DashboardWorksheetCard";
@@ -354,6 +355,7 @@ export default function DashboardPage() {
 
       <PageHeader
         title="Dashboard"
+        description={PAGE_CONTENT.dashboard.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}

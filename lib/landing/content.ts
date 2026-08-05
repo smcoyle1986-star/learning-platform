@@ -10,7 +10,7 @@ export type LandingSection = {
 export const LANDING_HERO_TITLE = "Interactive teaching tools\nfor English classrooms";
 
 export const LANDING_HERO_DESCRIPTION =
-  "Explore flashcards, classroom games, worksheets, lesson plans, and printable activities designed for English teachers and young learners.";
+  "Classendo helps teachers create visual lessons, classroom games, worksheets, and printable learning materials. Build resources from ready-made vocabulary or your own images, then use them directly with your class.";
 
 export const LANDING_SECTIONS: LandingSection[] = [
   {

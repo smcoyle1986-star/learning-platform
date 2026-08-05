@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel";
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
@@ -354,6 +355,7 @@ function WorksheetsPageContent() {
     <div className="flex h-[calc(100dvh-56px)] flex-col overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Worksheets"
+        description={PAGE_CONTENT.worksheets.description}
         sticky={false}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },

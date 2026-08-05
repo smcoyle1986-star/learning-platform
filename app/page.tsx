@@ -98,7 +98,18 @@ function HomePageContent() {
      LOADING
   ---------------------------- */
   if (loading) {
-    return <p className="p-10">Loading...</p>;
+    return (
+      <main className="min-h-screen bg-[#f7f6f2] px-6 py-24 text-[#2f3a2f]">
+        <section className="mx-auto max-w-7xl">
+          <h1 className="max-w-3xl whitespace-pre-line text-4xl font-semibold leading-tight md:text-6xl">
+            {LANDING_HERO_TITLE}
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#5c665c]">
+            {LANDING_HERO_DESCRIPTION}
+          </p>
+        </section>
+      </main>
+    );
   }
 
   const isLoggedIn = Boolean(email);

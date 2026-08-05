@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, Gamepad2, HelpCircle, Play, Sparkles, X } from "lucide-react";
 import { GameHowToModal } from "@/components/games/GameHowToModal";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   clearLessonTray,
-  readLessonTray,
   subscribeToLessonTray,
   writeLessonTray,
 } from "@/lib/lessons/tray";
@@ -138,7 +138,6 @@ export default function GamesLandingPage() {
   const { access, canAccessGame } = useBillingAccess();
 
   useEffect(() => {
-    setLessonTray(readLessonTray() as GameCard[]);
     return subscribeToLessonTray((cards) => {
       setLessonTray(cards as GameCard[]);
     });
@@ -220,6 +219,7 @@ export default function GamesLandingPage() {
       {/* Header */}
       <PageHeader
         title="Games"
+        description={PAGE_CONTENT.games.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}

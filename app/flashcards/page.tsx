@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
 // removed duplicate createClient import to avoid creating a second client that triggers refresh token errors
 import { useAuth } from "@/components/AuthProvider";
@@ -360,6 +361,7 @@ export default function FlashcardsPage() {
     >
       <PageHeader
         title="Flashcards"
+        description={PAGE_CONTENT.flashcards.description}
         sticky={false}
         primaryItems={[
           { label: "Classroom", onClick: () => {

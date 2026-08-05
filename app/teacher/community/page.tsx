@@ -6,6 +6,7 @@ import CommunityControls from "@/components/community/CommunityControls";
 import CommunityPreviewModal from "@/components/community/CommunityPreviewModal";
 import CommunitySetCard from "@/components/community/CommunitySetCard";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { LessonCard } from "@/lib/lessons/types";
 import { useCommunitySets } from "@/lib/community/useCommunitySets";
 import { writeLessonTray } from "@/lib/lessons/tray";
@@ -85,6 +86,7 @@ export default function CommunityPage() {
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Community"
+        description={PAGE_CONTENT.community.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}

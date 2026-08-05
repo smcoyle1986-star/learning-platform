@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandButton from "@/components/BrandButton";
 import { LANDING_FAQ_FULL } from "@/lib/landing/faq";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 
 export default function FaqPage() {
   return (
@@ -18,7 +19,7 @@ export default function FaqPage() {
             Frequently Asked Questions
           </h1>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-[#5c665c]">
-            Everything teachers need to know about using Classendo.
+            {PAGE_CONTENT.faq.description}
           </p>
         </div>
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { X, Printer } from "lucide-react";
 import EditorCardRow from "@/components/teacher/editor/EditorCardRow";
@@ -292,6 +293,7 @@ export default function TeacherLessonTrayEditor() {
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
           title="Editor"
+          description={PAGE_CONTENT.editor.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
           ]}
@@ -315,6 +317,7 @@ export default function TeacherLessonTrayEditor() {
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Editor"
+        description={PAGE_CONTENT.editor.description}
         primaryItems={[
           { label: "Classroom", onClick: () => navigateDirect("/flashcards/classroom"), tone: "classroom" },
         ]}

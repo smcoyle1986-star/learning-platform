@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonPlanSection from "@/components/lessons/LessonPlanSection";
 import { useAuth } from "@/components/AuthProvider";
 import { loadLessonsWithAccessFromServer } from "@/lib/lessons/repository";
@@ -213,6 +214,7 @@ export default function LessonsPage() {
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Lesson Plans"
+        description={PAGE_CONTENT.lessons.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}

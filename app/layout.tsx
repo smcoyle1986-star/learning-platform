@@ -8,10 +8,23 @@ import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
 import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience";
+import { PAGE_CONTENT } from "@/lib/seo/page-content";
 
 export const metadata: Metadata = {
-  title: "Classendo",
-  description: "Interactive learning",
+  metadataBase: new URL("https://www.classendo.com"),
+  title: {
+    default: PAGE_CONTENT.home.title,
+    template: "%s | Classendo",
+  },
+  description: PAGE_CONTENT.home.description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: PAGE_CONTENT.home.title,
+    description: PAGE_CONTENT.home.description,
+    type: "website",
+    url: "/",
+    siteName: "Classendo",
+  },
 };
 
 export default function RootLayout({

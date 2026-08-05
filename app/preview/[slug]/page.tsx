@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import BrandButton from "@/components/BrandButton";
@@ -6,6 +7,29 @@ import { LANDING_SECTIONS } from "@/lib/landing/content";
 type PreviewPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const section = LANDING_SECTIONS.find((item) => item.slug === slug);
+
+  if (!section) {
+    return { title: "Preview", robots: { index: false, follow: false } };
+  }
+
+  const description = `${section.previewLead} ${section.description}`;
+  return {
+    title: `${section.title} Preview`,
+    description,
+    alternates: { canonical: `/preview/${section.slug}` },
+    openGraph: {
+      title: `${section.title} Preview`,
+      description,
+      type: "website",
+      url: `/preview/${section.slug}`,
+      siteName: "Classendo",
+    },
+  };
+}
 
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { slug } = await params;
