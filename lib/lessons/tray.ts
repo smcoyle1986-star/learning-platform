@@ -1,8 +1,12 @@
 import { LessonCard } from "@/lib/lessons/types";
 
 export const LESSON_TRAY_KEY = "classendo-lesson-tray";
+export const GUEST_LESSON_TRAY_KEY = "classendo-guest-lesson-tray";
+export const GUEST_LESSON_TRAY_LIMIT = 6;
 export const LAST_SAVED_TRAY_KEY = "classendo-last-saved-tray";
 export const EDITING_LESSON_SET_ID_KEY = "editingLessonSetId";
+
+export type LessonTrayScope = "account" | "guest";
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -32,17 +36,29 @@ export function normalizeLessonCard(raw: unknown): LessonCard {
         : null,
     image_id:
       typeof source.image_id === "string" ? source.image_id : null,
+    creator_image_id:
+      typeof (source.creator_image_id ?? source.creatorImageId) === "string"
+        ? String(source.creator_image_id ?? source.creatorImageId)
+        : null,
     position:
       typeof source.position === "number" ? source.position : 0,
     type: typeof source.type === "string" ? source.type : undefined,
   };
 }
 
-function readCardArray(key: string): LessonCard[] {
+function trayStorage(scope: LessonTrayScope) {
+  return scope === "guest" ? window.sessionStorage : window.localStorage;
+}
+
+function trayKey(scope: LessonTrayScope) {
+  return scope === "guest" ? GUEST_LESSON_TRAY_KEY : LESSON_TRAY_KEY;
+}
+
+function readCardArray(key: string, storage?: Storage): LessonCard[] {
   if (!isBrowser()) return [];
 
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = (storage ?? window.localStorage).getItem(key);
     if (!raw || raw === "undefined") return [];
 
     const parsed = JSON.parse(raw);
@@ -55,23 +71,36 @@ function readCardArray(key: string): LessonCard[] {
   }
 }
 
-function writeCardArray(key: string, cards: LessonCard[]) {
+function writeCardArray(
+  key: string,
+  cards: LessonCard[],
+  storage?: Storage,
+) {
   if (!isBrowser()) return;
 
   try {
     const normalized = Array.isArray(cards) ? cards.filter(Boolean).map(normalizeLessonCard) : [];
-    window.localStorage.setItem(key, JSON.stringify(normalized));
+    (storage ?? window.localStorage).setItem(key, JSON.stringify(normalized));
   } catch (error) {
     console.error(`Failed to write ${key}:`, error);
   }
 }
 
-export function readLessonTray() {
-  return readCardArray(LESSON_TRAY_KEY);
+export function readLessonTray(scope: LessonTrayScope = "account") {
+  if (!isBrowser()) return [];
+  const cards = readCardArray(trayKey(scope), trayStorage(scope));
+  return scope === "guest" ? cards.slice(0, GUEST_LESSON_TRAY_LIMIT) : cards;
 }
 
-export function writeLessonTray(cards: LessonCard[]) {
-  writeCardArray(LESSON_TRAY_KEY, cards);
+export function writeLessonTray(
+  cards: LessonCard[],
+  scope: LessonTrayScope = "account",
+) {
+  if (!isBrowser()) return;
+  const scopedCards = scope === "guest"
+    ? cards.slice(0, GUEST_LESSON_TRAY_LIMIT)
+    : cards;
+  writeCardArray(trayKey(scope), scopedCards, trayStorage(scope));
 
   if (!isBrowser()) return;
 
@@ -80,28 +109,31 @@ export function writeLessonTray(cards: LessonCard[]) {
   } catch {}
 }
 
-export function clearLessonTray() {
+export function clearLessonTray(scope: LessonTrayScope = "account") {
   if (!isBrowser()) return;
 
-  window.localStorage.removeItem(LESSON_TRAY_KEY);
+  trayStorage(scope).removeItem(trayKey(scope));
 
   try {
     window.dispatchEvent(new Event("lesson-tray-updated"));
   } catch {}
 }
 
-export function subscribeToLessonTray(onChange: (cards: LessonCard[]) => void) {
+export function subscribeToLessonTray(
+  onChange: (cards: LessonCard[]) => void,
+  scope: LessonTrayScope = "account",
+) {
   if (!isBrowser()) {
     onChange([]);
     return () => {};
   }
 
   const emit = () => {
-    onChange(readLessonTray());
+    onChange(readLessonTray(scope));
   };
 
   const onStorage = (event: StorageEvent) => {
-    if (event.key === LESSON_TRAY_KEY) emit();
+    if (event.key === trayKey(scope)) emit();
   };
   const onFocus = () => emit();
   const onVisibility = () => {
@@ -121,6 +153,28 @@ export function subscribeToLessonTray(onChange: (cards: LessonCard[]) => void) {
     window.removeEventListener("lesson-tray-updated", onCustom as EventListener);
     document.removeEventListener("visibilitychange", onVisibility);
   };
+}
+
+export function adoptGuestLessonTray() {
+  if (!isBrowser()) return [];
+  const guestCards = readLessonTray("guest");
+  if (guestCards.length === 0) return readLessonTray("account");
+
+  const accountCards = readLessonTray("account");
+  const seen = new Set<string>();
+  const merged = [...guestCards, ...accountCards].filter((card) => {
+    const identity = card.id || card.image || `${card.type}:${card.word}`;
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
+
+  writeCardArray(LESSON_TRAY_KEY, merged, window.localStorage);
+  window.sessionStorage.removeItem(GUEST_LESSON_TRAY_KEY);
+  try {
+    window.dispatchEvent(new Event("lesson-tray-updated"));
+  } catch {}
+  return merged;
 }
 
 export function readLastSavedTray() {

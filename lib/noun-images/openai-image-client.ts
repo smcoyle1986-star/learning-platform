@@ -9,7 +9,7 @@ type OpenAIImageResponse = {
 };
 
 function getOpenAIImageModel() {
-  return getOptionalEnv("OPENAI_IMAGE_MODEL", "gpt-image-1")!;
+  return getOptionalEnv("OPENAI_IMAGE_MODEL", "gpt-image-2")!;
 }
 
 function getOpenAIImageQuality() {

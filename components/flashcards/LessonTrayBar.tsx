@@ -11,6 +11,8 @@ type LessonTrayBarProps = {
   lessonName: string;
   lessonTray: TrayItem[];
   showSavedIndicator: boolean;
+  isGuest?: boolean;
+  guestLimit?: number;
   formatWord: (word: string) => string;
   trayItemRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   draggedIndex: number | null;
@@ -22,6 +24,7 @@ type LessonTrayBarProps = {
   onTrayItemKeyDown: (event: React.KeyboardEvent, index: number) => void;
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
+  onGuestSave?: () => void;
   onGoWorksheets: () => void;
   onPrint: () => void;
   onClearTray: () => void;
@@ -32,6 +35,8 @@ export default function LessonTrayBar({
   lessonName,
   lessonTray,
   showSavedIndicator,
+  isGuest = false,
+  guestLimit = 6,
   formatWord,
   trayItemRefs,
   draggedIndex,
@@ -43,6 +48,7 @@ export default function LessonTrayBar({
   onTrayItemKeyDown,
   onRemoveFromTray,
   onOpenSaveModal,
+  onGuestSave,
   onGoWorksheets,
   onPrint,
   onClearTray,
@@ -56,6 +62,12 @@ export default function LessonTrayBar({
             <span className="font-semibold">{lessonName || "Untitled Lesson"}</span>
           </div>
         )}
+        {isGuest ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] leading-tight text-[var(--color-text-muted)]">
+            <span><strong className="text-[#4f6548]">Guest lesson:</strong> {lessonTray.length}/{guestLimit} cards</span>
+            <span>Temporary for this browser session</span>
+          </div>
+        ) : null}
 
         <LessonTrayScroller className="lesson-tray-scroll" contentClassName="gap-2">
           {lessonTray.length === 0 && (
@@ -108,18 +120,20 @@ export default function LessonTrayBar({
         <div className="flex items-center gap-2 flex-wrap">
           {lessonTray.length > 0 && (
             <>
-              <button onClick={onOpenSaveModal} className="btn btn-primary px-3 py-1 text-xs">
-                Save To Dashboard
+              <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-1 text-xs">
+                {isGuest ? "Sign up to save" : "Save To Dashboard"}
               </button>
 
-              <button
-                onClick={onGoWorksheets}
-                className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
-                title="Create worksheets"
-              >
-                <FileSpreadsheet size={14} />
-                Worksheets
-              </button>
+              {!isGuest ? (
+                <button
+                  onClick={onGoWorksheets}
+                  className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
+                  title="Create worksheets"
+                >
+                  <FileSpreadsheet size={14} />
+                  Worksheets
+                </button>
+              ) : null}
 
               <button
                 onClick={onPrint}

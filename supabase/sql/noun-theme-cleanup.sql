@@ -9,7 +9,6 @@ with theme_map(old_theme, new_theme) as (
     ('dates', 'time'),
     ('drink', 'food & drinks'),
     ('drinks', 'food & drinks'),
-    ('electronics', 'technology'),
     ('food', 'food & drinks'),
     ('fruit', 'food & drinks'),
     ('furniture', 'furniture & home'),
@@ -65,10 +64,7 @@ where n.id = r.id
 
 update public.nouns n
 set themes = case lower(n.lemma)
-  when 'computer' then array['classroom', 'technology']::text[]
   when 'kitchen' then array['kitchen']::text[]
-  when 'smartphone' then array['technology']::text[]
-  when 'tablet' then array['technology']::text[]
   when 'paintbrush' then array['classroom']::text[]
   when 'bakery' then array['buildings & places', 'food & drinks']::text[]
   when 'cafe' then array['buildings & places', 'food & drinks']::text[]
@@ -85,18 +81,16 @@ with desired(lemma, countability, themes) as (
     ('thermos', 'count', array['kitchen', 'classroom']::text[]),
     ('tray', 'count', array['kitchen']::text[]),
     ('whisk', 'count', array['kitchen']::text[]),
-    ('smartwatch', 'count', array['technology']::text[]),
-    ('speaker', 'count', array['technology', 'music']::text[]),
-    ('webcam', 'count', array['technology']::text[]),
-    ('remote control', 'count', array['technology', 'furniture & home']::text[]),
-    ('carpet', 'count', array['furniture & home']::text[]),
+    ('smartphone', 'count', array['toys & games']::text[]),
+    ('tablet', 'count', array['toys & games']::text[]),
+    ('smartwatch', 'count', array[]::text[]),
+    ('speaker', 'count', array['music']::text[]),
+    ('webcam', 'count', array[]::text[]),
+    ('remote control', 'count', array['furniture & home']::text[]),
     ('curtain', 'count', array['furniture & home']::text[]),
     ('hanger', 'count', array['furniture & home', 'clothing']::text[]),
     ('laundry basket', 'count', array['furniture & home']::text[]),
-    ('skateboard', 'count', array['sports & hobbies', 'transportation']::text[]),
-    ('roller skates', 'count', array['sports & hobbies']::text[]),
     ('paintbrush', 'count', array['sports & hobbies', 'classroom']::text[]),
-    ('binoculars', 'count', array['sports & hobbies']::text[]),
     ('bakery', 'count', array['buildings & places', 'food & drinks']::text[]),
     ('cafe', 'count', array['buildings & places', 'food & drinks']::text[]),
     ('fire station', 'count', array['buildings & places']::text[]),
@@ -114,5 +108,22 @@ where not exists (
   from public.nouns n
   where lower(n.lemma) = lower(d.lemma)
 );
+
+update public.nouns n
+set themes = case
+  when lower(n.lemma) in ('smartphone', 'tablet')
+    then array['toys & games']::text[]
+  else array(
+    select theme
+    from unnest(coalesce(n.themes, array[]::text[])) as theme
+    where lower(theme) <> 'technology'
+  )
+end
+where lower(n.lemma) in ('smartphone', 'tablet')
+  or exists (
+    select 1
+    from unnest(coalesce(n.themes, array[]::text[])) as theme
+    where lower(theme) = 'technology'
+  );
 
 commit;

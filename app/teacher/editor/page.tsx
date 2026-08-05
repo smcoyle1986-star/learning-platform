@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase/client";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   findExistingLessonIdByName,
+  LessonNameConflictError,
   loadLessonMetadata,
   saveLessonFromClient,
 } from "@/lib/lessons/repository";
@@ -215,9 +216,18 @@ export default function TeacherLessonTrayEditor() {
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
       finishSave();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (err instanceof LessonNameConflictError) {
+        if (err.existingLessonId) {
+          setExistingLessonId(err.existingLessonId);
+          setShowReplaceConfirm(true);
+        } else {
+          setNameError("A lesson with this name already exists. Choose a different name.");
+        }
+        return;
+      }
       console.error("Save failed:", err);
-      setNameError(err?.message || "Save failed. Please try again.");
+      setNameError(err instanceof Error ? err.message : "Save failed. Please try again.");
     }
   }
 
@@ -252,9 +262,9 @@ export default function TeacherLessonTrayEditor() {
       setTimeout(() => setShowSavedIndicator(false), 2000);
 
       finishSave();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Replace failed:", err);
-      setNameError(err?.message || "Replace failed. Please try again.");
+      setNameError(err instanceof Error ? err.message : "Replace failed. Please try again.");
     }
   }
 

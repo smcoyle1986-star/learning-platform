@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type Entry = { name: string; metadata?: Record<string, unknown> | null };
 
@@ -19,7 +19,7 @@ function load(filePath: string) {
 }
 
 async function listAll(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   bucket: string,
   folder: string
 ) {
@@ -41,7 +41,7 @@ async function listAll(
 }
 
 async function walk(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   bucket: string,
   folder: string
 ): Promise<Array<{ path: string; size: number }>> {

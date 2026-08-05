@@ -11,6 +11,7 @@ export type CommunityCardPreview = {
   id: string;
   front: string;
   back?: string | null;
+  creator_image_id?: string | null;
   position?: number | null;
 };
 

@@ -11,10 +11,11 @@ import { getProfileDisplayName } from "@/lib/auth/profile";
 import { resolveBrandTheme } from "@/lib/brand/theme";
 
 const LINKS = [
-  { label: "Landing", href: "/" },
+  { label: "Home", href: "/" },
   { label: "Flashcards", href: "/flashcards" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Community", href: "/teacher/community" },
+  { label: "Creator", href: "/creator" },
   { label: "Games", href: "/games" },
   { label: "Printables", href: "/printables" },
   { label: "Worksheets", href: "/worksheets" },
@@ -77,27 +78,27 @@ export default function BrandMenuDrawer() {
         onClick={close}
       />
       <aside
-        className={`fixed left-0 top-0 z-[90] h-full w-[min(40vw,480px)] bg-white shadow-2xl border-r transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-[90] h-dvh w-[min(88vw,400px)] bg-white shadow-2xl border-r transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b">
-          <div className="text-2xl font-extrabold text-blue-700">Classendo</div>
+        <div className="flex items-center justify-between border-b px-5 py-3">
+          <div className="text-xl font-extrabold text-blue-700">Classendo</div>
           <button
             type="button"
             onClick={close}
-            className="rounded-full border p-2 hover:bg-gray-50"
+            className="rounded-full border p-1.5 hover:bg-gray-50"
             aria-label="Close menu"
           >
             <X size={16} />
           </button>
         </div>
 
-        <div className="px-6 py-5 max-w-4xl">
+        <div className="max-w-4xl px-5 py-3">
           {user ? (
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(127,163,106,0.16))] text-[#6b756b] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <div className="mb-3 flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(127,163,106,0.16))] text-[#6b756b] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                 <FaceBadge mood="happy" />
               </div>
               <div>
@@ -113,14 +114,14 @@ export default function BrandMenuDrawer() {
               </div>
             </div>
           ) : (
-            <div className="mb-6 flex items-center justify-start">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(203,213,225,0.22))] text-[#8b95a3] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <div className="mb-3 flex items-center justify-start">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d7ddd1] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(203,213,225,0.22))] text-[#8b95a3] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                 <FaceBadge mood="sad" />
               </div>
             </div>
           )}
 
-          <nav className="flex flex-col gap-3">
+          <nav className="flex flex-col gap-1">
             {LINKS.map((item) => (
               (() => {
                 const theme = resolveBrandTheme(item.href);
@@ -129,16 +130,16 @@ export default function BrandMenuDrawer() {
                 key={item.href}
                 href={item.href}
                 onClick={close}
-                className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition"
+                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 transition hover:bg-gray-50"
               >
                 <div
-                  className="h-9 w-9 rounded-full border flex-shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                  className="h-6 w-6 flex-shrink-0 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
                   style={{
                     background: `linear-gradient(180deg, rgba(255,255,255,0.9), ${theme.circle})`,
                     borderColor: theme.circleBorder,
                   }}
                 />
-                <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                <span className="text-xs font-medium text-gray-800">{item.label}</span>
               </Link>
                 );
               })()
@@ -161,19 +162,19 @@ export default function BrandMenuDrawer() {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition text-left"
+                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 text-left transition hover:bg-gray-50"
               >
-                <div className="h-9 w-9 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))] flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-800">Log out</span>
+                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                <span className="text-xs font-medium text-gray-800">Log out</span>
               </button>
             ) : (
               <Link
                 href="/login"
                 onClick={close}
-                className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 hover:bg-gray-50 transition"
+                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 transition hover:bg-gray-50"
               >
-                <div className="h-9 w-9 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))] flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-800">Log in</span>
+                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                <span className="text-xs font-medium text-gray-800">Log in</span>
               </Link>
             )}
           </nav>

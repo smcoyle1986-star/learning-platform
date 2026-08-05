@@ -2,11 +2,20 @@
 
 import { usePathname } from "next/navigation";
 
-import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
+import SignedInFeatureGate from "@/components/auth/SignedInFeatureGate";
+import TimedGamePreviewGate from "@/components/billing/TimedGamePreviewGate";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { PREMIUM_GAME_IDS } from "@/lib/billing/constants";
 
 export default function GamesLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SignedInFeatureGate featureName="Games" nextPath="/games">
+      <SignedInGamesLayout>{children}</SignedInGamesLayout>
+    </SignedInFeatureGate>
+  );
+}
+
+function SignedInGamesLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { access, loading, canAccessGame } = useBillingAccess();
 
@@ -27,15 +36,14 @@ export default function GamesLayout({ children }: { children: React.ReactNode })
 
   if (!canAccessGame(gameId)) {
     return (
-      <div className="relative">
+      <TimedGamePreviewGate
+        key={gameId}
+        gameId={gameId}
+        userId={access.userId}
+        featuredGameId={access.featuredGameId}
+      >
         {children}
-        <PremiumPreviewOverlay
-          title="This game is locked on the Free plan"
-          description={`You can preview this game here. Free teachers can fully play ${access.featuredGameId.replaceAll("-", " ")} this week. Upgrade to Premium to unlock every classroom game anytime.`}
-          secondaryHref="/games"
-          secondaryLabel="Return to Games"
-        />
-      </div>
+      </TimedGamePreviewGate>
     );
   }
 

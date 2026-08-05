@@ -8,6 +8,7 @@ type CommunityPreviewModalProps = {
   authorName?: string;
   cards: CommunityCardPreview[];
   loading: boolean;
+  canAddToDashboard: boolean;
   onClose: () => void;
   onAddToDashboard: (setItem: CommunityLessonSet) => void;
 };
@@ -17,6 +18,7 @@ export default function CommunityPreviewModal({
   authorName,
   cards,
   loading,
+  canAddToDashboard,
   onClose,
   onAddToDashboard,
 }: CommunityPreviewModalProps) {
@@ -36,10 +38,16 @@ export default function CommunityPreviewModal({
 
           <div className="flex gap-2">
             <button
+              disabled={!canAddToDashboard}
               onClick={() => onAddToDashboard(setItem)}
-              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90"
+              title={
+                canAddToDashboard
+                  ? "Add this set to your Dashboard"
+                  : "Upgrade to Premium to use Community sets in your Dashboard"
+              }
+              className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-55"
             >
-              Add to Dashboard
+              {canAddToDashboard ? "Add to Dashboard" : "Premium required"}
             </button>
 
             <button

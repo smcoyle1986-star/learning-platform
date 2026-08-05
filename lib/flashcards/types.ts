@@ -1,12 +1,15 @@
 export type WordType = "noun" | "verb" | "adjective" | "phonics" | "preposition";
+export type CardType = WordType | "custom";
 
 export type Card = {
   id: string;
   word: string;
   image: string;
-  type: WordType;
+  type: CardType;
   countability?: "count" | "uncount" | "both";
   themes?: string[];
+  creatorImageId?: string;
+  creatorCardId?: string;
 };
 
 export type TrayItem = {
@@ -14,6 +17,7 @@ export type TrayItem = {
   word: string;
   image: string;
   type: Card["type"];
+  creator_image_id?: string | null;
 };
 
 export type CarouselEntry = {
@@ -75,7 +79,6 @@ export const FLASHCARD_THEMES: Record<WordType, string[]> = {
     "buildings & places",
     "classroom",
     "clothing",
-    "colors",
     "family",
     "food & drinks",
     "furniture & home",
@@ -83,19 +86,14 @@ export const FLASHCARD_THEMES: Record<WordType, string[]> = {
     "holidays & events",
     "jobs",
     "kitchen",
-    "music",
     "nature",
-    "numbers & math",
     "people",
     "school subjects",
-    "shopping",
     "sports & hobbies",
-    "technology",
     "time",
     "toys & games",
     "transportation",
     "weather",
-    "world & geography",
   ],
   verb: [
     "action",

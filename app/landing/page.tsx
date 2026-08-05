@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import HeaderAuth from "@/components/HeaderAuth";
 import LandingCarousel from "@/components/landing/LandingCarousel";
@@ -38,7 +38,7 @@ function QuickLinkCard({
   );
 }
 
-export default function LandingPage() {
+function LandingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile } = useAuth();
@@ -52,20 +52,28 @@ export default function LandingPage() {
     let mounted = true;
 
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (!data.session) {
+        if (!data.session) {
+          router.push("/login");
+          return;
+        }
+
+        setEmail(data.session.user.email ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.warn("LandingPage: authentication is unavailable:", error);
+        if (!mounted) return;
+        setLoading(false);
         router.push("/login");
-        return;
       }
-
-      setEmail(data.session.user.email ?? null);
-      setLoading(false);
     };
 
-    checkSession();
+    void checkSession();
 
     return () => {
       mounted = false;
@@ -79,13 +87,20 @@ export default function LandingPage() {
     if (!signedIn && !signedUp) return;
 
     const run = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.replace("/");
-        return;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (data.session) {
+          router.replace("/");
+          return;
+        }
+      } catch (error) {
+        console.warn("LandingPage: authentication is unavailable:", error);
       }
 
-      router.replace("/");
+      if (signedIn || signedUp) {
+        router.replace("/");
+      }
     };
 
     const timeout = setTimeout(run, 200);
@@ -255,5 +270,13 @@ export default function LandingPage() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<p className="p-10">Loading...</p>}>
+      <LandingPageContent />
+    </Suspense>
   );
 }

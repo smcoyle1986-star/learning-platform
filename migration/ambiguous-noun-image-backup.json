@@ -1,0 +1,833 @@
+{
+  "generatedAt": "2026-07-29T05:19:56.402Z",
+  "nouns": [
+    {
+      "id": "72f0baa5-0a8f-47fc-8b90-43c7ca45a144",
+      "lemma": "dentist",
+      "themes": [
+        "jobs"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/dentist/dentist_1.png"
+    },
+    {
+      "id": "e280f113-744c-4104-a2ca-fbc6cdbae15d",
+      "lemma": "dentist",
+      "themes": [
+        "buildings & places"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/dentist/dentist_1.png"
+    },
+    {
+      "id": "21d36b46-df10-41e2-9f71-f32badcdd516",
+      "lemma": "toilet",
+      "themes": [
+        "furniture & home"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/toilet_rooms/toilet_1.png"
+    },
+    {
+      "id": "811d5239-8e03-4392-9fd5-4b0f2c454802",
+      "lemma": "toilet",
+      "themes": [
+        "furniture & home"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/toilet_furniture/toilet_furniture_1.png"
+    },
+    {
+      "id": "a17c24e6-48c4-4731-aa2f-11772aa59e94",
+      "lemma": "cold",
+      "themes": [
+        "weather"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cold_weather/cold_1.png"
+    },
+    {
+      "id": "0643ee4a-a92b-48c3-b307-c5d948ff2bbe",
+      "lemma": "cold",
+      "themes": [
+        "health"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cold_health/cold_health_1.png"
+    },
+    {
+      "id": "7e0e7dc7-803e-4dbe-8e30-532518acd9fa",
+      "lemma": "desk",
+      "themes": [
+        "furniture & home"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/desk/desk_1.png"
+    },
+    {
+      "id": "249b03b4-f2b0-4795-bc83-b3a87f0c5695",
+      "lemma": "desk",
+      "themes": [
+        "classroom"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/desk/desk_1.png"
+    },
+    {
+      "id": "0fc94d66-67de-4fc6-a2e9-0d29957e78aa",
+      "lemma": "chair",
+      "themes": [
+        "classroom"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chair/chair_1.png"
+    },
+    {
+      "id": "2798e63f-f24d-4329-bd0a-0dcb977dbe67",
+      "lemma": "chair",
+      "themes": [
+        "furniture & home"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chair/chair_1.png"
+    },
+    {
+      "id": "bdd3aa4f-104b-4f26-97bb-143b895c489b",
+      "lemma": "scissors",
+      "themes": [
+        "classroom"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/scissors/scissors_1.png"
+    },
+    {
+      "id": "195057d0-b51d-4730-862d-2e20c01a9ee9",
+      "lemma": "scissors",
+      "themes": [
+        "kitchen"
+      ],
+      "image_id": null
+    },
+    {
+      "id": "f35bdf1a-2e85-46dd-8017-340a1b594053",
+      "lemma": "fish",
+      "themes": [
+        "animals"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/fish/fish_1.png"
+    },
+    {
+      "id": "3c611cb4-3485-48b0-bc18-d5115398664b",
+      "lemma": "fish",
+      "themes": [
+        "food & drinks"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/fish_food/fish_food_1.png"
+    },
+    {
+      "id": "9eaabef2-1d23-413c-bd0b-0854db4386c6",
+      "lemma": "river",
+      "themes": [
+        "nature"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/river_nature/river_nature_1.png"
+    },
+    {
+      "id": "8bc4d73f-95cd-45fe-8768-39ee8cde882e",
+      "lemma": "river",
+      "themes": [
+        "buildings & places"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/river_nature/river_nature_1.png"
+    },
+    {
+      "id": "14cb1f26-bc15-4f42-9926-829b7c3a2d87",
+      "lemma": "lake",
+      "themes": [
+        "nature"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/lake_nature/lake_nature_1.png"
+    },
+    {
+      "id": "05985d86-9f5f-471e-a133-823e9f0a5df5",
+      "lemma": "lake",
+      "themes": [
+        "buildings & places"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/lake_nature/lake_nature_1.png"
+    },
+    {
+      "id": "cbcabd5b-fd91-48a5-8de6-4f824adf2481",
+      "lemma": "Halloween",
+      "themes": [
+        "holidays & events"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/halloween_holidays/halloween_holidays_1.png"
+    },
+    {
+      "id": "17036678-f39a-4f07-a550-21886dac8d23",
+      "lemma": "halloween",
+      "themes": [
+        "time"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/halloween_dates/halloween_dates_1.png"
+    },
+    {
+      "id": "95c6ff3b-f632-4c5d-89e3-775069fd383a",
+      "lemma": "christmas",
+      "themes": [
+        "time"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/christmas_dates/christmas_dates_1.png"
+    },
+    {
+      "id": "31185790-9085-4454-8755-c73d3274e652",
+      "lemma": "Christmas",
+      "themes": [
+        "holidays & events"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/christmas_holidays/christmas_holidays_1.png"
+    },
+    {
+      "id": "c6371e47-ce5c-47e3-85ac-35d22303f312",
+      "lemma": "computer",
+      "themes": [
+        "classroom",
+        "technology"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/computer/computer_1.png"
+    },
+    {
+      "id": "8ba2a81c-ec9a-4f67-af9c-7ba20d25e3e9",
+      "lemma": "computer",
+      "themes": [
+        "classroom",
+        "technology"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/computer/computer_1.png"
+    },
+    {
+      "id": "d7d3536c-857f-45d7-a497-d391bfa92621",
+      "lemma": "chicken",
+      "themes": [
+        "food & drinks"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chicken_food/chicken_food_1.png"
+    },
+    {
+      "id": "87abc165-26e3-487f-b290-93d9428612a3",
+      "lemma": "chicken",
+      "themes": [
+        "animals"
+      ],
+      "image_id": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chicken_animal/chicken_1.png"
+    }
+  ],
+  "vocab_images": [
+    {
+      "id": 1135,
+      "lemma": "chicken",
+      "category": "noun",
+      "image_path": "nouns/chicken_animal/chicken_1.png",
+      "created_at": "2026-03-27T10:13:52.605057+00:00",
+      "variant": "chicken_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "87abc165-26e3-487f-b290-93d9428612a3"
+    },
+    {
+      "id": 1136,
+      "lemma": "chicken",
+      "category": "noun",
+      "image_path": "nouns/chicken_animal/chicken_2.png",
+      "created_at": "2026-03-27T10:13:52.605057+00:00",
+      "variant": "chicken_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "87abc165-26e3-487f-b290-93d9428612a3"
+    },
+    {
+      "id": 1151,
+      "lemma": "fish",
+      "category": "noun",
+      "image_path": "nouns/fish/fish_1.png",
+      "created_at": "2026-03-28T04:34:38.713878+00:00",
+      "variant": "fish_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "f35bdf1a-2e85-46dd-8017-340a1b594053"
+    },
+    {
+      "id": 1152,
+      "lemma": "fish",
+      "category": "noun",
+      "image_path": "nouns/fish/fish_2.png",
+      "created_at": "2026-03-28T04:35:21.117903+00:00",
+      "variant": "fish_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "f35bdf1a-2e85-46dd-8017-340a1b594053"
+    },
+    {
+      "id": 1279,
+      "lemma": "scissors",
+      "category": "noun",
+      "image_path": "nouns/scissors/scissors_1.png",
+      "created_at": "2026-03-30T05:05:45.634752+00:00",
+      "variant": "scissors_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "bdd3aa4f-104b-4f26-97bb-143b895c489b"
+    },
+    {
+      "id": 1280,
+      "lemma": "scissors",
+      "category": "noun",
+      "image_path": "nouns/scissors/scissors_2.png",
+      "created_at": "2026-03-30T05:06:04.967753+00:00",
+      "variant": "scissors_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "bdd3aa4f-104b-4f26-97bb-143b895c489b"
+    },
+    {
+      "id": 1281,
+      "lemma": "scissors",
+      "category": "noun",
+      "image_path": "nouns/scissors/scissors_3.png",
+      "created_at": "2026-03-30T05:06:28.852289+00:00",
+      "variant": "scissors_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "bdd3aa4f-104b-4f26-97bb-143b895c489b"
+    },
+    {
+      "id": 1224,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_1.png",
+      "created_at": "2026-03-30T04:48:03.864455+00:00",
+      "variant": "chair_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "0fc94d66-67de-4fc6-a2e9-0d29957e78aa"
+    },
+    {
+      "id": 1225,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_2.png",
+      "created_at": "2026-03-30T04:48:42.747855+00:00",
+      "variant": "chair_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "0fc94d66-67de-4fc6-a2e9-0d29957e78aa"
+    },
+    {
+      "id": 1230,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_1.png",
+      "created_at": "2026-03-30T04:50:19.905813+00:00",
+      "variant": "computer_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "8ba2a81c-ec9a-4f67-af9c-7ba20d25e3e9"
+    },
+    {
+      "id": 1537,
+      "lemma": "dentist",
+      "category": "noun",
+      "image_path": "nouns/dentist/dentist_1.png",
+      "created_at": "2026-04-01T03:06:30.867838+00:00",
+      "variant": "dentist_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "72f0baa5-0a8f-47fc-8b90-43c7ca45a144"
+    },
+    {
+      "id": 1538,
+      "lemma": "dentist",
+      "category": "noun",
+      "image_path": "nouns/dentist/dentist_2.png",
+      "created_at": "2026-04-01T03:06:53.872087+00:00",
+      "variant": "dentist_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "72f0baa5-0a8f-47fc-8b90-43c7ca45a144"
+    },
+    {
+      "id": 1645,
+      "lemma": "halloween",
+      "category": "noun",
+      "image_path": "nouns/halloween_holidays/halloween_holidays_2.png",
+      "created_at": "2026-04-04T08:08:21.351959+00:00",
+      "variant": "halloween_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "cbcabd5b-fd91-48a5-8de6-4f824adf2481"
+    },
+    {
+      "id": 1636,
+      "lemma": "christmas",
+      "category": "noun",
+      "image_path": "nouns/christmas_holidays/christmas_holidays_1.png",
+      "created_at": "2026-04-04T08:08:21.351959+00:00",
+      "variant": "christmas_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "31185790-9085-4454-8755-c73d3274e652"
+    },
+    {
+      "id": 1637,
+      "lemma": "christmas",
+      "category": "noun",
+      "image_path": "nouns/christmas_holidays/christmas_holidays_2.png",
+      "created_at": "2026-04-04T08:08:21.351959+00:00",
+      "variant": "christmas_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "31185790-9085-4454-8755-c73d3274e652"
+    },
+    {
+      "id": 1644,
+      "lemma": "halloween",
+      "category": "noun",
+      "image_path": "nouns/halloween_holidays/halloween_holidays_1.png",
+      "created_at": "2026-04-04T08:08:21.351959+00:00",
+      "variant": "halloween_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "cbcabd5b-fd91-48a5-8de6-4f824adf2481"
+    },
+    {
+      "id": 1856,
+      "lemma": "cold",
+      "category": "noun",
+      "image_path": "nouns/cold_health/cold_health_1.png",
+      "created_at": "2026-04-04T08:12:06.694898+00:00",
+      "variant": "cold_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "0643ee4a-a92b-48c3-b307-c5d948ff2bbe"
+    },
+    {
+      "id": 1857,
+      "lemma": "cold",
+      "category": "noun",
+      "image_path": "nouns/cold_health/cold_health_2.png",
+      "created_at": "2026-04-04T08:12:06.694898+00:00",
+      "variant": "cold_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "0643ee4a-a92b-48c3-b307-c5d948ff2bbe"
+    },
+    {
+      "id": 1920,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_1.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "computer_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "c6371e47-ce5c-47e3-85ac-35d22303f312"
+    },
+    {
+      "id": 1921,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_2.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "computer_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "c6371e47-ce5c-47e3-85ac-35d22303f312"
+    },
+    {
+      "id": 1922,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_3.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "computer_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "c6371e47-ce5c-47e3-85ac-35d22303f312"
+    },
+    {
+      "id": 1923,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_1.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "desk_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "7e0e7dc7-803e-4dbe-8e30-532518acd9fa"
+    },
+    {
+      "id": 1924,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_2.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "desk_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "7e0e7dc7-803e-4dbe-8e30-532518acd9fa"
+    },
+    {
+      "id": 1925,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_3.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "desk_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "7e0e7dc7-803e-4dbe-8e30-532518acd9fa"
+    },
+    {
+      "id": 1932,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_1.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "chair_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "2798e63f-f24d-4329-bd0a-0dcb977dbe67"
+    },
+    {
+      "id": 1933,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_2.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "chair_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "2798e63f-f24d-4329-bd0a-0dcb977dbe67"
+    },
+    {
+      "id": 1934,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_3.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "chair_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "2798e63f-f24d-4329-bd0a-0dcb977dbe67"
+    },
+    {
+      "id": 1941,
+      "lemma": "toilet",
+      "category": "noun",
+      "image_path": "nouns/toilet_furniture/toilet_furniture_1.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "toilet_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "811d5239-8e03-4392-9fd5-4b0f2c454802"
+    },
+    {
+      "id": 1942,
+      "lemma": "toilet",
+      "category": "noun",
+      "image_path": "nouns/toilet_furniture/toilet_furniture_2.png",
+      "created_at": "2026-04-04T08:16:50.965065+00:00",
+      "variant": "toilet_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "811d5239-8e03-4392-9fd5-4b0f2c454802"
+    },
+    {
+      "id": 2014,
+      "lemma": "christmas",
+      "category": "noun",
+      "image_path": "nouns/christmas_dates/christmas_dates_1.png",
+      "created_at": "2026-04-04T08:28:50.245101+00:00",
+      "variant": "christmas_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "95c6ff3b-f632-4c5d-89e3-775069fd383a"
+    },
+    {
+      "id": 2015,
+      "lemma": "halloween",
+      "category": "noun",
+      "image_path": "nouns/halloween_dates/halloween_dates_1.png",
+      "created_at": "2026-04-04T08:28:50.245101+00:00",
+      "variant": "halloween_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "17036678-f39a-4f07-a550-21886dac8d23"
+    },
+    {
+      "id": 2037,
+      "lemma": "chicken",
+      "category": "noun",
+      "image_path": "nouns/chicken_food/chicken_food_1.png",
+      "created_at": "2026-04-04T08:31:16.341851+00:00",
+      "variant": "chicken_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "d7d3536c-857f-45d7-a497-d391bfa92621"
+    },
+    {
+      "id": 2038,
+      "lemma": "chicken",
+      "category": "noun",
+      "image_path": "nouns/chicken_food/chicken_food_2.png",
+      "created_at": "2026-04-04T08:31:16.341851+00:00",
+      "variant": "chicken_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "d7d3536c-857f-45d7-a497-d391bfa92621"
+    },
+    {
+      "id": 2065,
+      "lemma": "fish",
+      "category": "noun",
+      "image_path": "nouns/fish_food/fish_food_1.png",
+      "created_at": "2026-04-04T08:31:16.341851+00:00",
+      "variant": "fish_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "3c611cb4-3485-48b0-bc18-d5115398664b"
+    },
+    {
+      "id": 2066,
+      "lemma": "fish",
+      "category": "noun",
+      "image_path": "nouns/fish_food/fish_food_2.png",
+      "created_at": "2026-04-04T08:31:16.341851+00:00",
+      "variant": "fish_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "3c611cb4-3485-48b0-bc18-d5115398664b"
+    },
+    {
+      "id": 2151,
+      "lemma": "lake",
+      "category": "noun",
+      "image_path": "nouns/lake_nature/lake_nature_1.png",
+      "created_at": "2026-04-04T08:52:31.757997+00:00",
+      "variant": "lake_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "14cb1f26-bc15-4f42-9926-829b7c3a2d87"
+    },
+    {
+      "id": 2155,
+      "lemma": "river",
+      "category": "noun",
+      "image_path": "nouns/river_nature/river_nature_1.png",
+      "created_at": "2026-04-04T08:53:49.253161+00:00",
+      "variant": "river_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "9eaabef2-1d23-413c-bd0b-0854db4386c6"
+    },
+    {
+      "id": 2168,
+      "lemma": "lake",
+      "category": "noun",
+      "image_path": "nouns/lake_nature/lake_nature_2.png",
+      "created_at": "2026-04-04T09:43:59.764381+00:00",
+      "variant": "lake_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "14cb1f26-bc15-4f42-9926-829b7c3a2d87"
+    },
+    {
+      "id": 2172,
+      "lemma": "river",
+      "category": "noun",
+      "image_path": "nouns/river_nature/river_nature_2.png",
+      "created_at": "2026-04-04T09:45:26.328407+00:00",
+      "variant": "river_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "9eaabef2-1d23-413c-bd0b-0854db4386c6"
+    },
+    {
+      "id": 2254,
+      "lemma": "dentist",
+      "category": "noun",
+      "image_path": "nouns/dentist/dentist_2.png",
+      "created_at": "2026-04-04T11:46:49.598411+00:00",
+      "variant": "dentist_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "e280f113-744c-4104-a2ca-fbc6cdbae15d"
+    },
+    {
+      "id": 2264,
+      "lemma": "lake",
+      "category": "noun",
+      "image_path": "nouns/lake_nature/lake_nature_2.png",
+      "created_at": "2026-04-04T11:50:33.143373+00:00",
+      "variant": "lake_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "05985d86-9f5f-471e-a133-823e9f0a5df5"
+    },
+    {
+      "id": 2272,
+      "lemma": "river",
+      "category": "noun",
+      "image_path": "nouns/river_nature/river_nature_2.png",
+      "created_at": "2026-04-04T11:53:22.157554+00:00",
+      "variant": "river_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "8bc4d73f-95cd-45fe-8768-39ee8cde882e"
+    },
+    {
+      "id": 2330,
+      "lemma": "lake",
+      "category": "noun",
+      "image_path": "nouns/lake_nature/lake_nature_1.png",
+      "created_at": "2026-07-29T04:04:54.592892+00:00",
+      "variant": "lake_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "05985d86-9f5f-471e-a133-823e9f0a5df5"
+    },
+    {
+      "id": 2331,
+      "lemma": "toilet",
+      "category": "noun",
+      "image_path": "nouns/toilet_rooms/toilet_1.png",
+      "created_at": "2026-07-29T04:04:54.592892+00:00",
+      "variant": "toilet_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "21d36b46-df10-41e2-9f71-f32badcdd516"
+    },
+    {
+      "id": 2332,
+      "lemma": "toilet",
+      "category": "noun",
+      "image_path": "nouns/toilet_rooms/toilet_2.png",
+      "created_at": "2026-07-29T04:04:54.592892+00:00",
+      "variant": "toilet_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "21d36b46-df10-41e2-9f71-f32badcdd516"
+    },
+    {
+      "id": 2333,
+      "lemma": "toilet",
+      "category": "noun",
+      "image_path": "nouns/toilet_rooms/toilet_3.png",
+      "created_at": "2026-07-29T04:04:54.592892+00:00",
+      "variant": "toilet_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "21d36b46-df10-41e2-9f71-f32badcdd516"
+    },
+    {
+      "id": 2406,
+      "lemma": "cold",
+      "category": "noun",
+      "image_path": "nouns/cold_weather/cold_1.png",
+      "created_at": "2026-07-29T04:04:54.725285+00:00",
+      "variant": "cold_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "a17c24e6-48c4-4731-aa2f-11772aa59e94"
+    },
+    {
+      "id": 2407,
+      "lemma": "cold",
+      "category": "noun",
+      "image_path": "nouns/cold_weather/cold_2.png",
+      "created_at": "2026-07-29T04:04:54.725285+00:00",
+      "variant": "cold_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "a17c24e6-48c4-4731-aa2f-11772aa59e94"
+    },
+    {
+      "id": 2520,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_2.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "computer_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "8ba2a81c-ec9a-4f67-af9c-7ba20d25e3e9"
+    },
+    {
+      "id": 2521,
+      "lemma": "computer",
+      "category": "noun",
+      "image_path": "nouns/computer/computer_3.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "computer_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "8ba2a81c-ec9a-4f67-af9c-7ba20d25e3e9"
+    },
+    {
+      "id": 2522,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_1.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "desk_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "249b03b4-f2b0-4795-bc83-b3a87f0c5695"
+    },
+    {
+      "id": 2523,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_2.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "desk_2",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "249b03b4-f2b0-4795-bc83-b3a87f0c5695"
+    },
+    {
+      "id": 2524,
+      "lemma": "desk",
+      "category": "noun",
+      "image_path": "nouns/desk/desk_3.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "desk_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "249b03b4-f2b0-4795-bc83-b3a87f0c5695"
+    },
+    {
+      "id": 2525,
+      "lemma": "chair",
+      "category": "noun",
+      "image_path": "nouns/chair/chair_3.png",
+      "created_at": "2026-07-29T04:04:54.769512+00:00",
+      "variant": "chair_3",
+      "is_default": false,
+      "is_premium": true,
+      "noun_id": "0fc94d66-67de-4fc6-a2e9-0d29957e78aa"
+    },
+    {
+      "id": 2987,
+      "lemma": "dentist",
+      "category": "noun",
+      "image_path": "nouns/dentist/dentist_1.png",
+      "created_at": "2026-07-29T04:04:54.968865+00:00",
+      "variant": "dentist_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "e280f113-744c-4104-a2ca-fbc6cdbae15d"
+    },
+    {
+      "id": 2994,
+      "lemma": "river",
+      "category": "noun",
+      "image_path": "nouns/river_nature/river_nature_1.png",
+      "created_at": "2026-07-29T04:04:54.968865+00:00",
+      "variant": "river_1",
+      "is_default": true,
+      "is_premium": false,
+      "noun_id": "8bc4d73f-95cd-45fe-8768-39ee8cde882e"
+    }
+  ]
+}

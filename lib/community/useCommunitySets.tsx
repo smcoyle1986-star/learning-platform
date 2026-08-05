@@ -4,9 +4,27 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { supabase } from "@/lib/supabase/client";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { CommunityCardPreview, CommunityLessonSet, CommunityToast } from "@/lib/community/types";
+import { hydrateCreatorLessonCards } from "@/lib/creator/client";
+import type { LessonCard } from "@/lib/lessons/types";
 
 const STORAGE_KEY = "classendo-saved-lessons";
+
+type CommunitySetRow = CommunityLessonSet;
+type CommunityCardRow = {
+  id: string;
+  lesson_set_id?: string;
+  front: string;
+  back?: string | null;
+  creator_image_id?: string | null;
+  position?: number | null;
+};
+type CommunityProfileRow = {
+  id: string;
+  display_name?: string | null;
+  username?: string | null;
+};
 
 function resolveCommunityImage(value?: string | null) {
   const raw = String(value ?? "").trim();
@@ -24,6 +42,7 @@ function buildCommunitySearchFilter(rawQuery: string) {
 }
 
 export function useCommunitySets() {
+  const { access } = useBillingAccess();
   const [query, setQuery] = useState("");
   const [sets, setSets] = useState<CommunityLessonSet[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +57,7 @@ export function useCommunitySets() {
   const [previewImages, setPreviewImages] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<CommunityToast>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const canCopyToDashboard = Boolean(access?.isPremium);
 
   const totalPages = useMemo(() => {
     if (!totalCount) return null;
@@ -92,7 +112,7 @@ export function useCommunitySets() {
         return;
       }
 
-      const fetched: CommunityLessonSet[] = (data ?? []).map((row: any) => ({
+      const fetched: CommunityLessonSet[] = ((data ?? []) as CommunitySetRow[]).map((row) => ({
         id: row.id,
         name: row.name,
         user_id: row.user_id,
@@ -109,20 +129,31 @@ export function useCommunitySets() {
         try {
           const { data: cardsData, error: cardsError } = await supabase
             .from("cards")
-            .select("lesson_set_id, back, position")
+            .select("id, lesson_set_id, front, back, creator_image_id, position")
             .in("lesson_set_id", lessonIds)
             .order("position", { ascending: true });
 
           if (cardsError) {
             console.warn("Failed to fetch preview images:", cardsError);
           } else if (cardsData) {
+            const hydratedCards = await hydrateCreatorLessonCards(
+              (cardsData as CommunityCardRow[]).map((card) => ({
+                id: String(card.id),
+                word: String(card.front ?? ""),
+                image: card.back,
+                back: card.back,
+                creator_image_id: card.creator_image_id,
+                position: card.position,
+                lesson_set_id: card.lesson_set_id,
+              })) as Array<LessonCard & { lesson_set_id: string }>
+            );
             const nextPreviewImages: Record<string, string> = {};
 
-            cardsData.forEach((card: any) => {
+            hydratedCards.forEach((card) => {
               const lessonId = String(card.lesson_set_id ?? "");
               if (!lessonId || nextPreviewImages[lessonId]) return;
 
-              const resolvedImage = resolveCommunityImage(card.back);
+              const resolvedImage = resolveCommunityImage(card.image ?? card.back);
               if (!resolvedImage) return;
               nextPreviewImages[lessonId] = resolvedImage;
             });
@@ -146,7 +177,7 @@ export function useCommunitySets() {
             console.warn("Failed to fetch profiles:", profilesError);
           } else if (profiles) {
             const nextAuthors: Record<string, string> = {};
-            profiles.forEach((profile: any) => {
+            (profiles as CommunityProfileRow[]).forEach((profile) => {
               nextAuthors[profile.id] = profile.username || profile.display_name || profile.id;
             });
             setAuthors((prev) => ({ ...prev, ...nextAuthors }));
@@ -192,7 +223,7 @@ export function useCommunitySets() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, front, back, position")
+        .select("id, front, back, creator_image_id, position")
         .eq("lesson_set_id", setItem.id)
         .order("position", { ascending: true })
         .limit(50);
@@ -203,11 +234,21 @@ export function useCommunitySets() {
         return;
       }
 
-      setPreviewCards(
-        (data ?? []).map((card: any) => ({
+      const hydrated = await hydrateCreatorLessonCards(
+        ((data ?? []) as CommunityCardRow[]).map((card) => ({
           id: card.id,
-          front: card.front,
+          word: card.front,
+          image: card.back,
           back: resolveCommunityImage(card.back),
+          creator_image_id: card.creator_image_id,
+          position: card.position,
+        })) as LessonCard[]
+      );
+      setPreviewCards(
+        hydrated.map((card) => ({
+          id: card.id,
+          front: card.word,
+          back: card.image ?? card.back,
           position: card.position,
         }))
       );
@@ -220,6 +261,13 @@ export function useCommunitySets() {
   }
 
   async function addToDashboard(setItem: CommunityLessonSet) {
+    if (!canCopyToDashboard) {
+      setToast({
+        message: "Upgrade to Premium to add Community sets to your Dashboard.",
+      });
+      return;
+    }
+
     try {
       setToast({ message: "Adding to your Dashboard..." });
 
@@ -252,15 +300,16 @@ export function useCommunitySets() {
 
         const { data: cardsData } = await supabase
           .from("cards")
-          .select("front, back, id, position")
+          .select("front, back, creator_image_id, id, position")
           .eq("lesson_set_id", newId)
           .order("position", { ascending: true });
 
         if (cardsData) {
-          newCards = cardsData.map((card: any) => ({
+          newCards = (cardsData as CommunityCardRow[]).map((card) => ({
             id: card.id,
             front: card.front,
             back: card.back,
+            creator_image_id: card.creator_image_id,
             position: card.position,
           }));
         }
@@ -351,6 +400,7 @@ export function useCommunitySets() {
     previewImages,
     toast,
     currentUserId,
+    canCopyToDashboard,
     setQuery,
     setPage,
     setPageSize,

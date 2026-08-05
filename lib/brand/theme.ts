@@ -25,6 +25,11 @@ export const BRAND_THEME_BY_KEY: Record<string, BrandTheme> = {
     circleBorder: "rgba(182, 161, 235, 0.95)",
     fade: "rgba(182, 161, 235, 0.20)",
   },
+  creator: {
+    circle: "rgba(244, 183, 166, 0.72)",
+    circleBorder: "rgba(244, 183, 166, 0.95)",
+    fade: "rgba(244, 183, 166, 0.20)",
+  },
   games: {
     circle: "rgba(108, 144, 255, 0.72)",
     circleBorder: "rgba(108, 144, 255, 0.95)",
@@ -75,6 +80,7 @@ export function resolveBrandTheme(pathname: string | null | undefined): BrandThe
   if (normalized.startsWith("/flashcards")) return BRAND_THEME_BY_KEY.flashcards;
   if (normalized.startsWith("/dashboard")) return BRAND_THEME_BY_KEY.dashboard;
   if (normalized.startsWith("/teacher/community")) return BRAND_THEME_BY_KEY.community;
+  if (normalized.startsWith("/creator")) return BRAND_THEME_BY_KEY.creator;
   if (normalized.startsWith("/games")) return BRAND_THEME_BY_KEY.games;
   if (normalized.startsWith("/printables")) return BRAND_THEME_BY_KEY.printables;
   if (normalized.startsWith("/worksheets")) return BRAND_THEME_BY_KEY.worksheets;

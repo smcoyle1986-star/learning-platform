@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase, supabaseReady } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { fetchProfileByUserId, type UserProfile } from "@/lib/auth/profile";
+import { adoptGuestLessonTray } from "@/lib/lessons/tray";
 
 type AuthContextType = {
   user: User | null;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const syncProfile = async (nextUser: User | null) => {
+      if (nextUser) adoptGuestLessonTray();
       setUser(nextUser);
 
       if (!nextUser) {

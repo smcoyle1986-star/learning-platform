@@ -5,6 +5,8 @@ import { Card, CarouselEntry, FlashcardImageVariant } from "@/lib/flashcards/typ
 type FlashcardResultsGridProps = {
   results: Card[];
   lastAddedId: string | null;
+  canUsePremiumImageVariations: boolean;
+  allowImageVariations?: boolean;
   getCarouselKey: (card: Card) => string;
   getCardImages: (card: Card) => FlashcardImageVariant[];
   getActiveImage: (card: Card) => string;
@@ -14,11 +16,14 @@ type FlashcardResultsGridProps = {
   onAddToLessonTray: (card: Card) => void;
   onStartCarouselSlide: (card: Card, direction: "left" | "right") => void;
   onFinishCarouselSlide: (card: Card) => void;
+  emptyMessage?: string;
 };
 
 export default function FlashcardResultsGrid({
   results,
   lastAddedId,
+  canUsePremiumImageVariations,
+  allowImageVariations = true,
   getCarouselKey,
   getCardImages,
   getActiveImage,
@@ -28,11 +33,12 @@ export default function FlashcardResultsGrid({
   onAddToLessonTray,
   onStartCarouselSlide,
   onFinishCarouselSlide,
+  emptyMessage = "Select a tab to load flashcards",
 }: FlashcardResultsGridProps) {
   if (results.length === 0) {
     return (
       <div className="text-center py-24 text-[var(--color-text-muted)]">
-        <p className="text-lg mb-2">Select a tab to load flashcards</p>
+        <p className="text-lg mb-2">{emptyMessage}</p>
       </div>
     );
   }
@@ -41,7 +47,13 @@ export default function FlashcardResultsGrid({
     <section className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
       {results.map((card) => {
         const key = getCarouselKey(card);
-        const images = getCardImages(card);
+        const availableImages = getCardImages(card);
+        const images = allowImageVariations
+          ? availableImages
+          : [
+              availableImages.find((variant) => !variant.isPremium)
+                ?? { url: card.image, isPremium: false },
+            ];
         const carousel = carouselState[key] || {
           index: 0,
           animating: false,
@@ -49,14 +61,16 @@ export default function FlashcardResultsGrid({
           nextIndex: 0,
           phase: "start" as const,
         };
-        const currentIndex = carousel.index ?? 0;
+        const currentIndex = allowImageVariations ? carousel.index ?? 0 : 0;
         const currentVariant = images[currentIndex] ?? getActiveVariant(card);
         const currentImage = currentVariant?.url ?? card.image;
         const nextIndex = carousel.nextIndex ?? currentIndex;
         const nextImage = images[nextIndex]?.url ?? currentImage;
         const showLeft = currentIndex > 0;
         const showRight = currentIndex < images.length - 1;
-        const isLockedPremium = Boolean(currentVariant?.isPremium);
+        const isLockedPremium = Boolean(
+          currentVariant?.isPremium && !canUsePremiumImageVariations
+        );
 
         return (
           <div

@@ -5,6 +5,7 @@ import { SupabaseClient, User } from "@supabase/supabase-js";
 
 import {
   findExistingLessonIdByName,
+  LessonNameConflictError,
   loadLessonMetadata,
   saveLessonFromClient,
 } from "@/lib/lessons/repository";
@@ -121,6 +122,15 @@ export function useFlashcardLessonSave(params: {
       finishSave();
       setShowSaveSuccessModal(true);
     } catch (error: unknown) {
+      if (error instanceof LessonNameConflictError) {
+        if (error.existingLessonId) {
+          setExistingLessonId(error.existingLessonId);
+          setShowReplaceConfirm(true);
+        } else {
+          setNameError("A lesson with this name already exists. Choose a different name.");
+        }
+        return;
+      }
       if (isDashboardSaveLimitError(error)) {
         setShowSaveModal(false);
         setNameError("");

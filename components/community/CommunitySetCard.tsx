@@ -10,6 +10,7 @@ type CommunitySetCardProps = {
   authorName?: string;
   previewImage?: string;
   isOwner: boolean;
+  canAddToDashboard: boolean;
   onSelect: (setItem: CommunityLessonSet) => void;
   onPreview: (setItem: CommunityLessonSet) => void;
   onAddToDashboard: (setItem: CommunityLessonSet) => void;
@@ -22,6 +23,7 @@ export default function CommunitySetCard({
   authorName,
   previewImage,
   isOwner,
+  canAddToDashboard,
   onSelect,
   onPreview,
   onAddToDashboard,
@@ -114,13 +116,25 @@ export default function CommunitySetCard({
 
       <div className="flex items-center gap-3 mt-4">
         <button
+          disabled={!canAddToDashboard}
           onClick={(event) => {
             event.stopPropagation();
             onAddToDashboard(setItem);
           }}
-          className="btn btn-primary flex-1 px-3 py-2"
+          title={
+            canAddToDashboard
+              ? isOwner
+                ? "Open this set in your Dashboard"
+                : "Add this set to your Dashboard"
+              : "Upgrade to Premium to use Community sets in your Dashboard"
+          }
+          className="btn btn-primary flex-1 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-55"
         >
-          {isOwner ? "Open in Dashboard" : "Add to Dashboard"}
+          {canAddToDashboard
+            ? isOwner
+              ? "Open in Dashboard"
+              : "Add to Dashboard"
+            : "Premium required"}
         </button>
 
         <div className="text-xs text-[var(--color-text-muted)] whitespace-nowrap">

@@ -10,7 +10,10 @@ type LandingHomepageSectionsProps = {
 };
 
 function getPreviewHref(isLoggedIn: boolean, slug: string) {
-  return isLoggedIn ? `/${slug}` : `/preview/${slug}`;
+  if (isLoggedIn || slug === "flashcards" || slug === "printables") {
+    return `/${slug}`;
+  }
+  return `/preview/${slug}`;
 }
 
 function LandingSectionImage({

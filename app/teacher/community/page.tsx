@@ -10,6 +10,7 @@ import { LessonCard } from "@/lib/lessons/types";
 import { useCommunitySets } from "@/lib/community/useCommunitySets";
 import { writeLessonTray } from "@/lib/lessons/tray";
 import { supabase } from "@/lib/supabase/client";
+import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 
 export default function CommunityPage() {
   const {
@@ -28,6 +29,7 @@ export default function CommunityPage() {
     previewImages,
     toast,
     currentUserId,
+    canCopyToDashboard,
     setQuery,
     setPage,
     setPageSize,
@@ -44,7 +46,7 @@ export default function CommunityPage() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, front, back, position")
+        .select("id, front, back, creator_image_id, position")
         .eq("lesson_set_id", setItem.id)
         .order("position", { ascending: true });
 
@@ -54,14 +56,14 @@ export default function CommunityPage() {
         return;
       }
 
-      const cards: LessonCard[] = (data ?? []).map((card) => ({
+      const cards = await hydrateCreatorLessonCards((data ?? []).map((card) => ({
         id: card.id,
         word: card.front,
-        front: card.front,
         back: card.back,
         image: card.back,
+        creator_image_id: card.creator_image_id,
         position: card.position,
-      }));
+      })) as LessonCard[]);
 
       if (!cards.length) {
         setToast({ message: "This lesson set does not have any cards yet." });
@@ -87,6 +89,7 @@ export default function CommunityPage() {
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
           { label: "Dashboard", href: "/dashboard" },
+          { label: "Creator", href: "/creator" },
           { label: "Editor", href: "/teacher/editor" },
           { label: "Printables", href: "/printables" },
           { label: "Worksheets", href: "/worksheets" },
@@ -141,6 +144,7 @@ export default function CommunityPage() {
                   authorName={authors[setItem.user_id]}
                   previewImage={previewImages[setItem.id]}
                   isOwner={currentUserId === setItem.user_id}
+                  canAddToDashboard={canCopyToDashboard}
                   onSelect={selectSetForTray}
                   onPreview={openPreview}
                   onAddToDashboard={addToDashboard}
@@ -183,6 +187,7 @@ export default function CommunityPage() {
         authorName={previewSet ? authors[previewSet.user_id] : undefined}
         cards={previewCards}
         loading={previewLoading}
+        canAddToDashboard={canCopyToDashboard}
         onClose={() => setPreviewSet(null)}
         onAddToDashboard={async (setItem) => {
           await addToDashboard(setItem);

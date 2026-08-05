@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import BrandButton from "@/components/BrandButton";
 import { LANDING_SECTIONS } from "@/lib/landing/content";
 
@@ -9,6 +9,11 @@ type PreviewPageProps = {
 
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { slug } = await params;
+
+  if (slug === "flashcards" || slug === "printables") {
+    redirect(`/${slug}`);
+  }
+
   const section = LANDING_SECTIONS.find((item) => item.slug === slug);
 
   if (!section) {

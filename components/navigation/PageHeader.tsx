@@ -25,7 +25,6 @@ function pillClassName(tone: PageHeaderItem["tone"]) {
   if (tone === "classroom") {
     return "btn rounded-full border-[#7ea76a] bg-[#89ad70] text-white hover:bg-[#7ea76a] shadow-[0_8px_18px_rgba(126,167,106,0.18)]";
   }
-
   return "btn btn-secondary rounded-full";
 }
 
@@ -105,7 +104,7 @@ export default function PageHeader({
                 <Link
                   key={`${item.label}-${item.href}`}
                   href={item.href}
-                  className="btn btn-secondary rounded-full px-3 py-1.5 text-sm"
+                  className={`${pillClassName(item.tone)} px-3 py-1.5 text-sm`}
                 >
                   {item.label}
                 </Link>
@@ -114,7 +113,7 @@ export default function PageHeader({
                   key={item.label}
                   type="button"
                   onClick={item.onClick}
-                  className="btn btn-secondary rounded-full px-3 py-1.5 text-sm"
+                  className={`${pillClassName(item.tone)} px-3 py-1.5 text-sm`}
                 >
                   {item.label}
                 </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandButton from "@/components/BrandButton";
 
@@ -12,7 +12,7 @@ import { LANDING_HERO_DESCRIPTION, LANDING_HERO_TITLE, LANDING_SECTIONS } from "
 import LandingHomepageSections from "@/components/landing/LandingHomepageSections";
 import { useAuth } from "@/components/AuthProvider";
 
-export default function HomePage() {
+function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { profile } = useAuth();
@@ -108,10 +108,12 @@ export default function HomePage() {
      Shared helpers for header links
   ----------------------------------*/
   const getSectionHref = (section: (typeof LANDING_SECTIONS)[number]) =>
-    isLoggedIn ? section.href : `/preview/${section.slug}`;
+    isLoggedIn || section.slug === "flashcards" || section.slug === "printables"
+      ? section.href
+      : `/preview/${section.slug}`;
   const goToSection = (section: (typeof LANDING_SECTIONS)[number]) => router.push(getSectionHref(section));
-  const goToFlashcards = () => router.push(isLoggedIn ? "/flashcards" : "/preview/flashcards");
-  const heroButtonLabel = isLoggedIn ? "Start with Flashcards" : "Preview Flashcards";
+  const goToFlashcards = () => router.push("/flashcards");
+  const heroButtonLabel = isLoggedIn ? "Start with Flashcards" : "Try Flashcards Free";
 
   /* =====================================================
      LOGGED-IN APP HOMEPAGE
@@ -238,9 +240,17 @@ export default function HomePage() {
 
       <LandingHomepageSections
         isLoggedIn={false}
-        primaryCtaHref="/signup"
-        primaryCtaLabel="Start Free"
+        primaryCtaHref="/flashcards"
+        primaryCtaLabel="Try Flashcards Free"
       />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<p className="p-10">Loading...</p>}>
+      <HomePageContent />
+    </Suspense>
   );
 }

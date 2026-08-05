@@ -1,0 +1,228 @@
+{
+  "generatedAt": "2026-07-29T05:02:05.285Z",
+  "bucket": "vocab-images",
+  "uploadedFiles": 17,
+  "results": [
+    {
+      "destinationPath": "adjectives/black/black_2.png",
+      "bytes": 1334799,
+      "sha256": "f5f303dfec88aa56ae18d0f94a9fd0b00bd12c6bb43448227bf8523f99b8e328",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.6816,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/black/black_2.png"
+    },
+    {
+      "destinationPath": "adjectives/colorless/colorless_1.png",
+      "bytes": 1549342,
+      "sha256": "18e36e5535eee39ebe148e509ab9e757c907df38e3aa71fb67bde2591d310026",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.652,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/colorless/colorless_1.png"
+    },
+    {
+      "destinationPath": "adjectives/dark_green/dark_green_2.png",
+      "bytes": 2006839,
+      "sha256": "052963b7d44be1e1949d51e1ccf65aa38c41fbca4139f8ffaff280f01a22f919",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.5303,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/dark_green/dark_green_2.png"
+    },
+    {
+      "destinationPath": "adjectives/encouraged/encouraged_2.png",
+      "bytes": 1944316,
+      "sha256": "0f0e1b0366e44390a8a0d0b2bc9fff8d5e05b0a6392fe10514e2d0abbda19ed9",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.5453,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/encouraged/encouraged_2.png"
+    },
+    {
+      "destinationPath": "adjectives/gray/gray_2.png",
+      "bytes": 1647697,
+      "sha256": "2133d2e85de130319dfd8327bd5398a35c7091e8f45962b69ad2dbf0602ddaed",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.4499,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/gray/gray_2.png"
+    },
+    {
+      "destinationPath": "adjectives/green/green_2.png",
+      "bytes": 1735083,
+      "sha256": "7f09f8e0b2e382c8fc63169fcc06b93675219d1b88f63d11799080ce41f0ddb2",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.4641,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/green/green_2.png"
+    },
+    {
+      "destinationPath": "adjectives/orange/orange_2.png",
+      "bytes": 1339176,
+      "sha256": "1ab508ea266f633df90b1af3cf73375b12808e600720d71ef968c23640daaef9",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.648,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/orange/orange_2.png"
+    },
+    {
+      "destinationPath": "adjectives/red/red_2.png",
+      "bytes": 1586169,
+      "sha256": "baf080debc83b5c41cbb26d2a2fb36c3cd34f2f5f69824d5315f3a918d270c94",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.5394,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/red/red_2.png"
+    },
+    {
+      "destinationPath": "adjectives/white/white_2.png",
+      "bytes": 1393657,
+      "sha256": "d4048a87111945b552b2d163bc1da344c2274430a0dd51dc1b3e83880c5ab661",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.4761,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/white/white_2.png"
+    },
+    {
+      "destinationPath": "adjectives/worried/worried_2.png",
+      "bytes": 1924576,
+      "sha256": "ae1ae4f42357a74232662d3db34fd79a92f79bacb62a0f129f2e9158e25e1f25",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.5884,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/worried/worried_2.png"
+    },
+    {
+      "destinationPath": "verbs/explain/explain_2.png",
+      "bytes": 1562111,
+      "sha256": "4f03617faeef039ffdc5ca5c9d16fb046cfcc73268a5a47a4318814cfcf0539f",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.8028,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/explain/explain_2.png"
+    },
+    {
+      "destinationPath": "verbs/listen/listen_2.png",
+      "bytes": 1617963,
+      "sha256": "f258032f0dbfc4f0c1e606b2ce2978bfc691243cb0167c46452030d1ce57380e",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.798,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/listen/listen_2.png"
+    },
+    {
+      "destinationPath": "verbs/memorize/memorize_2.png",
+      "bytes": 1713766,
+      "sha256": "9f928e0fb9b3e2eb839abeb68a811021efb02f0ce0e5f34e3c19e59576c140b3",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.7126,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/memorize/memorize_2.png"
+    },
+    {
+      "destinationPath": "verbs/need/need_2.png",
+      "bytes": 1673565,
+      "sha256": "7916c53e42aff8e2ae074bdb331a0aba70fae67ac2c1a42e110c2d85702e85bc",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.6783,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/need/need_2.png"
+    },
+    {
+      "destinationPath": "verbs/play_a_computer_game/play_a_computer_game_3.png",
+      "bytes": 1708463,
+      "sha256": "2b3b176fba7ccac827a0a33bdb9d969716be76160621d1e7518c0624b9560284",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.6909,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/play_a_computer_game/play_a_computer_game_3.png"
+    },
+    {
+      "destinationPath": "verbs/take_the_train/take_the_train_3.png",
+      "bytes": 1763443,
+      "sha256": "e0fc9e631965bd0e9e62f662443f27aca7c164b4cc266436d89d0f7d4022e168",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.5129,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/take_the_train/take_the_train_3.png"
+    },
+    {
+      "destinationPath": "nouns/pantry/pantry_2.png",
+      "bytes": 2186822,
+      "sha256": "b7b8818a9a3c09ca433789b992704b9dac28830cd3d5543bbace35634016c4cf",
+      "alpha": {
+        "width": 1024,
+        "height": 1024,
+        "hasAlpha": true,
+        "transparentFraction": 0.1765,
+        "transparentCornerPixels": 256
+      },
+      "publicUrl": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pantry/pantry_2.png"
+    }
+  ]
+}

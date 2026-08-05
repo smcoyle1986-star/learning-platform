@@ -3,27 +3,33 @@
 import { useEffect, useState } from "react";
 
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
-import { readLessonTray, subscribeToLessonTray } from "@/lib/lessons/tray";
+import {
+  readLessonTray,
+  subscribeToLessonTray,
+  type LessonTrayScope,
+} from "@/lib/lessons/tray";
 import { PrintableCard } from "@/lib/printables/types";
 
 const STORAGE_SAVED_KEY = "classendo-saved-lessons";
 
-function normalizePrintableCard(raw: any): PrintableCard {
+function normalizePrintableCard(raw: unknown): PrintableCard {
+  const source = (raw ?? {}) as Record<string, unknown>;
   return {
-    id: String(raw.id ?? raw.card_id ?? raw.word),
-    word: String(raw.word ?? raw.front ?? ""),
-    image: resolveLessonImageUrl(raw.image ?? raw.back ?? "/placeholder.png"),
-    type: raw.type ?? undefined,
+    id: String(source.id ?? source.card_id ?? source.word),
+    word: String(source.word ?? source.front ?? ""),
+    image: resolveLessonImageUrl(String(source.image ?? source.back ?? "/placeholder.png")),
+    type: typeof source.type === "string" ? source.type : undefined,
   };
 }
 
-function readPrintableCards(): PrintableCard[] {
+function readPrintableCards(scope: LessonTrayScope): PrintableCard[] {
   try {
-    const trayCards = readLessonTray();
+    const trayCards = readLessonTray(scope);
     if (trayCards.length > 0) {
       return trayCards.map(normalizePrintableCard);
     }
 
+    if (scope === "guest") return [];
     const savedRaw = localStorage.getItem(STORAGE_SAVED_KEY);
     if (savedRaw) {
       const parsed = JSON.parse(savedRaw);
@@ -41,21 +47,33 @@ function readPrintableCards(): PrintableCard[] {
   return [];
 }
 
-export function usePrintableCards() {
-  const [cards, setCards] = useState<PrintableCard[]>([]);
+export function usePrintableCards({
+  isAuthenticated,
+  ready,
+}: {
+  isAuthenticated: boolean;
+  ready: boolean;
+}) {
+  const scope: LessonTrayScope = isAuthenticated ? "account" : "guest";
+  const [trayState, setTrayState] = useState<{
+    scope: LessonTrayScope;
+    cards: PrintableCard[];
+  }>({ scope, cards: [] });
 
   useEffect(() => {
-    setCards(readPrintableCards());
+    if (!ready) return;
 
     return subscribeToLessonTray((nextCards) => {
       if (nextCards.length > 0) {
-        setCards(nextCards.map(normalizePrintableCard));
+        setTrayState({ scope, cards: nextCards.map(normalizePrintableCard) });
         return;
       }
 
-      setCards(readPrintableCards());
-    });
-  }, []);
+      setTrayState({ scope, cards: readPrintableCards(scope) });
+    }, scope);
+  }, [ready, scope]);
 
-  return { cards };
+  return {
+    cards: ready && trayState.scope === scope ? trayState.cards : [],
+  };
 }

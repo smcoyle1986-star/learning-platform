@@ -10,7 +10,9 @@ import {
 } from "lucide-react";
 import ClassroomCanvas from "@/components/classroom/ClassroomCanvas";
 import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
+import { useAuth } from "@/components/AuthProvider";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
+import { readLessonTray, writeLessonTray } from "@/lib/lessons/tray";
 
 
 type Card = {
@@ -22,7 +24,9 @@ type Card = {
 
 
 export default function ClassroomMode() {
+  const { user, loading: authLoading } = useAuth();
   const [cards, setCards] = useState<Card[]>([]);
+  const [trayReady, setTrayReady] = useState(false);
   const [index, setIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
   const [intervalMs, setIntervalMs] = useState(4000);
@@ -46,11 +50,7 @@ export default function ClassroomMode() {
 
   const formatWord = (word: string) => word.replace(/_/g, " ");
   const handleExit = () => {
-    // ✅ ALWAYS save lesson tray first (no behavior change)
-    localStorage.setItem(
-      "classendo-lesson-tray",
-      JSON.stringify(cards)
-    );
+    writeLessonTray(cards, user ? "account" : "guest");
 
     // ✅ Check where we came from
     const params = new URLSearchParams(window.location.search);
@@ -58,6 +58,8 @@ export default function ClassroomMode() {
 
     if (from === "dashboard") {
       window.location.href = "/dashboard";
+    } else if (from === "lessons") {
+      window.location.href = "/lessons";
     } else {
       // Default / existing behavior
       window.location.href = "/flashcards";
@@ -65,17 +67,16 @@ export default function ClassroomMode() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("classendo-lesson-tray");
-    if (!stored || stored === "undefined") return;
-    try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        setCards(parsed);
-      }
-    } catch (e) {
-      console.error("Invalid lesson tray data", e);
-    }
-  }, []);
+    if (authLoading) return;
+    const stored = readLessonTray(user ? "account" : "guest").map((card) => ({
+      id: card.id,
+      word: card.word,
+      image: card.image ?? card.back ?? "",
+      type: card.type ?? "",
+    }));
+    setCards(stored);
+    setTrayReady(true);
+  }, [authLoading, user]);
 
   useEffect(() => {
     if (!autoPlay || cards.length === 0) return;
@@ -220,6 +221,14 @@ export default function ClassroomMode() {
       setRevealToggle((v) => !v);
     }
   };
+
+  if (!trayReady || authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg-main)] text-[var(--color-text-muted)]">
+        Loading lesson…
+      </div>
+    );
+  }
 
   if (cards.length === 0) {
     return (
@@ -408,8 +417,10 @@ export default function ClassroomMode() {
         {/* Conditional rendering for text-only centered mode */}
         {displayMode === "text" && !revealToggle ? (
           // centered text (no image visible)
-          <div className="w-full h-full flex items-center justify-center">
-            <h2 className="text-7xl md:text-8xl font-extrabold tracking-wide">{formatWord(card.word)}</h2>
+          <div className="flex h-full w-full items-center justify-center px-4">
+            <h2 className="max-w-full break-words text-center text-8xl font-extrabold leading-[0.95] tracking-wide text-balance md:text-9xl lg:text-[10rem]">
+              {formatWord(card.word)}
+            </h2>
           </div>
         ) : (
           // Normal layout: image area on top, text area below

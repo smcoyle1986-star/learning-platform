@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/navigation/PageHeader";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel";
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
+import LockedWorksheetPreview from "@/components/worksheets/LockedWorksheetPreview";
 import { useAuth } from "@/components/AuthProvider";
 import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
@@ -43,7 +44,7 @@ function buildWritingLinesFromCards(nextCards: LessonCard[]) {
   return nextCards.map((card) => formatWorksheetWord(card.word));
 }
 
-export default function WorksheetsPage() {
+function WorksheetsPageContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { access, canAccessWorksheetType } = useBillingAccess();
@@ -283,9 +284,9 @@ export default function WorksheetsPage() {
       setWorksheetIsPublic(saved.isPublic);
       setDraft(saved.draft);
       setShowSaveModal(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save worksheet:", error);
-      setSaveError(error?.message || "Failed to save worksheet.");
+      setSaveError(error instanceof Error ? error.message : "Failed to save worksheet.");
     } finally {
       setIsSaving(false);
     }
@@ -350,7 +351,7 @@ export default function WorksheetsPage() {
   }
 
   return (
-    <div className={`${activeWorksheetLocked ? "min-h-screen overflow-x-hidden" : "h-screen overflow-hidden"} bg-[var(--color-bg-main)] text-[var(--color-text-main)]`}>
+    <div className="flex h-[calc(100dvh-56px)] flex-col overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Worksheets"
         sticky={false}
@@ -364,7 +365,7 @@ export default function WorksheetsPage() {
         ]}
       />
 
-      <main className={`max-w-7xl mx-auto px-6 py-4 ${activeWorksheetLocked ? "min-h-[calc(100vh-89px)]" : "h-[calc(100vh-89px)] overflow-hidden"} flex flex-col gap-3`}>
+      <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-3 overflow-hidden px-6 py-4">
         <section className="bg-white rounded-2xl border shadow-sm px-4 py-2.5 shrink-0">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div>
@@ -456,7 +457,7 @@ export default function WorksheetsPage() {
           </LessonTrayScroller>
         </section>
 
-        <div className={`relative grid grid-cols-12 gap-4 ${activeWorksheetLocked ? "" : "min-h-0 flex-1 overflow-hidden"}`}>
+        <div className="relative grid min-h-0 flex-1 grid-cols-12 gap-4 overflow-hidden">
           <aside className={`${activeWorksheetLocked ? "hidden" : "col-span-12 lg:col-span-4 xl:col-span-3 min-h-0 overflow-hidden"}`}>
             <div className="h-full flex flex-col gap-4">
               <div className="min-h-0 overflow-y-auto pr-1">
@@ -486,58 +487,65 @@ export default function WorksheetsPage() {
             </div>
           </aside>
 
-          <section className={`${activeWorksheetLocked ? "col-span-12" : "col-span-12 lg:col-span-8 xl:col-span-9 min-h-0 overflow-hidden"}`}>
-            <div className={`relative ${activeWorksheetLocked ? "min-h-[1200px]" : "h-full group"}`}>
-              <WorksheetPreview
-              cards={cards}
-              draft={{ ...draft, title: worksheetName || draft.title }}
-              onQuestionPromptsChange={updateQuestionPrompts}
-              onReadingLinesChange={updateReadingLines}
-              onWritingLinesChange={updateWritingLines}
-              onSentenceScrambleLinesChange={updateSentenceScrambleLines}
-              className={activeWorksheetLocked ? "h-auto min-h-[1200px]" : "h-full"}
-            />
+          <section className={`${activeWorksheetLocked ? "col-span-12" : "col-span-12 lg:col-span-8 xl:col-span-9"} min-h-0 min-w-0 overflow-hidden`}>
+            {activeWorksheetLocked && selectedType ? (
+              <div className="grid h-full min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_minmax(320px,370px)] gap-4 overflow-hidden">
+                <LockedWorksheetPreview
+                  cards={cards}
+                  draft={{ ...draft, title: worksheetName || draft.title }}
+                />
+                <PremiumPreviewOverlay
+                  variant="inline"
+                  title="This worksheet is locked on the Free plan"
+                  description={`You can preview ${selectedType.label} here. Click the worksheet thumbnail to enlarge it. Upgrade to Premium to unlock this worksheet type, every worksheet style, and the full builder controls.`}
+                  secondaryHref="/flashcards"
+                  secondaryLabel="Return to Flashcards"
+                />
+              </div>
+            ) : (
+              <div className="relative h-full group">
+                <WorksheetPreview
+                  cards={cards}
+                  draft={{ ...draft, title: worksheetName || draft.title }}
+                  onQuestionPromptsChange={updateQuestionPrompts}
+                  onReadingLinesChange={updateReadingLines}
+                  onWritingLinesChange={updateWritingLines}
+                  onSentenceScrambleLinesChange={updateSentenceScrambleLines}
+                  className="h-full"
+                />
 
-              <div className={`absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none ${activeWorksheetLocked ? "hidden" : ""}`}>
-                <div className="w-full max-w-3xl px-6 pt-6 pb-1 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-                  <div className="pointer-events-auto mx-auto flex items-center justify-center gap-3 px-4 py-3">
-                    <button
-                      onClick={() => setShowSaveModal(true)}
-                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
-                      className="btn btn-primary px-4 py-2 text-sm shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
-                    >
-                      Save Worksheet
-                    </button>
-                    <button
-                      onClick={handleExportPdf}
-                      disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
-                      className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
-                    >
-                      {isExporting ? "Exporting…" : "Export PDF"}
-                    </button>
-                    <button
-                      onClick={handlePrintNow}
-                      disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
-                      className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
-                    >
-                      {isPrinting ? "Printing…" : "Print Now"}
-                    </button>
+                <div className={`absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none ${activeWorksheetLocked ? "hidden" : ""}`}>
+                  <div className="w-full max-w-3xl px-6 pt-6 pb-1 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <div className="pointer-events-auto mx-auto flex items-center justify-center gap-3 px-4 py-3">
+                      <button
+                        onClick={() => setShowSaveModal(true)}
+                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
+                        className="btn btn-primary px-4 py-2 text-sm shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                      >
+                        Save Worksheet
+                      </button>
+                      <button
+                        onClick={handleExportPdf}
+                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
+                        className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                      >
+                        {isExporting ? "Exporting…" : "Export PDF"}
+                      </button>
+                      <button
+                        onClick={handlePrintNow}
+                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
+                        className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                      >
+                        {isPrinting ? "Printing…" : "Print Now"}
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                <div className={`absolute inset-x-0 bottom-0 h-28 z-10 group ${activeWorksheetLocked ? "hidden" : ""}`} />
               </div>
-
-              <div className={`absolute inset-x-0 bottom-0 h-28 z-10 group ${activeWorksheetLocked ? "hidden" : ""}`} />
-            </div>
+            )}
           </section>
-
-          {activeWorksheetLocked && selectedType ? (
-            <PremiumPreviewOverlay
-              title="This worksheet is locked on the Free plan"
-              description={`You can preview ${selectedType.label} here. Upgrade to Premium to unlock this worksheet type, every worksheet style, and the full builder controls.`}
-              secondaryHref="/flashcards"
-              secondaryLabel="Return to Flashcards"
-            />
-          ) : null}
         </div>
       </main>
 
@@ -593,5 +601,13 @@ export default function WorksheetsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorksheetsPage() {
+  return (
+    <Suspense fallback={<p className="p-10">Loading...</p>}>
+      <WorksheetsPageContent />
+    </Suspense>
   );
 }

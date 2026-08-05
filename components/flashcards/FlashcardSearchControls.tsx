@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Images, Lock, Search, X } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import {
@@ -14,11 +14,15 @@ type FlashcardSearchControlsProps = {
   activeWordType: WordType;
   activeTheme: string | null;
   query: string;
+  isMyCards: boolean;
+  canUseCreator: boolean;
   onSetOpenDropdown: (value: string | null) => void;
   onSetActiveWordType: (value: WordType) => void;
   onSetActiveTheme: (value: string | null) => void;
   onSetQuery: (value: string) => void;
   onSearch: () => Promise<void> | void;
+  onShowCatalog: () => void;
+  onShowMyCards: () => Promise<void> | void;
   onClearGrid: () => void;
   onGoDashboard: () => void;
   onGoGames: () => void;
@@ -100,11 +104,15 @@ export default function FlashcardSearchControls({
   activeWordType,
   activeTheme,
   query,
+  isMyCards,
+  canUseCreator,
   onSetOpenDropdown,
   onSetActiveWordType,
   onSetActiveTheme,
   onSetQuery,
   onSearch,
+  onShowCatalog,
+  onShowMyCards,
   onClearGrid,
   onGoDashboard,
   onGoGames,
@@ -132,7 +140,7 @@ export default function FlashcardSearchControls({
                     await onSearch();
                   }
                 }}
-                placeholder="Select a tab before searching"
+                placeholder={isMyCards ? "Search My Cards" : "Select a tab before searching"}
                 className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white"
               />
             </div>
@@ -153,13 +161,14 @@ export default function FlashcardSearchControls({
 
           <div className="flex flex-wrap gap-3 mt-4 relative justify-center">
             {(["noun", "verb", "adjective", "phonics", "preposition"] as const).map((type) => {
-              const isSelectedType = activeWordType === type;
+              const isSelectedType = !isMyCards && activeWordType === type;
 
               return (
                 <div key={type} className="relative" data-dropdown-type={type}>
                   <button
                     className={wordTypeButton(isSelectedType)}
                     onClick={() => {
+                      onShowCatalog();
                       onSetOpenDropdown(openDropdown === type ? null : type);
                       onSetActiveWordType(type);
                       onSetActiveTheme(null);
@@ -238,6 +247,17 @@ export default function FlashcardSearchControls({
                 </div>
               );
             })}
+
+            <button
+              type="button"
+              disabled={!canUseCreator}
+              onClick={() => void onShowMyCards()}
+              className={`${wordTypeButton(isMyCards)} flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-55`}
+              title={canUseCreator ? "Show your creator cards" : "My Cards is a premium feature"}
+            >
+              {canUseCreator ? <Images size={16} /> : <Lock size={15} />}
+              My Cards
+            </button>
           </div>
         </div>
       </section>

@@ -35,10 +35,15 @@ export async function POST(request: NextRequest) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to export lesson plan PDF:", error);
     return NextResponse.json(
-      { error: error?.message || "Failed to export lesson plan PDF." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to export lesson plan PDF.",
+      },
       { status: 500 }
     );
   }

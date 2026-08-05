@@ -218,6 +218,20 @@ const IRREGULAR_NOUNS: Record<string, string> = {
   tooth: "teeth",
   foot: "feet",
   ox: "oxen",
+  deer: "deer",
+  fish: "fish",
+  jellyfish: "jellyfish",
+  sheep: "sheep",
+  shrimp: "shrimp",
+  squid: "squid",
+  starfish: "starfish",
+  cafe: "cafes",
+  chef: "chefs",
+  giraffe: "giraffes",
+  mango: "mangoes",
+  mosquito: "mosquitoes",
+  potato: "potatoes",
+  tomato: "tomatoes",
 };
 
 const THEMES_WITHOUT_AUTO_PLURAL_LABELS = new Set([
@@ -225,35 +239,72 @@ const THEMES_WITHOUT_AUTO_PLURAL_LABELS = new Set([
   "dates",
   "drink",
   "family",
+  "health",
+  "time",
 ]);
 
 const NO_AUTO_PLURAL_LEMMAS = new Set([
+  "attic",
+  "balcony",
+  "basement",
+  "bathroom",
+  "bedroom",
   "boots",
+  "closet",
   "chopsticks",
   "christmas",
   "colored pencils",
   "darts",
+  "desert",
+  "dining room",
+  "dishwasher",
+  "diwali",
+  "dressing room",
   "ears",
   "ethics",
   "eyes",
+  "feet",
+  "forest",
+  "freezer",
   "fries",
+  "garage",
   "glasses",
   "gloves",
   "grapes",
+  "hall",
+  "home office",
   "jeans",
+  "jungle",
+  "kids room",
+  "lake",
+  "laundry room",
+  "living room",
+  "master bedroom",
   "octopus",
   "offices",
+  "oven",
   "pants",
+  "pantry",
   "potato chips",
+  "river",
+  "rug",
   "scissors",
   "shoes",
   "shorts",
   "sneakers",
   "social studies",
+  "sofa",
   "socks",
+  "study room",
   "sunglasses",
+  "temperature",
   "tennis",
+  "teeth",
+  "toaster",
+  "toilet",
+  "toilet room",
   "tongs",
+  "tv",
 ]);
 
 function rankResults<T extends { lemma: string; theme?: string }>(
@@ -366,7 +417,10 @@ export function getDisplayWord(card: Card, imagePath?: string) {
     card.type === "noun" &&
     (card.countability === "count" || card.countability === "both" || !card.countability);
 
-  const lowerLemma = String(card.word ?? "").trim().toLowerCase();
+  const lowerLemma = String(card.word ?? "")
+    .trim()
+    .toLowerCase()
+    .replaceAll("_", " ");
   const hasBlockedTheme = (card.themes ?? []).some((theme) =>
     THEMES_WITHOUT_AUTO_PLURAL_LABELS.has(String(theme).toLowerCase())
   );
@@ -391,11 +445,26 @@ function getThemePathHints(card: Card) {
     const normalized = theme.replace(/\s+/g, "_");
     if (normalized) hints.add(normalized);
     if (theme === "food" || theme === "food & drinks") hints.add("_food/");
-    if (theme === "places" || theme === "buildings & places") hints.add("_place/");
-    if (theme === "kitchen") hints.add("_utensil/");
+    if (theme === "places" || theme === "buildings & places") {
+      hints.add("_place/");
+      hints.add("_places/");
+    }
+    if (theme === "kitchen") {
+      hints.add("_utensil/");
+      hints.add("_utensils/");
+    }
     if (theme === "animals land" || theme === "animals" || theme === "animals baby") {
       hints.add("_animal/");
     }
+    if (theme === "furniture & home") {
+      hints.add("_furniture/");
+      hints.add("_rooms/");
+    }
+    if (theme === "holidays & events") hints.add("_holidays/");
+    if (theme === "time") hints.add("_dates/");
+    if (theme === "health") hints.add("_health/");
+    if (theme === "nature") hints.add("_nature/");
+    if (theme === "weather") hints.add("_weather/");
   });
 
   return Array.from(hints);
