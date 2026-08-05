@@ -33,12 +33,12 @@ function resolveCommunityImage(value?: string | null) {
   return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
 }
 
-function buildCommunitySearchFilter(rawQuery: string) {
+function normalizeCommunitySearchTerm(rawQuery: string) {
   const query = rawQuery.trim();
   if (!query) return null;
 
   const safeQuery = query.replace(/[{}"]/g, "").replace(/,/g, " ");
-  return `name.ilike.%${safeQuery}%,tags.cs.{${safeQuery}}`;
+  return safeQuery;
 }
 
 export function useCommunitySets() {
@@ -78,36 +78,91 @@ export function useCommunitySets() {
       const userId = currentUser?.id ?? null;
       setCurrentUserId(userId);
 
-      let builder = supabase
-        .from("lesson_sets")
-        .select("id, name, user_id, created_at, download_count, tags, content_types", { count: "exact" });
+      const columns = "id, name, user_id, created_at, download_count, tags, content_types";
+      const buildVisibleSetsQuery = (head = false) => {
+        let builder = supabase.from("lesson_sets").select(columns, { count: "exact", head });
 
-      if (userId) {
-        builder = builder.or(`is_public.eq.true,user_id.eq.${userId}`);
+        if (userId) {
+          builder = builder.or(`is_public.eq.true,user_id.eq.${userId}`);
+        } else {
+          builder = builder.eq("is_public", true);
+        }
+
+        if (contentType !== "all") {
+          builder = builder.overlaps("content_types", [contentType]);
+        }
+
+        return builder;
+      };
+      const orderSets = (builder: ReturnType<typeof buildVisibleSetsQuery>) => {
+        if (sort === "popular") {
+          return builder
+            .order("download_count", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false, nullsFirst: false })
+            .order("id", { ascending: true });
+        }
+        return builder
+          .order("created_at", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true });
+      };
+
+      const searchTerm = normalizeCommunitySearchTerm(query);
+      let data: CommunitySetRow[] | null = null;
+      let error: { message: string } | null = null;
+      let count: number | null = null;
+
+      if (!searchTerm) {
+        const result = await orderSets(buildVisibleSetsQuery()).range(from, to);
+        data = result.data as CommunitySetRow[] | null;
+        error = result.error;
+        count = result.count;
       } else {
-        builder = builder.eq("is_public", true);
+        const exactFilter = `name.ilike.${searchTerm},name.ilike.${searchTerm} - %,tags.cs.{${searchTerm}}`;
+        const addRemainingSearch = (builder: ReturnType<typeof buildVisibleSetsQuery>) => builder
+          .ilike("name", `%${searchTerm}%`)
+          .not("name", "ilike", searchTerm)
+          .not("name", "ilike", `${searchTerm} - %`)
+          .not("tags", "cs", `{${searchTerm}}`);
+
+        const [exactCountResult, remainingCountResult] = await Promise.all([
+          buildVisibleSetsQuery(true).or(exactFilter),
+          addRemainingSearch(buildVisibleSetsQuery(true)),
+        ]);
+
+        error = exactCountResult.error ?? remainingCountResult.error;
+        const exactCount = exactCountResult.count ?? 0;
+        const remainingCount = remainingCountResult.count ?? 0;
+        count = exactCount + remainingCount;
+
+        if (!error) {
+          const pageRows: CommunitySetRow[] = [];
+          const exactFrom = from;
+          const exactTo = Math.min(to, exactCount - 1);
+
+          if (exactFrom <= exactTo) {
+            const exactResult = await orderSets(buildVisibleSetsQuery().or(exactFilter)).range(exactFrom, exactTo);
+            if (exactResult.error) {
+              error = exactResult.error;
+            } else {
+              pageRows.push(...((exactResult.data ?? []) as CommunitySetRow[]));
+            }
+          }
+
+          const remainingSlots = pageSize - pageRows.length;
+          const remainingFrom = Math.max(0, from - exactCount);
+          if (!error && remainingSlots > 0 && remainingFrom < remainingCount) {
+            const remainingResult = await orderSets(addRemainingSearch(buildVisibleSetsQuery()))
+              .range(remainingFrom, remainingFrom + remainingSlots - 1);
+            if (remainingResult.error) {
+              error = remainingResult.error;
+            } else {
+              pageRows.push(...((remainingResult.data ?? []) as CommunitySetRow[]));
+            }
+          }
+
+          data = pageRows;
+        }
       }
-
-      const searchFilter = buildCommunitySearchFilter(query);
-      if (searchFilter) {
-        builder = builder.or(searchFilter);
-      }
-
-      if (contentType !== "all") {
-        builder = builder.overlaps("content_types", [contentType]);
-      }
-
-      if (sort === "popular") {
-        builder = builder
-          .order("download_count", { ascending: false, nullsFirst: false })
-          .order("created_at", { ascending: false, nullsFirst: false });
-      } else {
-        builder = builder.order("created_at", { ascending: false, nullsFirst: false });
-      }
-
-      builder = builder.range(from, to);
-
-      const { data, error, count } = await builder;
 
       if (error) {
         console.error("Failed to fetch community sets:", { error, data, count });
