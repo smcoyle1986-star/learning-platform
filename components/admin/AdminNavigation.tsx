@@ -24,7 +24,7 @@ const primaryItems = [
   { label: "Feedback", href: "/admin/feedback", icon: MessageSquareText, available: true },
   { label: "Community", href: "/admin/community", icon: ShieldAlert, available: true },
   { label: "Creator", href: "/admin/creator", icon: Images, available: false },
-  { label: "Content", href: "/admin/content", icon: Library, available: false },
+  { label: "Content", href: "/admin/content", icon: Library, available: true },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3, available: false },
   { label: "Supporters", href: "/admin/supporters", icon: HeartHandshake, available: false },
   { label: "Settings", href: "/admin/settings", icon: Settings, available: false },
