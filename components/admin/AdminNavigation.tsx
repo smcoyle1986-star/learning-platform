@@ -22,7 +22,7 @@ const primaryItems = [
   { label: "Users", href: "/admin/users", icon: Users, available: true },
   { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard, available: true },
   { label: "Feedback", href: "/admin/feedback", icon: MessageSquareText, available: true },
-  { label: "Community", href: "/admin/community", icon: ShieldAlert, available: false },
+  { label: "Community", href: "/admin/community", icon: ShieldAlert, available: true },
   { label: "Creator", href: "/admin/creator", icon: Images, available: false },
   { label: "Content", href: "/admin/content", icon: Library, available: false },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3, available: false },
