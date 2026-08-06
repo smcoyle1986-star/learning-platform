@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheet, Printer, X } from "lucide-react";
+import { BookOpen, FileSpreadsheet, Printer, X } from "lucide-react";
 
 import { TrayItem } from "@/lib/flashcards/types";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
@@ -25,6 +25,7 @@ type LessonTrayBarProps = {
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
   onGuestSave?: () => void;
+  onGoLessonPlans?: () => void;
   onGoWorksheets: () => void;
   onPrint: () => void;
   onClearTray: () => void;
@@ -49,6 +50,7 @@ export default function LessonTrayBar({
   onRemoveFromTray,
   onOpenSaveModal,
   onGuestSave,
+  onGoLessonPlans,
   onGoWorksheets,
   onPrint,
   onClearTray,
@@ -132,6 +134,17 @@ export default function LessonTrayBar({
                 >
                   <FileSpreadsheet size={14} />
                   Worksheets
+                </button>
+              ) : null}
+
+              {isGuest && onGoLessonPlans ? (
+                <button
+                  onClick={onGoLessonPlans}
+                  className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
+                  title="Make a lesson plan from this temporary lesson"
+                >
+                  <BookOpen size={14} />
+                  Lesson Plan
                 </button>
               ) : null}
 

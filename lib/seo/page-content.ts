@@ -18,8 +18,8 @@ export const PAGE_CONTENT = {
     path: "/flashcards",
   },
   community: {
-    title: "Community Lesson Sets",
-    description: "Explore lesson sets created and shared by the Classendo community. Search by topic or content type, preview the cards, and copy useful sets to your own teaching dashboard.",
+    title: "Community Teaching Resources",
+    description: "Explore lesson sets and worksheets shared by the Classendo community. Search, filter, preview, and copy useful teaching resources to your own dashboard.",
     path: "/teacher/community",
   },
   creator: {

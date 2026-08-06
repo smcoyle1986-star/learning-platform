@@ -41,7 +41,7 @@ export default function SignedInFeatureGate({
           <p className="mt-4 text-sm leading-7 text-[#5f695e]">{description}</p>
         ) : null}
         <p className="mt-4 text-sm leading-7 text-[#5f695e]">
-          Guest access is limited to a six-card flashcard lesson, Classroom Mode, and basic printing. Create a free account to unlock this area.
+          Without signing up, guests can build a temporary six-card lesson using free Image 1 flashcards and use it in Classroom Mode, Printables, and Lesson Plans. Create a free account to unlock this area.
         </p>
         <div className="mt-7 grid gap-3 sm:grid-cols-2">
           <Link href={`/signup?next=${next}`} className="btn btn-primary px-4 py-3 text-sm">Create free account</Link>

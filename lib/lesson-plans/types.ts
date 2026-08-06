@@ -93,6 +93,7 @@ export type LessonPlanDraft = {
 };
 
 export const LESSON_PLAN_DRAFT_KEY = "classendo-lesson-plan-draft";
+export const GUEST_LESSON_PLAN_DRAFT_KEY = "classendo-guest-lesson-plan-draft";
 
 export const EMPTY_LESSON_PLAN_DRAFT: LessonPlanDraft = {
   selectedLessonId: null,

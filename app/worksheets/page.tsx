@@ -8,6 +8,7 @@ import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel";
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
 import LockedWorksheetPreview from "@/components/worksheets/LockedWorksheetPreview";
+import SaveWorksheetDialogs from "@/components/worksheets/SaveWorksheetDialogs";
 import { useAuth } from "@/components/AuthProvider";
 import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
@@ -28,6 +29,7 @@ import {
   WorksheetType,
 } from "@/lib/worksheets/types";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 
 function buildReadingLinesFromCards(nextCards: LessonCard[]) {
   if (nextCards.length === 0) {
@@ -58,6 +60,8 @@ function WorksheetsPageContent() {
   const [worksheetIsPublic, setWorksheetIsPublic] = useState(true);
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showSaveLimitModal, setShowSaveLimitModal] = useState(false);
+  const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
@@ -69,28 +73,33 @@ function WorksheetsPageContent() {
   }, []);
 
   useEffect(() => {
-    const existingWorksheetId = searchParams.get("worksheet_id");
+    const communityWorksheetId = searchParams.get("community_worksheet_id");
+    const existingWorksheetId = searchParams.get("worksheet_id") ?? communityWorksheetId;
     if (!existingWorksheetId) return;
 
     let mounted = true;
     loadWorksheetById(supabase, existingWorksheetId)
-      .then((worksheet) => {
+      .then(async (worksheet) => {
+        if (!mounted) return;
+        const hydratedCards = await hydrateCreatorLessonCards(worksheet.cards);
         if (!mounted) return;
         const readingLines =
           worksheet.draft.type === "reading"
             ? worksheet.draft.readingLines?.length
               ? worksheet.draft.readingLines
-              : buildReadingLinesFromCards(worksheet.cards)
+              : buildReadingLinesFromCards(hydratedCards)
             : worksheet.draft.readingLines ?? [];
         const writingLines =
           worksheet.draft.type === "writing"
             ? worksheet.draft.writingLines?.length
               ? worksheet.draft.writingLines
-              : buildWritingLinesFromCards(worksheet.cards)
+              : buildWritingLinesFromCards(hydratedCards)
             : worksheet.draft.writingLines ?? [];
-        setWorksheetId(worksheet.id);
+        // Community resources open as templates. Saving creates an owned copy
+        // instead of attempting to update the public source worksheet.
+        setWorksheetId(communityWorksheetId ? null : worksheet.id);
         setWorksheetName(worksheet.name);
-        setWorksheetIsPublic(worksheet.isPublic);
+        setWorksheetIsPublic(communityWorksheetId ? false : worksheet.isPublic);
         setDraft({
           ...DEFAULT_WORKSHEET_DRAFT,
           ...worksheet.draft,
@@ -99,8 +108,8 @@ function WorksheetsPageContent() {
           writingLines,
           sentenceScrambleLines: worksheet.draft.sentenceScrambleLines ?? [],
         });
-        setCards(worksheet.cards);
-        writeLessonTray(worksheet.cards);
+        setCards(hydratedCards);
+        writeLessonTray(hydratedCards);
       })
       .catch((error) => {
         console.error("Failed to load worksheet:", error);
@@ -285,9 +294,17 @@ function WorksheetsPageContent() {
       setWorksheetIsPublic(saved.isPublic);
       setDraft(saved.draft);
       setShowSaveModal(false);
+      setShowSaveSuccessModal(true);
     } catch (error: unknown) {
       console.error("Failed to save worksheet:", error);
-      setSaveError(error instanceof Error ? error.message : "Failed to save worksheet.");
+      const message = error instanceof Error ? error.message : "Failed to save worksheet.";
+      if (/upgrade to premium|free accounts can save/i.test(message)) {
+        setShowSaveModal(false);
+        setSaveError("");
+        setShowSaveLimitModal(true);
+      } else {
+        setSaveError(message);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -551,57 +568,25 @@ function WorksheetsPageContent() {
         </div>
       </main>
 
-      {showSaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Save Worksheet</h2>
-
-            <input
-              type="text"
-              value={worksheetName}
-              onChange={(event) => setWorksheetName(event.target.value)}
-              placeholder="Enter worksheet name"
-              className="w-full mb-3 px-3 py-2 rounded-lg border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            />
-
-            <div className="flex items-center justify-between mb-5">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={worksheetIsPublic}
-                  onChange={() => setWorksheetIsPublic((value) => !value)}
-                  className="w-4 h-4"
-                />
-                <span className="select-none">
-                  {worksheetIsPublic ? "Public — visible in worksheet community later" : "Private — only visible to you"}
-                </span>
-              </label>
-            </div>
-
-            {saveError && <div className="text-sm text-red-600 mb-3">{saveError}</div>}
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setSaveError("");
-                  setShowSaveModal(false);
-                }}
-                className="px-4 py-2 rounded-lg border border-black/10 bg-[var(--color-bg-soft)] text-sm hover:bg-white transition"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleSaveWorksheet}
-                disabled={isSaving}
-                className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm hover:opacity-90 transition disabled:opacity-60"
-              >
-                {isSaving ? "Saving…" : "Save Worksheet"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SaveWorksheetDialogs
+        showSaveModal={showSaveModal}
+        worksheetName={worksheetName}
+        worksheetTypeLabel={selectedType?.label ?? "worksheet"}
+        isPublic={worksheetIsPublic}
+        isSaving={isSaving}
+        saveError={saveError}
+        onNameChange={setWorksheetName}
+        onTogglePublic={() => setWorksheetIsPublic((value) => !value)}
+        onCancelSave={() => { setSaveError(""); setShowSaveModal(false); }}
+        onSave={handleSaveWorksheet}
+        showSaveLimitModal={showSaveLimitModal}
+        onCloseSaveLimit={() => setShowSaveLimitModal(false)}
+        onManageDashboard={() => { window.location.href = "/dashboard#saved-worksheets"; }}
+        onUpgrade={() => { window.location.href = "/upgrade"; }}
+        showSuccessModal={showSaveSuccessModal}
+        onCloseSuccess={() => setShowSaveSuccessModal(false)}
+        onOpenDashboard={() => { window.location.href = `/dashboard?worksheet_id=${encodeURIComponent(worksheetId ?? "")}`; }}
+      />
     </div>
   );
 }

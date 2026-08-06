@@ -16,6 +16,7 @@ export type YesNoPromptSetRecord = {
   userId: string;
   gameKey: string;
   name: string;
+  isPublic: boolean;
   rows: YesNoPromptRow[];
   createdAt: string;
   updatedAt: string;
@@ -25,6 +26,7 @@ type SaveYesNoPromptSetInput = {
   promptSetId?: string | null;
   userId: string;
   name: string;
+  isPublic: boolean;
   rows: YesNoPromptRow[];
 };
 
@@ -49,6 +51,7 @@ function normalizePromptSet(raw: unknown): YesNoPromptSetRecord {
     userId: String(source.user_id ?? ""),
     gameKey: String(source.game_key ?? GAME_KEY),
     name: String(source.name ?? "Untitled Yes/No Set"),
+    isPublic: source.is_public !== false,
     rows,
     createdAt: String(source.created_at ?? new Date().toISOString()),
     updatedAt: String(source.updated_at ?? new Date().toISOString()),
@@ -68,7 +71,7 @@ export async function loadYesNoPromptSets(
   if (scope === "own") {
     query = query.eq("user_id", userId);
   } else {
-    query = query.neq("user_id", userId);
+    query = query.neq("user_id", userId).eq("is_public", true);
   }
 
   const { data, error } = await query.order("updated_at", { ascending: false });
@@ -88,6 +91,7 @@ export async function saveYesNoPromptSet(
     user_id: input.userId,
     game_key: GAME_KEY,
     name: trimmedName,
+    is_public: input.isPublic,
     payload: {
       rows: input.rows.map(normalizePromptRow),
     },

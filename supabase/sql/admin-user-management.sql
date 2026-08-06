@@ -39,8 +39,17 @@ as $$
       select 1
         from public.user_subscriptions us
        where us.user_id = target_user_id
-         and lower(coalesce(us.subscription_tier, 'free')) = 'premium'
-         and lower(coalesce(us.subscription_status, '')) in ('trialing', 'active', 'past_due')
+         and (
+           (
+             lower(coalesce(us.subscription_tier, 'free')) = 'premium'
+             and lower(coalesce(us.subscription_status, '')) in ('trialing', 'active', 'past_due')
+           )
+           or (
+             us.premium_trial_used
+             and us.premium_trial_started_at is not null
+             and us.premium_trial_ends_at > now()
+           )
+         )
     )
     or exists (
       select 1

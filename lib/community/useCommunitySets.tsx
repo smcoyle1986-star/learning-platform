@@ -78,7 +78,7 @@ export function useCommunitySets() {
       const userId = currentUser?.id ?? null;
       setCurrentUserId(userId);
 
-      const columns = "id, name, user_id, created_at, download_count, tags, content_types";
+      const columns = "id, name, user_id, created_at, download_count, tags, content_types, copied_from";
       const buildVisibleSetsQuery = (head = false) => {
         let builder = supabase.from("lesson_sets").select(columns, { count: "exact", head });
 
@@ -180,6 +180,7 @@ export function useCommunitySets() {
         download_count: row.download_count ?? 0,
         tags: row.tags ?? [],
         content_types: row.content_types ?? [],
+        copied_from: row.copied_from ?? null,
       }));
 
       setSets(fetched);
@@ -350,17 +351,17 @@ export function useCommunitySets() {
 
       setToast({ message: "Adding to your Dashboard..." });
 
-      const { data: existingCopy, error: existingCopyError } = await supabase
+      const sourceIds = Array.from(new Set([setItem.id, setItem.copied_from].filter((value): value is string => Boolean(value))));
+      const { data: existingCopies, error: existingCopyError } = await supabase
         .from("lesson_sets")
         .select("id")
         .eq("user_id", currentUserId)
-        .eq("copied_from", setItem.id)
+        .in("copied_from", sourceIds)
         .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
       if (existingCopyError) throw existingCopyError;
-      if (existingCopy?.id) {
-        openExistingDashboardSet(String(existingCopy.id), "already_saved");
+      if (existingCopies?.[0]?.id) {
+        openExistingDashboardSet(String(existingCopies[0].id), "already_saved");
         return;
       }
 
@@ -369,8 +370,31 @@ export function useCommunitySets() {
       });
 
       if (rpcErr) {
-        console.error("copy_lesson_set_once RPC failed:", rpcErr);
-        setToast({ message: "Failed to copy set. Try again." });
+        const rpcDetails = {
+          code: rpcErr.code,
+          message: rpcErr.message,
+          details: rpcErr.details,
+          hint: rpcErr.hint,
+        };
+        console.error("copy_lesson_set_once RPC failed:", JSON.stringify(rpcDetails));
+
+        const { data: copyAfterFailure } = await supabase
+          .from("lesson_sets")
+          .select("id")
+          .eq("user_id", currentUserId)
+          .in("copied_from", sourceIds)
+          .order("created_at", { ascending: true })
+          .limit(1);
+        if (copyAfterFailure?.[0]?.id) {
+          openExistingDashboardSet(String(copyAfterFailure[0].id), "already_saved");
+          return;
+        }
+
+        setToast({
+          message: /premium|upgrade|6 active lesson sets/i.test(rpcErr.message ?? "")
+            ? rpcErr.message
+            : "Failed to copy set. Try again.",
+        });
         return;
       }
 

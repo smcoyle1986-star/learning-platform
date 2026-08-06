@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { LessonCard } from "@/lib/lessons/types";
+import { LessonCard, type LessonContentType } from "@/lib/lessons/types";
 import { normalizeLessonCard } from "@/lib/lessons/tray";
 import { SavedWorksheetRecord, WorksheetDraft, WorksheetType } from "@/lib/worksheets/types";
 
@@ -33,7 +33,7 @@ function enumOrFallback<T extends string>(value: unknown, fallback: T): T {
   return typeof value === "string" && value.trim() ? (value as T) : fallback;
 }
 
-function normalizeWorksheet(raw: unknown): SavedWorksheetRecord {
+export function normalizeWorksheet(raw: unknown): SavedWorksheetRecord {
   const source = (raw ?? {}) as Record<string, unknown>;
   const draft = (source.draft ?? {}) as Record<string, unknown>;
   return {
@@ -85,6 +85,17 @@ function normalizeWorksheet(raw: unknown): SavedWorksheetRecord {
     },
     createdAt: typeof source.created_at === "string" ? source.created_at : undefined,
     updatedAt: typeof source.updated_at === "string" ? source.updated_at : undefined,
+    lastUsed: typeof source.last_used === "string" ? source.last_used : null,
+    useCount: Number(source.use_count ?? 0),
+    downloadCount: Number(source.download_count ?? 0),
+    copiedFrom: source.copied_from ? String(source.copied_from) : null,
+    isFavorite: Boolean(source.is_favorite ?? false),
+    archivedAt: typeof source.archived_at === "string" ? source.archived_at : null,
+    contentTypes: Array.isArray(source.content_types)
+      ? source.content_types.map(String).filter((value): value is LessonContentType =>
+          ["noun", "verb", "adjective", "preposition", "phonics"].includes(value))
+      : [],
+    tags: Array.isArray(source.tags) ? source.tags.map(String) : [],
   };
 }
 
@@ -109,8 +120,9 @@ export async function saveWorksheet(
       .from("worksheets")
       .update(payload)
       .eq("id", input.worksheetId)
+      .eq("user_id", input.userId)
       .select("*")
-      .single();
+      .maybeSingle();
     if (error || !data) throw error ?? new Error("Failed to update worksheet");
     return normalizeWorksheet(data);
   }
@@ -175,4 +187,38 @@ export async function loadWorksheetsForUser(supabase: SupabaseClient, userId: st
 export async function deleteWorksheet(supabase: SupabaseClient, worksheetId: string) {
   const { error } = await supabase.from("worksheets").delete().eq("id", worksheetId);
   if (error) throw error;
+}
+
+export async function recordWorksheetUsage(
+  supabase: SupabaseClient,
+  worksheet: SavedWorksheetRecord,
+) {
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("worksheets")
+    .update({ last_used: now, use_count: (worksheet.useCount ?? 0) + 1 })
+    .eq("id", worksheet.id)
+    .eq("user_id", worksheet.userId);
+  if (error) throw error;
+  return { lastUsed: now, useCount: (worksheet.useCount ?? 0) + 1 };
+}
+
+export async function updateWorksheetLibraryStateFromServer(
+  worksheetId: string,
+  changes: { isFavorite?: boolean; archived?: boolean },
+) {
+  const { data: { session } } = await import("@/lib/supabase/client").then(({ supabase }) => supabase.auth.getSession());
+  const response = await fetch(`/api/worksheets/${encodeURIComponent(worksheetId)}/library-state`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify(changes),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload) {
+    throw new Error(String(payload?.error ?? "Could not update this worksheet."));
+  }
+  return normalizeWorksheet(payload);
 }

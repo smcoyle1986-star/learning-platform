@@ -9,8 +9,10 @@ import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
 import DashboardLessonCard from "@/components/dashboard/DashboardLessonCard";
 import DashboardWorksheetCard from "@/components/dashboard/DashboardWorksheetCard";
+import DashboardWorksheetPreviewModal from "@/components/dashboard/DashboardWorksheetPreviewModal";
 import DashboardPreviewModal from "@/components/dashboard/DashboardPreviewModal";
 import DeleteLessonModal from "@/components/dashboard/DeleteLessonModal";
+import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import {
   deleteLesson,
   loadLessonsWithAccessFromServer,
@@ -24,7 +26,12 @@ import {
   writeLessonTray,
 } from "@/lib/lessons/tray";
 import { LessonRecord } from "@/lib/lessons/types";
-import { deleteWorksheet, loadWorksheetsForUser } from "@/lib/worksheets/repository";
+import {
+  deleteWorksheet,
+  loadWorksheetsForUser,
+  recordWorksheetUsage,
+  updateWorksheetLibraryStateFromServer,
+} from "@/lib/worksheets/repository";
 import { SavedWorksheetRecord } from "@/lib/worksheets/types";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
@@ -35,6 +42,9 @@ const PAGE_SIZE_OPTIONS = [12, 24, 36] as const;
 type LessonFilter = "all" | "favorites" | "public" | "private" | "locked" | "archive";
 type LessonSort = "recent" | "newest" | "oldest" | "name" | "popular" | "cards";
 type LessonView = "grid" | "list";
+type WorksheetFilter = "all" | "favorites" | "public" | "private" | "archive";
+type WorksheetSort = "recent" | "newest" | "oldest" | "name" | "popular" | "cards";
+type WorksheetView = "grid" | "list";
 
 function lessonTimestamp(value: number | string | null | undefined) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -48,6 +58,7 @@ export default function DashboardPage() {
 
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [worksheets, setWorksheets] = useState<SavedWorksheetRecord[]>([]);
+  const [previewWorksheet, setPreviewWorksheet] = useState<SavedWorksheetRecord | null>(null);
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [conversionMessage, setConversionMessage] = useState("");
@@ -61,6 +72,15 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [libraryStatePendingIds, setLibraryStatePendingIds] = useState<Set<string>>(new Set());
   const openedLessonFromQueryRef = useRef(false);
+  const [worksheetSearchQuery, setWorksheetSearchQuery] = useState("");
+  const [worksheetFilter, setWorksheetFilter] = useState<WorksheetFilter>("all");
+  const [worksheetSort, setWorksheetSort] = useState<WorksheetSort>("recent");
+  const [worksheetView, setWorksheetView] = useState<WorksheetView>("grid");
+  const [worksheetPageSize, setWorksheetPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(12);
+  const [worksheetPage, setWorksheetPage] = useState(1);
+  const [worksheetLibraryMessage, setWorksheetLibraryMessage] = useState("");
+  const [worksheetLibraryPendingIds, setWorksheetLibraryPendingIds] = useState<Set<string>>(new Set());
+  const openedWorksheetFromQueryRef = useRef(false);
   
 
   // Delete modal state (new)
@@ -94,8 +114,12 @@ export default function DashboardPage() {
         });
 
       loadWorksheetsForUser(supabase, user.id)
-        .then((data) => {
-          if (mounted) setWorksheets(data);
+        .then(async (data) => {
+          const hydrated = await Promise.all(data.map(async (worksheet) => ({
+            ...worksheet,
+            cards: await hydrateCreatorLessonCards(worksheet.cards),
+          })));
+          if (mounted) setWorksheets(hydrated);
         })
         .catch((error) => {
           console.error("Unexpected error loading worksheets from Supabase:", error);
@@ -177,6 +201,53 @@ export default function DashboardPage() {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
 
+  const worksheetFilterCounts = useMemo(() => {
+    const active = worksheets.filter((worksheet) => !worksheet.archivedAt);
+    return {
+      all: active.length,
+      favorites: active.filter((worksheet) => worksheet.isFavorite).length,
+      public: active.filter((worksheet) => worksheet.isPublic).length,
+      private: active.filter((worksheet) => !worksheet.isPublic).length,
+      archive: worksheets.filter((worksheet) => worksheet.archivedAt).length,
+    } satisfies Record<WorksheetFilter, number>;
+  }, [worksheets]);
+
+  const filteredWorksheets = useMemo(() => {
+    const normalizedQuery = worksheetSearchQuery.trim().toLocaleLowerCase();
+    return worksheets
+      .filter((worksheet) => {
+        if (worksheetFilter === "archive") return Boolean(worksheet.archivedAt);
+        if (worksheet.archivedAt) return false;
+        if (worksheetFilter === "favorites") return Boolean(worksheet.isFavorite);
+        if (worksheetFilter === "public") return worksheet.isPublic;
+        if (worksheetFilter === "private") return !worksheet.isPublic;
+        return true;
+      })
+      .filter((worksheet) => {
+        if (!normalizedQuery) return true;
+        return worksheet.name.toLocaleLowerCase().includes(normalizedQuery)
+          || worksheet.worksheetType.toLocaleLowerCase().includes(normalizedQuery)
+          || worksheet.cards.some((card) => card.word.toLocaleLowerCase().includes(normalizedQuery));
+      })
+      .sort((left, right) => {
+        if (worksheetSort === "newest") return lessonTimestamp(right.createdAt) - lessonTimestamp(left.createdAt);
+        if (worksheetSort === "oldest") return lessonTimestamp(left.createdAt) - lessonTimestamp(right.createdAt);
+        if (worksheetSort === "name") return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+        if (worksheetSort === "popular") return (right.useCount ?? 0) - (left.useCount ?? 0);
+        if (worksheetSort === "cards") return right.cards.length - left.cards.length;
+        return lessonTimestamp(right.lastUsed ?? right.updatedAt) - lessonTimestamp(left.lastUsed ?? left.updatedAt);
+      });
+  }, [worksheetFilter, worksheetSearchQuery, worksheetSort, worksheets]);
+
+  const worksheetTotalPages = Math.max(1, Math.ceil(filteredWorksheets.length / worksheetPageSize));
+  const pagedWorksheets = useMemo(
+    () => filteredWorksheets.slice((worksheetPage - 1) * worksheetPageSize, worksheetPage * worksheetPageSize),
+    [filteredWorksheets, worksheetPage, worksheetPageSize],
+  );
+
+  useEffect(() => setWorksheetPage(1), [worksheetFilter, worksheetPageSize, worksheetSearchQuery, worksheetSort]);
+  useEffect(() => setWorksheetPage((page) => Math.min(page, worksheetTotalPages)), [worksheetTotalPages]);
+
   useEffect(() => {
     if (openedLessonFromQueryRef.current || lessons.length === 0) return;
     const params = new URLSearchParams(window.location.search);
@@ -201,6 +272,27 @@ export default function DashboardPage() {
       document.getElementById("saved-lessons")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }, [lessons]);
+
+  useEffect(() => {
+    if (openedWorksheetFromQueryRef.current || worksheets.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const worksheetId = params.get("worksheet_id");
+    if (!worksheetId) return;
+    const worksheet = worksheets.find((item) => item.id === worksheetId);
+    if (!worksheet) return;
+    openedWorksheetFromQueryRef.current = true;
+    setWorksheetFilter(worksheet.archivedAt ? "archive" : "all");
+    setWorksheetSearchQuery(worksheet.name);
+    const notice = params.get("notice");
+    if (notice === "already_saved") {
+      setWorksheetLibraryMessage(`“${worksheet.name}” is already saved. We opened the existing worksheet instead.`);
+    } else if (notice === "owned") {
+      setWorksheetLibraryMessage(`“${worksheet.name}” is already yours. We opened it without making a copy.`);
+    }
+    window.requestAnimationFrame(() => {
+      document.getElementById("saved-worksheets")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [worksheets]);
 
   /* ----------------------------------
      Actions (preserved behavior, hardened)
@@ -383,6 +475,12 @@ export default function DashboardPage() {
 
   const openSavedWorksheet = (worksheet: SavedWorksheetRecord) => {
     writeLessonTray(worksheet.cards);
+    setWorksheets((current) => current.map((item) => item.id === worksheet.id
+      ? { ...item, useCount: (item.useCount ?? 0) + 1, lastUsed: new Date().toISOString() }
+      : item));
+    recordWorksheetUsage(supabase, worksheet).catch((error) => {
+      console.warn("Failed to update worksheet usage:", error);
+    });
     window.location.href = `/worksheets?worksheet_id=${worksheet.id}`;
   };
 
@@ -403,6 +501,27 @@ export default function DashboardPage() {
       console.error("Failed to delete worksheet:", error);
     }
   };
+
+  async function updateWorksheetLibraryState(
+    worksheet: SavedWorksheetRecord,
+    changes: { isFavorite?: boolean; archived?: boolean },
+  ) {
+    if (worksheetLibraryPendingIds.has(worksheet.id)) return;
+    setWorksheetLibraryMessage("");
+    setWorksheetLibraryPendingIds((current) => new Set(current).add(worksheet.id));
+    try {
+      const updated = await updateWorksheetLibraryStateFromServer(worksheet.id, changes);
+      setWorksheets((current) => current.map((item) => item.id === worksheet.id ? { ...item, ...updated } : item));
+    } catch (error) {
+      setWorksheetLibraryMessage(error instanceof Error ? error.message : "Could not update this worksheet.");
+    } finally {
+      setWorksheetLibraryPendingIds((current) => {
+        const next = new Set(current);
+        next.delete(worksheet.id);
+        return next;
+      });
+    }
+  }
 
   const convertLessonToBasic = async (lesson: LessonRecord) => {
     const confirmed = window.confirm(
@@ -542,7 +661,7 @@ export default function DashboardPage() {
               No recent lessons yet.
             </p>
           ) : (
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            <LessonTrayScroller contentClassName="!gap-4 items-stretch pb-1">
               {recentlyUsed.map((lesson) => (
                 <div key={lesson.id} className="min-w-[360px] w-[360px]">
                   <DashboardLessonCard
@@ -563,7 +682,7 @@ export default function DashboardPage() {
                 />
               </div>
               ))}
-            </div>
+            </LessonTrayScroller>
           )}
         </section>
 
@@ -711,30 +830,120 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-6">Saved Worksheets</h2>
+        <section id="saved-worksheets">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Saved Worksheets</h2>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Search and organise worksheets separately from lesson sets.
+              </p>
+            </div>
+            {filteredWorksheets.length > 0 ? (
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Showing {(worksheetPage - 1) * worksheetPageSize + 1}–{Math.min(worksheetPage * worksheetPageSize, filteredWorksheets.length)} of {filteredWorksheets.length}
+              </p>
+            ) : null}
+          </div>
+
+          {worksheetLibraryMessage ? (
+            <div className="mb-4 rounded-2xl border border-[#cbdcc3] bg-[#f2f8ee] px-4 py-3 text-sm text-[#3f6338]">
+              {worksheetLibraryMessage}
+            </div>
+          ) : null}
 
           {worksheets.length === 0 ? (
-            <div className="text-sm text-[var(--color-text-muted)]">
+            <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">
               No saved worksheets yet. Create one from the Worksheets page.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {worksheets.map((worksheet) => (
-                <DashboardWorksheetCard
-                  key={worksheet.id}
-                  worksheet={worksheet}
-                  onOpen={openSavedWorksheet}
-                  onDelete={removeSavedWorksheet}
-                />
-              ))}
-            </div>
+            <>
+              <div className="mb-5 rounded-2xl border border-[#dfe5d9] bg-white/75 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                  <label className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                    <span className="sr-only">Search saved worksheets</span>
+                    <input type="search" value={worksheetSearchQuery} onChange={(event) => setWorksheetSearchQuery(event.target.value)} placeholder="Search worksheet names, types, or card words" className="w-full rounded-xl border border-[#d7ddd1] bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                    <span>Sort</span>
+                    <select value={worksheetSort} onChange={(event) => setWorksheetSort(event.target.value as WorksheetSort)} className="rounded-xl border border-[#d7ddd1] bg-white px-3 py-2.5 text-sm text-[var(--color-text-main)]">
+                      <option value="recent">Recently used</option>
+                      <option value="newest">Newest created</option>
+                      <option value="oldest">Oldest created</option>
+                      <option value="name">Name A–Z</option>
+                      <option value="popular">Most used</option>
+                      <option value="cards">Most cards</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                    <span>Per page</span>
+                    <select value={worksheetPageSize} onChange={(event) => setWorksheetPageSize(Number(event.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])} className="rounded-xl border border-[#d7ddd1] bg-white px-3 py-2.5 text-sm text-[var(--color-text-main)]">
+                      {PAGE_SIZE_OPTIONS.map((size) => <option key={size} value={size}>{size}</option>)}
+                    </select>
+                  </label>
+                  <div className="flex rounded-xl border border-[#d7ddd1] bg-white p-1" aria-label="Worksheet display style">
+                    <button type="button" onClick={() => setWorksheetView("grid")} aria-label="Grid view" aria-pressed={worksheetView === "grid"} className={`rounded-lg p-2 transition ${worksheetView === "grid" ? "bg-blue-100 text-blue-800" : "text-slate-500 hover:bg-slate-50"}`}><Grid2X2 size={17} /></button>
+                    <button type="button" onClick={() => setWorksheetView("list")} aria-label="List view" aria-pressed={worksheetView === "list"} className={`rounded-lg p-2 transition ${worksheetView === "list" ? "bg-blue-100 text-blue-800" : "text-slate-500 hover:bg-slate-50"}`}><List size={18} /></button>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2" aria-label="Worksheet filters">
+                  {([
+                    ["all", "All"],
+                    ["favorites", "Favourites"],
+                    ["public", "Public"],
+                    ["private", "Private"],
+                    ["archive", "Archive"],
+                  ] as const).map(([value, label]) => (
+                    <button key={value} type="button" onClick={() => setWorksheetFilter(value)} aria-pressed={worksheetFilter === value} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${worksheetFilter === value ? "border-blue-700 bg-blue-700 text-white shadow-sm" : "border-[#d7ddd1] bg-white text-[#596459] hover:border-blue-300 hover:text-blue-700"}`}>
+                      {label} <span className="ml-1 opacity-75">{worksheetFilterCounts[value]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {filteredWorksheets.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">No worksheets match this search and filter.</div>
+              ) : (
+                <div className={worksheetView === "grid" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-3"}>
+                  {pagedWorksheets.map((worksheet) => (
+                    <DashboardWorksheetCard
+                      key={worksheet.id}
+                      worksheet={worksheet}
+                      onOpen={openSavedWorksheet}
+                      onPreview={setPreviewWorksheet}
+                      onDelete={removeSavedWorksheet}
+                      viewMode={worksheetView}
+                      libraryStatePending={worksheetLibraryPendingIds.has(worksheet.id)}
+                      onToggleFavorite={(item) => void updateWorksheetLibraryState(item, { isFavorite: !item.isFavorite })}
+                      onToggleArchived={(item) => void updateWorksheetLibraryState(item, { archived: !item.archivedAt })}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {worksheetTotalPages > 1 ? (
+                <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Saved worksheet pages">
+                  <button type="button" onClick={() => setWorksheetPage((page) => Math.max(1, page - 1))} disabled={worksheetPage === 1} className="btn btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft size={16} /> Previous</button>
+                  <span className="text-sm text-[var(--color-text-muted)]">Page {worksheetPage} of {worksheetTotalPages}</span>
+                  <button type="button" onClick={() => setWorksheetPage((page) => Math.min(worksheetTotalPages, page + 1))} disabled={worksheetPage === worksheetTotalPages} className="btn btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40">Next <ChevronRight size={16} /></button>
+                </nav>
+              ) : null}
+            </>
           )}
         </section>
 
         <DashboardPreviewModal
           lesson={previewLesson}
           onClose={() => setPreviewLesson(null)}
+        />
+
+        <DashboardWorksheetPreviewModal
+          worksheet={previewWorksheet}
+          onClose={() => setPreviewWorksheet(null)}
+          onOpen={(worksheet) => {
+            setPreviewWorksheet(null);
+            openSavedWorksheet(worksheet);
+          }}
         />
 
         <DeleteLessonModal

@@ -119,7 +119,7 @@ function HomePageContent() {
      Shared helpers for header links
   ----------------------------------*/
   const getSectionHref = (section: (typeof LANDING_SECTIONS)[number]) =>
-    isLoggedIn || section.slug === "flashcards" || section.slug === "printables"
+    isLoggedIn || section.slug === "flashcards" || section.slug === "printables" || section.slug === "lessons"
       ? section.href
       : `/preview/${section.slug}`;
   const goToSection = (section: (typeof LANDING_SECTIONS)[number]) => router.push(getSectionHref(section));

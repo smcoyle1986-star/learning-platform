@@ -78,21 +78,31 @@ export default function YesOrNoPage() {
 
   // Load lesson tray (read-only)
   const [tray, setTray] = useState<GameCard[]>([]);
+  const [trayLoaded, setTrayLoaded] = useState(false);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LESSON_TRAY_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const normalized = parsed.map((c: any) => ({
-          id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
-          word: String(c.word ?? c.text ?? ""),
-          image: resolveLessonImageUrl(c.image ?? c.image_id ?? c.img),
-        })) as GameCard[];
-        setTray(normalized);
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const normalized = parsed.map((rawCard): GameCard => {
+            const card = (rawCard ?? {}) as Record<string, unknown>;
+            const rawImage = [card.image, card.image_id, card.img].find(
+              (value): value is string => typeof value === "string"
+            );
+            return {
+              id: String(card.id ?? card.word ?? Math.random().toString(36).slice(2)),
+              word: String(card.word ?? card.text ?? ""),
+              image: resolveLessonImageUrl(rawImage),
+            };
+          });
+          setTray(normalized);
+        }
       }
     } catch (e) {
       console.error("Failed to load lesson tray", e);
+    } finally {
+      setTrayLoaded(true);
     }
   }, []);
 
@@ -153,6 +163,10 @@ export default function YesOrNoPage() {
   const [modalFinishedTickVisible, setModalFinishedTickVisible] = useState(false);
   const [promptSetName, setPromptSetName] = useState("Yes/No Set");
   const [promptSetId, setPromptSetId] = useState<string | null>(null);
+  const [promptSetIsPublic, setPromptSetIsPublic] = useState(true);
+  const [savePromptModalOpen, setSavePromptModalOpen] = useState(false);
+  const [savePromptName, setSavePromptName] = useState("Yes/No Set");
+  const [savePromptNameError, setSavePromptNameError] = useState<string | null>(null);
   const [savedPromptSets, setSavedPromptSets] = useState<YesNoPromptSetRecord[]>([]);
   const [savedPromptSetsLoading, setSavedPromptSetsLoading] = useState(false);
   const [savedPromptSetsError, setSavedPromptSetsError] = useState<string | null>(null);
@@ -161,6 +175,10 @@ export default function YesOrNoPage() {
   const [previewPromptSet, setPreviewPromptSet] = useState<YesNoPromptSetRecord | null>(null);
   const [savedPromptSetsScope, setSavedPromptSetsScope] = useState<YesNoPromptSetScope>("own");
   const [pendingDeletePromptSet, setPendingDeletePromptSet] = useState<YesNoPromptSetRecord | null>(null);
+  const [pendingLoadPromptSet, setPendingLoadPromptSet] = useState<{
+    set: YesNoPromptSetRecord;
+    preserveSavedId: boolean;
+  } | null>(null);
 
   // Cards & used tracking
   const [usedIndices, setUsedIndices] = useState<number[]>([]);
@@ -176,8 +194,12 @@ export default function YesOrNoPage() {
   // Game start control
   const [gameStarted, setGameStarted] = useState(false);
 
-  // Initialize sentencesMap and open modal on startup
+  // Initialize once after localStorage has been checked. With no lesson tray,
+  // Saved Sets is the useful entry point for this game.
+  const initialModalOpenedRef = useRef(false);
   useEffect(() => {
+    if (!trayLoaded || initialModalOpenedRef.current) return;
+    initialModalOpenedRef.current = true;
     if (tray.length > 0) {
       setSentencesMap((prev) => {
         const next = { ...prev };
@@ -186,9 +208,12 @@ export default function YesOrNoPage() {
         });
         return next;
       });
-      setSentencesModalOpen(true);
+      setSentencesModalView("edit");
+    } else {
+      setSentencesModalView("saved");
     }
-  }, [tray.length]);
+    setSentencesModalOpen(true);
+  }, [tray, trayLoaded]);
 
   function rowsFromCurrentTray() {
     return tray.map((card) => {
@@ -203,20 +228,49 @@ export default function YesOrNoPage() {
     });
   }
 
-  function applySavedPromptSet(set: YesNoPromptSetRecord) {
-    setPromptSetId(set.id);
-    setPromptSetName(set.name || "Yes/No Set");
-    setSentencesMap((prev) => {
-      const next = { ...prev };
-      tray.forEach((card) => {
-        const match = set.rows.find((row) => row.cardId === card.id);
-        next[card.id] = {
-          text: match?.text ?? "",
-          isYes: match?.isYes ?? true,
-        };
+  function cardsFromPromptSet(set: YesNoPromptSetRecord) {
+    const seen = new Set<string>();
+    return set.rows.reduce<GameCard[]>((cards, row) => {
+      if (!row.cardId || seen.has(row.cardId)) return cards;
+      seen.add(row.cardId);
+      cards.push({
+        id: row.cardId,
+        word: row.word,
+        image: resolveLessonImageUrl(row.image),
       });
-      return next;
-    });
+      return cards;
+    }, []);
+  }
+
+  function hasDifferentCards(nextCards: GameCard[]) {
+    return tray.map((card) => card.id).join("|") !== nextCards.map((card) => card.id).join("|");
+  }
+
+  function applySavedPromptSet(set: YesNoPromptSetRecord, preserveSavedId: boolean) {
+    const nextTray = cardsFromPromptSet(set);
+    if (nextTray.length === 0) {
+      setSavedPromptSetsError("This saved set has no cards to load.");
+      return;
+    }
+
+    setTray(nextTray);
+    localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(nextTray));
+    setPromptSetId(preserveSavedId ? set.id : null);
+    setPromptSetName(set.name || "Yes/No Set");
+    setPromptSetIsPublic(preserveSavedId ? set.isPublic : true);
+    setSentencesMap(Object.fromEntries(set.rows.map((row) => [row.cardId, {
+      text: row.text,
+      isYes: row.isYes,
+    }])));
+    setUsedIndices([]);
+    setCurrentCardIndex(null);
+    setGameStarted(false);
+    setRoundPhase("hidden");
+    stopTimer();
+    setPreviewPromptSet(null);
+    setPendingLoadPromptSet(null);
+    setSavedPromptSetsError(null);
+    setSentencesModalView("edit");
   }
 
   async function loadSavedPromptSetsForUser(scope: YesNoPromptSetScope = savedPromptSetsScope) {
@@ -247,7 +301,18 @@ export default function YesOrNoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentencesModalOpen, sentencesModalView, savedPromptSetsScope]);
 
+  function openSavePromptModal() {
+    setSavePromptName(promptSetName || "Yes/No Set");
+    setSavePromptNameError(null);
+    setSavePromptModalOpen(true);
+  }
+
   async function handleSavePromptSet() {
+    const trimmedName = savePromptName.trim();
+    if (!trimmedName) {
+      setSavePromptNameError("Enter a name for this set.");
+      return;
+    }
     setSavingPromptSet(true);
     setSavedPromptSetsError(null);
     try {
@@ -260,16 +325,20 @@ export default function YesOrNoPage() {
       const saved = await saveYesNoPromptSet(supabase, {
         promptSetId,
         userId: user.id,
-        name: promptSetName || "Yes/No Set",
+        name: trimmedName,
+        isPublic: promptSetIsPublic,
         rows: rowsFromCurrentTray(),
       });
       setPromptSetId(saved.id);
       setPromptSetName(saved.name);
+      setPromptSetIsPublic(saved.isPublic);
+      setSavePromptModalOpen(false);
       setSavedPromptSetsScope("own");
       setSavedPromptSets((prev) => {
         const next = [saved, ...prev.filter((item) => item.id !== saved.id)];
         return next.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
       });
+      setSavePromptNameError(null);
       setSentencesModalView("saved");
     } catch (error) {
       console.error("Failed to save Yes/No set", error);
@@ -279,9 +348,18 @@ export default function YesOrNoPage() {
     }
   }
 
-  async function handleLoadSavedPromptSet(set: YesNoPromptSetRecord) {
-    applySavedPromptSet(set);
-    setSentencesModalView("edit");
+  function handleLoadSavedPromptSet(set: YesNoPromptSetRecord) {
+    const nextCards = cardsFromPromptSet(set);
+    const preserveSavedId = savedPromptSetsScope === "own";
+    if (nextCards.length === 0) {
+      setSavedPromptSetsError("This saved set has no cards to load.");
+      return;
+    }
+    if (tray.length > 0 && hasDifferentCards(nextCards)) {
+      setPendingLoadPromptSet({ set, preserveSavedId });
+      return;
+    }
+    applySavedPromptSet(set, preserveSavedId);
   }
 
   function openPreviewPromptSet(set: YesNoPromptSetRecord) {
@@ -401,7 +479,10 @@ export default function YesOrNoPage() {
   function getAudioCtx() {
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        if (!AudioContextConstructor) return null;
+        audioCtxRef.current = new AudioContextConstructor();
       } catch {
         audioCtxRef.current = null;
       }
@@ -777,20 +858,6 @@ export default function YesOrNoPage() {
     setPlayMode(nextMode);
   }
 
-  // Edge: no cards
-  if (!tray || tray.length === 0) {
-    return (
-      <div className="min-h-screen bg-[hsl(140,40%,95%)] flex flex-col items-center justify-center p-6">
-        <h1 className="text-3xl font-bold mb-4">Yes or No</h1>
-        <p className="text-lg text-gray-700 mb-6">No cards found in your lesson tray.</p>
-        <div className="flex gap-3">
-          <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-primary px-3 py-1">Go to Flashcards</button>
-          <button onClick={() => (window.location.href = "/dashboard")} className="btn btn-secondary px-3 py-1">Return to Dashboard</button>
-        </div>
-      </div>
-    );
-  }
-
   const remainingCount = Math.max(0, tray.length - usedIndices.length);
   const currentCard = currentCardIndex !== null ? tray[currentCardIndex] : null;
   const canAnswer = roundPhase === "timing";
@@ -900,6 +967,22 @@ export default function YesOrNoPage() {
                     }`}
                     draggable={false}
                   />
+                ) : tray.length === 0 ? (
+                  <div className="flex max-w-md flex-col items-center px-6 text-center">
+                    <div className="text-xl font-semibold text-slate-700">Choose a saved Yes/No set</div>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Load a reusable set to add its cards to the lesson tray and start the game.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSentencesModalView("saved");
+                        setSentencesModalOpen(true);
+                      }}
+                      className="mt-5 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:-translate-y-0.5"
+                    >
+                      Open Saved Sets
+                    </button>
+                  </div>
                 ) : (
                   <div className="text-gray-400 text-xl font-semibold">No image selected</div>
                 )}
@@ -1192,17 +1275,14 @@ export default function YesOrNoPage() {
             {sentencesModalView === "edit" ? (
               <>
                 <div className="flex-1 overflow-auto px-6 py-5">
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <label className="text-sm font-semibold text-gray-700">Set name</label>
-                    <input
-                      value={promptSetName}
-                      onChange={(e) => setPromptSetName(e.target.value)}
-                      className="min-w-[16rem] flex-1 rounded-full border border-[#e3d7c2] bg-white px-4 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
-                      placeholder="Name this set"
-                    />
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e8decb] bg-white px-4 py-3">
+                    <div>
+                      <div className="text-sm font-semibold text-gray-800">{promptSetName}</div>
+                      <div className="mt-0.5 text-xs text-gray-500">{tray.length} cards in this Yes/No set</div>
+                    </div>
                     <button
-                      onClick={() => void handleSavePromptSet()}
-                      disabled={savingPromptSet}
+                      onClick={openSavePromptModal}
+                      disabled={savingPromptSet || tray.length === 0}
                       className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,150,86,0.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
                     >
                       {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
@@ -1257,6 +1337,13 @@ export default function YesOrNoPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 border-t border-[#eadfcb] bg-[#fffaf0] px-6 py-4">
+                  <button
+                    onClick={openSavePromptModal}
+                    disabled={savingPromptSet || tray.length === 0}
+                    className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,150,86,0.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+                  >
+                    {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
+                  </button>
                   <button
                     onClick={() => setSentencesModalOpen(false)}
                     className="rounded-full border border-[#d8ccb6] bg-white px-5 py-2.5 text-sm font-semibold text-[#4d5b4d] shadow-sm transition-transform hover:-translate-y-0.5"
@@ -1348,18 +1435,20 @@ export default function YesOrNoPage() {
                               Preview
                             </button>
                             <button
-                              onClick={() => void handleLoadSavedPromptSet(set)}
+                              onClick={() => handleLoadSavedPromptSet(set)}
                               className="px-4 py-2 rounded-full bg-[var(--color-primary)] text-white text-sm font-semibold shadow hover:-translate-y-0.5 transition-transform"
                             >
                               Load
                             </button>
-                            <button
-                              onClick={() => confirmDeletePromptSet(set)}
-                              disabled={deletingPromptSetId === set.id}
-                              className="px-4 py-2 rounded-full bg-white border border-red-200 text-red-600 text-sm font-semibold hover:-translate-y-0.5 transition-transform disabled:opacity-60"
-                            >
-                              {deletingPromptSetId === set.id ? "Deleting..." : "Delete"}
-                            </button>
+                            {savedPromptSetsScope === "own" ? (
+                              <button
+                                onClick={() => confirmDeletePromptSet(set)}
+                                disabled={deletingPromptSetId === set.id}
+                                className="px-4 py-2 rounded-full bg-white border border-red-200 text-red-600 text-sm font-semibold hover:-translate-y-0.5 transition-transform disabled:opacity-60"
+                              >
+                                {deletingPromptSetId === set.id ? "Deleting..." : "Delete"}
+                              </button>
+                            ) : null}
                           </div>
                         </div>
                       ))}
@@ -1387,6 +1476,143 @@ export default function YesOrNoPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {savePromptModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 py-8">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-yes-no-title"
+            className="relative w-full max-w-lg rounded-[2rem] border border-[#dfe5d9] bg-white p-6 shadow-[0_24px_70px_rgba(47,58,47,0.22)] sm:p-7"
+          >
+            <button
+              type="button"
+              onClick={() => setSavePromptModalOpen(false)}
+              disabled={savingPromptSet}
+              className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+              aria-label="Close dialog"
+            >
+              ×
+            </button>
+
+            <div className="pr-10">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#6f895f]">Save Yes/No set</p>
+              <h2 id="save-yes-no-title" className="mt-2 text-2xl font-semibold text-[#2f3a2f]">Save Yes/No Set</h2>
+              <p className="mt-2 text-sm leading-6 text-[#687268]">
+                Save these {tray.length} cards, sentences, and answers so the activity is ready to reuse.
+              </p>
+            </div>
+
+            <form
+              className="mt-6"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!savingPromptSet) void handleSavePromptSet();
+              }}
+            >
+              <label htmlFor="yes-no-save-name" className="text-sm font-semibold text-[#384638]">Set name</label>
+              <input
+                id="yes-no-save-name"
+                type="text"
+                value={savePromptName}
+                onChange={(event) => {
+                  setSavePromptName(event.target.value);
+                  if (savePromptNameError) setSavePromptNameError(null);
+                }}
+                placeholder="For example, Animals: Yes or No"
+                autoFocus
+                disabled={savingPromptSet}
+                aria-invalid={Boolean(savePromptNameError)}
+                className={`mt-2 w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 disabled:bg-slate-50 ${
+                  savePromptNameError
+                    ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                    : "border-[#d7ddd1] focus:border-[#86a96a] focus:ring-[#e5efdf]"
+                }`}
+              />
+              {savePromptNameError ? <p className="mt-2 text-sm text-red-600">{savePromptNameError}</p> : null}
+
+              <div className="mt-5 rounded-2xl border border-[#dfe5d9] bg-[#f7faf5] p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={promptSetIsPublic}
+                    onChange={() => setPromptSetIsPublic((current) => !current)}
+                    disabled={savingPromptSet}
+                    aria-label="Make Yes/No set public"
+                    className="mt-0.5 h-5 w-5 rounded border-[#b8c5b2] accent-[#6f895f]"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-[#384638]">
+                      {promptSetIsPublic ? "Public" : "Private"}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-[#687268]">
+                      {promptSetIsPublic
+                        ? "Other signed-in teachers can discover and load this set."
+                        : "Only you can access this set."}
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              {savedPromptSetsError ? <p className="mt-3 text-sm text-red-600">{savedPromptSetsError}</p> : null}
+
+              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSavePromptModalOpen(false)}
+                  disabled={savingPromptSet}
+                  className="btn btn-secondary px-5 py-2.5 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPromptSet || !savePromptName.trim() || tray.length === 0}
+                  className="btn btn-primary px-5 py-2.5 disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  {savingPromptSet ? "Saving…" : promptSetId ? "Update set" : "Save set"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+
+      {pendingLoadPromptSet && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="replace-yes-no-tray-title"
+            className="w-full max-w-md rounded-[2rem] border border-[#eadfcb] bg-white p-6 shadow-2xl"
+          >
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-amber-700">Change lesson tray</p>
+            <h3 id="replace-yes-no-tray-title" className="mt-2 text-2xl font-bold text-gray-900">Load a different card set?</h3>
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              Loading <span className="font-semibold text-gray-900">{pendingLoadPromptSet.set.name}</span> will change the cards in your lesson tray to the cards saved in this set.
+            </p>
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Your current tray will be replaced. The saved Yes/No set itself will not be changed.
+            </div>
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingLoadPromptSet(null)}
+                className="btn btn-secondary px-5 py-2.5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => applySavedPromptSet(pendingLoadPromptSet.set, pendingLoadPromptSet.preserveSavedId)}
+                className="rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700"
+              >
+                Change tray and load set
+              </button>
+            </div>
+          </section>
         </div>
       )}
 

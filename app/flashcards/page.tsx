@@ -408,12 +408,34 @@ export default function FlashcardsPage() {
             router.push("/games");
           } },
         ] : [
+          { label: "Lesson Plans", onClick: () => {
+            persistLessonTray();
+            router.push("/lessons");
+          } },
           { label: "Printables", onClick: () => {
             persistLessonTray();
             router.push("/printables?from=flashcards");
           } },
         ]}
       />
+
+      {isGuest ? (
+        <section className="border-b border-[#dce6d5] bg-[#f2f7ee]">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#40533b]">Use Classendo without signing up</p>
+              <p className="mt-1 text-xs leading-5 text-[#63705f]">
+                Choose up to 6 free Image 1 flashcards, then use them in Classroom Mode, Printables, or Lesson Plans. Your temporary lesson lasts for this browser session.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <button type="button" onClick={() => { persistLessonTray(); router.push("/flashcards/classroom"); }} className="btn btn-secondary px-3 py-1.5 text-xs">Classroom</button>
+              <button type="button" onClick={() => { persistLessonTray(); router.push("/printables?from=flashcards"); }} className="btn btn-secondary px-3 py-1.5 text-xs">Printables</button>
+              <button type="button" onClick={() => { persistLessonTray(); router.push("/lessons"); }} className="btn btn-primary px-3 py-1.5 text-xs">Lesson Plans</button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <LessonTrayBar
         editingLessonSetId={editingLessonSetId}
@@ -434,6 +456,10 @@ export default function FlashcardsPage() {
         onRemoveFromTray={removeFromLessonTray}
         onOpenSaveModal={() => setShowSaveModal(true)}
         onGuestSave={() => setGuestPrompt("save")}
+        onGoLessonPlans={() => {
+          persistLessonTray();
+          router.push("/lessons");
+        }}
         onGoWorksheets={() => {
           setOpenDropdown(null);
           router.push("/worksheets");

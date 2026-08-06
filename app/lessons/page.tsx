@@ -1,16 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import LessonPlanSection from "@/components/lessons/LessonPlanSection";
 import { useAuth } from "@/components/AuthProvider";
 import { loadLessonsWithAccessFromServer } from "@/lib/lessons/repository";
-import { LessonRecord } from "@/lib/lessons/types";
-import { writeLessonTray } from "@/lib/lessons/tray";
+import { LessonCard, LessonRecord } from "@/lib/lessons/types";
+import { subscribeToLessonTray, writeLessonTray } from "@/lib/lessons/tray";
 import {
   DEFAULT_LESSON_PLAN_PREFERENCES,
   EMPTY_LESSON_PLAN_DRAFT,
+  GUEST_LESSON_PLAN_DRAFT_KEY,
   LESSON_PLAN_DRAFT_KEY,
   LessonAgeGroup,
   LessonClassFormat,
@@ -24,42 +26,91 @@ import {
 } from "@/lib/lesson-plans/types";
 import { buildLessonPlanDraft } from "@/lib/lesson-plans/generate";
 
-function readDraft(): LessonPlanDraft {
+type LessonPlanStorageScope = "account" | "guest";
+
+function storageForScope(scope: LessonPlanStorageScope) {
+  return scope === "guest" ? window.sessionStorage : window.localStorage;
+}
+
+function draftKeyForScope(scope: LessonPlanStorageScope) {
+  return scope === "guest" ? GUEST_LESSON_PLAN_DRAFT_KEY : LESSON_PLAN_DRAFT_KEY;
+}
+
+function emptyDraftForScope(scope: LessonPlanStorageScope): LessonPlanDraft {
+  return scope === "guest"
+    ? {
+        ...EMPTY_LESSON_PLAN_DRAFT,
+        preferences: { ...DEFAULT_LESSON_PLAN_PREFERENCES },
+      }
+    : EMPTY_LESSON_PLAN_DRAFT;
+}
+
+function readDraft(scope: LessonPlanStorageScope): LessonPlanDraft {
   try {
-    const raw = localStorage.getItem(LESSON_PLAN_DRAFT_KEY);
-    if (!raw) return EMPTY_LESSON_PLAN_DRAFT;
+    const raw = storageForScope(scope).getItem(draftKeyForScope(scope));
+    if (!raw) return emptyDraftForScope(scope);
     const parsed = JSON.parse(raw);
+    const preferences = {
+      ...DEFAULT_LESSON_PLAN_PREFERENCES,
+      ...(parsed.preferences ?? {}),
+    };
     return {
       ...EMPTY_LESSON_PLAN_DRAFT,
       ...parsed,
-      preferences: {
-        ...DEFAULT_LESSON_PLAN_PREFERENCES,
-        ...(parsed.preferences ?? {}),
-      },
+      preferences,
       stages: Array.isArray(parsed.stages) ? parsed.stages : [],
       recommendedTools: Array.isArray(parsed.recommendedTools) ? parsed.recommendedTools : [],
     };
   } catch {
-    return EMPTY_LESSON_PLAN_DRAFT;
+    return emptyDraftForScope(scope);
   }
 }
 
+function guestLessonId(cards: LessonCard[]) {
+  const signature = cards.map((card) => `${card.id}:${card.word}:${card.image ?? ""}`).join("|");
+  let hash = 2166136261;
+  for (let index = 0; index < signature.length; index += 1) {
+    hash ^= signature.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `guest-session-${(hash >>> 0).toString(36)}`;
+}
+
+function createGuestLesson(cards: LessonCard[]): LessonRecord {
+  return {
+    id: guestLessonId(cards),
+    name: "My Guest Lesson",
+    cards,
+  };
+}
+
 export default function LessonsPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<LessonPlanDraft>(EMPTY_LESSON_PLAN_DRAFT);
+  const [draftHydrated, setDraftHydrated] = useState(false);
   const [isPdfExporting, setIsPdfExporting] = useState(false);
+  const isGuest = !authLoading && !user;
+  const storageScope: LessonPlanStorageScope = user ? "account" : "guest";
 
   useEffect(() => {
-    setDraft(readDraft());
-  }, []);
+    if (authLoading) return;
+    setDraftHydrated(false);
+    setDraft(readDraft(user ? "account" : "guest"));
+    setDraftHydrated(true);
+  }, [authLoading, user]);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user?.id) {
-      setLessons([]);
+      const syncGuestLesson = (cards: LessonCard[]) => {
+        setLessons(cards.length > 0 ? [createGuestLesson(cards)] : []);
+      };
+      const unsubscribe = subscribeToLessonTray(syncGuestLesson, "guest");
       setLoading(false);
-      return;
+      return unsubscribe;
     }
 
     let mounted = true;
@@ -80,11 +131,31 @@ export default function LessonsPage() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem(LESSON_PLAN_DRAFT_KEY, JSON.stringify(draft));
-  }, [draft]);
+    if (authLoading || !draftHydrated || loading || user || lessons.length === 0) return;
+    const guestLesson = lessons[0];
+    setDraft((current) => {
+      if (
+        current.selectedLessonId === guestLesson.id
+        && current.stages.length > 0
+      ) {
+        return current;
+      }
+      return buildLessonPlanDraft(
+        guestLesson,
+        current.level,
+        current.variant + 1,
+        current.preferences,
+      );
+    });
+  }, [authLoading, draftHydrated, lessons, loading, user]);
+
+  useEffect(() => {
+    if (!draftHydrated || authLoading) return;
+    storageForScope(storageScope).setItem(draftKeyForScope(storageScope), JSON.stringify(draft));
+  }, [authLoading, draft, draftHydrated, storageScope]);
 
   const selectedLesson = useMemo(
     () => lessons.find((lesson) => lesson.id === draft.selectedLessonId) ?? null,
@@ -148,25 +219,30 @@ export default function LessonsPage() {
   }
 
   function clearDraft() {
-    setDraft(EMPTY_LESSON_PLAN_DRAFT);
-    localStorage.removeItem(LESSON_PLAN_DRAFT_KEY);
+    setDraft({
+      ...EMPTY_LESSON_PLAN_DRAFT,
+      preferences: DEFAULT_LESSON_PLAN_PREFERENCES,
+    });
+    storageForScope(storageScope).removeItem(draftKeyForScope(storageScope));
   }
 
   function openLessonInPrintables() {
     if (!selectedLesson) return;
-    writeLessonTray(selectedLesson.cards);
-    window.location.href = "/printables?from=dashboard";
+    writeLessonTray(selectedLesson.cards, storageScope);
+    window.location.href = "/printables?from=lessons";
   }
 
   function openLessonInFlashcards() {
     if (!selectedLesson) return;
-    writeLessonTray(selectedLesson.cards);
-    window.location.href = `/flashcards?lesson_set_id=${selectedLesson.id}`;
+    writeLessonTray(selectedLesson.cards, storageScope);
+    window.location.href = isGuest
+      ? "/flashcards"
+      : `/flashcards?lesson_set_id=${selectedLesson.id}`;
   }
 
   function openLessonInClassroom() {
     if (!selectedLesson) return;
-    writeLessonTray(selectedLesson.cards);
+    writeLessonTray(selectedLesson.cards, storageScope);
     window.location.href = "/flashcards/classroom?from=lessons";
   }
 
@@ -218,26 +294,41 @@ export default function LessonsPage() {
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}
-        secondaryItems={[
+        secondaryItems={user ? [
           { label: "Flashcards", href: "/flashcards" },
           { label: "Dashboard", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
+        ] : [
+          { label: "Flashcards", href: "/flashcards" },
+          { label: "Printables", href: "/printables" },
         ]}
       />
 
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32 grid grid-cols-12 gap-6">
+        {isGuest ? (
+          <section className="col-span-12 rounded-2xl border border-[#d7e3d0] bg-[#f2f7ee] px-5 py-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#40533b]">Guest Lesson Plan — no sign-up needed</p>
+            <p className="mt-1 text-xs leading-5 text-[#63705f]">
+              Build and export a lesson plan from up to 6 free Image 1 flashcards. Your cards and draft are temporary for this browser session. Classroom Mode and basic Printables are also available without an account; saving, Community, games, worksheets, and premium images require an account.
+            </p>
+          </section>
+        ) : null}
         <aside className="col-span-12 lg:col-span-4 space-y-4">
           <div className="bg-white rounded-2xl border shadow-sm p-5">
-            <h2 className="text-xl font-semibold mb-2">Choose a Lesson</h2>
+            <h2 className="text-xl font-semibold mb-2">{isGuest ? "Your Guest Lesson" : "Choose a Lesson"}</h2>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">
-              Start from a saved lesson so the plan, printables, and classroom flow stay connected.
+              {isGuest
+                ? "Use the temporary cards you selected in Flashcards to generate a classroom-ready plan."
+                : "Start from a saved lesson so the plan, printables, and classroom flow stay connected."}
             </p>
 
             {loading ? (
               <div className="text-sm text-[var(--color-text-muted)]">Loading saved lessons…</div>
             ) : lessons.length === 0 ? (
               <div className="text-sm text-[var(--color-text-muted)]">
-                No saved lessons yet. Build one in Flashcards first.
+                {isGuest ? (
+                  <>Your temporary tray is empty. <Link href="/flashcards" className="font-semibold text-[#58734d] underline">Choose up to 6 free flashcards</Link> first.</>
+                ) : "No saved lessons yet. Build one in Flashcards first."}
               </div>
             ) : (
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
@@ -534,6 +625,11 @@ export default function LessonsPage() {
                       </label>
                     </div>
                   </div>
+                  {isGuest ? (
+                    <p className="mt-3 rounded-xl bg-[#f2f7ee] px-3 py-2 text-xs leading-5 text-[#63705f]">
+                      Your plan can recommend Classendo games and worksheets. <Link href="/signup?next=%2Flessons" className="font-semibold text-[#4f7046] underline">Create a free account</Link> to open those recommended tools; Classroom Mode and basic Printables remain available as a guest.
+                    </p>
+                  ) : null}
                 </div>
               </details>
 
@@ -561,6 +657,7 @@ export default function LessonsPage() {
                               {stage.tool ? (
                                 <span className="rounded-full border border-[rgba(127,163,106,0.22)] bg-[rgba(127,163,106,0.10)] px-3 py-1 text-xs font-semibold text-[#52634a]">
                                   {stage.tool.label}
+                                  {isGuest && (stage.tool.kind === "game" || stage.tool.kind === "worksheet") ? " · Account required" : ""}
                                 </span>
                               ) : null}
                             </div>
@@ -628,7 +725,7 @@ export default function LessonsPage() {
                                 {tool.label}
                               </span>
                               <span className="rounded-full bg-white px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
-                                {tool.kind}
+                                {tool.kind}{isGuest && (tool.kind === "game" || tool.kind === "worksheet") ? " · sign up to use" : ""}
                               </span>
                             </div>
                             <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">

@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
 export default async function PreviewPage({ params }: PreviewPageProps) {
   const { slug } = await params;
 
-  if (slug === "flashcards" || slug === "printables") {
+  if (slug === "flashcards" || slug === "printables" || slug === "lessons") {
     redirect(`/${slug}`);
   }
 

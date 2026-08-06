@@ -1,4 +1,5 @@
 import { LessonCard } from "@/lib/lessons/types";
+import type { LessonContentType } from "@/lib/lessons/types";
 
 export type WorksheetType =
   | "crossword"
@@ -66,6 +67,14 @@ export type SavedWorksheetRecord = {
   draft: WorksheetDraft;
   createdAt?: string;
   updatedAt?: string;
+  lastUsed?: string | null;
+  useCount?: number;
+  downloadCount?: number;
+  copiedFrom?: string | null;
+  isFavorite?: boolean;
+  archivedAt?: string | null;
+  contentTypes?: LessonContentType[];
+  tags?: string[];
 };
 
 export const DEFAULT_WORKSHEET_DRAFT: WorksheetDraft = {

@@ -8,6 +8,7 @@ export type CommunityLessonSet = {
   download_count?: number;
   tags?: string[];
   content_types?: CommunityContentType[];
+  copied_from?: string | null;
 };
 
 export type CommunityCardPreview = {
@@ -22,3 +23,5 @@ export type CommunityToast = {
   message: string;
   action?: React.ReactNode;
 } | null;
+
+export type CommunityLibraryKind = "lesson_sets" | "worksheets";

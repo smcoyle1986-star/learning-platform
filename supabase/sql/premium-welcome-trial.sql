@@ -134,25 +134,40 @@ create or replace function public.has_premium_access(target_user_id uuid)
 returns boolean
 language sql
 stable
-set search_path = public
+security definer
+set search_path = ''
 as $$
-  select exists (
-    select 1
-    from public.user_subscriptions us
-    where us.user_id = target_user_id
-      and (
-        (
-          lower(coalesce(us.subscription_tier, 'free')) = 'premium'
-          and lower(coalesce(us.subscription_status, '')) in ('trialing', 'active', 'past_due')
+  select
+    exists (
+      select 1
+      from public.user_subscriptions us
+      where us.user_id = target_user_id
+        and (
+          (
+            lower(coalesce(us.subscription_tier, 'free')) = 'premium'
+            and lower(coalesce(us.subscription_status, '')) in ('trialing', 'active', 'past_due')
+          )
+          or (
+            us.premium_trial_used
+            and us.premium_trial_started_at is not null
+            and us.premium_trial_ends_at > now()
+          )
         )
-        or (
-          us.premium_trial_used
-          and us.premium_trial_started_at is not null
-          and us.premium_trial_ends_at > now()
-        )
-      )
-  );
+    )
+    or exists (
+      select 1
+      from public.admin_user_entitlements aue
+      where aue.user_id = target_user_id
+        and aue.entitlement = 'premium'
+        and aue.revoked_at is null
+        and (aue.expires_at is null or aue.expires_at > now())
+    );
 $$;
+
+revoke all on function public.has_premium_access(uuid)
+  from public, anon, authenticated;
+grant execute on function public.has_premium_access(uuid)
+  to authenticated, service_role;
 
 -- Assign the six most recently used/updated sets once on entry to Basic. The
 -- assignment remains stable, preventing unlimited rotation of locked sets.
