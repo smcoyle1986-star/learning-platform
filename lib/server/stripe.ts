@@ -61,3 +61,7 @@ export function getAppBaseUrl() {
 
   return "http://localhost:3000";
 }
+
+export function isStripeManagedPaymentsEnabled() {
+  return getOptionalEnv("STRIPE_MANAGED_PAYMENTS_ENABLED")?.toLowerCase() === "true";
+}

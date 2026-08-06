@@ -4,7 +4,12 @@ import { getBillingAccessForUser } from "@/lib/billing/access";
 import { upsertStripeCustomerLink } from "@/lib/billing/subscription-sync";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
-import { getAppBaseUrl, getStripePriceId, getStripeServer } from "@/lib/server/stripe";
+import {
+  getAppBaseUrl,
+  getStripePriceId,
+  getStripeServer,
+  isStripeManagedPaymentsEnabled,
+} from "@/lib/server/stripe";
 
 export const runtime = "nodejs";
 
@@ -49,11 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = getAppBaseUrl();
+    const managedPaymentsEnabled = isStripeManagedPaymentsEnabled();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      adaptive_pricing: {
-        enabled: true,
-      },
+      ...(managedPaymentsEnabled
+        ? { managed_payments: { enabled: true } }
+        : { adaptive_pricing: { enabled: true } }),
       customer: customerId,
       client_reference_id: user.id,
       success_url: `${baseUrl}/landing?premium=welcome&session_id={CHECKOUT_SESSION_ID}`,
