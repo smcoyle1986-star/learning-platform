@@ -1,4 +1,6 @@
 /.git/
+/.vercel/
+/.env*
 /.next/
 /node_modules/
 /tmp/
