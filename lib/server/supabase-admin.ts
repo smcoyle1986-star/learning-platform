@@ -2,6 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 
 import { getEnv } from "@/lib/server/env";
 
+// The project does not yet have generated Supabase database types. Keep this
+// untyped at the single service-role boundary instead of spreading casts across
+// every trusted server query.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LooseDatabase = any;
 
 let cachedClient: ReturnType<typeof createClient<LooseDatabase>> | null = null;

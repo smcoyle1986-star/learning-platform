@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to track game play:", error);
     return NextResponse.json(
-      { error: error?.message || "Failed to track game play." },
+      { error: error instanceof Error ? error.message : "Failed to track game play." },
       { status: 500 }
     );
   }

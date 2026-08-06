@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 
-import { assertCanCreateDashboardResource } from "@/lib/billing/access";
+import { assertCanCreateDashboardResource, getBillingAccessForUser } from "@/lib/billing/access";
+import { getRequestUser } from "@/lib/server/request-auth";
+import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 type AiSaveRequest = {
   title?: string;
-  cards?: any[];
+  cards?: unknown[];
   prompt?: string;
   source?: string;
 };
@@ -13,30 +14,43 @@ type AiSaveRequest = {
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
 /* Simple card normalizer */
-function normalizeCard(raw: any, idx?: number) {
+type NormalizedCard = {
+  id: string;
+  word: string;
+  image: string | null;
+  forms: Record<string, unknown> | null;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function normalizeCard(raw: unknown, idx?: number): NormalizedCard {
+  const source = asRecord(raw);
+  const forms = asRecord(source.forms);
   const id =
     String(
-      raw?.id ??
-        raw?.uid ??
-        raw?.card_id ??
-        raw?.lesson_card_id ??
-        raw?.word ??
+      source.id ??
+        source.uid ??
+        source.card_id ??
+        source.lesson_card_id ??
+        source.word ??
         `${Date.now()}-${idx ?? 0}`
     );
   const word = String(
-    raw?.word ??
-      raw?.front ??
-      raw?.lemma ??
-      raw?.text ??
-      raw?.forms?.singular ??
-      raw?.forms?.base ??
+    source.word ??
+      source.front ??
+      source.lemma ??
+      source.text ??
+      forms.singular ??
+      forms.base ??
       ""
   );
-  const image = raw?.image ?? raw?.image_url ?? raw?.img ?? raw?.back ?? null;
-  const forms = raw?.forms ?? null;
-  return { id, word, image, forms, raw };
+  const rawImage = source.image ?? source.image_url ?? source.img ?? source.back;
+  const image = typeof rawImage === "string" ? rawImage : null;
+  return { id, word, image, forms: Object.keys(forms).length ? forms : null };
 }
-function normalizeCards(arr: any[]) {
+function normalizeCards(arr: unknown[]) {
   if (!Array.isArray(arr)) return [];
   return arr.map((r, i) => normalizeCard(r, i));
 }
@@ -58,8 +72,10 @@ async function callOpenAI(prompt: string) {
     const text = await res.text();
     throw new Error(`OpenAI request failed: ${res.status} ${text}`);
   }
-  const body = await res.json();
-  const assistant = body?.choices?.[0]?.message?.content ?? "";
+  const body = asRecord(await res.json());
+  const choices = Array.isArray(body.choices) ? body.choices : [];
+  const firstChoice = asRecord(choices[0]);
+  const assistant = String(asRecord(firstChoice.message).content ?? "");
   try {
     const parsed = JSON.parse(assistant);
     if (!Array.isArray(parsed)) throw new Error("OpenAI did not return an array");
@@ -73,37 +89,38 @@ async function callOpenAI(prompt: string) {
 
 export async function POST(req: Request) {
   try {
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > 256 * 1024) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
     const body = (await req.json()) as AiSaveRequest;
 
     if (!body.title && !body.prompt) {
       return NextResponse.json({ error: "title or prompt required" }, { status: 400 });
     }
 
-    // server-side Supabase client (service role)
-    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return NextResponse.json({ error: "Missing Supabase server keys" }, { status: 500 });
-    }
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    // Require Authorization Bearer token so we can derive the user (safer than trusting body.teacher_id)
-    const authHeader = req.headers.get("authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
-    if (!token) return NextResponse.json({ error: "Authorization Bearer token required" }, { status: 401 });
-
-    const userRes: any = await supabase.auth.getUser(token);
-    const user = userRes?.data?.user ?? null;
-    if (!user || !user.id) return NextResponse.json({ error: "Invalid token / user not found" }, { status: 401 });
+    const user = await getRequestUser(req);
+    if (!user?.id) return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
+    const supabase = getSupabaseAdmin();
     const teacherId = user.id;
 
     await assertCanCreateDashboardResource(supabase, teacherId);
 
     // Build cards array (client-sent or generated)
-    let cards: any[] = Array.isArray(body.cards) ? body.cards : [];
+    let cards: unknown[] = Array.isArray(body.cards) ? body.cards : [];
     if ((!cards || cards.length === 0) && body.prompt) {
+      if (body.prompt.length > 2_000) {
+        return NextResponse.json({ error: "AI prompts must be 2,000 characters or fewer." }, { status: 400 });
+      }
+      const access = await getBillingAccessForUser(supabase, teacherId);
+      if (!access.isPremium) {
+        return NextResponse.json({ error: "Premium is required for AI-generated sets." }, { status: 403 });
+      }
       const generated = await callOpenAI(body.prompt);
       cards = Array.isArray(generated) ? generated : [];
+    }
+    if (cards.length > 100) {
+      return NextResponse.json({ error: "Sets can contain up to 100 cards." }, { status: 400 });
     }
     const normalized = normalizeCards(cards || []);
 
@@ -124,11 +141,11 @@ export async function POST(req: Request) {
       console.error("Failed to insert lesson_set:", lessonErr);
       throw lessonErr || new Error("Failed to insert lesson_set");
     }
-    const lessonSetId = (lessonData as any).id;
+    const lessonSetId = String(lessonData.id);
 
     // Insert cards rows; rollback lesson_set if cards insert fails
     if (normalized.length > 0) {
-      const cardsToInsert = normalized.map((c: any, idx: number) => ({
+      const cardsToInsert = normalized.map((c, idx) => ({
         lesson_set_id: lessonSetId,
         front: c.word ?? "",
         back: c.image ?? null,
@@ -149,9 +166,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, id: String(lessonSetId), cards: normalized });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI save-set error:", err);
-    const message = err?.message ?? "Unknown error";
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { error: message },
       { status: /upgrade to premium|free accounts can save/i.test(message) ? 403 : 500 }

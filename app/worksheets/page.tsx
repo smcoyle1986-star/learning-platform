@@ -486,6 +486,7 @@ function WorksheetsPageContent() {
                   </div>
                 ) : selectedType ? (
                 <WorksheetOptionsPanel
+                  key={selectedType.id}
                   worksheetType={selectedType}
                   draft={draft}
                   onUpdate={updateDraft}

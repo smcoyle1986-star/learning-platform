@@ -190,20 +190,15 @@ export default function LandingCarousel() {
     return () => window.clearInterval(id);
   }, [slides.length, rotationKey]);
 
-  useEffect(() => {
-    if (activeIndex >= slides.length) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, slides.length]);
-
   const carouselSlides = useMemo(() => (slides.length > 0 ? slides : FALLBACK_SLIDES), [slides]);
-  const activeSlide = carouselSlides[activeIndex] ?? carouselSlides[0];
+  const effectiveActiveIndex = activeIndex < carouselSlides.length ? activeIndex : 0;
+  const activeSlide = carouselSlides[effectiveActiveIndex];
 
   return (
     <div className="flex h-[420px] flex-col rounded-3xl bg-gradient-to-br from-[#dfe8d1] to-[#cfd9c1] p-4 shadow-[0_18px_40px_rgba(54,64,46,0.12)] ring-1 ring-black/5">
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[2rem]">
         {carouselSlides.map((slide, index) => {
-          const active = index === activeIndex;
+          const active = index === effectiveActiveIndex;
           return (
             <div
               key={slide.path}
@@ -245,7 +240,7 @@ export default function LandingCarousel() {
                   setRotationKey((current) => current + 1);
                 }}
                 className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                  index === activeIndex ? "scale-110 bg-[#4f6f52]" : "bg-white/80 hover:bg-white"
+                  index === effectiveActiveIndex ? "scale-110 bg-[#4f6f52]" : "bg-white/80 hover:bg-white"
                 }`}
                 aria-label={`Show slide ${index + 1}`}
               />

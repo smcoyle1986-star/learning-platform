@@ -75,7 +75,9 @@ export default function WhackAWordPage() {
   function getAudioCtx() {
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
       } catch {
         audioCtxRef.current = null;
       }
@@ -106,13 +108,18 @@ export default function WhackAWordPage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length) {
-          const normalized: Card[] = parsed.map((c: any, i: number) => ({
+          const normalized: Card[] = parsed.map((c: Record<string, unknown>, i: number) => ({
             id: String(c.id ?? c.word ?? `c-${i}`),
             word: String(c.word ?? c.text ?? c.label ?? ""),
-            image: c.image ?? null,
+            image: typeof c.image === "string" ? c.image : null,
           }));
-          setCards(normalized);
-          setGameState("preprompt"); // if cards exist, go to preprompt automatically
+          queueMicrotask(() => {
+            setCards(normalized);
+            setTargetCard(normalized[Math.floor(Math.random() * normalized.length)]);
+            setTeacherMarkedCorrect(null);
+            setShowCardReveal(false);
+            setGameState("preprompt");
+          });
           return;
         }
       }
@@ -120,25 +127,31 @@ export default function WhackAWordPage() {
       // ignore parse errors
     }
     // fallback sample set (small)
-    setCards([
+    const fallbackCards: Card[] = [
       { id: "apple", word: "apple", image: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?w=600&q=60" },
       { id: "ball", word: "ball", image: "https://images.unsplash.com/photo-1533134486753-c1e2b9b4d3d2?w=600&q=60" },
       { id: "cat", word: "cat", image: "https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&q=60" },
       { id: "dog", word: "dog", image: "https://images.unsplash.com/photo-1507149833265-60c372daea22?w=600&q=60" },
       { id: "fish", word: "fish", image: "https://images.unsplash.com/photo-1503602642458-232111445657?w=600&q=60" },
-    ]);
-    setGameState("preprompt");
+    ];
+    queueMicrotask(() => {
+      setCards(fallbackCards);
+      setTargetCard(fallbackCards[Math.floor(Math.random() * fallbackCards.length)]);
+      setTeacherMarkedCorrect(null);
+      setShowCardReveal(false);
+      setGameState("preprompt");
+    });
   }, []);
 
-  // choose a random target and show pre-prompt
-  useEffect(() => {
-    if (gameState !== "preprompt") return;
-    if (!cards || cards.length === 0) return;
-    const idx = Math.floor(Math.random() * cards.length);
-    setTargetCard(cards[idx]);
+  function prepareRound(sourceCards = cards) {
+    if (sourceCards.length === 0) return;
+    const idx = Math.floor(Math.random() * sourceCards.length);
+    setCards(sourceCards);
+    setTargetCard(sourceCards[idx]);
     setTeacherMarkedCorrect(null);
     setShowCardReveal(false);
-  }, [gameState, cards]);
+    setGameState("preprompt");
+  }
 
   // start round
   function startRound(teacherSaysCorrect: boolean) {
@@ -196,7 +209,7 @@ export default function WhackAWordPage() {
 
   // helper: start new round from summary or idle
   function beginPreprompt() {
-    setGameState("preprompt");
+    prepareRound();
   }
 
   // cleanup intervals/timeouts on unmount
@@ -258,7 +271,7 @@ export default function WhackAWordPage() {
               <button className={`px-2 py-1 rounded ${!useImages ? "bg-[#A7F3D0]" : "bg-white/80"}`} onClick={() => setUseImages(false)}>Words</button>
             </div>
             <div className="text-sm text-slate-600">Difficulty:</div>
-            <select className="px-2 py-1 rounded" value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
+            <select className="px-2 py-1 rounded" value={difficulty} onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}>
               <option value="easy">Easy</option>
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
@@ -335,7 +348,7 @@ export default function WhackAWordPage() {
           <div className="text-sm text-slate-600">Rounds are short and calm — teacher marks the pre-round prompt.</div>
           <div className="flex items-center gap-3">
             {gameState === "idle" && (
-              <button className="px-4 py-2 bg-[#A7F3D0] rounded" onClick={() => setGameState("preprompt")}>Prepare Round</button>
+              <button className="px-4 py-2 bg-[#A7F3D0] rounded" onClick={() => prepareRound()}>Prepare Round</button>
             )}
 
             {gameState === "summary" && (
@@ -343,7 +356,7 @@ export default function WhackAWordPage() {
                 className="px-4 py-2 bg-[#C7E7FF] rounded"
                 onClick={() => {
                   // new round: pick a new target
-                  setGameState("preprompt");
+                  prepareRound();
                 }}
               >
                 New Round
@@ -413,7 +426,7 @@ export default function WhackAWordPage() {
                 className="px-4 py-2 bg-green-600 text-white rounded"
                 onClick={() => {
                   // prepare new round
-                  setGameState("preprompt");
+                  prepareRound();
                 }}
               >
                 New Round

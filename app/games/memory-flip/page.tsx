@@ -56,7 +56,9 @@ export default function MemoryFlipPage() {
   function getAudioCtx() {
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
       } catch {
         audioCtxRef.current = null;
       }
@@ -157,10 +159,10 @@ export default function MemoryFlipPage() {
         return;
       }
       const normalized = parsed
-        .map((c: any, i: number) => {
+        .map((c: Record<string, unknown>, i: number) => {
           const word = String(c.word ?? c.text ?? c.label ?? c.name ?? c.title ?? "");
           const id = String(c.id ?? word ?? `tray-${i}`);
-          const image = c.image ?? c.img ?? null;
+          const image = typeof c.image === "string" ? c.image : typeof c.img === "string" ? c.img : null;
           return { id, word, image };
         })
         .filter((x) => x.word);
@@ -391,7 +393,9 @@ export default function MemoryFlipPage() {
 
       generatorAwardTimeoutRef.current = window.setTimeout(async () => {
         await loadConfetti();
-        const confettiFn = (window as any).confetti;
+        const confettiFn = (window as typeof window & {
+          confetti?: (options: Record<string, unknown>) => void;
+        }).confetti;
         if (typeof confettiFn === "function") confettiFn({ particleCount: 80, spread: 90, origin: { y: 0.5 } });
 
         const idx = activeTeamIndexRef.current;
@@ -1027,11 +1031,12 @@ export default function MemoryFlipPage() {
 
 /* ---------- helpers (single definitions) ---------- */
 
-function normalizePOS(raw: any): TrayCard["partOfSpeech"] | null {
+function normalizePOS(raw: unknown): TrayCard["partOfSpeech"] | null {
   if (!raw) return null;
   const candidates: string[] = [];
   const keys = ["partOfSpeech", "part_of_speech", "pos", "type", "category", "tag", "posTag", "pos_tag"];
-  for (const k of keys) if (raw[k]) candidates.push(String(raw[k]));
+  const record = typeof raw === "object" ? raw as Record<string, unknown> : {};
+  for (const k of keys) if (record[k]) candidates.push(String(record[k]));
   if (typeof raw === "string") candidates.push(raw);
   for (let c of candidates) {
     c = c.toLowerCase().trim();
@@ -1044,10 +1049,11 @@ function normalizePOS(raw: any): TrayCard["partOfSpeech"] | null {
   return null;
 }
 
-function inferPOSFromFields(obj: any): TrayCard["partOfSpeech"] | null {
-  if (!obj) return null;
-  if (obj.prepositionType) return "preposition";
-  if (obj.countability) return "noun";
+function inferPOSFromFields(obj: unknown): TrayCard["partOfSpeech"] | null {
+  if (!obj || typeof obj !== "object") return null;
+  const record = obj as Record<string, unknown>;
+  if (record.prepositionType) return "preposition";
+  if (record.countability) return "noun";
   return null;
 }
 

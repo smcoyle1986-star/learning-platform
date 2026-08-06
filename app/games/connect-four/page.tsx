@@ -285,11 +285,15 @@ export default function ConnectFourPage() {
       if (!raw) { setTray([]); return; }
       const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map((c: any, i: number) => ({
+          const normalized = parsed.map((c: Record<string, unknown>, i: number) => ({
             id: String(c.id ?? c.word ?? `t-${i}`),
             word: String(c.word ?? c.text ?? c.label ?? ""),
-            image: resolveImageUrl(c.image ?? c.image_id ?? c.img),
-            audio: c.audio ?? null,
+            image: resolveImageUrl(
+              typeof c.image === "string" ? c.image
+                : typeof c.image_id === "string" ? c.image_id
+                  : typeof c.img === "string" ? c.img : null,
+            ),
+            audio: typeof c.audio === "string" ? c.audio : null,
           })).filter((x) => x.word);
           setTray(normalized);
       } else setTray([]);
@@ -337,7 +341,11 @@ export default function ConnectFourPage() {
   const musicIntervalRef = useRef<number | null>(null);
   function getAudioCtx() {
     if (!audioCtxRef.current) {
-      try { audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)(); } catch { audioCtxRef.current = null; }
+      try {
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
+      } catch { audioCtxRef.current = null; }
     }
     return audioCtxRef.current;
   }

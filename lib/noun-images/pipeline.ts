@@ -111,8 +111,16 @@ async function saveFinalImageLocally(params: {
   storagePath: string;
   buffer: Buffer;
 }) {
-  const root = getLocalImageRoot();
-  const absolutePath = path.join(root, params.storagePath);
+  const root = process.env.VERCEL
+    ? "/tmp/classendo-generated-nouns"
+    : getLocalImageRoot();
+  const resolvedRoot = path.resolve(root);
+  const absolutePath = path.resolve(
+    path.join(/* turbopackIgnore: true */ resolvedRoot, params.storagePath),
+  );
+  if (!absolutePath.startsWith(`${resolvedRoot}${path.sep}`)) {
+    throw new Error("Generated image path escaped the configured local image directory.");
+  }
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
   fs.writeFileSync(absolutePath, params.buffer);
   return absolutePath;
@@ -407,7 +415,7 @@ export async function loadNounsForGeneration(limit?: number) {
     throw new Error(`Failed to load nouns: ${error.message}`);
   }
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row: { id: string; lemma: string; countability: NounGenerationInput["countability"] }) => ({
     nounId: row.id,
     lemma: row.lemma,
     countability: row.countability,
@@ -431,7 +439,7 @@ export async function loadNounsForTheme(theme: string, limit?: number) {
     throw new Error(`Failed to load nouns for theme "${theme}": ${error.message}`);
   }
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row: { id: string; lemma: string; countability: NounGenerationInput["countability"] }) => ({
     nounId: row.id,
     lemma: row.lemma,
     countability: row.countability,

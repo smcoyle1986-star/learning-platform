@@ -306,10 +306,14 @@ export default function ConquerPage() {
         return;
       }
       const normalized = parsed
-        .map((c: any, i: number) => {
+        .map((c: Record<string, unknown>, i: number) => {
           const word = String(c.word ?? c.text ?? c.label ?? c.name ?? c.title ?? "");
           const id = String(c.id ?? word ?? `conquer-${i}`);
-          const image = resolveImageUrl(c.image ?? c.image_id ?? c.img ?? null);
+          const image = resolveImageUrl(
+            typeof c.image === "string" ? c.image
+              : typeof c.image_id === "string" ? c.image_id
+                : typeof c.img === "string" ? c.img : null,
+          );
           return { id, word, image };
         })
         .filter((card: GameCard) => card.word);

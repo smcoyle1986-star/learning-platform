@@ -26,13 +26,13 @@ import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 /* -------------------------
    Shared game engine types
    ------------------------- */
-export interface GameCard {
+interface GameCard {
   id: string;
   word: string;
   image?: string;
 }
 
-export interface GameEngineProps {
+interface GameEngineProps {
   cards: GameCard[];
   onExit: () => void;
   onStart?: () => void;
@@ -44,7 +44,7 @@ export interface GameEngineProps {
 /* -------------------------
    Minimal reusable components
    ------------------------- */
-export function GameLayout({
+function GameLayout({
   children,
   title,
   subtitle,
@@ -69,7 +69,7 @@ export function GameLayout({
   );
 }
 
-export function GameEngine({ cards, onExit }: GameEngineProps) {
+function GameEngine({ cards, onExit }: GameEngineProps) {
   useEffect(() => {
     return () => {
       // cleanup placeholder for future game logic

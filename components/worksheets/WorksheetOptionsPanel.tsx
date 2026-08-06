@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { WorksheetDraft, WorksheetTypeOption } from "@/lib/worksheets/types";
 
@@ -37,12 +37,6 @@ export default function WorksheetOptionsPanel({
   crosswordFitSummary,
   wordsearchFitSummary,
 }: WorksheetOptionsPanelProps) {
-  const [showBullseyeHelp, setShowBullseyeHelp] = useState(false);
-  const [showSentenceScrambleHelp, setShowSentenceScrambleHelp] = useState(false);
-  const [showTicTacToeHelp, setShowTicTacToeHelp] = useState(false);
-  const [showBattleshipHelp, setShowBattleshipHelp] = useState(false);
-  const [showWordsearchHelp, setShowWordsearchHelp] = useState(false);
-  const [showWritingHelp, setShowWritingHelp] = useState(false);
   const isCrossword = worksheetType.id === "crossword";
   const isBullseye = worksheetType.id === "bullseye";
   const isMatching = worksheetType.id === "matching";
@@ -53,6 +47,12 @@ export default function WorksheetOptionsPanel({
   const isTicTacToe = worksheetType.id === "tic-tac-toe";
   const isBattleship = worksheetType.id === "battleship";
   const isWordsearch = worksheetType.id === "wordsearch";
+  const [showBullseyeHelp, setShowBullseyeHelp] = useState(isBullseye);
+  const [showSentenceScrambleHelp, setShowSentenceScrambleHelp] = useState(isSentenceScramble);
+  const [showTicTacToeHelp, setShowTicTacToeHelp] = useState(isTicTacToe);
+  const [showBattleshipHelp, setShowBattleshipHelp] = useState(isBattleship);
+  const [showWordsearchHelp, setShowWordsearchHelp] = useState(isWordsearch);
+  const [showWritingHelp, setShowWritingHelp] = useState(isWriting);
   const actionButtonClass =
     "btn btn-secondary w-full px-4 py-3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30";
   const chipButtonClass =
@@ -66,30 +66,6 @@ export default function WorksheetOptionsPanel({
       : isWordsearch
         ? "Mix Up the Wordsearch"
         : "Mix Up the Crossword";
-
-  useEffect(() => {
-    if (isBullseye) setShowBullseyeHelp(true);
-  }, [isBullseye]);
-
-  useEffect(() => {
-    if (isSentenceScramble) setShowSentenceScrambleHelp(true);
-  }, [isSentenceScramble]);
-
-  useEffect(() => {
-    if (isTicTacToe) setShowTicTacToeHelp(true);
-  }, [isTicTacToe]);
-
-  useEffect(() => {
-    if (isBattleship) setShowBattleshipHelp(true);
-  }, [isBattleship]);
-
-  useEffect(() => {
-    if (isWordsearch) setShowWordsearchHelp(true);
-  }, [isWordsearch]);
-
-  useEffect(() => {
-    if (isWriting) setShowWritingHelp(true);
-  }, [isWriting]);
 
   return (
     <div className="space-y-4">

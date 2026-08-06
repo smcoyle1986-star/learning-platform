@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+import { AdminAuthorizationError, requireAdmin } from "@/lib/admin/auth";
 
 const REPLICATE_TOKEN = process.env.REPLICATE_API_TOKEN?.trim();
 const REPLICATE_MODEL_VERSION = process.env.REPLICATE_MODEL_VERSION;
@@ -16,7 +18,13 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Supabase env vars missing");
 }
 
-async function createReplicatePrediction(input: any, modelVersion: string) {
+type ReplicatePrediction = {
+  id: string;
+  status: string;
+  output?: unknown;
+};
+
+async function createReplicatePrediction(input: Record<string, unknown>, modelVersion: string) {
   const res = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
     headers: {
@@ -34,7 +42,7 @@ async function createReplicatePrediction(input: any, modelVersion: string) {
     throw new Error(`Replicate create failed: ${res.status} ${text}`);
   }
 
-  return res.json();
+  return res.json() as Promise<ReplicatePrediction>;
 }
 
 async function pollPrediction(predictionId: string, timeoutMs = 120000, intervalMs = 2000) {
@@ -47,7 +55,7 @@ async function pollPrediction(predictionId: string, timeoutMs = 120000, interval
       const text = await res.text();
       throw new Error(`Replicate poll failed: ${res.status} ${text}`);
     }
-    const json = await res.json();
+    const json = await res.json() as ReplicatePrediction;
     if (json.status === "succeeded") return json;
     if (json.status === "failed") throw new Error(`Replicate prediction failed: ${JSON.stringify(json)}`);
     // still running
@@ -56,8 +64,17 @@ async function pollPrediction(predictionId: string, timeoutMs = 120000, interval
   throw new Error("Replicate prediction timed out");
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    if (req.headers.get("origin") !== req.nextUrl.origin) {
+      return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    }
+    await requireAdmin();
+
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > 64 * 1024) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
     if (!REPLICATE_TOKEN || !REPLICATE_MODEL_VERSION) {
       return NextResponse.json({ error: "Server not configured: missing replicate env" }, { status: 500 });
     }
@@ -65,7 +82,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Server not configured: missing supabase env" }, { status: 500 });
     }
 
-    const body = await req.json();
+    const body = await req.json() as Record<string, unknown>;
     const {
       prompt,
       masterImageUrl,
@@ -79,14 +96,16 @@ export async function POST(req: Request) {
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json({ error: "Missing required field: prompt" }, { status: 400 });
     }
-    const resolvedModelVersion = modelVersion || REPLICATE_MODEL_VERSION;
+    const resolvedModelVersion = typeof modelVersion === "string" && modelVersion.trim()
+      ? modelVersion.trim()
+      : REPLICATE_MODEL_VERSION;
     if (!resolvedModelVersion) {
       return NextResponse.json({ error: "Server not configured: missing model version" }, { status: 500 });
     }
 
     // Build the input object for the model.
     // NOTE: SDXL models accept various inputs; here we include prompt and optionally an image reference.
-    const input: any = {
+    const input: Record<string, unknown> = {
       prompt,
       ...(negativePrompt ? { negative_prompt: negativePrompt } : null),
       ...(options && typeof options === "object" ? options : null),
@@ -108,7 +127,8 @@ export async function POST(req: Request) {
     const result = await pollPrediction(predictionId, 2 * 60 * 1000, 2000); // 2 minutes timeout
     // 3) Extract outputs
     // Many models return result.output as array of URLs (or data URIs).
-    const outputs: string[] = result.output && Array.isArray(result.output) ? result.output : [result.output].filter(Boolean);
+    const outputs = (Array.isArray(result.output) ? result.output : [result.output])
+      .filter((value): value is string => typeof value === "string" && value.length > 0);
 
     // 4) Upload outputs to Supabase Storage
     // Import server-side supabase client lazily to avoid client bundle issues
@@ -158,10 +178,13 @@ export async function POST(req: Request) {
 
       if (!buffer) continue;
 
-      const baseName =
-        filenameBase
-          ? `${filenameBase}${outputs.length > 1 ? `-${i}` : ""}`
-          : `${filenamePrefix}-${Date.now()}-${i}`;
+      const safeBase = String(filenameBase || filenamePrefix || "gen")
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
+        .slice(0, 100) || "gen";
+      const baseName = filenameBase
+        ? `${safeBase}${outputs.length > 1 ? `-${i}` : ""}`
+        : `${safeBase}-${Date.now()}-${i}`;
       const fileName = `${baseName}.${ext}`;
       const path = `${fileName}`;
 
@@ -182,8 +205,14 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true, urls: uploadedUrls, replicate: { id: predictionId, status: result.status } });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (err instanceof AdminAuthorizationError) {
+      return NextResponse.json({ error: "Administrator access is required." }, { status: err.status });
+    }
     console.error("generate-image error:", err);
-    return NextResponse.json({ error: String(err?.message || err) }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Image generation failed." },
+      { status: 500 },
+    );
   }
 }

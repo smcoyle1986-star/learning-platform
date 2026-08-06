@@ -78,7 +78,7 @@ export default function SpinAndSpeakPage() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        const normalized = parsed.map((c: any) => ({
+        const normalized = parsed.map((c: Record<string, unknown>) => ({
           id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
           word: String(c.word ?? c.text ?? ""),
           image: c.image ?? c.image_id ?? c.img ?? null,
@@ -142,7 +142,9 @@ export default function SpinAndSpeakPage() {
   function getAudioCtx() {
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
       } catch {
         audioCtxRef.current = null;
       }

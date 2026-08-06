@@ -137,10 +137,12 @@ export default function CardRevealPage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         const normalized: GameCard[] = Array.isArray(parsed)
-          ? parsed.map((c: any) => ({
+          ? parsed.map((c: Record<string, unknown>) => ({
               id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
               word: String(c.word ?? c.text ?? ""),
-              image: c.image ?? c.image_id ?? c.img ?? null,
+              image: typeof c.image === "string" ? c.image
+                : typeof c.image_id === "string" ? c.image_id
+                  : typeof c.img === "string" ? c.img : null,
             }))
           : [];
         const shuffled = shuffleArray(normalized);
@@ -304,7 +306,9 @@ export default function CardRevealPage() {
   function getAudioCtx() {
     if (!audioCtxRef.current) {
       try {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
+        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
       } catch {
         audioCtxRef.current = null;
       }
@@ -548,10 +552,12 @@ export default function CardRevealPage() {
       if (!raw) return;
       const parsed = JSON.parse(raw);
       const normalized: GameCard[] = Array.isArray(parsed)
-        ? parsed.map((c: any) => ({
+        ? parsed.map((c: Record<string, unknown>) => ({
             id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
             word: String(c.word ?? c.text ?? ""),
-            image: c.image ?? c.image_id ?? c.img ?? null,
+            image: typeof c.image === "string" ? c.image
+              : typeof c.image_id === "string" ? c.image_id
+                : typeof c.img === "string" ? c.img : null,
           }))
         : [];
       const shuffled = shuffleArray(normalized);

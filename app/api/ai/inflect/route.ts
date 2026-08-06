@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getBillingAccessForUser } from "@/lib/billing/access";
+import { getRequestUser } from "@/lib/server/request-auth";
+import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+
 type ClientCard = {
   id: string;
   type: string;
   lemma: string;
-  forms?: any;
+  forms?: InflectionForms;
   image_url?: string | null;
 };
+
+type InflectionForms = Record<string, string>;
+type InflectedCard = {
+  id: string;
+  forms: InflectionForms;
+  image_hint?: { variant: string; suggestion: string };
+  type?: string;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
 
 type OptionsShape = {
   verbs?: { mode?: string; negative?: boolean; subject?: string };
@@ -172,33 +188,36 @@ function normalizeNounMode(raw?: string) {
   return s;
 }
 
-function normalizeOptions(raw:any): OptionsShape {
+function normalizeOptions(raw: unknown): OptionsShape {
   if (!raw || typeof raw !== "object") return {};
+  const source = asRecord(raw);
   const opts: OptionsShape = {};
-  const topNegative = Boolean(raw.negative);
+  const topNegative = Boolean(source.negative);
 
   // nouns
-  const nounRaw = raw.nouns ?? {};
-  const nounOption = nounRaw.mode ?? raw.nounOption ?? raw.noun_option ?? null;
+  const nounRaw = asRecord(source.nouns);
+  const nounOption = nounRaw.mode ?? source.nounOption ?? source.noun_option ?? null;
   opts.nouns = {
-    mode: normalizeNounMode(nounOption ?? nounRaw.mode),
-    skip_uncount: Boolean(nounRaw.skip_uncount ?? raw.skip_uncount ?? nounRaw.skipUncount),
+    mode: normalizeNounMode(typeof nounOption === "string" ? nounOption : undefined),
+    skip_uncount: Boolean(nounRaw.skip_uncount ?? source.skip_uncount ?? nounRaw.skipUncount),
     negative: Boolean(nounRaw.negative ?? topNegative),
   };
 
   // verbs
-  const verbRaw = raw.verbs ?? {};
-  const verbModeCandidate = verbRaw.mode ?? raw.verbOption ?? raw.verb_option ?? raw.mode ?? verbRaw.mode;
+  const verbRaw = asRecord(source.verbs);
+  const verbModeCandidate = verbRaw.mode ?? source.verbOption ?? source.verb_option ?? source.mode;
   opts.verbs = {
-    mode: normalizeVerbMode(verbModeCandidate),
+    mode: normalizeVerbMode(typeof verbModeCandidate === "string" ? verbModeCandidate : undefined),
     negative: Boolean(verbRaw.negative ?? topNegative),
-    subject: (verbRaw.subject as string) ?? (raw.subject as string) ?? "he",
+    subject: typeof verbRaw.subject === "string"
+      ? verbRaw.subject
+      : typeof source.subject === "string" ? source.subject : "he",
   };
 
   // adjectives
   opts.adjectives = { comparative: false, superlative: false };
-  const adjRaw = raw.adjectives ?? {};
-  const adjOption = adjRaw.option ?? raw.adjOption ?? raw.adj_option ?? raw.adj ?? raw.adjOption;
+  const adjRaw = asRecord(source.adjectives);
+  const adjOption = adjRaw.option ?? source.adjOption ?? source.adj_option ?? source.adj;
   if (typeof adjOption === "string") {
     const s = String(adjOption).toLowerCase();
     if (s.includes("comp")) opts.adjectives.comparative = true;
@@ -208,24 +227,24 @@ function normalizeOptions(raw:any): OptionsShape {
   } else if (typeof adjRaw === "object") {
     opts.adjectives.comparative = Boolean(adjRaw.comparative ?? adjRaw.comp ?? false);
     opts.adjectives.superlative = Boolean(adjRaw.superlative ?? adjRaw.super ?? false);
-  } else if (raw.adjOption === "mixed") {
+  } else if (source.adjOption === "mixed") {
     opts.adjectives.comparative = true; opts.adjectives.superlative = true;
   }
 
   // modals
-  const modalSrc = raw.modalOptions ?? raw.modals ?? raw.modal_options ?? {};
+  const modalValue = source.modalOptions ?? source.modals ?? source.modal_options;
+  const modalSrc = asRecord(modalValue);
   const include: string[] = [];
-  if (modalSrc && typeof modalSrc === "object") {
-    for (const k of Object.keys(modalSrc)) { if (modalSrc[k]) include.push(k); }
-  }
-  if (Array.isArray(raw.modals)) raw.modals.forEach((m:string)=> include.push(String(m)));
-  opts.modals = { include, negative: Boolean((raw.modals && (raw.modals.negative ?? raw.modals.negative)) ?? raw.modalsNegative ?? topNegative) };
+  for (const k of Object.keys(modalSrc)) { if (modalSrc[k]) include.push(k); }
+  if (Array.isArray(source.modals)) source.modals.forEach((m)=> include.push(String(m)));
+  opts.modals = { include, negative: Boolean(modalSrc.negative ?? source.modalsNegative ?? topNegative) };
 
   // images
-  opts.images = { transform: Boolean((raw.images && raw.images.transform) ?? raw.imagesTransform ?? raw.images_transform ?? false) };
+  const imageOptions = asRecord(source.images);
+  opts.images = { transform: Boolean(imageOptions.transform ?? source.imagesTransform ?? source.images_transform ?? false) };
 
-  if (!opts.verbs) opts.verbs = { mode: undefined, negative: topNegative, subject: raw.subject ?? "he" };
-  opts.subject = (raw.subject as string) ?? opts.verbs.subject;
+  if (!opts.verbs) opts.verbs = { mode: undefined, negative: topNegative, subject: typeof source.subject === "string" ? source.subject : "he" };
+  opts.subject = typeof source.subject === "string" ? source.subject : opts.verbs.subject;
 
   return opts;
 }
@@ -236,7 +255,7 @@ function normalizeOptions(raw:any): OptionsShape {
 
 function extractJson(text?: string) {
   if (!text || typeof text !== "string") return null;
-  let cleaned = text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const cleaned = text.replace(/```json/gi,"").replace(/```/g,"").trim();
   try { return JSON.parse(cleaned); } catch {}
   const match = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
   if (match) { try { return JSON.parse(match[0]); } catch {} }
@@ -248,7 +267,7 @@ function extractJson(text?: string) {
    ------------------------- */
 
 function mockInflect(cards:ClientCard[], options:OptionsShape) {
-  const out:any[] = [];
+  const out: InflectedCard[] = [];
   for (const c of cards) {
     const base = c.lemma ?? "";
     if (c.type === "noun") {
@@ -270,7 +289,7 @@ function mockInflect(cards:ClientCard[], options:OptionsShape) {
       else if (v?.mode === "perfect") out.push({ id: c.id, forms: { perfect: `${auxHas(subj)} ${verbPastParticiple(baseForm)}` } });
       else out.push({ id: c.id, forms: { base: baseForm } });
     } else if (c.type === "adjective") {
-      const a = options?.adjectives; const forms:any = {};
+      const a = options?.adjectives; const forms: InflectionForms = {};
       if (a?.comparative) forms.comparative = adjectiveComparative(c.lemma); if (a?.superlative) forms.superlative = adjectiveSuperlative(c.lemma);
       out.push({ id: c.id, forms });
     } else out.push({ id: c.id, forms: { base: c.lemma ?? "" } });
@@ -287,8 +306,24 @@ function adjectiveSuperlative(a?:string) { if (!a) return a ?? ""; return a.leng
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBody = await req.json().catch(()=>({}));
+    const user = await getRequestUser(req);
+    if (!user?.id) {
+      return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
+    }
+    const access = await getBillingAccessForUser(getSupabaseAdmin(), user.id);
+    if (!access.isPremium) {
+      return NextResponse.json({ error: "Premium is required for AI inflection." }, { status: 403 });
+    }
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (contentLength > 128 * 1024) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
+
+    const rawBody = await req.json().catch(()=>({})) as Record<string, unknown>;
     const cards:ClientCard[] = Array.isArray(rawBody.cards) ? rawBody.cards : [];
+    if (cards.length === 0 || cards.length > 100) {
+      return NextResponse.json({ error: "Provide between 1 and 100 cards." }, { status: 400 });
+    }
     const receivedOptions = rawBody.options ?? rawBody;
     const options = normalizeOptions(receivedOptions);
 
@@ -321,7 +356,7 @@ export async function POST(req: NextRequest) {
       { in: { cards:[{ id:"3", type:"noun", lemma:"apple", forms:{} }], options:{ nouns:{ mode:"plural" }, images:{ transform:true } } }, out:{ cards:[{ id:"3", forms:{ plural:"apples" }, image_hint:{ variant:"plural", suggestion:"several apples pictured" } }] } },
     ];
 
-    const messages:any[] = [{ role:"system", content: system }];
+    const messages: Array<{ role: string; content: string }> = [{ role:"system", content: system }];
     messages.push({ role:"user", content: `Transform instructions: verbs=${options.verbs?.mode ?? "none"}, nouns=${options.nouns?.mode ?? "none"}.` });
     for (const ex of examples) { messages.push({ role:"user", content:`Example input: ${JSON.stringify(ex.in)}` }); messages.push({ role:"user", content:`Example output: ${JSON.stringify(ex.out)}` }); }
     messages.push({ role:"user", content: `Now transform: ${JSON.stringify({ cards, options })}. Output strict JSON only.` });
@@ -345,8 +380,8 @@ export async function POST(req: NextRequest) {
     try { const parsedFull = JSON.parse(rawText); assistantContent = parsedFull?.choices?.[0]?.message?.content ?? parsedFull?.choices?.[0]?.text ?? rawText; } catch {}
     console.debug("INFLECT: assistant preview:", assistantContent?.slice?.(0,800));
 
-    const parsed = extractJson(assistantContent);
-    if (!parsed || !Array.isArray(parsed.cards)) {
+    const parsed = asRecord(extractJson(assistantContent));
+    if (!Array.isArray(parsed.cards)) {
       console.error("INFLECT: parse failed, assistant preview:", assistantContent?.slice?.(0,1000));
       const fallback = mockInflect(cards, options);
       const r = NextResponse.json({ ...fallback, error:"parse_failed", aiPreview: assistantContent?.slice?.(0,1000) });
@@ -354,14 +389,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Post-process: ensure requested fields & subject-aware tenses
-    const final:any[] = [];
-    for (let i=0;i<parsed.cards.length;i++) {
-      const c = parsed.cards[i];
+    const parsedCards = parsed.cards.map((card, index) => {
+      const record = asRecord(card);
+      return {
+        id: typeof record.id === "string" ? record.id : `idx-${index}`,
+        type: typeof record.type === "string" ? record.type : undefined,
+        forms: asRecord(record.forms),
+      };
+    });
+    const final: InflectedCard[] = [];
+    for (let i=0;i<parsedCards.length;i++) {
+      const c = parsedCards[i];
       const input = cards.find(ic=>ic.id===c.id) ?? cards[i] ?? null;
       const type = input?.type ?? c?.type ?? "noun";
       const lemma = input?.lemma ?? "";
       const subj = (options?.verbs?.subject ?? options.subject) ?? "he";
-      const outForms = { ...(c.forms ?? {}) };
+      const rawForms = c.forms;
+      const outForms: InflectionForms = Object.fromEntries(
+        Object.entries(rawForms).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+      );
 
       if (type === "noun") {
         const n = options?.nouns;
@@ -387,19 +433,19 @@ export async function POST(req: NextRequest) {
       }
 
       if (type === "adjective") {
-        const a = options?.adjectives; const out:any = { ...(c.forms ?? {}) }; if (a?.comparative && !out.comparative) out.comparative = adjectiveComparative(lemma); if (a?.superlative && !out.superlative) out.superlative = adjectiveSuperlative(lemma); if (options?.images?.transform && (out.comparative || out.superlative)) final.push({ id:c.id ?? input?.id ?? `idx-${i}`, forms:out, image_hint:{ variant: out.comparative ? "comparative" : "superlative", suggestion:`${out.comparative ? "comparative" : "superlative"} ${lemma}` } }); else final.push({ id:c.id ?? input?.id ?? `idx-${i}`, forms:out }); continue;
+        const a = options?.adjectives; const out: InflectionForms = { ...outForms }; if (a?.comparative && !out.comparative) out.comparative = adjectiveComparative(lemma); if (a?.superlative && !out.superlative) out.superlative = adjectiveSuperlative(lemma); if (options?.images?.transform && (out.comparative || out.superlative)) final.push({ id:String(c.id ?? input?.id ?? `idx-${i}`), forms:out, image_hint:{ variant: out.comparative ? "comparative" : "superlative", suggestion:`${out.comparative ? "comparative" : "superlative"} ${lemma}` } }); else final.push({ id:String(c.id ?? input?.id ?? `idx-${i}`), forms:out }); continue;
       }
 
-      final.push({ id:c.id ?? input?.id ?? `idx-${i}`, forms:c.forms ?? {} });
+      final.push({ id:String(c.id ?? input?.id ?? `idx-${i}`), forms:outForms });
     }
 
     // append modal variants if requested
     if (Array.isArray(options?.modals?.include) && options?.modals?.include.length>0) {
-      const mods = options.modals.include; const modalCards:any[] = [];
+      const mods = options.modals.include; const modalCards: InflectedCard[] = [];
       for (const fc of final) {
         const ic = cards.find(c=>c.id===fc.id) ?? null; if (!ic || ic.type!=="verb") continue;
         const base = ic.lemma; const subj = options?.verbs?.subject ?? options?.subject ?? "he"; const wantNeg = Boolean(options?.modals?.negative);
-        for (const m of mods) { const t = (MODAL_TEMPLATES[m]||MODAL_TEMPLATES["can"])(subj, base, wantNeg); const id = `${fc.id}::modal::${m}`; const formObj:any = {}; formObj[`modal_${m}`] = t.phrase; if (t.phrase_contracted) formObj[`modal_${m}_contracted`] = t.phrase_contracted; modalCards.push({ id, forms: formObj }); }
+        for (const m of mods) { const t = (MODAL_TEMPLATES[m]||MODAL_TEMPLATES["can"])(subj, base, wantNeg); const id = `${fc.id}::modal::${m}`; const formObj: InflectionForms = {}; formObj[`modal_${m}`] = t.phrase; if (t.phrase_contracted) formObj[`modal_${m}_contracted`] = t.phrase_contracted; modalCards.push({ id, forms: formObj }); }
       }
       final.push(...modalCards);
     }
@@ -408,11 +454,11 @@ export async function POST(req: NextRequest) {
     console.debug("INFLECT: returning finalCards preview:", JSON.stringify(final.slice(0,20), null, 2));
     const r = NextResponse.json({ source:"openai", cards: final }); r.headers.set("x-ai-mock","false"); r.headers.set("x-ai-debug","ok"); return r;
 
-  } catch (err:any) {
+  } catch (err: unknown) {
     console.error("INFLECT unexpected:", err);
-    try {
-      const body = await req.json().catch(()=>({})); const cards:ClientCard[] = Array.isArray(body.cards)? body.cards:[]; const options:OptionsShape = (body.options as OptionsShape)??{}; const fallback = mockInflect(cards, options);
-      const res = NextResponse.json({ ...fallback, error: String(err?.message ?? err) }); res.headers.set("x-ai-mock","true"); res.headers.set("x-ai-debug","exception"); return res;
-    } catch { return NextResponse.json({ error: String(err?.message ?? err) }, { status:500 }); }
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Inflection failed." },
+      { status: 500 },
+    );
   }
 }

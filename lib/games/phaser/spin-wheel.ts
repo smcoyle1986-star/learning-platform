@@ -355,7 +355,7 @@ export async function createSpinWheelGame({
   }
 
   const scene = new SpinWheelScene();
-  const game = new Phaser.Game({
+  const gameConfig: Phaser.Types.Core.GameConfig & { resolution: number } = {
     type: Phaser.AUTO,
     parent,
     width,
@@ -374,7 +374,8 @@ export async function createSpinWheelGame({
       width,
       height,
     },
-  } as any);
+  };
+  const game = new Phaser.Game(gameConfig);
 
   exposeApi({
     spin: () => scene.spin(),

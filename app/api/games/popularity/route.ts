@@ -66,10 +66,10 @@ export async function GET() {
       weekly: sortEntries(weeklyCounts),
       allTime: sortEntries(allTimeCounts),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to load game popularity stats:", error);
     return NextResponse.json(
-      { error: error?.message || "Failed to load game popularity stats." },
+      { error: error instanceof Error ? error.message : "Failed to load game popularity stats." },
       { status: 500 }
     );
   }

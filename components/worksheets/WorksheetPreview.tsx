@@ -56,10 +56,7 @@ export default function WorksheetPreview({
   }, [cards, draft]);
 
   useEffect(() => {
-    if (!isFitPreview) {
-      setCrosswordScale(1);
-      return;
-    }
+    if (!isFitPreview) return;
 
     const element = previewFrameRef.current;
     if (!element) return;

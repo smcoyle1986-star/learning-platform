@@ -24,7 +24,7 @@ export type ButtonProps = Omit<
  * Note: No legacy/global class aliases are emitted here so globals.css can't override the utility classes.
  */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", className = "", children, ...rest }, ref) => {
+  ({ variant = "primary", className = "", children, type = "button", ...rest }, ref) => {
     // Base classes: neutral idle (page bg), rounded-full, subtle border & shadow, hover->card bg + bigger shadow
     const baseClass =
       "px-4 py-2 rounded-full text-sm transition active:scale-95 active:translate-y-[1px] bg-[var(--color-bg-main)] border border-[rgba(15,23,42,0.04)] shadow-sm hover:shadow-md hover:bg-[var(--color-bg-card)]";
@@ -40,7 +40,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        type={(rest as any).type ?? "button"}
+        type={type}
         className={`btn ${baseClass} ${variantClass} ${className}`}
         {...rest}
       >

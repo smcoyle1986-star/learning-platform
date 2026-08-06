@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { AdminAuthorizationError, requireAdmin } from "@/lib/admin/auth";
 import { generateNounImageSet } from "@/lib/noun-images/pipeline";
 import { NounGenerationInput } from "@/lib/noun-images/types";
 
@@ -13,8 +14,13 @@ type RequestBody = {
   items?: NounGenerationInput[];
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (request.headers.get("origin") !== request.nextUrl.origin) {
+      return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+    }
+    await requireAdmin();
+
     const body = (await request.json()) as RequestBody;
     const items =
       body.items && body.items.length > 0
@@ -60,6 +66,9 @@ export async function POST(request: Request) {
       results,
     });
   } catch (error) {
+    if (error instanceof AdminAuthorizationError) {
+      return NextResponse.json({ error: "Administrator access is required." }, { status: error.status });
+    }
     console.error("noun image generation failed", error);
     return NextResponse.json(
       {
