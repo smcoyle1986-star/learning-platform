@@ -515,7 +515,7 @@ export default function FlashcardsPage() {
           results={results}
           lastAddedId={lastAddedId}
           canUsePremiumImageVariations={canUsePremiumImageVariations}
-          allowImageVariations={!isGuest}
+          allowImageVariations
           getCarouselKey={getCarouselKey}
           getCardImages={getCardImages}
           getActiveImage={getSelectedImage}
