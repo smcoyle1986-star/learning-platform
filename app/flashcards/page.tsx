@@ -12,6 +12,7 @@ import FlashcardResultsGrid from "@/components/flashcards/FlashcardResultsGrid";
 import LessonTrayBar from "@/components/flashcards/LessonTrayBar";
 import SaveLessonDialogs from "@/components/flashcards/SaveLessonDialogs";
 import GuestFlashcardPrompt from "@/components/flashcards/GuestFlashcardPrompt";
+import NewUserOnboarding from "@/components/flashcards/NewUserOnboarding";
 import {
   GUEST_LESSON_TRAY_LIMIT,
   readLastSavedTray,
@@ -417,6 +418,12 @@ export default function FlashcardsPage() {
             router.push("/printables?from=flashcards");
           } },
         ]}
+      />
+
+      <NewUserOnboarding
+        user={user}
+        authLoading={authLoading}
+        daysRemaining={access?.welcomeTrial.daysRemaining ?? 14}
       />
 
       {isGuest ? (

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,10 +12,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmationRequired, setConfirmationRequired] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+    setConfirmationRequired(false);
     setSubmitting(true);
 
     try {
@@ -24,7 +27,21 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMessage(error.message);
+        const normalizedMessage = error.message.toLowerCase();
+        if (normalizedMessage.includes("email not confirmed")) {
+          const pendingEmail = email.trim().toLowerCase();
+          const requestedPath = new URLSearchParams(window.location.search).get("next");
+          const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
+            ? requestedPath
+            : "/flashcards?onboarding=1";
+          savePendingEmailConfirmation({ email: pendingEmail, nextPath, sentAt: 0 });
+          setConfirmationRequired(true);
+          setMessage("Please confirm your email address before logging in. We can send you a new confirmation link.");
+        } else if (normalizedMessage.includes("invalid login credentials")) {
+          setMessage("The email address or password is incorrect.");
+        } else {
+          setMessage("We could not log you in just now. Please try again.");
+        }
         return;
       }
 
@@ -88,9 +105,14 @@ export default function LoginPage() {
               </div>
 
               {message && (
-                <p className="rounded-2xl border border-[#ead0c9] bg-[#fff7f4] px-4 py-3 text-sm leading-6 text-[#a45d49]">
-                  {message}
-                </p>
+                <div className="rounded-2xl border border-[#ead0c9] bg-[#fff7f4] px-4 py-3 text-sm leading-6 text-[#a45d49]">
+                  <p>{message}</p>
+                  {confirmationRequired ? (
+                    <Link href="/check-email" className="mt-2 inline-flex font-semibold underline underline-offset-4">
+                      Open email confirmation help
+                    </Link>
+                  ) : null}
+                </div>
               )}
 
               <button

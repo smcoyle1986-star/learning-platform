@@ -35,6 +35,8 @@ import {
 import { SavedWorksheetRecord } from "@/lib/worksheets/types";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import WelcomeTrialNotice from "@/components/billing/WelcomeTrialNotice";
+import { clearPendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 
 const RECENT_LIMIT = 8;
 const PAGE_SIZE_OPTIONS = [12, 24, 36] as const;
@@ -62,6 +64,7 @@ export default function DashboardPage() {
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [conversionMessage, setConversionMessage] = useState("");
+  const [onboardingMessage, setOnboardingMessage] = useState("");
   const [libraryMessage, setLibraryMessage] = useState("");
   const [libraryNotice, setLibraryNotice] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,6 +90,17 @@ export default function DashboardPage() {
   const [lessonSetPendingDelete, setLessonSetPendingDelete] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("email_confirmed") !== "1") return;
+
+    clearPendingEmailConfirmation();
+    setOnboardingMessage("Email confirmed — welcome to Classendo. Your 14-day Premium trial is ready.");
+    url.searchParams.delete("email_confirmed");
+    url.searchParams.delete("welcome_trial");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
 
   const refreshLessons = useCallback(async () => {
     if (!user?.id) {
@@ -642,12 +656,17 @@ export default function DashboardPage() {
 
       {/* MAIN */}
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-32 space-y-16">
-        {access?.welcomeTrial.active ? (
-          <section className="rounded-[2rem] border border-[#e3cf91] bg-[linear-gradient(135deg,#fff9df,#fff3c2)] p-6 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#98701f]">Premium welcome trial · {access.welcomeTrial.daysRemaining} days remaining</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[#5f491a]">Enjoy Premium on us for 14 days</h2>
-            <p className="mt-2 text-sm leading-6 text-[#765f2b]">You have full Premium access with no payment details required. You’ll automatically move to Basic when the welcome period ends unless you choose Premium.</p>
-          </section>
+        {onboardingMessage ? (
+          <div className="rounded-2xl border border-[#cfe0c7] bg-[#f2f8ee] px-5 py-4 text-sm font-medium text-[#496143]" role="status">
+            {onboardingMessage}
+          </div>
+        ) : null}
+        {access?.welcomeTrial.active && user ? (
+          <WelcomeTrialNotice
+            daysRemaining={access.welcomeTrial.daysRemaining}
+            userId={user.id}
+            userMetadata={user.user_metadata}
+          />
         ) : null}
         {conversionMessage ? (
           <div className="rounded-2xl border border-[#d5e2cf] bg-[#f4f8f1] px-5 py-4 text-sm text-[#496143]">{conversionMessage}</div>

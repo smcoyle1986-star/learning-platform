@@ -9,14 +9,16 @@ export default function AuthCodeErrorPage() {
         </p>
         <h1 className="mt-3 text-3xl font-semibold">We could not confirm this sign-in.</h1>
         <p className="mt-4 leading-7 text-[#5c665c]">
-          The link may have expired or already been used. Return to login and try again.
+          The link may have expired or already been used. Request a new confirmation email, then use the newest message in your inbox.
         </p>
-        <Link
-          href="/login"
-          className="btn btn-primary mt-7 inline-flex px-6 py-3"
-        >
-          Return to login
-        </Link>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link href="/check-email" className="btn btn-primary inline-flex px-6 py-3">
+            Request a new link
+          </Link>
+          <Link href="/login" className="btn btn-secondary inline-flex px-6 py-3">
+            Return to login
+          </Link>
+        </div>
       </section>
     </main>
   );

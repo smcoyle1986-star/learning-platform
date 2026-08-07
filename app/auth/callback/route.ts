@@ -16,7 +16,9 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      const destination = new URL(next, url.origin);
+      destination.searchParams.set("email_confirmed", "1");
+      return NextResponse.redirect(destination);
     }
   }
 

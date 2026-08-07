@@ -11,6 +11,10 @@ import {
   suggestUsernameFromEmail,
 } from "@/lib/auth/username";
 import { LEGAL_VERSION } from "@/lib/legal/constants";
+import {
+  buildConfirmationRedirect,
+  savePendingEmailConfirmation,
+} from "@/lib/auth/pending-confirmation";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
@@ -264,12 +268,13 @@ export default function SignupPage() {
       }
 
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
-      const welcomeDestination = requestedNext ?? "/dashboard?welcome_trial=1";
+      const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
+      const onboardingStartedAt = new Date().toISOString();
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(welcomeDestination)}`,
+          emailRedirectTo: buildConfirmationRedirect(window.location.origin, welcomeDestination),
           data: {
             username: cleanUsername,
             country_region: cleanCountry,
@@ -277,6 +282,7 @@ export default function SignupPage() {
             terms_accepted_at: new Date().toISOString(),
             terms_version: LEGAL_VERSION,
             privacy_notice_version: LEGAL_VERSION,
+            classendo_onboarding_started_at: onboardingStartedAt,
           },
         },
       });
@@ -319,8 +325,17 @@ export default function SignupPage() {
         }
       }
 
-      setMessage("Enjoy Premium on us for 14 days. No payment details are required; after 14 days your account moves automatically to Basic unless you choose Premium.");
-      router.replace(data.session ? welcomeDestination : "/?signed_up=1&welcome_trial=1");
+      if (!data.session) {
+        savePendingEmailConfirmation({
+          email: cleanEmail,
+          nextPath: welcomeDestination,
+          sentAt: Date.now(),
+        });
+        router.replace("/check-email");
+        return;
+      }
+
+      router.replace(welcomeDestination);
     } finally {
       setSubmitting(false);
     }
@@ -329,7 +344,7 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f] lg:h-[calc(100dvh-65px)] lg:min-h-0 lg:overflow-hidden">
       <section className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:h-full lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:py-8">
-        <div className="space-y-8 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]">
+        <div className="order-2 space-y-8 lg:order-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]">
           <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-white px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
             Create your account
           </div>
@@ -376,7 +391,7 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <div className="lg:min-h-0">
+        <div className="order-1 lg:order-2 lg:min-h-0">
           <div className="rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]">
             <h2 className="text-3xl font-semibold text-[#2f3a2f]">
               Create your free account
