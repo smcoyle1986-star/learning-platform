@@ -68,8 +68,9 @@ export default function FlashcardResultsGrid({
         const nextImage = images[nextIndex]?.url ?? currentImage;
         const showLeft = currentIndex > 0;
         const showRight = currentIndex < images.length - 1;
+        const isPremiumImage = Boolean(currentVariant?.isPremium);
         const isLockedPremium = Boolean(
-          currentVariant?.isPremium && !canUsePremiumImageVariations
+          isPremiumImage && !canUsePremiumImageVariations
         );
 
         return (
@@ -114,9 +115,13 @@ export default function FlashcardResultsGrid({
                 />
               )}
 
-              {isLockedPremium ? (
-                <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-start bg-black/12 p-3">
-                  <div className="rounded-full border border-[#eadfc6] bg-[#fff6ea]/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8b6a3f] shadow-sm">
+              {isPremiumImage ? (
+                <div
+                  className={`pointer-events-none absolute z-10 flex items-start justify-start p-3 ${
+                    isLockedPremium ? "inset-0 bg-black/12" : "left-0 top-0"
+                  }`}
+                >
+                  <div className="rounded-full border border-[#eadfc6] bg-[#fff6ea]/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8b6a3f] shadow-sm backdrop-blur-sm">
                     Premium
                   </div>
                 </div>

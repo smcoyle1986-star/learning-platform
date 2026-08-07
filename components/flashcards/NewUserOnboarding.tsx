@@ -149,11 +149,11 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
           </li>
           <li className="flex gap-4 rounded-2xl bg-[#f5f7f1] p-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#607b55] shadow-sm"><Images aria-hidden="true" className="h-5 w-5" /></span>
-            <div><p className="font-semibold text-[#2f3a2f]">2. Add flashcards</p><p className="mt-1 text-sm leading-6 text-[#647064]">Click a card to add it to the lesson tray at the top of this page.</p></div>
+            <div><p className="font-semibold text-[#2f3a2f]">2. Explore Premium image variations</p><p className="mt-1 text-sm leading-6 text-[#647064]">Use the carousel arrows to see the same vocabulary from useful teaching perspectives—for example one item or several, the word in context, or an action performed by a boy, girl, or group. Premium images keep their badge so they are easy to recognise.</p></div>
           </li>
           <li className="flex gap-4 rounded-2xl bg-[#f5f7f1] p-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#607b55] shadow-sm"><BookOpen aria-hidden="true" className="h-5 w-5" /></span>
-            <div><p className="font-semibold text-[#2f3a2f]">3. Teach or create</p><p className="mt-1 text-sm leading-6 text-[#647064]">Save the set, open Classroom mode, or reuse the same cards in worksheets, printables, games, and lesson plans.</p></div>
+            <div><p className="font-semibold text-[#2f3a2f]">3. Add, save, and teach</p><p className="mt-1 text-sm leading-6 text-[#647064]">Click your preferred image to add it to the lesson tray, then save the set, open Classroom mode, or reuse the cards in worksheets, printables, games, and lesson plans.</p></div>
           </li>
         </ol>
 
