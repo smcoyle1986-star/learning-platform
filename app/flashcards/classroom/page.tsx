@@ -49,6 +49,22 @@ export default function ClassroomMode() {
   const [cardAvailableHeight, setCardAvailableHeight] = useState<number | null>(null);
 
   const formatWord = (word: string) => word.replace(/_/g, " ");
+
+  const flashcardTextSize = (word: string, layout: "text-only" | "image-and-text") => {
+    const length = formatWord(word).trim().length;
+
+    if (layout === "text-only") {
+      if (length > 48) return "text-3xl md:text-4xl lg:text-5xl";
+      if (length > 28) return "text-4xl md:text-5xl lg:text-6xl";
+      if (length > 16) return "text-5xl md:text-6xl lg:text-7xl";
+      return "text-8xl md:text-9xl lg:text-[10rem]";
+    }
+
+    if (length > 48) return "text-2xl md:text-3xl lg:text-4xl";
+    if (length > 28) return "text-3xl md:text-4xl lg:text-5xl";
+    if (length > 16) return "text-4xl md:text-5xl lg:text-6xl";
+    return "text-7xl md:text-8xl";
+  };
   const handleExit = () => {
     writeLessonTray(cards, user ? "account" : "guest");
 
@@ -418,7 +434,7 @@ export default function ClassroomMode() {
         {displayMode === "text" && !revealToggle ? (
           // centered text (no image visible)
           <div className="flex h-full w-full items-center justify-center px-4">
-            <h2 className="max-w-full break-words text-center text-8xl font-extrabold leading-[0.95] tracking-wide text-balance md:text-9xl lg:text-[10rem]">
+            <h2 className={`max-w-[92%] break-words text-center font-extrabold leading-[1.05] tracking-wide text-balance ${flashcardTextSize(card.word, "text-only")}`}>
               {formatWord(card.word)}
             </h2>
           </div>
@@ -467,7 +483,7 @@ export default function ClassroomMode() {
                 || (displayMode === "image" && revealToggle)
                 || (displayMode === "text") // in text mode, when revealToggle true we still show text (moved down); when false handled above
               ) && (
-                <h2 className={`text-7xl md:text-8xl font-extrabold tracking-wide ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
+                <h2 className={`max-w-[92%] break-words text-center font-extrabold leading-[1.1] tracking-wide text-balance ${flashcardTextSize(card.word, "image-and-text")} ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
                   {formatWord(card.word)}
                 </h2>
               )}
