@@ -12,6 +12,15 @@ import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
 const LINK_REFUND_SUPPORT_URL = "https://support.link.com/questions/requesting-a-refund-for-a-sold-through-link-payment";
 
+function formatSubscriptionEndDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
+}
+
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
   const { access } = useBillingAccess();
@@ -24,6 +33,11 @@ export default function ProfilePage() {
   const displayName = profile?.username || profile?.display_name || user?.email || "Guest";
   const administratorRole = access?.administratorRole ?? null;
   const accountTitle = administratorTitle(administratorRole);
+  const premiumEndDate = access?.premiumAccessSource === "stripe"
+    && access.subscription?.cancelAtPeriodEnd
+    && access.subscription.currentPeriodEnd
+    ? formatSubscriptionEndDate(access.subscription.currentPeriodEnd)
+    : null;
 
   if (loading) {
     return <p className="p-10">Loading...</p>;
@@ -80,7 +94,9 @@ export default function ProfilePage() {
                 : access?.isPremium
                   ? access.premiumAccessSource === "welcome_trial"
                     ? `Premium welcome trial · ${access.welcomeTrial.daysRemaining} days left`
-                    : "Premium"
+                    : premiumEndDate
+                      ? `Premium access ends ${premiumEndDate}`
+                      : "Premium"
                   : "Basic"}
             </p>
           </div>
@@ -134,7 +150,10 @@ export default function ProfilePage() {
         </div>
         {access?.premiumAccessSource === "stripe" ? (
           <p className="mt-5 text-sm leading-6 text-[#657065]">
-            Manage Billing cancels future renewal. Request a refund through Link for payment support, or see our{" "}
+            {premiumEndDate
+              ? `Your cancellation is scheduled. Premium remains available until ${premiumEndDate}.`
+              : "Manage Billing cancels future renewal."}{" "}
+            Request a refund through Link for payment support, or see our{" "}
             <Link href="/legal/refunds" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
           </p>
         ) : null}
