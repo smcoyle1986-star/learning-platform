@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
+
 import { useAuth } from "@/components/AuthProvider";
 import {
   AdministratorBadge,
@@ -23,7 +25,8 @@ function formatSubscriptionEndDate(value: string) {
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
-  const { access } = useBillingAccess();
+  const { access, refresh: refreshBillingAccess } = useBillingAccess();
+  const reconciledSubscriptionId = useRef<string | null>(null);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -38,6 +41,31 @@ export default function ProfilePage() {
     && access.subscription.currentPeriodEnd
     ? formatSubscriptionEndDate(access.subscription.currentPeriodEnd)
     : null;
+
+  useEffect(() => {
+    const subscriptionId = access?.subscription?.stripeSubscriptionId;
+    if (!subscriptionId || reconciledSubscriptionId.current === subscriptionId) return;
+
+    reconciledSubscriptionId.current = subscriptionId;
+
+    const reconcileBilling = async () => {
+      try {
+        await supabaseReady;
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        const response = await fetch("/api/billing/reconcile", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (response.ok) await refreshBillingAccess();
+      } catch {
+        // The normal webhook remains the fallback if a one-off profile refresh fails.
+      }
+    };
+
+    void reconcileBilling();
+  }, [access?.subscription?.stripeSubscriptionId, refreshBillingAccess]);
 
   if (loading) {
     return <p className="p-10">Loading...</p>;
