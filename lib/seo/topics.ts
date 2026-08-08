@@ -7,6 +7,8 @@ export type Topic = {
   vocabulary: string[];
   classroomIdea: string;
   worksheetIdea: string;
+  lessonSteps?: string[];
+  languageFocus?: string;
 };
 
 export const TOPICS: Topic[] = [
@@ -39,6 +41,13 @@ export const TOPICS: Topic[] = [
     vocabulary: ["sunny", "rainy", "windy", "cloudy", "snowy", "hot", "cold", "stormy"],
     classroomIdea: "Start class with ‘What’s the weather like today?’ and let learners choose, mime, or hold up the matching card.",
     worksheetIdea: "Make a weather diary or a clothes-for-the-weather matching activity.",
+    languageFocus: "What’s the weather like today? It’s sunny / rainy / windy. I wear a jacket when it’s cold.",
+    lessonSteps: [
+      "Introduce four to eight weather flashcards and drill the words with gestures.",
+      "Ask ‘What’s the weather like today?’ and have learners answer with a complete sentence.",
+      "Play a quick weather mime or picture-reveal game to review the vocabulary.",
+      "Finish with a weather diary or a clothes-for-the-weather worksheet.",
+    ],
   },
   {
     slug: "classroom-objects",
@@ -69,6 +78,13 @@ export const TOPICS: Topic[] = [
     vocabulary: ["wake up", "eat breakfast", "go to school", "study", "play", "have dinner", "take a shower", "sleep"],
     classroomIdea: "Give groups mixed routine cards and ask them to sequence a day, then explain it using ‘First’, ‘then’, and ‘finally’.",
     worksheetIdea: "Create a cut-and-order routine worksheet or a ‘My day’ writing prompt.",
+    languageFocus: "I wake up at seven. First I eat breakfast, then I go to school. What time do you…?",
+    lessonSteps: [
+      "Teach the daily routine flashcards with actions learners can copy.",
+      "Give pairs mixed cards and ask them to put a typical day in order.",
+      "Have pairs describe their sequence using first, then, and finally.",
+      "Use a ‘My day’ worksheet as a writing or speaking follow-up.",
+    ],
   },
   {
     slug: "transportation",
@@ -89,6 +105,13 @@ export const TOPICS: Topic[] = [
     vocabulary: ["run", "jump", "walk", "swim", "read", "write", "sing", "dance"],
     classroomIdea: "Play a fast mime game: one learner acts out a card while the class guesses using ‘You are…’ or the base verb.",
     worksheetIdea: "Create a draw-the-action or match-the-verb worksheet from the selected cards.",
+    languageFocus: "Run! Jump! Can you swim? He is reading. She can dance.",
+    lessonSteps: [
+      "Introduce action verb flashcards and use each word as a whole-class movement command.",
+      "Mix the cards and play a fast listen-and-do round.",
+      "Let learners mime an action while classmates guess the verb or make a sentence.",
+      "Consolidate with a match-the-action worksheet or a Classendo game.",
+    ],
   },
   {
     slug: "clothes",
