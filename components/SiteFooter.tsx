@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { COMPANY } from "@/lib/legal/constants";
 import { CookiePreferencesButton } from "@/components/privacy/CookiePreferencesButton";
@@ -15,6 +18,17 @@ const legalLinks = [
 ] as const;
 
 export function SiteFooter() {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const updateFullscreenState = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    updateFullscreenState();
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState);
+  }, []);
+
+  if (isFullscreen) return null;
+
   return (
     <footer className="border-t border-[#dfe4d9] bg-[#eef1e9] px-5 py-8 text-sm text-[#566056]">
       <div className="mx-auto max-w-7xl">
