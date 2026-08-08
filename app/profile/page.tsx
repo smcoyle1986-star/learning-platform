@@ -12,8 +12,6 @@ import { supabase, supabaseReady } from "@/lib/supabase/client";
 import { openBillingPortal } from "@/lib/billing/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
-const LINK_REFUND_SUPPORT_URL = "https://support.link.com/questions/requesting-a-refund-for-a-sold-through-link-payment";
-
 function formatSubscriptionEndDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -154,19 +152,9 @@ export default function ProfilePage() {
             </>
           ) : null}
           {access?.premiumAccessSource === "stripe" ? (
-            <>
-              <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
-                Manage Billing
-              </button>
-              <a
-                href={LINK_REFUND_SUPPORT_URL}
-                className="btn btn-secondary px-6 py-3"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Request a refund through Link
-              </a>
-            </>
+            <button type="button" onClick={() => void openBillingPortal()} className="btn btn-secondary px-6 py-3">
+              Manage Billing
+            </button>
           ) : !access?.isPremium || access?.premiumAccessSource === "welcome_trial" ? (
             <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
               {access?.premiumAccessSource === "welcome_trial" ? "Continue Premium after trial" : "Upgrade to Premium"}
@@ -181,7 +169,7 @@ export default function ProfilePage() {
             {premiumEndDate
               ? `Your cancellation is scheduled. Premium remains available until ${premiumEndDate}.`
               : "Manage Billing cancels future renewal."}{" "}
-            Request a refund through Link for payment support, or see our{" "}
+            See our{" "}
             <Link href="/legal/refunds" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
           </p>
         ) : null}
