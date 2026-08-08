@@ -276,8 +276,8 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
       {
         title: "5. Requesting a refund",
         paragraphs: [
-          `Email ${COMPANY.supportEmail} from the address associated with your Classendo account. Use the subject “Refund request” and include the account email, transaction date, plan and brief reason. Do not include complete card or bank details.`,
-          "We review requests before approval to prevent mistakes, duplicate refunds, abuse and conflict with payment disputes. We may ask for information reasonably necessary to locate the transaction or verify the account.",
+          "For a subscription sold through Stripe Managed Payments, submit the refund request through Link Support using the Request a refund through Link button in your Classendo profile. Link is the merchant of record for these transactions and may contact us for product-specific information.",
+          `For a Classendo product or access issue, you may also email ${COMPANY.supportEmail} from the address associated with your account. Include the transaction date, plan and a brief reason. Do not include complete card or bank details.`,
         ],
       },
       {

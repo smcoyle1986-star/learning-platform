@@ -9,7 +9,8 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { openBillingPortal } from "@/lib/billing/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
-import { COMPANY } from "@/lib/legal/constants";
+
+const LINK_REFUND_SUPPORT_URL = "https://support.link.com/questions/requesting-a-refund-for-a-sold-through-link-payment";
 
 export default function ProfilePage() {
   const { user, profile, loading } = useAuth();
@@ -114,10 +115,12 @@ export default function ProfilePage() {
                 Manage Billing
               </button>
               <a
-                href={`mailto:${COMPANY.supportEmail}?subject=${encodeURIComponent("Classendo refund request")}`}
+                href={LINK_REFUND_SUPPORT_URL}
                 className="btn btn-secondary px-6 py-3"
+                target="_blank"
+                rel="noreferrer"
               >
-                Request a refund
+                Request a refund through Link
               </a>
             </>
           ) : !access?.isPremium || access?.premiumAccessSource === "welcome_trial" ? (
@@ -131,7 +134,7 @@ export default function ProfilePage() {
         </div>
         {access?.premiumAccessSource === "stripe" ? (
           <p className="mt-5 text-sm leading-6 text-[#657065]">
-            Manage Billing cancels future renewal. Refunds are reviewed separately under our{" "}
+            Manage Billing cancels future renewal. Request a refund through Link for payment support, or see our{" "}
             <Link href="/legal/refunds" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
           </p>
         ) : null}

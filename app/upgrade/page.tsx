@@ -159,7 +159,7 @@ function UpgradePageContent() {
               US dollars (USD)
             </div>
             <div className="mt-4 min-h-[58px]" />
-            <p className="mb-5 text-sm leading-6 text-[#667066]">Renews monthly until cancelled. Taxes may apply at checkout.</p>
+            <p className="mb-5 text-sm leading-6 text-[#667066]">Renews monthly until cancelled. Applicable taxes, such as VAT, are added at Stripe Checkout where required.</p>
             <button
               type="button"
               onClick={() => void startPremiumCheckout("monthly")}
@@ -190,7 +190,7 @@ function UpgradePageContent() {
                 Save {yearlySavings.amount} a year, about {yearlySavings.percent}% off
               </div>
             ) : null}
-            <p className="mb-5 mt-4 text-sm leading-6 text-[#667066]">Renews yearly until cancelled. Taxes may apply at checkout.</p>
+            <p className="mb-5 mt-4 text-sm leading-6 text-[#667066]">Renews yearly until cancelled. Applicable taxes, such as VAT, are added at Stripe Checkout where required.</p>
             <button
               type="button"
               onClick={() => void startPremiumCheckout("yearly")}
@@ -203,7 +203,7 @@ function UpgradePageContent() {
 
         <p className="mt-5 text-center text-sm leading-6 text-[#667066]">
           Prices are shown in US dollars. Stripe may display and charge the local equivalent at checkout. Applicable
-          taxes are added where required.
+          taxes, including VAT where required, are added at Stripe Checkout.
         </p>
 
         <div className="mt-8 rounded-2xl border border-[#dce4d5] bg-[#f3f7f0] p-5 text-sm leading-7 text-[#566056]">
