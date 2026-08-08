@@ -37,9 +37,9 @@ function LandingSectionImage({
     <button
       type="button"
       onClick={() => onExpand({ src, alt })}
-      className="group block w-full cursor-zoom-in rounded-[2rem] text-left outline-none transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-[#86a96a]/50"
+      className="group block w-full touch-manipulation cursor-zoom-in rounded-[2rem] text-left outline-none transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-[#86a96a]/50"
       aria-label={`Expand ${alt}`}
-      title="Click to view fullscreen"
+      title="Tap or click to view fullscreen"
     >
       <div className="rounded-[2rem] border-[3px] border-[#d8e6ce] bg-[#fcfcf8] p-3 shadow-[0_16px_40px_rgba(54,64,46,0.08)] transition-shadow duration-200 group-hover:shadow-[0_22px_48px_rgba(54,64,46,0.16)]">
       <img
@@ -79,9 +79,9 @@ export default function LandingHomepageSections({
         <button
           type="button"
           onClick={() => setExpandedImage(null)}
-          className="fixed inset-0 z-[200] flex cursor-zoom-out items-center justify-center bg-[#182016]/90 p-4 outline-none sm:p-8"
+          className="fixed inset-0 z-[200] flex touch-manipulation cursor-zoom-out items-center justify-center bg-[#182016]/90 p-4 outline-none sm:p-8"
           aria-label="Close fullscreen image"
-          title="Click anywhere to close"
+          title="Tap or click anywhere to close"
         >
           <img
             src={expandedImage.src}
@@ -89,7 +89,7 @@ export default function LandingHomepageSections({
             className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl"
           />
           <span className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white">
-            Click anywhere to close
+            Tap or click anywhere to close
           </span>
         </button>
       ) : null}
