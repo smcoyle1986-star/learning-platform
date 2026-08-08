@@ -11,6 +11,7 @@ import {
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const revealIfNeeded = window.setTimeout(() => setVisible(!readCookieConsent()), 0);
@@ -23,8 +24,15 @@ export function CookieConsentBanner() {
   }, []);
 
   useEffect(() => {
+    const updateFullscreenState = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    updateFullscreenState();
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState);
+  }, []);
+
+  useEffect(() => {
     const root = document.documentElement;
-    if (visible) {
+    if (visible && !isFullscreen) {
       root.dataset.cookieConsentBanner = "visible";
     } else {
       delete root.dataset.cookieConsentBanner;
@@ -33,7 +41,7 @@ export function CookieConsentBanner() {
     return () => {
       delete root.dataset.cookieConsentBanner;
     };
-  }, [visible]);
+  }, [visible, isFullscreen]);
 
   const choose = (analytics: boolean) => {
     saveCookieConsent(analytics);
@@ -41,7 +49,7 @@ export function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible || isFullscreen) return null;
 
   return (
     <aside
