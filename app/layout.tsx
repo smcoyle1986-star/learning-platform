@@ -13,7 +13,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.classendo.com"),
+  metadataBase: new URL("https://classendo.com"),
   title: {
     default: PAGE_CONTENT.home.title,
     template: "%s | Classendo",
