@@ -81,6 +81,9 @@ export async function syncStripeSubscription(params: {
   const subscriptionItem = params.subscription.items.data[0];
   const priceId = subscriptionItem?.price?.id ?? null;
   const billingInterval = subscriptionItem?.price?.recurring?.interval ?? null;
+  const scheduledCancellation = Boolean(
+    params.subscription.cancel_at_period_end || params.subscription.cancel_at,
+  );
   const nextState = {
     subscription_tier: params.subscription.status === "canceled" ? "free" : "premium",
     subscription_status: params.subscription.status,
@@ -98,7 +101,7 @@ export async function syncStripeSubscription(params: {
           ? billingInterval
           : null,
       current_period_end: toIsoDate(subscriptionItem?.current_period_end),
-      cancel_at_period_end: Boolean(params.subscription.cancel_at_period_end),
+      cancel_at_period_end: scheduledCancellation,
       stripe_livemode: Boolean(params.subscription.livemode),
       last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
