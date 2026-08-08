@@ -8,7 +8,7 @@ import {
   AdministratorBadge,
   administratorTitle,
 } from "@/components/admin/AdministratorBadge";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseReady } from "@/lib/supabase/client";
 import { openBillingPortal } from "@/lib/billing/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 
