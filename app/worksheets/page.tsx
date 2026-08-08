@@ -369,7 +369,10 @@ function WorksheetsPageContent() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-56px)] flex-col overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
+    <div
+      className="flex flex-col overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]"
+      style={{ height: "calc(100dvh - 56px - var(--cookie-consent-banner-offset, 0px))" }}
+    >
       <PageHeader
         title="Worksheets"
         description={PAGE_CONTENT.worksheets.description}

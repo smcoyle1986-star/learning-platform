@@ -20,6 +20,37 @@ type WorksheetPreviewProps = {
   className?: string;
 };
 
+function FittedWorksheetIframe({
+  previewHtml,
+  width,
+  height,
+  scale,
+}: {
+  previewHtml: string;
+  width: number;
+  height: number;
+  scale: number;
+}) {
+  const scaledWidth = width * scale;
+  const scaledHeight = height * scale;
+
+  return (
+    <div
+      className="flex min-h-full min-w-full items-center justify-center p-4"
+      style={{ minWidth: `${scaledWidth + 32}px`, minHeight: `${scaledHeight + 32}px` }}
+    >
+      <div className="relative shrink-0" style={{ width: `${scaledWidth}px`, height: `${scaledHeight}px` }}>
+        <iframe
+          title="Worksheet preview"
+          srcDoc={previewHtml}
+          className="absolute left-0 top-0 border-0 bg-[#eef2f7]"
+          style={{ width: `${width}px`, height: `${height}px`, transform: `scale(${scale})`, transformOrigin: "top left" }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function WorksheetPreview({
   cards,
   draft,
@@ -39,6 +70,7 @@ export default function WorksheetPreview({
     draft.type === "tic-tac-toe" ||
     draft.type === "battleship" ||
     draft.type === "wordsearch";
+  const visualPreviewScale = Math.max(crosswordScale, 0.62);
 
   useEffect(() => {
     let mounted = true;
@@ -94,7 +126,7 @@ export default function WorksheetPreview({
       ) : null}
       <div
         ref={previewFrameRef}
-        className="rounded-[30px] border border-slate-200 overflow-hidden bg-[#eef2f7] flex-1 min-h-0 relative shadow-[0_24px_80px_rgba(15,23,42,0.08)]"
+        className={`rounded-[30px] border border-slate-200 bg-[#eef2f7] flex-1 min-h-0 relative shadow-[0_24px_80px_rgba(15,23,42,0.08)] ${isFitPreview ? "overflow-auto" : "overflow-hidden"}`}
       >
         {draft.type === "questions" ? (
           <div className="absolute inset-0 p-2">
@@ -148,37 +180,19 @@ export default function WorksheetPreview({
             />
           </div>
         ) : draft.type === "bullseye" || draft.type === "tic-tac-toe" || draft.type === "battleship" ? (
-          <div
-            className="absolute left-1/2 top-1/2"
-            style={{
-              width: `${LANDSCAPE_PREVIEW_BASE_SIZE.width}px`,
-              height: `${LANDSCAPE_PREVIEW_BASE_SIZE.height}px`,
-              transform: `translate(-50%, -50%) scale(${crosswordScale})`,
-              transformOrigin: "center center",
-            }}
-          >
-            <iframe
-              title="Worksheet preview"
-              srcDoc={previewHtml}
-              className="w-full h-full min-h-0 bg-[#eef2f7] border-0"
-            />
-          </div>
+          <FittedWorksheetIframe
+            previewHtml={previewHtml}
+            width={LANDSCAPE_PREVIEW_BASE_SIZE.width}
+            height={LANDSCAPE_PREVIEW_BASE_SIZE.height}
+            scale={visualPreviewScale}
+          />
         ) : isFitPreview ? (
-          <div
-            className="absolute left-1/2 top-1/2"
-            style={{
-              width: `${PORTRAIT_PREVIEW_BASE_SIZE.width}px`,
-              height: `${PORTRAIT_PREVIEW_BASE_SIZE.height}px`,
-              transform: `translate(-50%, -50%) scale(${crosswordScale})`,
-              transformOrigin: "center center",
-            }}
-          >
-            <iframe
-              title="Worksheet preview"
-              srcDoc={previewHtml}
-              className="w-full h-full min-h-0 bg-[#eef2f7] border-0"
-            />
-          </div>
+          <FittedWorksheetIframe
+            previewHtml={previewHtml}
+            width={PORTRAIT_PREVIEW_BASE_SIZE.width}
+            height={PORTRAIT_PREVIEW_BASE_SIZE.height}
+            scale={visualPreviewScale}
+          />
         ) : (
           <iframe
             title="Worksheet preview"

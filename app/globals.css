@@ -7,6 +7,7 @@
    - New accent tokens added so primary buttons are not blue
    ====================================================== */
 :root {
+  --cookie-consent-banner-offset: 0px;
   /* Brand / palette */
   --color-primary: #1e40af;        /* brand blue (homepage) - used for logo/brand only */
   --color-primary-hover: #15307f;  /* brand blue hover (if needed) */
@@ -32,6 +33,16 @@
   --radius-lg: 1.25rem;   /* 20px */
   --easing: cubic-bezier(.2,.9,.3,1);
   --shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-cookie-consent-banner="visible"] {
+  --cookie-consent-banner-offset: 116px;
+}
+
+@media (max-width: 640px) {
+  :root[data-cookie-consent-banner="visible"] {
+    --cookie-consent-banner-offset: 168px;
+  }
 }
 
 /* ======================================================
