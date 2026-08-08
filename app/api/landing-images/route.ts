@@ -25,8 +25,14 @@ function hasFileExtension(name: string) {
   return /\.[a-z0-9]+$/i.test(name);
 }
 
-async function listRecursive(bucket: StorageBucket, folder: string): Promise<Array<{ path: string; label: string }>> {
-  const collected: Array<{ path: string; label: string }> = [];
+type LandingImage = {
+  path: string;
+  label: string;
+  version: string | null;
+};
+
+async function listRecursive(bucket: StorageBucket, folder: string): Promise<LandingImage[]> {
+  const collected: LandingImage[] = [];
   const pageSize = 100;
   let offset = 0;
 
@@ -51,6 +57,7 @@ async function listRecursive(bucket: StorageBucket, folder: string): Promise<Arr
         collected.push({
           path: fullPath,
           label: name.replace(/\.[^.]+$/, "").replace(/_/g, " "),
+          version: entry.updated_at ?? null,
         });
         continue;
       }
@@ -67,6 +74,7 @@ async function listRecursive(bucket: StorageBucket, folder: string): Promise<Arr
         collected.push({
           path: fullPath,
           label: name.replace(/\.[^.]+$/, "").replace(/_/g, " "),
+          version: entry.updated_at ?? null,
         });
       }
     }

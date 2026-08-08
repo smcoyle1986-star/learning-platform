@@ -7,6 +7,7 @@ type Slide = {
   alt: string;
   label: string;
   caption: string;
+  version?: string | null;
 };
 
 const SLIDE_CAPTIONS: Record<string, string> = {
@@ -31,6 +32,12 @@ const SLIDE_CAPTIONS: Record<string, string> = {
 
 function isInformationSlide(path: string) {
   return path.startsWith("landing/information/");
+}
+
+function landingImageUrl(slide: Slide) {
+  const params = new URLSearchParams({ path: slide.path });
+  if (slide.version) params.set("v", slide.version);
+  return `/api/landing-image?${params.toString()}`;
 }
 
 const FALLBACK_SLIDES: Slide[] = [
@@ -149,7 +156,9 @@ export default function LandingCarousel() {
     const load = async () => {
       try {
         const response = await fetch("/api/landing-images", { cache: "no-store" });
-        const json = (await response.json().catch(() => ({}))) as { slides?: Array<{ path: string; label?: string }> };
+        const json = (await response.json().catch(() => ({}))) as {
+          slides?: Array<{ path: string; label?: string; version?: string | null }>;
+        };
         if (cancelled) return;
 
         const apiSlides =
@@ -161,6 +170,7 @@ export default function LandingCarousel() {
                   alt: slide.label ? `Classendo landing slide: ${slide.label}` : "Classendo landing carousel slide",
                   label: slide.label ?? "",
                   caption: SLIDE_CAPTIONS[slide.label?.replace(/\s+/g, "_") ?? ""] ?? "",
+                  version: slide.version ?? null,
                 }))
             : [];
 
@@ -208,7 +218,7 @@ export default function LandingCarousel() {
             >
               <div className="h-full w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-4 shadow-xl backdrop-blur-sm">
                 <img
-                  src={`/api/landing-image?path=${encodeURIComponent(slide.path)}`}
+                  src={landingImageUrl(slide)}
                   alt={slide.alt}
                   className="h-full w-full object-contain object-center"
                 />
