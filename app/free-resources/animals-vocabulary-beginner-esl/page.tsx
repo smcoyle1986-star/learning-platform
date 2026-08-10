@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Download, ExternalLink, FileText, Printer, Presentation, Sparkles } from "lucide-react";
 import BrandButton from "@/components/BrandButton";
+import AnimalsClassroomButton from "@/components/free-resources/AnimalsClassroomButton";
 
 const path = "/free-resources/animals-vocabulary-beginner-esl";
 const asset = "/resources/animals-vocabulary-beginner-esl";
@@ -39,6 +40,7 @@ export default function AnimalsVocabularyFreeResourcePage() {
             <a href="#preview" className="btn btn-secondary px-6 py-3 text-base">Preview the pack</a>
           </div>
           <p className="mt-4 text-sm text-[#6c7669]">No email gate. No sign-up required. 10 printable pages.</p>
+          <AnimalsClassroomButton />
         </div>
         <div className="rounded-[2rem] border border-[#d7e4cf] bg-[#eaf3e5] p-4 shadow-[0_22px_55px_rgba(72,96,62,0.14)]">
           <img src={`${asset}/animals-vocabulary-full-pack-pinterest.png`} alt="Preview of the Animals Vocabulary beginner ESL pack" className="mx-auto w-full max-w-[440px] rounded-[1.35rem] shadow-lg" />
