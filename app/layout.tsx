@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "Classendo",
   },
+  verification: {
+    other: {
+      "p:domain_verify": "f0f195a8d8bcb75cf8530e02d35062c6",
+    },
+  },
 };
 
 export default function RootLayout({
