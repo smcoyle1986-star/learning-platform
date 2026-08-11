@@ -388,15 +388,15 @@ function WorksheetsPageContent() {
       />
 
       <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-3 overflow-hidden px-6 py-4">
-        <section className="bg-white rounded-2xl border shadow-sm px-4 py-2.5 shrink-0">
-          <div className="flex items-center justify-between gap-3 mb-2">
+        <section className="shrink-0 rounded-2xl border bg-white px-4 py-2 shadow-sm">
+          <div className="mb-1.5 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold">Lesson Tray</h2>
               <p className="text-xs text-[var(--color-text-muted)]">{trayDescription}</p>
             </div>
             <button
               onClick={() => (window.location.href = "/flashcards")}
-              className="btn btn-secondary px-3 py-2 text-sm shrink-0"
+              className="btn btn-secondary shrink-0 px-3 py-1.5 text-sm"
             >
               Add Cards
             </button>
@@ -526,7 +526,7 @@ function WorksheetsPageContent() {
                 />
               </div>
             ) : (
-              <div className="relative h-full group">
+            <div className="relative h-full">
                 <WorksheetPreview
                   cards={cards}
                   draft={{ ...draft, title: worksheetName || draft.title }}
@@ -537,35 +537,31 @@ function WorksheetsPageContent() {
                   className="h-full"
                 />
 
-                <div className={`absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-6 pb-6 pointer-events-none ${activeWorksheetLocked ? "hidden" : ""}`}>
-                  <div className="w-full max-w-3xl px-6 pt-6 pb-1 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-                    <div className="pointer-events-auto mx-auto flex items-center justify-center gap-3 px-4 py-3">
+                <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-4 pb-4 ${activeWorksheetLocked ? "hidden" : ""}`}>
+                  <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.18)] backdrop-blur-sm">
                       <button
                         onClick={() => setShowSaveModal(true)}
                         disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
-                        className="btn btn-primary px-4 py-2 text-sm shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                        className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
                       >
                         Save Worksheet
                       </button>
                       <button
                         onClick={handleExportPdf}
                         disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
-                        className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                        className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
                       >
                         {isExporting ? "Exporting…" : "Export PDF"}
                       </button>
                       <button
                         onClick={handlePrintNow}
                         disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
-                        className="btn btn-secondary px-4 py-2 text-sm bg-white/98 shadow-[0_12px_30px_rgba(15,23,42,0.18)] disabled:opacity-50"
+                        className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
                       >
                         {isPrinting ? "Printing…" : "Print Now"}
                       </button>
                     </div>
                   </div>
-                </div>
-
-                <div className={`absolute inset-x-0 bottom-0 h-28 z-10 group ${activeWorksheetLocked ? "hidden" : ""}`} />
               </div>
             )}
           </section>
