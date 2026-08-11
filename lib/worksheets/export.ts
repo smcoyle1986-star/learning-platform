@@ -633,26 +633,15 @@ function buildWordsearchHtml(cards: LessonCard[], draft: WorksheetDraft, options
     .map((entry, index) => {
       const imageSrc = resolveBoardImageSrc(entry.card);
       const word = formatWorksheetWord(entry.word);
-      const fill = palette[index % palette.length];
-      const content =
-        listMode === "image"
-          ? `<div class="wordsearch-list-frame wordsearch-list-frame-image">${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(word)}" class="wordsearch-list-image" />` : `<div class="wordsearch-list-placeholder">${escapeHtml(word)}</div>`}</div>`
-          : listMode === "text"
-            ? `<div class="wordsearch-list-frame wordsearch-list-frame-text">${escapeHtml(word)}</div>`
-            : `
-              <div class="wordsearch-list-frame wordsearch-list-frame-both">
-                ${
-                  imageSrc
-                    ? `<div class="wordsearch-list-image-wrap"><img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(word)}" class="wordsearch-list-image" /></div>`
-                    : `<div class="wordsearch-list-placeholder">${escapeHtml(word)}</div>`
-                }
-                <div class="wordsearch-list-text">${escapeHtml(word)}</div>
-              </div>
-            `;
+      const image = imageSrc
+        ? `<div class="clue-image-wrap"><img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(word)}" class="clue-image" /></div>`
+        : "";
+      const text = `<div class="clue-word">${escapeHtml(word)}</div>`;
+      const content = listMode === "image" ? image || text : listMode === "text" ? text : `${image}${text}`;
 
       return `
-        <div class="wordsearch-word-card" style="background:${fill};">
-          <div class="wordsearch-word-number">${index + 1}</div>
+        <div class="clue-card wordsearch-clue-card">
+          <div class="clue-number-badge">${index + 1}</div>
           ${content}
         </div>
       `;
@@ -1375,84 +1364,6 @@ export function buildWorksheetDocumentHtml(
             grid-template-columns: repeat(var(--wordsearch-columns, 4), minmax(0, 1fr));
             grid-template-rows: repeat(var(--wordsearch-rows, 2), minmax(0, 1fr));
             gap: 4px;
-          }
-          .wordsearch-word-card {
-            border-radius: 14px;
-            padding: 6px 8px;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
-          }
-          .wordsearch-word-number {
-            width: 18px;
-            height: 18px;
-            border-radius: 999px;
-            background: #1d4ed8;
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            font-weight: 800;
-            flex-shrink: 0;
-          }
-          .wordsearch-list-frame {
-            flex: 1 1 auto;
-            min-width: 0;
-            min-height: 0;
-            display: flex;
-          }
-          .wordsearch-list-frame-image,
-          .wordsearch-list-frame-text {
-            align-items: center;
-            justify-content: center;
-          }
-          .wordsearch-list-frame-both {
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-          }
-          .wordsearch-list-image-wrap {
-            width: 100%;
-            height: 100%;
-            min-height: 24px;
-            border-radius: 10px;
-            overflow: hidden;
-            flex-shrink: 0;
-            background: rgba(255, 255, 255, 0.4);
-          }
-          .wordsearch-list-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-          }
-          .wordsearch-list-text {
-            width: 100%;
-            text-align: center;
-            font-size: 9px;
-            font-weight: 800;
-            line-height: 1.15;
-            color: #0f172a;
-            text-transform: uppercase;
-            word-break: break-word;
-          }
-          .wordsearch-list-placeholder {
-            width: 100%;
-            height: 100%;
-            min-height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 9px;
-            font-weight: 800;
-            color: #475569;
-            text-transform: uppercase;
-            word-break: break-word;
           }
           .wordsearch-footer {
             margin-top: 0;
