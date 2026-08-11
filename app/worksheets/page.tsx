@@ -369,10 +369,7 @@ function WorksheetsPageContent() {
   }
 
   return (
-    <div
-      className="flex flex-col overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]"
-      style={{ height: "calc(100dvh - 56px - var(--cookie-consent-banner-offset, 0px))" }}
-    >
+    <div className="min-h-full bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
         title="Worksheets"
         description={PAGE_CONTENT.worksheets.description}
@@ -387,7 +384,7 @@ function WorksheetsPageContent() {
         ]}
       />
 
-      <main className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-3 overflow-hidden px-6 py-4">
+      <main className="mx-auto w-full max-w-7xl space-y-3 px-6 py-4">
         <section className="shrink-0 rounded-2xl border bg-white px-4 py-2 shadow-sm">
           <div className="mb-1.5 flex items-center justify-between gap-3">
             <div>
@@ -479,15 +476,13 @@ function WorksheetsPageContent() {
           </LessonTrayScroller>
         </section>
 
-        <div className="relative grid min-h-0 flex-1 grid-cols-12 gap-4 overflow-hidden">
-          <aside className={`${activeWorksheetLocked ? "hidden" : "col-span-12 lg:col-span-4 xl:col-span-3 min-h-0 overflow-hidden"}`}>
-            <div className="h-full flex flex-col gap-4">
-              <div className="min-h-0 overflow-y-auto pr-1">
-                {selectedType && !activeWorksheetLocked && access && !access.isPremium ? (
-                  <div className="bg-white rounded-2xl border shadow-sm p-4 text-sm text-[var(--color-text-muted)]">
-                    Advanced worksheet controls are part of Premium. Free accounts can still use the featured weekly worksheet with its default layout.
-                  </div>
-                ) : selectedType ? (
+        <div className="grid items-start grid-cols-12 gap-4">
+          <aside className={`${activeWorksheetLocked ? "hidden" : "col-span-12 lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 lg:self-start"}`}>
+            {selectedType && !activeWorksheetLocked && access && !access.isPremium ? (
+              <div className="rounded-2xl border bg-white p-4 text-sm text-[var(--color-text-muted)] shadow-sm">
+                Advanced worksheet controls are part of Premium. Free accounts can still use the featured weekly worksheet with its default layout.
+              </div>
+            ) : selectedType ? (
                 <WorksheetOptionsPanel
                   key={selectedType.id}
                   worksheetType={selectedType}
@@ -501,18 +496,16 @@ function WorksheetsPageContent() {
                 crosswordFitSummary={crosswordFitSummary}
                 wordsearchFitSummary={wordsearchFitSummary}
               />
-                ) : (
-                  <div className="bg-white rounded-2xl border shadow-sm p-4 text-sm text-[var(--color-text-muted)]">
-                    Select a worksheet type to see its editing options here.
-                  </div>
-                )}
+            ) : (
+              <div className="rounded-2xl border bg-white p-4 text-sm text-[var(--color-text-muted)] shadow-sm">
+                Select a worksheet type to see its editing options here.
               </div>
-            </div>
+            )}
           </aside>
 
-          <section className={`${activeWorksheetLocked ? "col-span-12" : "col-span-12 lg:col-span-8 xl:col-span-9"} min-h-0 min-w-0 overflow-hidden`}>
+          <section className={`${activeWorksheetLocked ? "col-span-12" : "col-span-12 lg:col-span-8 xl:col-span-9"} min-w-0`}>
             {activeWorksheetLocked && selectedType ? (
-              <div className="grid h-full min-h-0 min-w-0 grid-cols-[minmax(0,1fr)_minmax(320px,370px)] gap-4 overflow-hidden">
+              <div className="grid min-h-[78vh] min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,370px)]">
                 <LockedWorksheetPreview
                   cards={cards}
                   draft={{ ...draft, title: worksheetName || draft.title }}
@@ -526,7 +519,30 @@ function WorksheetsPageContent() {
                 />
               </div>
             ) : (
-            <div className="relative h-full">
+              <div>
+                <div className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:justify-end">
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
+                    className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    Save Worksheet
+                  </button>
+                  <button
+                    onClick={handleExportPdf}
+                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
+                    className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    {isExporting ? "Exporting…" : "Export PDF"}
+                  </button>
+                  <button
+                    onClick={handlePrintNow}
+                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
+                    className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
+                  >
+                    {isPrinting ? "Printing…" : "Print Now"}
+                  </button>
+                </div>
                 <WorksheetPreview
                   cards={cards}
                   draft={{ ...draft, title: worksheetName || draft.title }}
@@ -534,34 +550,8 @@ function WorksheetsPageContent() {
                   onReadingLinesChange={updateReadingLines}
                   onWritingLinesChange={updateWritingLines}
                   onSentenceScrambleLinesChange={updateSentenceScrambleLines}
-                  className="h-full"
+                  className="h-[78vh] min-h-[38rem]"
                 />
-
-                <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-center px-4 pb-4 ${activeWorksheetLocked ? "hidden" : ""}`}>
-                  <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white/95 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.18)] backdrop-blur-sm">
-                      <button
-                        onClick={() => setShowSaveModal(true)}
-                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
-                        className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
-                      >
-                        Save Worksheet
-                      </button>
-                      <button
-                        onClick={handleExportPdf}
-                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
-                        className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
-                      >
-                        {isExporting ? "Exporting…" : "Export PDF"}
-                      </button>
-                      <button
-                        onClick={handlePrintNow}
-                        disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isPrinting}
-                        className="btn btn-secondary bg-white px-4 py-2 text-sm disabled:opacity-50"
-                      >
-                        {isPrinting ? "Printing…" : "Print Now"}
-                      </button>
-                    </div>
-                  </div>
               </div>
             )}
           </section>

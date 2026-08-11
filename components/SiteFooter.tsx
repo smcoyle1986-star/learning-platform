@@ -60,7 +60,7 @@ export function SiteFooter() {
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls="site-information-drawer"
-        className="fixed bottom-[calc(1.25rem+var(--cookie-consent-banner-offset,0px))] left-5 z-50 inline-flex items-center gap-2 rounded-full border border-[#cfdcc8] bg-white px-4 py-2.5 text-sm font-semibold text-[#506a47] shadow-[0_12px_30px_rgba(48,65,43,0.16)] transition hover:-translate-y-0.5 hover:bg-[#f7faf5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6f895f] focus-visible:ring-offset-2"
+        className="fixed bottom-[calc(1.25rem+var(--cookie-consent-banner-offset,0px))] left-5 z-50 inline-flex items-center gap-2 rounded-full border border-[#cfdcc8] bg-white px-4 py-2.5 text-sm font-semibold text-[#506a47] opacity-35 shadow-[0_12px_30px_rgba(48,65,43,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#f7faf5] hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6f895f] focus-visible:ring-offset-2"
       >
         <Info aria-hidden="true" className="h-4 w-4" />
         Legal &amp; site info
