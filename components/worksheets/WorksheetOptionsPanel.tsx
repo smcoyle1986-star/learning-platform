@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { WorksheetDraft, WorksheetTypeOption } from "@/lib/worksheets/types";
+import WorksheetHelpModal from "@/components/worksheets/WorksheetHelpModal";
 
 type WorksheetOptionsPanelProps = {
   worksheetType: WorksheetTypeOption;
@@ -47,12 +48,12 @@ export default function WorksheetOptionsPanel({
   const isTicTacToe = worksheetType.id === "tic-tac-toe";
   const isBattleship = worksheetType.id === "battleship";
   const isWordsearch = worksheetType.id === "wordsearch";
-  const [showBullseyeHelp, setShowBullseyeHelp] = useState(isBullseye);
-  const [showSentenceScrambleHelp, setShowSentenceScrambleHelp] = useState(isSentenceScramble);
-  const [showTicTacToeHelp, setShowTicTacToeHelp] = useState(isTicTacToe);
-  const [showBattleshipHelp, setShowBattleshipHelp] = useState(isBattleship);
-  const [showWordsearchHelp, setShowWordsearchHelp] = useState(isWordsearch);
-  const [showWritingHelp, setShowWritingHelp] = useState(isWriting);
+  const [showBullseyeHelp, setShowBullseyeHelp] = useState(false);
+  const [showSentenceScrambleHelp, setShowSentenceScrambleHelp] = useState(false);
+  const [showTicTacToeHelp, setShowTicTacToeHelp] = useState(false);
+  const [showBattleshipHelp, setShowBattleshipHelp] = useState(false);
+  const [showWordsearchHelp, setShowWordsearchHelp] = useState(false);
+  const [showWritingHelp, setShowWritingHelp] = useState(false);
   const actionButtonClass =
     "btn btn-secondary w-full px-4 py-3 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30";
   const chipButtonClass =
@@ -69,6 +70,7 @@ export default function WorksheetOptionsPanel({
 
   return (
     <div className="space-y-4">
+      <WorksheetHelpModal worksheetType={worksheetType} />
       {showBullseyeHelp && isBullseye ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 px-4">
           <div className="w-full max-w-md rounded-[28px] border border-white/20 bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.24)]">
