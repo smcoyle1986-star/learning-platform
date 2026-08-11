@@ -16,7 +16,7 @@ async function make(type: "battleship" | "bullseye", filename: string, title: st
   const browser = await chromium.launch({ headless: true }); const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } }); await page.setContent(html, { waitUntil: "networkidle" }); await page.pdf({ path: path.join("/private/tmp", filename), landscape: true, format: "A4", printBackground: true }); await page.screenshot({ path: path.join(asset, filename.replace(".pdf", "-pinterest.png")), fullPage: true }); await browser.close();
 }
 async function main() {
-  await make("battleship", "food-battleship.pdf", "Food Battleship", "Work with a partner. Say a food word, find the matching card and mark the grid.");
+  await make("battleship", "food-battleship.pdf", "Food Battleship", "Each player draws five ships on a private grid and keeps them hidden. Take turns calling a food word and coordinate. Your partner says hit or miss. Sink all ships to win.");
   await make("bullseye", "food-bullseye.pdf", "Food Bullseye", "Drop a small token. Say: I like ___. Score the points when you say it correctly.");
 }
 main();
