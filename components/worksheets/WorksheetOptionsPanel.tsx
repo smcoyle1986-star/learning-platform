@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { WorksheetDraft, WorksheetTypeOption } from "@/lib/worksheets/types";
-import WorksheetHelpModal from "@/components/worksheets/WorksheetHelpModal";
 
 type WorksheetOptionsPanelProps = {
   worksheetType: WorksheetTypeOption;
@@ -70,7 +69,6 @@ export default function WorksheetOptionsPanel({
 
   return (
     <div className="space-y-4">
-      <WorksheetHelpModal worksheetType={worksheetType} />
       {showBullseyeHelp && isBullseye ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 px-4">
           <div className="w-full max-w-md rounded-[28px] border border-white/20 bg-white p-6 shadow-[0_30px_100px_rgba(15,23,42,0.24)]">

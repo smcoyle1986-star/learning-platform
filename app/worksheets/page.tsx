@@ -9,6 +9,7 @@ import WorksheetOptionsPanel from "@/components/worksheets/WorksheetOptionsPanel
 import WorksheetPreview from "@/components/worksheets/WorksheetPreview";
 import LockedWorksheetPreview from "@/components/worksheets/LockedWorksheetPreview";
 import SaveWorksheetDialogs from "@/components/worksheets/SaveWorksheetDialogs";
+import WorksheetHelpModal from "@/components/worksheets/WorksheetHelpModal";
 import { useAuth } from "@/components/AuthProvider";
 import PremiumPreviewOverlay from "@/components/billing/PremiumPreviewOverlay";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
@@ -577,6 +578,7 @@ function WorksheetsPageContent() {
         onCloseSuccess={() => setShowSaveSuccessModal(false)}
         onOpenDashboard={() => { window.location.href = `/dashboard?worksheet_id=${encodeURIComponent(worksheetId ?? "")}`; }}
       />
+      {selectedType && !activeWorksheetLocked ? <WorksheetHelpModal worksheetType={selectedType} /> : null}
     </div>
   );
 }
