@@ -1,6 +1,9 @@
 from pathlib import Path
+import sys
 from pypdf import PdfReader, PdfWriter
-for slug in ["transportation-vocabulary-beginner-esl", "jobs-vocabulary-beginner-esl", "places-in-town-vocabulary-beginner-esl", "home-furniture-vocabulary-beginner-esl", "school-subjects-vocabulary-beginner-esl", "toys-vocabulary-beginner-esl", "sports-vocabulary-beginner-esl", "nature-vocabulary-beginner-esl", "numbers-vocabulary-beginner-esl", "time-vocabulary-beginner-esl", "kitchen-objects-vocabulary-beginner-esl"]:
+slugs = ["transportation-vocabulary-beginner-esl", "jobs-vocabulary-beginner-esl", "places-in-town-vocabulary-beginner-esl", "home-furniture-vocabulary-beginner-esl", "school-subjects-vocabulary-beginner-esl", "toys-vocabulary-beginner-esl", "sports-vocabulary-beginner-esl", "nature-vocabulary-beginner-esl", "numbers-vocabulary-beginner-esl", "time-vocabulary-beginner-esl", "kitchen-objects-vocabulary-beginner-esl", "morning-routine-verbs-beginner-esl", "after-school-verbs-beginner-esl", "home-chores-verbs-beginner-esl", "food-actions-verbs-beginner-esl"]
+selected = set(sys.argv[1:])
+for slug in [candidate for candidate in slugs if not selected or candidate in selected]:
     source=Path("public/free-resources")/(slug+".pdf")
     original=PdfReader(source); worksheet=PdfReader(Path("/private/tmp")/(slug+"-classendo.pdf"))
     output=PdfWriter()
