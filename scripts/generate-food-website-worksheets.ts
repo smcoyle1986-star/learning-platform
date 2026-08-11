@@ -13,10 +13,10 @@ const cards = [
 async function make(type: "battleship" | "bullseye", filename: string, title: string, instructions: string) {
   const draft = { ...buildWorksheetDraft(type), title, instructions, shuffleSeed: 17, battleshipImageMode: "both" as const, battleshipBoardMode: "empty" as const, bullseyeImageMode: "both" as const, bullseyeVersion: "points" as const };
   const html = await buildWorksheetPreviewHtml(cards, draft, { includeTeacherCopy: false, previewMode: false });
-  const browser = await chromium.launch({ headless: true }); const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } }); await page.setContent(html, { waitUntil: "networkidle" }); await page.pdf({ path: path.join("/private/tmp", filename), landscape: true, format: "A4", printBackground: true }); await page.screenshot({ path: path.join(asset, filename.replace(".pdf", "-pinterest.png")), fullPage: true }); await browser.close();
+  const browser = await chromium.launch({ headless: true }); const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } }); await page.setContent(html, { waitUntil: "networkidle" }); await page.pdf({ path: path.join("/private/tmp", filename), landscape: true, format: "A4", printBackground: true }); await page.screenshot({ path: path.join(asset, `food-vocabulary-${type}-pinterest.png`), fullPage: true }); await browser.close();
 }
 async function main() {
-  await make("battleship", "food-battleship.pdf", "Food Battleship", "Each player draws five ships on a private grid and keeps them hidden. Take turns calling a food word and coordinate. Your partner says hit or miss. Sink all ships to win.");
+  await make("battleship", "food-battleship.pdf", "Food Battleship", "On your own grid, draw five ships and keep them hidden from your partner. Take turns calling a food word and coordinate. Your partner says hit or miss. Sink all ships to win.");
   await make("bullseye", "food-bullseye.pdf", "Food Bullseye", "Drop a small token. Say: I like ___. Score the points when you say it correctly.");
 }
 main();
