@@ -44,6 +44,8 @@ const FREE_RESOURCE_SLUGS = [
   "creative-activities-verbs-beginner-esl",
   "outdoor-adventures-verbs-beginner-esl",
   "opposites-adjectives-beginner-esl",
+  "personality-adjectives-beginner-esl",
+  "speed-and-difficulty-adjectives-beginner-esl",
   "weather-vocabulary-beginner-esl",
   "weather-adjectives-beginner-esl",
 ] as const;
