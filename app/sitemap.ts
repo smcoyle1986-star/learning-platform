@@ -47,6 +47,11 @@ const FREE_RESOURCE_SLUGS = [
   "personality-adjectives-beginner-esl",
   "speed-and-difficulty-adjectives-beginner-esl",
   "weather-vocabulary-beginner-esl",
+  "place-prepositions-beginner-esl",
+  "where-things-are-prepositions-beginner-esl",
+  "movement-prepositions-beginner-esl",
+  "directions-prepositions-beginner-esl",
+  "travel-routes-prepositions-beginner-esl",
   "weather-adjectives-beginner-esl",
 ] as const;
 
