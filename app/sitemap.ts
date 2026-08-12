@@ -30,6 +30,10 @@ const FREE_RESOURCE_SLUGS = [
   "time-vocabulary-beginner-esl",
   "toys-vocabulary-beginner-esl",
   "transportation-vocabulary-beginner-esl",
+  "travel-actions-verbs-beginner-esl",
+  "active-verbs-beginner-esl",
+  "creative-activities-verbs-beginner-esl",
+  "outdoor-adventures-verbs-beginner-esl",
   "weather-vocabulary-beginner-esl",
 ] as const;
 
