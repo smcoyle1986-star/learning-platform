@@ -7,6 +7,7 @@ const siteUrl = "https://classendo.com";
 const FREE_RESOURCE_SLUGS = [
   "after-school-verbs-beginner-esl",
   "animals-vocabulary-beginner-esl",
+  "appearance-adjectives-beginner-esl",
   "body-parts-vocabulary-beginner-esl",
   "classroom-actions-verbs-beginner-esl",
   "classroom-objects-vocabulary-beginner-esl",
@@ -29,6 +30,7 @@ const FREE_RESOURCE_SLUGS = [
   "nature-vocabulary-beginner-esl",
   "numbers-vocabulary-beginner-esl",
   "places-in-town-vocabulary-beginner-esl",
+  "places-adjectives-beginner-esl",
   "school-subjects-vocabulary-beginner-esl",
   "size-and-shape-adjectives-beginner-esl",
   "speaking-skills-verbs-beginner-esl",
@@ -41,7 +43,9 @@ const FREE_RESOURCE_SLUGS = [
   "active-verbs-beginner-esl",
   "creative-activities-verbs-beginner-esl",
   "outdoor-adventures-verbs-beginner-esl",
+  "opposites-adjectives-beginner-esl",
   "weather-vocabulary-beginner-esl",
+  "weather-adjectives-beginner-esl",
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
