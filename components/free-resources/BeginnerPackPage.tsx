@@ -3,7 +3,7 @@ import { Check, Download, FileText, Presentation, Printer, Sparkles } from "luci
 import BrandButton from "@/components/BrandButton";
 import BeginnerPackClassroomButton from "@/components/free-resources/BeginnerPackClassroomButton";
 
-type Pack = { slug: string; title: string; topic: string; words: string[]; cards: { id: string; word: string }[]; cardType?: "noun" | "verb"; worksheet: string; activity: string; activityCopy: string; lessonCopy: string };
+type Pack = { slug: string; title: string; topic: string; words: string[]; cards: { id: string; word: string }[]; cardType?: "noun" | "verb" | "adjective"; worksheet: string; activity: string; activityCopy: string; lessonCopy: string };
 const tools = [{ t: "Flashcards", h: "/flashcards", i: Sparkles, c: "Choose up to six free cards for a temporary lesson in this browser." }, { t: "Classroom", h: "/flashcards/classroom", i: Presentation, c: "Present your selected cards in Classroom Mode." }, { t: "Lesson Plans", h: "/lessons", i: FileText, c: "Build and export a guest plan from selected cards." }, { t: "Printables", h: "/printables", i: Printer, c: "Print the default layout from a temporary six-card lesson." }];
 const imageName = (word: string) => word.replaceAll(" ", "-");
 
