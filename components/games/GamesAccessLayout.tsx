@@ -8,9 +8,11 @@ import { PREMIUM_GAME_IDS } from "@/lib/billing/constants";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 
-export default function GamesAccessLayout({ children }: { children: React.ReactNode }) {
+export default function GamesAccessLayout({ children, publicFallback }: { children: React.ReactNode; publicFallback?: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
-    <SignedInFeatureGate featureName="Games" nextPath="/games" description={PAGE_CONTENT.games.description}>
+    <SignedInFeatureGate featureName="Games" nextPath="/games" description={PAGE_CONTENT.games.description} publicFallback={pathname === "/games" ? publicFallback : undefined}>
       <SignedInGamesLayout>{children}</SignedInGamesLayout>
     </SignedInFeatureGate>
   );

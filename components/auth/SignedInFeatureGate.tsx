@@ -6,11 +6,13 @@ import { useAuth } from "@/components/AuthProvider";
 
 export default function SignedInFeatureGate({
   children,
+  publicFallback,
   featureName,
   nextPath,
   description,
 }: {
   children: React.ReactNode;
+  publicFallback?: React.ReactNode;
   featureName: string;
   nextPath: string;
   description?: string;
@@ -18,6 +20,7 @@ export default function SignedInFeatureGate({
   const { user, loading } = useAuth();
 
   if (loading) {
+    if (publicFallback) return <>{publicFallback}</>;
     return (
       <main className="min-h-[55vh] bg-[var(--color-bg-main)] px-6 py-12 text-[#2f3a2f]">
         <section className="mx-auto max-w-3xl">
@@ -29,6 +32,8 @@ export default function SignedInFeatureGate({
   }
 
   if (user) return <>{children}</>;
+
+  if (publicFallback) return <>{publicFallback}</>;
 
   const next = encodeURIComponent(nextPath);
 
