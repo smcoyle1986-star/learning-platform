@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandButton from "@/components/BrandButton";
 
@@ -213,6 +214,10 @@ function HomePageContent() {
               {section.title}
             </button>
           ))}
+
+          <Link href="/free-resources" className="btn btn-secondary">
+            Free Lesson Packs
+          </Link>
 
           <a href="/login" className="btn btn-secondary ml-1">
             Teacher Login

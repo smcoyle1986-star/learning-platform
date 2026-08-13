@@ -55,6 +55,11 @@ export const BRAND_THEME_BY_KEY: Record<string, BrandTheme> = {
     circleBorder: "rgba(165, 180, 252, 0.95)",
     fade: "rgba(165, 180, 252, 0.18)",
   },
+  freeResources: {
+    circle: "rgba(216, 180, 254, 0.72)",
+    circleBorder: "rgba(216, 180, 254, 0.95)",
+    fade: "rgba(216, 180, 254, 0.20)",
+  },
   login: {
     circle: "rgba(160, 174, 192, 0.70)",
     circleBorder: "rgba(160, 174, 192, 0.90)",
@@ -86,6 +91,7 @@ export function resolveBrandTheme(pathname: string | null | undefined): BrandThe
   if (normalized.startsWith("/worksheets")) return BRAND_THEME_BY_KEY.worksheets;
   if (normalized.startsWith("/lessons")) return BRAND_THEME_BY_KEY.lessons;
   if (normalized.startsWith("/teacher/editor")) return BRAND_THEME_BY_KEY.editor;
+  if (normalized.startsWith("/free-resources")) return BRAND_THEME_BY_KEY.freeResources;
   if (normalized.startsWith("/login")) return BRAND_THEME_BY_KEY.login;
   if (normalized.startsWith("/signup")) return BRAND_THEME_BY_KEY.signup;
   if (normalized.startsWith("/profile")) return BRAND_THEME_BY_KEY.profile;

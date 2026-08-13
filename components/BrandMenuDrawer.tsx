@@ -62,6 +62,9 @@ export default function BrandMenuDrawer() {
   const { access } = useBillingAccess();
 
   const displayName = getProfileDisplayName(profile, user?.email);
+  const navigationLinks = user
+    ? [...LINKS, { label: "Free Lesson Packs", href: "/free-resources" }]
+    : LINKS;
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -122,7 +125,7 @@ export default function BrandMenuDrawer() {
           )}
 
           <nav className="flex flex-col gap-1">
-            {LINKS.map((item) => (
+            {navigationLinks.map((item) => (
               (() => {
                 const theme = resolveBrandTheme(item.href);
                 return (
