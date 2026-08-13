@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+import { createFreeResourceMetadata } from "@/lib/seo/free-resource-metadata";
 import BeginnerPackPage from "@/components/free-resources/BeginnerPackPage";
 const slug = "family-vocabulary-beginner-esl";
 const cards = [{ id: "183d7140-0e85-47e4-b012-af9220a9bb7e", word: "mother" }, { id: "11bdc94a-30db-4c02-8e6a-d176e4d050cf", word: "father" }, { id: "89aa6eac-c16d-42ec-8b69-747f61607914", word: "brother" }, { id: "d9087541-f06f-44e6-a1cf-99d6885b3535", word: "sister" }, { id: "9e5723c8-035b-4d81-99e6-d8bcfd7abd12", word: "grandmother" }, { id: "0dce9082-4bc2-4ba3-9e3f-3c173b1cc62e", word: "grandfather" }];
-export const metadata: Metadata = { title: "Free Family Vocabulary Lesson Pack for Beginner ESL", description: "Free printable family lesson pack for beginner ESL.", alternates: { canonical: `/free-resources/${slug}` }, openGraph: { title: "Family Vocabulary - Beginner ESL", images: [{ url: `/resources/${slug}/${slug}-full-pack-pinterest.png`, width: 1000, height: 1500 }] } };
+export const metadata = createFreeResourceMetadata({ slug, title: "Family Vocabulary" });
 export default function Page() { return <BeginnerPackPage pack={{ slug, title: "Family Vocabulary", topic: "Family", words: cards.map(card => card.word), cards, worksheet: "Picture crossword and sentence writing", activity: "Family Interview speaking activity", activityCopy: "Ask and answer Who is this? with picture cards.", lessonCopy: "How to pair learners and run the Family Interview." }} />; }

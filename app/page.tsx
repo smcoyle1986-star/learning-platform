@@ -219,6 +219,10 @@ function HomePageContent() {
             Free Lesson Packs
           </Link>
 
+          <Link href="/topics" className="btn btn-secondary">
+            ESL Topics
+          </Link>
+
           <a href="/login" className="btn btn-secondary ml-1">
             Teacher Login
           </a>

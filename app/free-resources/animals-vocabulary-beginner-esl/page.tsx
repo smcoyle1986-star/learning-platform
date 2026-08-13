@@ -1,19 +1,15 @@
-import type { Metadata } from "next";
+import { createFreeResourceMetadata } from "@/lib/seo/free-resource-metadata";
 import Link from "next/link";
 import { Check, Download, ExternalLink, FileText, Printer, Presentation, Sparkles } from "lucide-react";
 import BrandButton from "@/components/BrandButton";
 import AnimalsClassroomButton from "@/components/free-resources/AnimalsClassroomButton";
 
-const path = "/free-resources/animals-vocabulary-beginner-esl";
+const slug = "animals-vocabulary-beginner-esl";
+const path = `/free-resources/${slug}`;
 const asset = "/resources/animals-vocabulary-beginner-esl";
 const cards = ["dog", "cat", "bird", "fish", "rabbit", "lion"];
 
-export const metadata: Metadata = {
-  title: "Free Animals Vocabulary Lesson Pack for Beginner ESL",
-  description: "Download a free printable Animals Vocabulary beginner ESL lesson pack with six flashcards, worksheets, a speaking activity, lesson plan and answer key.",
-  alternates: { canonical: path },
-  openGraph: { title: "Free Animals Vocabulary Lesson Pack for Beginner ESL", description: "A complete printable six-word animal vocabulary lesson for beginner English learners.", url: path, type: "website", siteName: "Classendo", images: [{ url: `${asset}/animals-vocabulary-full-pack-pinterest.png`, width: 1000, height: 1500, alt: "Animals Vocabulary beginner ESL printable lesson pack" }] },
-};
+export const metadata = createFreeResourceMetadata({ slug, title: "Animals Vocabulary" });
 
 const featureLinks = [
   { title: "Flashcards", href: "/flashcards", icon: Sparkles, copy: "Choose up to six free cards for a temporary lesson in this browser." },

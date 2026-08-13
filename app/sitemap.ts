@@ -56,7 +56,7 @@ const FREE_RESOURCE_SLUGS = [
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const publicPaths = ["/", "/flashcards", "/games", "/worksheets", "/printables", "/lessons", "/teacher/community", "/creator", "/faq", "/upgrade", "/legal", "/topics", "/free-resources", "/free-resources/animals-vocabulary-beginner-esl"];
+  const publicPaths = ["/", "/flashcards", "/games", "/worksheets", "/printables", "/lessons", "/teacher/community", "/creator", "/faq", "/upgrade", "/legal", "/topics", "/free-resources"];
   return [
     ...publicPaths.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "weekly" as const, priority: path === "/" ? 1 : 0.7 })),
     ...LEGAL_DOCUMENTS.map((document) => ({ url: `${siteUrl}/legal/${document.slug}`, changeFrequency: "yearly" as const, priority: 0.3 })),

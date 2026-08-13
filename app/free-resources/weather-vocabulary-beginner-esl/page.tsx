@@ -1,26 +1,15 @@
-import type { Metadata } from "next";
+import { createFreeResourceMetadata } from "@/lib/seo/free-resource-metadata";
 import Link from "next/link";
 import { Check, Download, ExternalLink, FileText, Presentation, Printer, Sparkles } from "lucide-react";
 import BrandButton from "@/components/BrandButton";
 import WeatherClassroomButton from "@/components/free-resources/WeatherClassroomButton";
 
-const path = "/free-resources/weather-vocabulary-beginner-esl";
+const slug = "weather-vocabulary-beginner-esl";
+const path = `/free-resources/${slug}`;
 const asset = "/resources/weather-vocabulary-beginner-esl";
 const cards = ["sunny", "cloudy", "raining", "snowing", "windy", "stormy"];
 
-export const metadata: Metadata = {
-  title: "Free Weather Vocabulary Lesson Pack for Beginner ESL",
-  description: "Download a free printable Weather Vocabulary beginner ESL lesson pack with six flashcards, worksheets, a speaking game, lesson plan and answer key.",
-  alternates: { canonical: path },
-  openGraph: {
-    title: "Free Weather Vocabulary Lesson Pack for Beginner ESL",
-    description: "A complete printable six-word weather lesson for beginner English learners.",
-    url: path,
-    type: "website",
-    siteName: "Classendo",
-    images: [{ url: `${asset}/weather-vocabulary-full-pack-pinterest.png`, width: 1000, height: 1500, alt: "Weather Vocabulary beginner ESL printable lesson pack" }],
-  },
-};
+export const metadata = createFreeResourceMetadata({ slug, title: "Weather Vocabulary" });
 
 const featureLinks = [
   { title: "Flashcards", href: "/flashcards", icon: Sparkles, copy: "Choose up to six free cards for a temporary lesson in this browser." },
