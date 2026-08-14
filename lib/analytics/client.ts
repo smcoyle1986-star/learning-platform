@@ -4,7 +4,14 @@ import { supabase } from "@/lib/supabase/client";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
 type AnalyticsEvent = {
-  eventType: "vocabulary_search" | "flashcard_view" | "worksheet_generated";
+  eventType:
+    | "vocabulary_search"
+    | "flashcard_view"
+    | "worksheet_generated"
+    | "flashcards_opened"
+    | "classroom_opened"
+    | "lesson_pack_viewed"
+    | "lesson_pack_downloaded";
   itemKey?: string;
   itemLabel: string;
   category?: string;

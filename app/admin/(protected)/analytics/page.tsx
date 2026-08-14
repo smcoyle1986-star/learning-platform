@@ -15,6 +15,7 @@ import {
   getAdminAnalyticsSnapshot,
   type AdminAnalyticsRankedItem,
 } from "@/lib/admin/analytics";
+import { AdminAnalyticsAutoRefresh } from "@/components/admin/AdminAnalyticsAutoRefresh";
 
 const GAME_LABELS: Record<string, string> = {
   "connect-four": "Connect Four",
@@ -133,6 +134,10 @@ export default async function AdminAnalyticsPage({
     { label: "Worksheet activity", value: analytics.summary.worksheetGenerations + analytics.summary.worksheetSaves, icon: FileText },
     { label: "Premium upgrades", value: analytics.summary.premiumUpgrades, icon: Crown },
     { label: "New users", value: analytics.summary.newUsers, icon: UserPlus },
+    { label: "Lesson-pack views", value: analytics.summary.lessonPackViews, icon: Eye },
+    { label: "PDF downloads", value: analytics.summary.lessonPackDownloads, icon: FileText },
+    { label: "Guest flashcard starts", value: analytics.summary.guestFlashcardsOpened, icon: Search },
+    { label: "Guest Classroom starts", value: analytics.summary.guestClassroomOpens, icon: Activity },
   ];
   const recentTrends = analytics.trends.slice(-14);
   const trendMaximum = Math.max(
@@ -142,6 +147,7 @@ export default async function AdminAnalyticsPage({
 
   return (
     <section className="px-5 py-8 sm:px-7 lg:px-10 lg:py-10">
+      <AdminAnalyticsAutoRefresh />
       <div className="flex flex-col justify-between gap-5 border-b border-[#dfe4dc] pb-7 sm:flex-row sm:items-end">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#718d63]">Platform signals</p>
@@ -154,7 +160,7 @@ export default async function AdminAnalyticsPage({
         <div className="inline-flex w-fit items-center gap-2 rounded-2xl border border-[#dfe4dc] bg-white px-4 py-3 text-sm text-[#697267]">
           <Activity aria-hidden="true" className="h-4 w-4 text-[#68805d]" />
           <strong className="text-[#354035]">{analytics.summary.trackedEvents.toLocaleString()}</strong>
-          first-party events
+          first-party events · updates every 30 seconds
         </div>
       </div>
 
@@ -166,7 +172,7 @@ export default async function AdminAnalyticsPage({
         ))}
       </nav>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {summaryCards.map(({ label, value, icon: Icon }) => (
           <article key={label} className="rounded-2xl border border-[#dfe4dc] bg-white p-4">
             <div className="flex items-center justify-between gap-3">
@@ -184,6 +190,7 @@ export default async function AdminAnalyticsPage({
         <RankedList title="Most viewed flashcards" description="Flashcards teachers selected from the result grid." items={analytics.flashcards} kind="flashcards" empty="No flashcard engagement recorded for this period." />
         <RankedList title="Most played games" description="Game starts captured by the existing Classendo game tracker." items={analytics.games} kind="games" empty="No game starts recorded for this period." />
         <RankedList title="Most generated worksheets" description="Worksheet previews plus saved worksheet records from the selected period." items={analytics.worksheets} kind="worksheets" empty="No worksheet activity recorded for this period." />
+        <RankedList title="Most popular free lesson packs" description="Pack-page views and PDF downloads in the selected period." items={analytics.lessonPacks} kind="flashcards" empty="No lesson-pack activity recorded for this period." />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
@@ -213,7 +220,7 @@ export default async function AdminAnalyticsPage({
       <div className="mt-5 rounded-2xl border border-[#dfe4dc] bg-[#f9faf7] p-4 text-xs leading-5 text-[#747e73]">
         Analytics intentionally stores only event type, short vocabulary/resource labels,
         broad category, pseudonymous session key, optional account ID, and timestamp.
-        Browser Do Not Track is respected. Community counters are all-time because the
+        Guest starts are events with no signed-in account. Browser Do Not Track is respected. Community counters are all-time because the
         existing schema stores totals rather than individual copy events.
       </div>
     </section>

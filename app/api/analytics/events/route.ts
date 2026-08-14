@@ -9,6 +9,10 @@ const EVENT_TYPES = new Set([
   "vocabulary_search",
   "flashcard_view",
   "worksheet_generated",
+  "flashcards_opened",
+  "classroom_opened",
+  "lesson_pack_viewed",
+  "lesson_pack_downloaded",
 ]);
 
 const SAFE_LABEL = /^[\p{L}\p{N}\s'&_-]+$/u;

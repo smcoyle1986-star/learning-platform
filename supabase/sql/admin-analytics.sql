@@ -43,6 +43,10 @@ create table if not exists public.analytics_events (
       'vocabulary_search',
       'flashcard_view',
       'worksheet_generated',
+      'flashcards_opened',
+      'classroom_opened',
+      'lesson_pack_viewed',
+      'lesson_pack_downloaded',
       'premium_upgrade'
     )
   ),
@@ -57,6 +61,23 @@ create table if not exists public.analytics_events (
   constraint analytics_events_category_check
     check (category is null or char_length(category) <= 60)
 );
+
+alter table public.analytics_events
+  drop constraint if exists analytics_events_type_check;
+
+alter table public.analytics_events
+  add constraint analytics_events_type_check check (
+    event_type in (
+      'vocabulary_search',
+      'flashcard_view',
+      'worksheet_generated',
+      'flashcards_opened',
+      'classroom_opened',
+      'lesson_pack_viewed',
+      'lesson_pack_downloaded',
+      'premium_upgrade'
+    )
+  );
 
 create unique index if not exists analytics_events_event_key_unique_idx
   on public.analytics_events (event_key)
@@ -100,6 +121,12 @@ declare
   flashcard_views bigint := 0;
   worksheet_generations bigint := 0;
   worksheet_saves bigint := 0;
+  flashcards_opened bigint := 0;
+  classroom_opens bigint := 0;
+  guest_flashcards_opened bigint := 0;
+  guest_classroom_opens bigint := 0;
+  lesson_pack_views bigint := 0;
+  lesson_pack_downloads bigint := 0;
   game_plays bigint := 0;
   premium_upgrades bigint := 0;
   new_users bigint := 0;
@@ -108,6 +135,7 @@ declare
   flashcards jsonb := '[]'::jsonb;
   games jsonb := '[]'::jsonb;
   worksheets jsonb := '[]'::jsonb;
+  lesson_packs jsonb := '[]'::jsonb;
   community_sets jsonb := '[]'::jsonb;
   trends jsonb := '[]'::jsonb;
 begin
@@ -116,12 +144,24 @@ begin
     count(*) filter (where event_type = 'vocabulary_search'),
     count(*) filter (where event_type = 'flashcard_view'),
     count(*) filter (where event_type = 'worksheet_generated'),
+    count(*) filter (where event_type = 'flashcards_opened'),
+    count(*) filter (where event_type = 'classroom_opened'),
+    count(*) filter (where event_type = 'flashcards_opened' and user_id is null),
+    count(*) filter (where event_type = 'classroom_opened' and user_id is null),
+    count(*) filter (where event_type = 'lesson_pack_viewed'),
+    count(*) filter (where event_type = 'lesson_pack_downloaded'),
     count(*) filter (where event_type = 'premium_upgrade')
   into
     tracked_events,
     vocabulary_searches,
     flashcard_views,
     worksheet_generations,
+    flashcards_opened,
+    classroom_opens,
+    guest_flashcards_opened,
+    guest_classroom_opens,
+    lesson_pack_views,
+    lesson_pack_downloads,
     premium_upgrades
   from public.analytics_events
   where since_at is null or created_at >= since_at;
@@ -242,6 +282,34 @@ begin
       limit 8
     ) ranked;
 
+  with viewed as (
+    select coalesce(nullif(item_key, ''), lower(btrim(item_label))) as key,
+           min(item_label) as label,
+           count(*) as count
+      from public.analytics_events
+     where event_type = 'lesson_pack_viewed'
+       and nullif(btrim(item_label), '') is not null
+       and (since_at is null or created_at >= since_at)
+     group by coalesce(nullif(item_key, ''), lower(btrim(item_label)))
+  ), downloaded as (
+    select coalesce(nullif(item_key, ''), lower(btrim(item_label))) as key,
+           count(*) as downloads
+      from public.analytics_events
+     where event_type = 'lesson_pack_downloaded'
+       and (since_at is null or created_at >= since_at)
+     group by coalesce(nullif(item_key, ''), lower(btrim(item_label)))
+  ), combined as (
+    select coalesce(v.key, d.key) as key,
+           coalesce(v.label, replace(d.key, '-', ' ')) as label,
+           coalesce(v.count, 0) + coalesce(d.downloads, 0) as count,
+           coalesce(d.downloads, 0) as downloads
+      from viewed v full outer join downloaded d on d.key = v.key
+     order by count desc, coalesce(v.label, d.key)
+     limit 8
+  )
+  select coalesce(jsonb_agg(to_jsonb(combined)), '[]'::jsonb)
+    into lesson_packs from combined;
+
   with days as (
     select generate_series(
       (current_date - (trend_days - 1))::date,
@@ -291,6 +359,12 @@ begin
       'flashcard_views', flashcard_views,
       'worksheet_generations', worksheet_generations,
       'worksheet_saves', worksheet_saves,
+      'flashcards_opened', flashcards_opened,
+      'classroom_opens', classroom_opens,
+      'guest_flashcards_opened', guest_flashcards_opened,
+      'guest_classroom_opens', guest_classroom_opens,
+      'lesson_pack_views', lesson_pack_views,
+      'lesson_pack_downloads', lesson_pack_downloads,
       'game_plays', game_plays,
       'premium_upgrades', premium_upgrades,
       'new_users', new_users,
@@ -300,6 +374,7 @@ begin
     'flashcards', flashcards,
     'games', games,
     'worksheets', worksheets,
+    'lesson_packs', lesson_packs,
     'community_sets', community_sets,
     'trends', trends
   );

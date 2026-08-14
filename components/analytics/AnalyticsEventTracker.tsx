@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
@@ -39,6 +40,40 @@ function trackVocabularySearch() {
 }
 
 export function AnalyticsEventTracker() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname === "/flashcards") {
+      void trackAnalyticsEvent({
+        eventType: "flashcards_opened",
+        itemKey: "flashcards",
+        itemLabel: "Flashcards",
+        category: "tool",
+      });
+      return;
+    }
+
+    if (pathname === "/flashcards/classroom") {
+      void trackAnalyticsEvent({
+        eventType: "classroom_opened",
+        itemKey: "classroom",
+        itemLabel: "Classroom Mode",
+        category: "tool",
+      });
+      return;
+    }
+
+    const packSlug = pathname.match(/^\/free-resources\/([^/]+)$/)?.[1];
+    if (packSlug) {
+      void trackAnalyticsEvent({
+        eventType: "lesson_pack_viewed",
+        itemKey: packSlug,
+        itemLabel: packSlug.replaceAll("-", " "),
+        category: "lesson pack",
+      });
+    }
+  }, [pathname]);
+
   useEffect(() => {
     function onClick(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target : null;
@@ -77,6 +112,24 @@ export function AnalyticsEventTracker() {
           itemKey: key,
           itemLabel: label,
           category: "worksheet",
+        });
+        return;
+      }
+
+      const packDownload = target.closest<HTMLAnchorElement>(
+        'a[href^="/free-resources/"][href$=".pdf"]',
+      );
+      if (packDownload) {
+        const slug = packDownload
+          .getAttribute("href")
+          ?.replace(/^\/free-resources\//, "")
+          .replace(/\.pdf$/, "");
+        if (!slug) return;
+        void trackAnalyticsEvent({
+          eventType: "lesson_pack_downloaded",
+          itemKey: slug,
+          itemLabel: slug.replaceAll("-", " "),
+          category: "lesson pack",
         });
       }
     }

@@ -31,6 +31,12 @@ export type AdminAnalyticsSnapshot = {
     flashcardViews: number;
     worksheetGenerations: number;
     worksheetSaves: number;
+    flashcardsOpened: number;
+    classroomOpens: number;
+    guestFlashcardsOpened: number;
+    guestClassroomOpens: number;
+    lessonPackViews: number;
+    lessonPackDownloads: number;
     gamePlays: number;
     premiumUpgrades: number;
     newUsers: number;
@@ -40,6 +46,7 @@ export type AdminAnalyticsSnapshot = {
   flashcards: AdminAnalyticsRankedItem[];
   games: AdminAnalyticsRankedItem[];
   worksheets: AdminAnalyticsRankedItem[];
+  lessonPacks: AdminAnalyticsRankedItem[];
   communitySets: AdminAnalyticsRankedItem[];
   trends: AdminAnalyticsTrend[];
 };
@@ -100,6 +107,12 @@ export async function getAdminAnalyticsSnapshot(
       flashcardViews: count(summary.flashcard_views),
       worksheetGenerations: count(summary.worksheet_generations),
       worksheetSaves: count(summary.worksheet_saves),
+      flashcardsOpened: count(summary.flashcards_opened),
+      classroomOpens: count(summary.classroom_opens),
+      guestFlashcardsOpened: count(summary.guest_flashcards_opened),
+      guestClassroomOpens: count(summary.guest_classroom_opens),
+      lessonPackViews: count(summary.lesson_pack_views),
+      lessonPackDownloads: count(summary.lesson_pack_downloads),
       gamePlays: count(summary.game_plays),
       premiumUpgrades: count(summary.premium_upgrades),
       newUsers: count(summary.new_users),
@@ -109,6 +122,7 @@ export async function getAdminAnalyticsSnapshot(
     flashcards: normalizeList(root.flashcards),
     games: normalizeList(root.games),
     worksheets: normalizeList(root.worksheets),
+    lessonPacks: normalizeList(root.lesson_packs),
     communitySets: normalizeList(root.community_sets),
     trends: Array.isArray(root.trends)
       ? root.trends.map((value) => {
