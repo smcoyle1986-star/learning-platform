@@ -18,7 +18,7 @@ const filters: { value: TypeFilter; label: string }[] = [
 const colours = {
   noun: "border-sky-200 bg-sky-50 text-sky-800",
   verb: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  adjective: "border-violet-200 bg-violet-50 text-violet-800",
+  adjective: "border-rose-200 bg-rose-50 text-rose-800",
   preposition: "border-amber-200 bg-amber-50 text-amber-800",
 };
 
