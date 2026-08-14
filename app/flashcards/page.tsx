@@ -180,7 +180,9 @@ export default function FlashcardsPage() {
     if (authLoading) return;
     let mounted = true;
     const scope = user ? "account" : "guest";
-    const storedTray = readLessonTray(scope) as TrayItem[];
+    const cameFromFreeResource = new URLSearchParams(window.location.search).get("from") === "free-resource";
+    const storedTray = (cameFromFreeResource ? [] : readLessonTray(scope)) as TrayItem[];
+    if (cameFromFreeResource) writeLessonTray([], scope);
     setLessonTray(storedTray);
     setLessonTrayReady(true);
     void hydrateCreatorLessonCards(storedTray as LessonCard[]).then((hydrated) => {

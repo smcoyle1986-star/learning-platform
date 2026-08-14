@@ -12,7 +12,7 @@ const cards = ["sunny", "cloudy", "raining", "snowing", "windy", "stormy"];
 export const metadata = createFreeResourceMetadata({ slug, title: "Weather Vocabulary" });
 
 const featureLinks = [
-  { title: "Flashcards", href: "/flashcards", icon: Sparkles, copy: "Choose up to six free cards for a temporary lesson in this browser." },
+  { title: "Flashcards", href: "/flashcards?from=free-resource", icon: Sparkles, copy: "Choose up to six free cards for a temporary lesson in this browser." },
   { title: "Classroom", href: "/flashcards/classroom", icon: Presentation, copy: "Present your selected cards in Classroom Mode." },
   { title: "Lesson Plans", href: "/lessons", icon: FileText, copy: "Build and export a guest plan from selected cards." },
   { title: "Printables", href: "/printables", icon: Printer, copy: "Print the default layout from a temporary six-card lesson." },
@@ -23,7 +23,7 @@ export default function WeatherVocabularyFreeResourcePage() {
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
         <BrandButton className="text-3xl font-extrabold text-blue-700 hover:opacity-80 md:text-4xl" />
-        <Link href="/flashcards" className="text-sm font-semibold text-[#52684a] hover:underline">Explore Flashcards</Link>
+        <Link href="/flashcards?from=free-resource" className="text-sm font-semibold text-[#52684a] hover:underline">Explore Flashcards</Link>
       </header>
       <section className="mx-auto grid max-w-7xl gap-10 px-6 pb-16 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pt-16">
         <div>
