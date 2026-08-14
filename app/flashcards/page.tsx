@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Presentation } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
@@ -48,6 +49,7 @@ export default function FlashcardsPage() {
   const [isMyCards, setIsMyCards] = useState(false);
   const [creatorCards, setCreatorCards] = useState<Card[]>([]);
   const [guestPrompt, setGuestPrompt] = useState<"limit" | "save" | null>(null);
+  const [shouldHighlightClassroom, setShouldHighlightClassroom] = useState(false);
 
   // NOTE: changed to preserve original case — only replace underscores with spaces.
   const formatWord = (word: string) => String(word ?? "").replace(/_/g, " ");
@@ -127,6 +129,20 @@ export default function FlashcardsPage() {
       if (raw) setCardCounts(JSON.parse(raw));
     } catch (e) {
       console.warn("Failed to load card counts:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const storageKey = "classendo-classroom-cta-seen";
+
+    try {
+      if (sessionStorage.getItem(storageKey)) return;
+      sessionStorage.setItem(storageKey, "true");
+      setShouldHighlightClassroom(true);
+      const timeout = window.setTimeout(() => setShouldHighlightClassroom(false), 6800);
+      return () => window.clearTimeout(timeout);
+    } catch {
+      setShouldHighlightClassroom(true);
     }
   }, []);
   useEffect(() => {
@@ -365,10 +381,10 @@ export default function FlashcardsPage() {
     >
       <PageHeader
         title="Flashcards"
-        description={PAGE_CONTENT.flashcards.description}
+        description={<><span>{PAGE_CONTENT.flashcards.description}</span><span className="mt-1 block font-medium text-[#52684a]">Interactive Classroom lets you present cards full-screen, shuffle them, and draw as you teach.</span></>}
         sticky={false}
         primaryItems={[
-          { label: "Classroom", onClick: () => {
+          { label: "Open Interactive Classroom", icon: <Presentation size={18} aria-hidden="true" />, highlight: shouldHighlightClassroom, onClick: () => {
             persistLessonTray();
             router.push("/flashcards/classroom");
           }, tone: "classroom" },
@@ -463,6 +479,10 @@ export default function FlashcardsPage() {
         onRemoveFromTray={removeFromLessonTray}
         onOpenSaveModal={() => setShowSaveModal(true)}
         onGuestSave={() => setGuestPrompt("save")}
+        onGoClassroom={() => {
+          persistLessonTray();
+          router.push("/flashcards/classroom?from=flashcards");
+        }}
         onGoLessonPlans={() => {
           persistLessonTray();
           router.push("/lessons");

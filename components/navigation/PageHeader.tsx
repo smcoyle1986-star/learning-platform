@@ -10,6 +10,8 @@ type PageHeaderItem = {
   href?: string;
   onClick?: () => void;
   tone?: "default" | "classroom";
+  icon?: ReactNode;
+  highlight?: boolean;
 };
 
 type PageHeaderProps = {
@@ -22,9 +24,9 @@ type PageHeaderProps = {
   className?: string;
 };
 
-function pillClassName(tone: PageHeaderItem["tone"]) {
+function pillClassName(tone: PageHeaderItem["tone"], highlight = false) {
   if (tone === "classroom") {
-    return "btn rounded-full border-[#7ea76a] bg-[#89ad70] text-white hover:bg-[#7ea76a] shadow-[0_8px_18px_rgba(126,167,106,0.18)]";
+    return `btn rounded-full border-[#7ea76a] bg-[#89ad70] px-5 py-3 text-sm text-white hover:bg-[#7ea76a] shadow-[0_8px_18px_rgba(126,167,106,0.18)] ${highlight ? "animate-classroom-prompt" : ""}`;
   }
   return "btn btn-secondary rounded-full";
 }
@@ -62,17 +64,17 @@ export default function PageHeader({
             <div className="flex flex-wrap items-center gap-2 xl:hidden">
               {primaryItems.map((item) =>
                 item.href ? (
-                  <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone)}>
-                    {item.label}
+                  <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone, item.highlight)}>
+                    {item.icon}{item.label}
                   </Link>
                 ) : (
                   <button
                     key={item.label}
                     type="button"
                     onClick={item.onClick}
-                    className={pillClassName(item.tone)}
+                    className={pillClassName(item.tone, item.highlight)}
                   >
-                    {item.label}
+                    {item.icon}{item.label}
                   </button>
                 )
               )}
@@ -82,17 +84,17 @@ export default function PageHeader({
           <div className="hidden xl:flex xl:shrink-0 xl:items-center xl:justify-end xl:gap-2">
             {primaryItems.map((item) =>
               item.href ? (
-                <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone)}>
-                  {item.label}
+                <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone, item.highlight)}>
+                  {item.icon}{item.label}
                 </Link>
               ) : (
                 <button
                   key={item.label}
                   type="button"
                   onClick={item.onClick}
-                  className={pillClassName(item.tone)}
+                  className={pillClassName(item.tone, item.highlight)}
                 >
-                  {item.label}
+                  {item.icon}{item.label}
                 </button>
               )
             )}
@@ -107,18 +109,18 @@ export default function PageHeader({
                 <Link
                   key={`${item.label}-${item.href}`}
                   href={item.href}
-                  className={`${pillClassName(item.tone)} px-3 py-1.5 text-sm`}
+                  className={`${pillClassName(item.tone, item.highlight)} px-3 py-1.5 text-sm`}
                 >
-                  {item.label}
+                  {item.icon}{item.label}
                 </Link>
               ) : (
                 <button
                   key={item.label}
                   type="button"
                   onClick={item.onClick}
-                  className={`${pillClassName(item.tone)} px-3 py-1.5 text-sm`}
+                  className={`${pillClassName(item.tone, item.highlight)} px-3 py-1.5 text-sm`}
                 >
-                  {item.label}
+                  {item.icon}{item.label}
                 </button>
               )
             )}

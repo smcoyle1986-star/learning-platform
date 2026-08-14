@@ -222,6 +222,17 @@ body {
 .animate-slide-right { animation: slide-right 0.35s ease-out; }
 .animate-fade-up { animation: fade-up 0.6s ease-out both; }
 
+@keyframes classroom-prompt {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 18px rgba(126, 167, 106, 0.18); }
+  50% { transform: scale(1.045); box-shadow: 0 12px 28px rgba(126, 167, 106, 0.34); }
+}
+
+.animate-classroom-prompt { animation: classroom-prompt 2.2s ease-in-out 3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-classroom-prompt { animation: none; }
+}
+
 .animate-delay-1 { animation-delay: 0.08s; }
 .animate-delay-2 { animation-delay: 0.16s; }
 .animate-delay-3 { animation-delay: 0.24s; }

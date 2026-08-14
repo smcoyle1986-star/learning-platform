@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileSpreadsheet, Printer, X } from "lucide-react";
+import { BookOpen, FileSpreadsheet, Presentation, Printer, X } from "lucide-react";
 
 import { TrayItem } from "@/lib/flashcards/types";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
@@ -25,6 +25,7 @@ type LessonTrayBarProps = {
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
   onGuestSave?: () => void;
+  onGoClassroom: () => void;
   onGoLessonPlans?: () => void;
   onGoWorksheets: () => void;
   onPrint: () => void;
@@ -50,6 +51,7 @@ export default function LessonTrayBar({
   onRemoveFromTray,
   onOpenSaveModal,
   onGuestSave,
+  onGoClassroom,
   onGoLessonPlans,
   onGoWorksheets,
   onPrint,
@@ -122,6 +124,14 @@ export default function LessonTrayBar({
         <div className="flex items-center gap-2 flex-wrap">
           {lessonTray.length > 0 && (
             <>
+              <button
+                onClick={onGoClassroom}
+                className="btn btn-primary px-4 py-2 text-sm shadow-[0_8px_18px_rgba(126,167,106,0.2)]"
+                title="Present these cards full-screen in Interactive Classroom"
+              >
+                <Presentation size={17} />
+                Present {lessonTray.length} card{lessonTray.length === 1 ? "" : "s"} in Classroom
+              </button>
               <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-1 text-xs">
                 {isGuest ? "Sign up to save" : "Save To Dashboard"}
               </button>
