@@ -7,8 +7,8 @@ type Tool = "games" | "worksheets" | "community";
 const toolContent = {
   games: {
     eyebrow: "Classendo for ESL teachers",
-    title: "Vocabulary games for lively ESL lessons",
-    description: "Turn a small set of visual vocabulary cards into a quick, teacher-led classroom game. Build a lesson set first, then choose an activity that suits your class.",
+    title: "Interactive ESL classroom games and vocabulary activities",
+    description: "Turn a small set of visual vocabulary cards into an interactive, teacher-led classroom game. Build a free lesson set first, then choose an activity that suits your class.",
     benefits: [
       ["Image Reveal", "Reveal a picture gradually while learners guess the word."],
       ["Memory Flip", "Match visual vocabulary cards for a focused review activity."],
@@ -17,8 +17,8 @@ const toolContent = {
   },
   worksheets: {
     eyebrow: "Classendo for ESL teachers",
-    title: "Make vocabulary worksheets from your lesson cards",
-    description: "Choose vocabulary in Flashcards, then turn the same set into a classroom worksheet. Classendo helps you prepare matching, word-search, reading, writing, and other practice activities without rebuilding the content.",
+    title: "Free ESL vocabulary worksheets for the classroom",
+    description: "Choose vocabulary in Flashcards, then turn the same set into a free printable classroom worksheet. Classendo helps you prepare matching, word-search, reading, writing, and other practice activities without rebuilding the content.",
     benefits: [
       ["One shared lesson set", "Keep the vocabulary consistent from introduction to follow-up practice."],
       ["Flexible activities", "Choose an activity that works for your learners and the time available."],
@@ -87,8 +87,8 @@ export function FlashcardsSearchGuide() {
   return (
     <section className="border-t border-[#dce6d5] bg-[#f7f6f2] px-6 py-14 text-[#2f3a2f]" aria-labelledby="flashcard-guide-heading">
       <div className="mx-auto max-w-6xl">
-        <h2 id="flashcard-guide-heading" className="text-3xl font-semibold tracking-tight">Find ESL vocabulary flashcards by topic</h2>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-[#5c665c]">Classendo&apos;s illustrated flashcards help teachers introduce and practise beginner English vocabulary. Search for a word or choose a topic, collect the cards you need, then reuse the same set in classroom activities, printables, lesson plans, and games.</p>
+        <h2 id="flashcard-guide-heading" className="text-3xl font-semibold tracking-tight">Free interactive ESL flashcards by topic</h2>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-[#5c665c]">Classendo&apos;s illustrated flashcards help teachers introduce and practise beginner English vocabulary. Search for a word or choose a topic, collect the cards you need, then use them as free interactive classroom flashcards or reuse the same set in games, printables, worksheets, and lesson plans.</p>
         <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {TOPICS.map((topic) => (
             <li key={topic.slug}>
@@ -100,6 +100,18 @@ export function FlashcardsSearchGuide() {
           ))}
         </ul>
         <p className="mt-8 text-sm leading-6 text-[#5c665c]">Looking for ready-made teaching materials? Browse <Link href="/free-resources" className="font-semibold text-[#506a47] underline underline-offset-4">free ESL lesson packs</Link>.</p>
+      </div>
+    </section>
+  );
+}
+
+export function ClassroomModeSearchGuide() {
+  return (
+    <section className="bg-[#f7f6f2] px-6 py-14 text-[#2f3a2f]" aria-labelledby="classroom-mode-guide-heading">
+      <div className="mx-auto max-w-6xl">
+        <h2 id="classroom-mode-guide-heading" className="text-3xl font-semibold tracking-tight">Free interactive flashcards for the ESL classroom</h2>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-[#5c665c]">Classroom Mode presents the visual vocabulary cards in your lesson tray as large interactive flashcards. Use the arrows, shuffle controls, fullscreen view, and drawing tools to introduce words, review vocabulary, and lead whole-class English activities.</p>
+        <p className="mt-5 max-w-3xl text-base leading-7 text-[#5c665c]">Start by choosing free visual vocabulary cards in <Link href="/flashcards" className="font-semibold text-[#506a47] underline underline-offset-4">Flashcards</Link>, then bring the same set back to Classroom Mode whenever you teach.</p>
       </div>
     </section>
   );

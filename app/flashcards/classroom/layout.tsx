@@ -1,10 +1,8 @@
-import { createPrivateMetadata } from "@/lib/seo/page-content";
+import { ClassroomModeSearchGuide } from "@/components/seo/PublicToolLanding";
+import { createPublicMetadata } from "@/lib/seo/page-content";
 
-export const metadata = createPrivateMetadata(
-  "Classroom Flashcards",
-  "Present the cards in your lesson tray as large classroom flashcards."
-);
+export const metadata = createPublicMetadata("classroom");
 
 export default function ClassroomLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <>{children}<ClassroomModeSearchGuide /></>;
 }

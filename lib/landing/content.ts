@@ -7,10 +7,10 @@ export type LandingSection = {
   href: string;
 };
 
-export const LANDING_HERO_TITLE = "Interactive teaching tools\nfor English classrooms";
+export const LANDING_HERO_TITLE = "Free interactive flashcards\nfor English classrooms";
 
 export const LANDING_HERO_DESCRIPTION =
-  "Classendo helps teachers create visual lessons, classroom games, worksheets, and printable learning materials. Build resources from ready-made vocabulary or your own images, then use them directly with your class.";
+  "Classendo gives ESL teachers free interactive flashcards and classroom activities. Build a visual vocabulary set, then reuse it in Classroom Mode, games, worksheets, printables, and lesson plans.";
 
 export const LANDING_SECTIONS: LandingSection[] = [
   {

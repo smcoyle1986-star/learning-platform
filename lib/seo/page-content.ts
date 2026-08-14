@@ -8,14 +8,19 @@ type PageContent = {
 
 export const PAGE_CONTENT = {
   home: {
-    title: "Classendo | Visual Teaching Tools for the Classroom",
-    description: "Classendo helps teachers create visual lessons, classroom games, worksheets, and printable learning materials. Build resources from ready-made vocabulary or your own images, then use them directly with your class.",
+    title: "Free Interactive ESL Flashcards & Classroom Activities",
+    description: "Classendo gives ESL teachers free interactive flashcards and classroom activities. Build a visual vocabulary set, then reuse it in Classroom Mode, games, worksheets, printables, and lesson plans.",
     path: "/",
   },
   flashcards: {
-    title: "Flashcards",
-    description: "Find illustrated vocabulary cards and assemble them into lessons for your students. Search by topic, choose the cards you need, and send the finished set to Classendo's classroom tools.",
+    title: "Free Interactive ESL Flashcards for the Classroom",
+    description: "Build free interactive ESL flashcards for the classroom. Search visual vocabulary by topic, choose the cards you need, and reuse the set in Classroom Mode, games, worksheets, and printables.",
     path: "/flashcards",
+  },
+  classroom: {
+    title: "Free Interactive Flashcards for the ESL Classroom",
+    description: "Use free interactive flashcards in Classroom Mode for visual vocabulary teaching. Present cards full screen, shuffle them, add drawings, and lead whole-class ESL activities.",
+    path: "/flashcards/classroom",
   },
   community: {
     title: "Community Teaching Resources",
@@ -38,23 +43,23 @@ export const PAGE_CONTENT = {
     path: "/teacher/editor",
   },
   worksheets: {
-    title: "Worksheet Maker",
-    description: "Create classroom worksheets from the vocabulary cards in your lesson tray. Choose an activity and customise the content before saving or exporting the worksheet for your students.",
+    title: "Free ESL Vocabulary Worksheet Maker",
+    description: "Create free printable ESL vocabulary worksheets from the cards in your lesson tray. Choose a classroom activity, customise it, then save or export it for your students.",
     path: "/worksheets",
   },
   printables: {
-    title: "Classroom Printables",
-    description: "Turn your selected vocabulary cards into printable classroom resources. Adjust the layout and print flashcards, handouts, or supporting materials for lessons and activities.",
+    title: "Free Printable ESL Vocabulary Cards & Classroom Resources",
+    description: "Turn selected vocabulary cards into free printable ESL classroom resources. Adjust the layout and print flashcards, handouts, or supporting materials for lessons and activities.",
     path: "/printables",
   },
   lessons: {
-    title: "Lesson Plan Maker",
-    description: "Create structured lesson plans using your selected vocabulary and teaching goals. Organise activities and classroom instructions into a practical plan you can save or export.",
+    title: "Free ESL Lesson Plan Maker & Classroom Activities",
+    description: "Create practical ESL lesson plans from selected vocabulary and teaching goals. Organise classroom activities and instructions, then save or export the plan when it is ready.",
     path: "/lessons",
   },
   games: {
-    title: "Interactive Classroom Games",
-    description: "Choose an interactive classroom game and play it with the cards in your lesson tray. Classendo games turn vocabulary review into team challenges, movement activities, memory practice, and speaking tasks.",
+    title: "Interactive ESL Classroom Games & Vocabulary Activities",
+    description: "Turn a visual vocabulary set into interactive ESL classroom games. Classendo supports team challenges, movement activities, memory practice, and speaking tasks using the cards you choose.",
     path: "/games",
   },
   teacherTools: {

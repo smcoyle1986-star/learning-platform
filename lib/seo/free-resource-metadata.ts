@@ -11,7 +11,7 @@ export function createFreeResourceMetadata({
 }: FreeResourceMetadataInput): Metadata {
   const path = `/free-resources/${slug}`;
   const resourceTitle = `Free ${title} Lesson Pack for Beginner ESL`;
-  const description = `Download a free printable ${title} lesson pack for beginner ESL, including six visual flashcards, a worksheet, classroom activity, lesson plan, and answer key.`;
+  const description = `Download a free printable ${title} lesson pack for beginner ESL with visual flashcards, a worksheet, classroom activity, lesson plan, and an optional free interactive Classroom Mode extension.`;
   const image = `/resources/${slug}/${slug}-full-pack-pinterest.png`;
 
   return {
