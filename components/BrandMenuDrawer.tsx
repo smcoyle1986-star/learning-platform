@@ -15,6 +15,8 @@ const LINKS = [
   { label: "Flashcards", href: "/flashcards" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Community", href: "/teacher/community" },
+  { label: "Free Lesson Packs", href: "/free-resources" },
+  { label: "ESL Topics", href: "/topics" },
   { label: "Creator", href: "/creator" },
   { label: "Games", href: "/games" },
   { label: "Printables", href: "/printables" },
@@ -62,9 +64,7 @@ export default function BrandMenuDrawer() {
   const { access } = useBillingAccess();
 
   const displayName = getProfileDisplayName(profile, user?.email);
-  const navigationLinks = user
-    ? [...LINKS, { label: "Free Lesson Packs", href: "/free-resources" }]
-    : LINKS;
+  const navigationLinks = LINKS;
 
   const signOut = async () => {
     await supabase.auth.signOut();
