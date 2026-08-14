@@ -18,6 +18,7 @@ import {
   GUEST_LESSON_TRAY_LIMIT,
   readLastSavedTray,
   readLessonTray,
+  subscribeToLessonTray,
   setEditingLessonSetId as persistEditingLessonSetId,
   writeLastSavedTray,
   writeLessonTray,
@@ -201,6 +202,14 @@ export default function FlashcardsPage() {
     if (!lessonTrayReady || authLoading) return;
     writeLessonTray(lessonTray as LessonCard[], user ? "account" : "guest");
   }, [authLoading, lessonTray, lessonTrayReady, user]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    return subscribeToLessonTray(
+      (cards) => setLessonTray(cards as TrayItem[]),
+      user ? "account" : "guest",
+    );
+  }, [authLoading, user]);
 
   const {
     carouselState,

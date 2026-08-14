@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import TopicFlashcardPicker from "@/components/flashcards/TopicFlashcardPicker";
 import { TOPICS } from "@/lib/seo/topics";
 
 type Tool = "games" | "worksheets" | "community";
@@ -88,17 +89,8 @@ export function FlashcardsSearchGuide() {
     <section className="border-t border-[#dce6d5] bg-[#f7f6f2] px-6 py-14 text-[#2f3a2f]" aria-labelledby="flashcard-guide-heading">
       <div className="mx-auto max-w-6xl">
         <h2 id="flashcard-guide-heading" className="text-3xl font-semibold tracking-tight">Free interactive ESL flashcards by topic</h2>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-[#5c665c]">Classendo&apos;s illustrated flashcards help teachers introduce and practise beginner English vocabulary. Search for a word or choose a topic, collect the cards you need, then use them as free interactive classroom flashcards or reuse the same set in games, printables, worksheets, and lesson plans.</p>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TOPICS.map((topic) => (
-            <li key={topic.slug}>
-              <Link href={`/topics/${topic.slug}`} className="block rounded-2xl border border-[#e2e6da] bg-white px-5 py-4 transition hover:border-[#bdc9b5] hover:shadow-sm">
-                <h3 className="font-semibold">{topic.shortTitle} flashcards</h3>
-                <p className="mt-1 text-sm leading-6 text-[#5c665c]">{topic.vocabulary.join(", ")}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-[#5c665c]">Classendo&apos;s illustrated flashcards help teachers introduce and practise beginner English vocabulary. Guests can create a temporary lesson of up to six cards. Sign in free to load a complete topic set into your tray, then use it in Interactive Classroom, games, printables, worksheets, and lesson plans.</p>
+        <TopicFlashcardPicker topics={TOPICS} />
         <p className="mt-8 text-sm leading-6 text-[#5c665c]">Looking for ready-made teaching materials? Browse <Link href="/free-resources" className="font-semibold text-[#506a47] underline underline-offset-4">free ESL lesson packs</Link>.</p>
       </div>
     </section>
