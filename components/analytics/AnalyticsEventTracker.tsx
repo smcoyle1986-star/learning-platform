@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { clearLessonTray } from "@/lib/lessons/tray";
 
 const WORKSHEET_KEYS: Record<string, string> = {
   Crossword: "crossword",
@@ -79,6 +80,15 @@ export function AnalyticsEventTracker() {
       const target = event.target instanceof Element ? event.target : null;
       if (!target) return;
       const path = window.location.pathname;
+
+      if (target.closest('a[href="/flashcards?from=free-resource"]')) {
+        // Free-pack links intentionally start a fresh temporary lesson. Clear
+        // both stores before navigating because authentication may still be
+        // resolving when the visitor arrives on Flashcards.
+        clearLessonTray("guest");
+        clearLessonTray("account");
+        return;
+      }
 
       if (path === "/flashcards") {
         const button = target.closest("button");
