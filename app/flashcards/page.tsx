@@ -240,6 +240,7 @@ export default function FlashcardsPage() {
         supabase,
         cards,
         category: activeWordType,
+        activeTheme,
       });
       setImageVariants((prev) => ({ ...prev, ...variants }));
     } catch (err) {

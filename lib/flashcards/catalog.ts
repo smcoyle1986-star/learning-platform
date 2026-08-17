@@ -642,8 +642,9 @@ export async function loadImageVariants(params: {
   supabase: SupabaseClient;
   cards: Card[];
   category: Card["type"];
+  activeTheme?: string | null;
 }) {
-  const { supabase, cards, category } = params;
+  const { supabase, cards, category, activeTheme = null } = params;
   const lemmas = Array.from(new Set(cards.map((card) => card.word).filter(Boolean)));
   const nounIds = Array.from(
     new Set(cards.map((card) => String(card.id ?? "").trim()).filter(Boolean))
@@ -725,16 +726,37 @@ export async function loadImageVariants(params: {
           ? nounIdRows
           : rowsByLemma[card.word] ?? [];
 
+    const normalizedActiveTheme = String(activeTheme ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+    const scopedRows =
+      category === "adjective" &&
+      (normalizedActiveTheme === "feelings" || normalizedActiveTheme === "senses")
+        ? candidateRows.filter((row) =>
+            String(row.image_path ?? "")
+              .toLowerCase()
+              .includes(`_${normalizedActiveTheme}/`)
+          )
+        : [];
+    const defaultRows = candidateRows.filter((row) => row.is_default);
+    const themeRows =
+      scopedRows.length > 0
+        ? [...defaultRows, ...scopedRows]
+        : candidateRows;
+
     const hints = getThemePathHints(card);
     const matchedRows =
-      hints.length > 0
-        ? candidateRows.filter((row) => {
+      scopedRows.length > 0
+        ? themeRows
+        : hints.length > 0
+          ? themeRows.filter((row) => {
             const rawPath = String(row.image_path ?? "").toLowerCase();
             return hints.some((hint) => rawPath.includes(hint));
           })
-        : [];
+          : [];
 
-    const rowsForCard = matchedRows.length > 0 ? matchedRows : candidateRows;
+    const rowsForCard = matchedRows.length > 0 ? matchedRows : themeRows;
 
     rowsForCard.forEach((row) => {
       if (!nextMap[key]) nextMap[key] = [];
