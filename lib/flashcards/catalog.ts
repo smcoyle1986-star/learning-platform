@@ -740,9 +740,12 @@ export async function loadImageVariants(params: {
           )
         : [];
     const defaultRows = candidateRows.filter((row) => row.is_default);
+    const scopedDefaultRows = scopedRows.filter((row) => row.is_default);
     const themeRows =
       scopedRows.length > 0
-        ? [...defaultRows, ...scopedRows]
+        ? scopedDefaultRows.length > 0
+          ? scopedRows
+          : [...defaultRows, ...scopedRows]
         : candidateRows;
 
     const hints = getThemePathHints(card);
