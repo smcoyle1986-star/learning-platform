@@ -450,7 +450,7 @@ export default function ClassroomMode() {
                   <img
                     src={resolveLessonImageUrl(card.image || "/placeholder.png")}
                     alt={card.word}
-                    className={`object-contain w-full h-full ${inFullscreen ? "scale-[1.08] md:scale-[1.12]" : "scale-[1.01] md:scale-[1.03]"}`}
+                    className="h-full w-full object-contain"
                   />
                 ) : (
                   <div className="text-2xl text-gray-400"> </div>
