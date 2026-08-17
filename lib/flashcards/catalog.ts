@@ -741,11 +741,17 @@ export async function loadImageVariants(params: {
         : [];
     const defaultRows = candidateRows.filter((row) => row.is_default);
     const scopedDefaultRows = scopedRows.filter((row) => row.is_default);
+    const unscopedDefaultRows = defaultRows.filter(
+      (row) =>
+        !/_(?:feelings|senses)\//.test(
+          String(row.image_path ?? "").toLowerCase()
+        )
+    );
     const themeRows =
       scopedRows.length > 0
         ? scopedDefaultRows.length > 0
           ? scopedRows
-          : [...defaultRows, ...scopedRows]
+          : [...unscopedDefaultRows, ...scopedRows]
         : candidateRows;
 
     const hints = getThemePathHints(card);
