@@ -781,7 +781,11 @@ export async function loadImageVariants(params: {
         seen.add(variant.url);
         return true;
       })
-      .sort((left, right) => left.url.localeCompare(right.url));
+      .sort(
+        (left, right) =>
+          Number(left.isPremium) - Number(right.isPremium) ||
+          left.url.localeCompare(right.url)
+      );
   });
 
   return nextMap;
