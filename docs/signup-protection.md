@@ -12,6 +12,10 @@ list. Refresh it from the repository root with:
 npx tsx scripts/sync-disposable-email-domains.ts
 ```
 
+The repository also runs this automatically every Sunday at 03:17 UTC through
+GitHub Actions. It uses the repository secrets `NEXT_PUBLIC_SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`; neither value is kept in the workflow file.
+
 The sync only adds or refreshes domains. It deliberately does not automatically
 remove old entries, so a temporary upstream outage cannot weaken protection.
 Review and remove an entry manually if a legitimate provider is ever listed by

@@ -8,6 +8,8 @@ const UPSERT_BATCH_SIZE = 1_000;
 
 function loadEnvFile() {
   const values: Record<string, string> = {};
+  if (!fs.existsSync(".env.local")) return values;
+
   for (const line of fs.readFileSync(".env.local", "utf8").split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
@@ -16,6 +18,10 @@ function loadEnvFile() {
     values[trimmed.slice(0, separator)] = trimmed.slice(separator + 1);
   }
   return values;
+}
+
+function envValue(key: string, fileValues: Record<string, string>) {
+  return process.env[key]?.trim() || fileValues[key]?.trim() || "";
 }
 
 function parseDomains(payload: string) {
@@ -29,10 +35,10 @@ function parseDomains(payload: string) {
 
 async function main() {
   const env = loadEnvFile();
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = envValue("NEXT_PUBLIC_SUPABASE_URL", env);
+  const serviceRoleKey = envValue("SUPABASE_SERVICE_ROLE_KEY", env);
   if (!url || !serviceRoleKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in .env.local.");
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in the environment or .env.local.");
   }
 
   const response = await fetch(SOURCE_URL, {
