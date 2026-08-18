@@ -32,6 +32,7 @@ export type AdminDashboardSnapshot = {
     feedbackPending: number | null;
     reportsConfigured: boolean;
     reportsPending: number | null;
+    rejectedSignups24h: number;
   };
   recent: {
     registrations: Array<{
@@ -56,6 +57,12 @@ export type AdminDashboardSnapshot = {
       action: string;
       targetType: string;
       targetId: string | null;
+      createdAt: string;
+    }>;
+    rejectedSignups: Array<{
+      id: string;
+      domain: string;
+      reason: string;
       createdAt: string;
     }>;
   };
@@ -127,16 +134,33 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
     "NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY",
   ]);
 
-  const { data, error } = await getSupabaseAdmin().rpc(
-    "get_admin_dashboard_snapshot",
-    {
+  const supabase = getSupabaseAdmin();
+  const [dashboardResult, rejectedSignupCountResult, rejectedSignupsResult] = await Promise.all([
+    supabase.rpc("get_admin_dashboard_snapshot", {
       monthly_price_ids: monthlyPriceIds,
       yearly_price_ids: yearlyPriceIds,
-    },
-  );
+    }),
+    supabase
+      .from("signup_rejection_events")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1_000).toISOString()),
+    supabase
+      .from("signup_rejection_events")
+      .select("id,domain,reason,created_at")
+      .order("created_at", { ascending: false })
+      .limit(6),
+  ]);
+  const { data, error } = dashboardResult;
 
   if (error) {
     throw new Error(`Could not load administrator dashboard data: ${error.message}`);
+  }
+  if (rejectedSignupCountResult.error || rejectedSignupsResult.error) {
+    throw new Error(
+      `Could not load signup protection data: ${
+        rejectedSignupCountResult.error?.message ?? rejectedSignupsResult.error?.message
+      }`,
+    );
   }
 
   const root = record(data);
@@ -206,6 +230,7 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
       feedbackPending: nullableCount(platform.feedback_pending),
       reportsConfigured: boolean(platform.reports_configured),
       reportsPending: nullableCount(platform.reports_pending),
+      rejectedSignups24h: rejectedSignupCountResult.count ?? 0,
     },
     recent: {
       registrations: array(recent.registrations).map((value) => {
@@ -244,6 +269,12 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
           createdAt: string(item.created_at),
         };
       }),
+      rejectedSignups: (rejectedSignupsResult.data ?? []).map((item) => ({
+        id: String(item.id),
+        domain: String(item.domain),
+        reason: String(item.reason),
+        createdAt: String(item.created_at),
+      })),
     },
   };
 }

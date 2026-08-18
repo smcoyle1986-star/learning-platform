@@ -177,6 +177,12 @@ function activityGroups(snapshot: AdminDashboardSnapshot) {
         : item.targetType.replaceAll("_", " "),
       occurredAt: item.createdAt,
     })),
+    rejectedSignups: snapshot.recent.rejectedSignups.map((item) => ({
+      id: item.id,
+      title: item.domain,
+      detail: item.reason.replaceAll("_", " "),
+      occurredAt: item.createdAt,
+    })),
   };
 }
 
@@ -281,6 +287,12 @@ export default async function AdminDashboardPage() {
               icon={ShieldAlert}
               unavailable={!snapshot.platform.reportsConfigured}
             />
+            <MetricCard
+              label="Rejected signups"
+              value={formatCount(snapshot.platform.rejectedSignups24h)}
+              detail="Disposable-email attempts in the last 24 hours"
+              icon={ShieldAlert}
+            />
           </div>
         </section>
 
@@ -319,6 +331,13 @@ export default async function AdminDashboardPage() {
                 <ActivityList items={activity.adminActivity} />
               ) : (
                 <EmptyActivity>No privileged actions have been recorded.</EmptyActivity>
+              )}
+            </ActivityPanel>
+            <ActivityPanel title="Blocked signups" icon={ShieldAlert}>
+              {activity.rejectedSignups.length ? (
+                <ActivityList items={activity.rejectedSignups} />
+              ) : (
+                <EmptyActivity>No disposable-email signups have been blocked.</EmptyActivity>
               )}
             </ActivityPanel>
           </div>
