@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import BrandButton from "@/components/BrandButton";
-import { Maximize2, Minimize2, Settings2, LogOut } from "lucide-react";
+import { Maximize2, Minimize2, Settings2, LogOut, Menu, X, RotateCw } from "lucide-react";
 
 import Button from "@/components/ui/Button";
 
@@ -17,6 +18,10 @@ type GameHeaderProps = {
   trackGameKey?: string;
 };
 
+type LockableScreenOrientation = ScreenOrientation & {
+  lock?: (orientation: "landscape") => Promise<void>;
+};
+
 export default function GameHeader({
   title,
   onExit,
@@ -28,24 +33,58 @@ export default function GameHeader({
   extraActions,
   trackGameKey: _trackGameKey,
 }: GameHeaderProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.add("classendo-game-page");
+    return () => document.body.classList.remove("classendo-game-page");
+  }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const orientation = screen.orientation as LockableScreenOrientation;
+    if (!orientation?.lock) return;
+    void orientation.lock("landscape").catch(() => {
+      // Safari and some managed devices do not allow orientation locking.
+    });
+    return () => {
+      orientation.unlock?.();
+    };
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => {
+    setMobileMenuOpen(false);
+    onToggleFullscreen?.();
+  };
+
+  const openSettings = () => {
+    setMobileMenuOpen(false);
+    onToggleSettings?.();
+  };
+
+  const exitGame = () => {
+    setMobileMenuOpen(false);
+    onExit();
+  };
+
   if (hidden) return null;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-main)]/95 backdrop-blur-md border-b border-black/5">
+    <header data-game-header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <BrandButton className="text-3xl font-extrabold text-blue-700" />
+        <BrandButton className="hidden text-3xl font-extrabold text-blue-700 sm:block" />
 
-        <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
-          <h1 className="text-2xl font-bold text-[var(--color-text-main)]">{title}</h1>
+        <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 pointer-events-none">
+          <h1 className="text-lg font-bold text-[var(--color-text-main)] sm:text-2xl">{title}</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           {extraActions}
 
           {onToggleSettings ? (
             <Button
               variant={settingsOpen ? "primary" : "secondary"}
-              onClick={onToggleSettings}
+              onClick={openSettings}
               aria-label="Open settings"
               className="inline-flex items-center gap-2 px-3 py-2 text-sm"
             >
@@ -57,7 +96,7 @@ export default function GameHeader({
           {onToggleFullscreen ? (
             <Button
               variant="secondary"
-              onClick={onToggleFullscreen}
+              onClick={toggleFullscreen}
               aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm"
             >
@@ -68,12 +107,32 @@ export default function GameHeader({
 
           <Button
             variant="secondary"
-            onClick={onExit}
+            onClick={exitGame}
             className="inline-flex items-center gap-2 px-3 py-2 text-sm"
           >
             <LogOut size={16} />
             Exit
           </Button>
+        </div>
+
+        <div className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="grid h-10 w-10 place-items-center rounded-full border border-black/10 bg-white/55 text-[var(--color-text-main)] shadow-sm backdrop-blur transition hover:bg-white/85"
+            aria-label={mobileMenuOpen ? "Close game controls" : "Open game controls"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-game-controls"
+          >
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={20} />}
+          </button>
+          {mobileMenuOpen ? (
+            <div id="mobile-game-controls" className="absolute right-0 top-12 z-[80] w-56 rounded-2xl border border-black/10 bg-white/95 p-2 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop-blur">
+              {onToggleSettings ? <button type="button" onClick={openSettings} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#f2f6ee]"><Settings2 size={17} />Settings</button> : null}
+              {onToggleFullscreen ? <button type="button" onClick={toggleFullscreen} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#f2f6ee]">{isFullscreen ? <Minimize2 size={17} /> : <RotateCw size={17} />}{isFullscreen ? "Exit fullscreen" : "Play landscape"}</button> : null}
+              <button type="button" onClick={exitGame} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#fdf1ee]"><LogOut size={17} />Exit game</button>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

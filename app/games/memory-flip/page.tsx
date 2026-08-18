@@ -791,7 +791,7 @@ export default function MemoryFlipPage() {
       ) : (
         <>
       {/* Scoreboard */}
-      <div style={{ maxWidth: "none", margin: 0, padding: "14px 24px 8px" }}>
+      <div className="game-mobile-chrome" style={{ maxWidth: "none", margin: 0, padding: "14px 24px 8px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Scoreboard</h2>
@@ -853,7 +853,7 @@ export default function MemoryFlipPage() {
       </div>
 
           {/* Grid */}
-          <div style={{ padding: 20, display: "flex", justifyContent: "center" }}>
+          <div data-game-stage style={{ padding: 20, display: "flex", justifyContent: "center" }}>
             <div
               style={{
                 width: "min(1200px, 92vw)",

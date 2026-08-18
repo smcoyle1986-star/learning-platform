@@ -678,6 +678,7 @@ export default function ConnectFourPage() {
 
           <div className="flex-1">
             <div
+              data-game-stage
               className="p-4 rounded-[32px] border shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
               style={{
                 height: inFullscreen ? "78vh" : "620px",

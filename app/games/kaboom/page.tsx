@@ -830,7 +830,7 @@ export default function KaBoomPage() {
 
       {/* Scoreboard + controls */}
       <div ref={controlsRef} className="">
-        <div className={isFullscreen ? "pt-[28px] max-w-7xl mx-auto px-4" : "pt-[36px] max-w-7xl mx-auto px-4"}>
+        <div className={isFullscreen ? "game-mobile-chrome pt-[28px] max-w-7xl mx-auto px-4" : "game-mobile-chrome pt-[36px] max-w-7xl mx-auto px-4"}>
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -883,10 +883,10 @@ export default function KaBoomPage() {
       </div>
 
       {/* Main grid */}
-      <main className="max-w-7xl mx-auto px-4 pb-2">
+      <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2">
         <div className="flex justify-center items-start">
           <div
-            className={`w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border bg-white`}
+            className={`game-mobile-aspect-stage w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border bg-white`}
             style={{ aspectRatio: "16 / 9", marginTop: isFullscreen ? "0px" : undefined }}
           >
             <div className="relative w-full h-full bg-[#f3f4f6]">

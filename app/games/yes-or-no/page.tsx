@@ -906,7 +906,7 @@ export default function YesOrNoPage() {
       </div>
 
       {playMode === "team" ? (
-        <div className="pt-[72px] max-w-7xl mx-auto px-4">
+        <div className="game-mobile-chrome pt-[72px] max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-3">
               <h2 className="text-base md:text-lg font-semibold">Scoreboard</h2>
@@ -953,7 +953,7 @@ export default function YesOrNoPage() {
       )}
 
       {/* Main game grid */}
-      <main className={`max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
+      <main data-game-stage className={`max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
         <div className="flex justify-center items-start h-full min-h-0">
           <div className="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-4 md:p-5 flex flex-col items-center overflow-hidden h-full min-h-0">
             <div className="relative w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 py-1">

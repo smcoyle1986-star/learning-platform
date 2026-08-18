@@ -1131,6 +1131,7 @@ export default function ConquerPage() {
             <div className={isFullscreen ? "mt-4 flex justify-start" : "mt-6 flex justify-center"}>
               <div className={`w-full ${isFullscreen ? "max-w-[min(100vw,98rem)]" : "max-w-[min(92vw,72rem)]"}`}>
                 <div
+                  data-game-stage
                   className={`${isFullscreen ? "mx-0" : "mx-auto"} relative overflow-hidden rounded-[2rem] border border-black/10 bg-[rgba(242,248,239,0.88)] shadow-[0_20px_60px_rgba(15,23,42,0.12)] ${
                     bombAnimation ? "conquer-bomb-board" : ""
                   }`}
