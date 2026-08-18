@@ -1,0 +1,55 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type ExpandedImage = { src: string; alt: string };
+
+export function LandingSectionImage({ path, alt }: { path: string; alt: string }) {
+  const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(null);
+  const src = `/api/landing-image?path=${encodeURIComponent(path)}`;
+
+  useEffect(() => {
+    if (!expandedImage) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpandedImage(null);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [expandedImage]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setExpandedImage({ src, alt })}
+        className="group block w-full touch-manipulation cursor-zoom-in rounded-[2rem] text-left outline-none transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-[#86a96a]/50"
+        aria-label={`Expand ${alt}`}
+      >
+        <span className="block rounded-[2rem] border-[3px] border-[#d8e6ce] bg-[#fcfcf8] p-3 shadow-[0_16px_40px_rgba(54,64,46,0.08)] transition-shadow duration-200 group-hover:shadow-[0_22px_48px_rgba(54,64,46,0.16)]">
+          <img
+            src={src}
+            alt={alt}
+            className="block h-full w-full rounded-[1.35rem] object-contain"
+            style={{ maxHeight: "min(80vh, 1200px)" }}
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
+      </button>
+
+      {expandedImage ? (
+        <button
+          type="button"
+          onClick={() => setExpandedImage(null)}
+          className="fixed inset-0 z-[200] flex touch-manipulation cursor-zoom-out items-center justify-center bg-[#182016]/90 p-4 outline-none sm:p-8"
+          aria-label="Close fullscreen image"
+        >
+          <img src={expandedImage.src} alt={expandedImage.alt} className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl" />
+          <span className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white">
+            Tap, click, or press Escape to close
+          </span>
+        </button>
+      ) : null}
+    </>
+  );
+}
