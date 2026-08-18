@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Shuffle,
   Maximize,
+  Menu,
   X,
 } from "lucide-react";
 import ClassroomCanvas from "@/components/classroom/ClassroomCanvas";
@@ -34,8 +35,10 @@ export default function ClassroomMode() {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchCurrentX, setTouchCurrentX] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const mobileHeaderRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
   const drawingsRef = useRef<Map<string, string>>(new Map());
@@ -54,16 +57,16 @@ export default function ClassroomMode() {
     const length = formatWord(word).trim().length;
 
     if (layout === "text-only") {
-      if (length > 48) return "text-3xl md:text-4xl lg:text-5xl";
-      if (length > 28) return "text-4xl md:text-5xl lg:text-6xl";
-      if (length > 16) return "text-5xl md:text-6xl lg:text-7xl";
-      return "text-8xl md:text-9xl lg:text-[10rem]";
+      if (length > 48) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
+      if (length > 28) return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
+      if (length > 16) return "text-4xl sm:text-5xl md:text-6xl lg:text-7xl";
+      return "text-5xl sm:text-6xl md:text-8xl lg:text-[10rem]";
     }
 
-    if (length > 48) return "text-2xl md:text-3xl lg:text-4xl";
-    if (length > 28) return "text-3xl md:text-4xl lg:text-5xl";
-    if (length > 16) return "text-4xl md:text-5xl lg:text-6xl";
-    return "text-7xl md:text-8xl";
+    if (length > 48) return "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
+    if (length > 28) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
+    if (length > 16) return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
+    return "text-4xl sm:text-5xl md:text-7xl lg:text-8xl";
   };
   const handleExit = () => {
     writeLessonTray(cards, user ? "account" : "guest");
@@ -151,9 +154,10 @@ export default function ClassroomMode() {
   // measure header + bottom controls and compute available height for the card
   function recomputeAvailableCardHeight() {
     const headerH = headerRef.current?.offsetHeight ?? 0;
+    const mobileHeaderH = mobileHeaderRef.current?.offsetHeight ?? 0;
     const bottomH = bottomRef.current?.offsetHeight ?? 0;
     const topBottomGap = 48; // a little breathing room
-    const available = Math.max(200, window.innerHeight - headerH - bottomH - topBottomGap);
+    const available = Math.max(200, window.innerHeight - headerH - mobileHeaderH - bottomH - topBottomGap);
     setCardAvailableHeight(available);
   }
 
@@ -183,7 +187,7 @@ export default function ClassroomMode() {
       document.removeEventListener("fullscreenchange", recomputeAvailableCardHeight);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mobileMenuOpen]);
 
   // touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -266,6 +270,7 @@ export default function ClassroomMode() {
   const card = cards[index];
   const cardKey = String(card?.id ?? index);
   const inFullscreen = !!document.fullscreenElement;
+  const isCompactViewport = window.innerWidth < 640;
 
   // determine inline styles for the card container when fullscreen:
   const cardStyle: React.CSSProperties = {};
@@ -273,17 +278,19 @@ export default function ClassroomMode() {
     // Use that available height and make the card take most of it.
     // Keep a small space for card margins/controls inside the card wrapper.
     cardStyle.height = `${cardAvailableHeight}px`;
-    const maxWidth = Math.min(cardAvailableHeight * 1.75, window.innerWidth - 88);
-    cardStyle.width = `${Math.max(520, maxWidth)}px`;
-    cardStyle.maxWidth = "calc(100vw - 88px)";
-    cardStyle.padding = "24px";
+    const horizontalSpace = isCompactViewport ? 24 : 88;
+    const maxWidth = Math.min(cardAvailableHeight * 1.75, window.innerWidth - horizontalSpace);
+    cardStyle.width = `${isCompactViewport ? maxWidth : Math.max(520, maxWidth)}px`;
+    cardStyle.maxWidth = `calc(100vw - ${horizontalSpace}px)`;
+    cardStyle.padding = isCompactViewport ? "12px" : "24px";
   } else if (cardAvailableHeight) {
     const fittedHeight = Math.max(220, Math.floor(cardAvailableHeight * 0.9));
-    const maxWidth = Math.min(fittedHeight * 1.62, window.innerWidth - 48);
+    const horizontalSpace = isCompactViewport ? 24 : 48;
+    const maxWidth = Math.min(fittedHeight * 1.62, window.innerWidth - horizontalSpace);
     cardStyle.height = `${fittedHeight}px`;
-    cardStyle.width = `${Math.max(320, maxWidth)}px`;
-    cardStyle.maxWidth = "calc(100vw - 48px)";
-    cardStyle.padding = "20px";
+    cardStyle.width = `${isCompactViewport ? maxWidth : Math.max(320, maxWidth)}px`;
+    cardStyle.maxWidth = `calc(100vw - ${horizontalSpace}px)`;
+    cardStyle.padding = isCompactViewport ? "12px" : "20px";
   } else {
     cardStyle.height = undefined;
     cardStyle.width = undefined;
@@ -293,10 +300,109 @@ export default function ClassroomMode() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col justify-between">
+      <div
+        ref={mobileHeaderRef}
+        className="sticky top-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 px-4 py-3 backdrop-blur md:hidden"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-lg font-bold text-[var(--color-text-main)]">Classroom</span>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm"
+            aria-label={mobileMenuOpen ? "Close classroom controls" : "Open classroom controls"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="classroom-mobile-controls"
+          >
+            {mobileMenuOpen ? <X size={21} /> : <Menu size={22} />}
+          </button>
+        </div>
+
+        {mobileMenuOpen ? (
+          <div id="classroom-mobile-controls" className="mt-3 space-y-3 rounded-2xl border border-black/10 bg-white p-3 shadow-lg">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Display</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["image+text", "Image + text"],
+                  ["image", "Image only"],
+                  ["text", "Text only"],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => { setDisplayMode(mode); setMobileMenuOpen(false); }}
+                    className={`min-h-11 rounded-xl px-2 text-xs font-semibold ${displayMode === mode ? "bg-[var(--color-accent)] text-white" : "border border-black/10 bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAutoPlay((playing) => !playing)}
+                className={`btn flex-1 px-3 py-2.5 text-sm ${autoPlay ? "btn-primary" : "btn-secondary"}`}
+              >
+                {autoPlay ? "Pause auto-play" : "Auto-play"}
+              </button>
+              <select
+                value={intervalMs}
+                onChange={(event) => setIntervalMs(Number(event.target.value))}
+                aria-label="Auto-play speed"
+                className="min-h-11 rounded-xl border border-black/10 bg-white px-3 text-sm"
+              >
+                <option value={2500}>Fast</option>
+                <option value={4000}>Normal</option>
+                <option value={6000}>Slow</option>
+              </select>
+              <button
+                type="button"
+                onClick={shuffleCards}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-black/10 bg-[var(--color-bg-main)]"
+                aria-label="Shuffle cards"
+              >
+                <Shuffle size={18} />
+              </button>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Draw on the card</p>
+              <ClassroomToolbar
+                tool={tool}
+                setTool={setTool}
+                color={color}
+                setColor={setColor}
+                size={size}
+                setSize={setSize}
+                clearCanvas={() => {
+                  const canvas = document.querySelector("canvas");
+                  if (!canvas) return;
+                  const ctx = canvas.getContext("2d")!;
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  drawingsRef.current.delete(cardKey);
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-black/5 pt-3">
+              <button onClick={toggleFullscreen} className="btn btn-secondary px-3 py-2.5 text-sm">
+                <Maximize size={17} /> Full screen
+              </button>
+              <button onClick={handleExit} className="btn btn-secondary px-3 py-2.5 text-sm">
+                <X size={17} /> Exit
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       {/* Header controls */}
       <div
         ref={headerRef}
-        className="sticky top-0 z-50 w-full flex justify-between items-center px-6 py-3 bg-transparent"
+        className="sticky top-0 z-50 hidden w-full items-center justify-between bg-transparent px-6 py-3 md:flex"
       >
         <div className="flex gap-3 items-center">
           {/* Settings button */}
@@ -426,7 +532,7 @@ export default function ClassroomMode() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         key={index}
-        className={`cursor-pointer mx-auto my-6 bg-white rounded-3xl shadow-2xl border-[10px] border-gray-300
+        className={`cursor-pointer mx-auto my-3 rounded-3xl border-[6px] border-gray-300 bg-white shadow-2xl md:my-6 md:border-[10px]
           ${inFullscreen ? "max-w-none" : "max-w-none"} transition-all duration-300 ease-out`}
         style={{ ...cardStyle }}
       >
@@ -493,24 +599,24 @@ export default function ClassroomMode() {
       </div>
 
       {/* Bottom navigation - ensure visible in fullscreen by measuring height above */}
-      <div ref={bottomRef} className="w-full flex flex-col items-center gap-6 px-6 pb-6">
-        <div className="flex items-center gap-6">
+      <div ref={bottomRef} className="flex w-full flex-col items-center gap-4 px-4 pb-4 md:gap-6 md:px-6 md:pb-6">
+        <div className="flex items-center gap-4 md:gap-6">
           <button
             onClick={prevCard}
-            className="btn btn-primary p-4 md:p-5"
+            className="btn btn-primary p-3.5 md:p-5"
           >
             <ArrowLeft size={28} />
           </button>
 
           <button
             onClick={nextCard}
-            className="btn btn-primary p-4 md:p-5"
+            className="btn btn-primary p-3.5 md:p-5"
           >
             <ArrowRight size={28} />
           </button>
         </div>
 
-        <div className="text-2xl font-semibold text-gray-700">
+        <div className="text-xl font-semibold text-gray-700 md:text-2xl">
           {index + 1} / {cards.length}
         </div>
       </div>
