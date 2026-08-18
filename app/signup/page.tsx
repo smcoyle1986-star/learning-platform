@@ -92,32 +92,6 @@ const FALLBACK_COUNTRIES = [
   "Kenya",
 ];
 
-function LandingInfoImage({
-  path,
-  alt,
-  caption,
-}: {
-  path: string;
-  alt: string;
-  caption: string;
-}) {
-  return (
-    <figure className="overflow-hidden rounded-[1.75rem] bg-transparent">
-      <img
-        src={`/api/landing-image?path=${encodeURIComponent(path)}`}
-        alt={alt}
-        className="block w-full h-full object-contain"
-        style={{ maxHeight: "420px" }}
-        loading="lazy"
-        decoding="async"
-      />
-      <figcaption className="px-2 pt-3 text-sm text-[#5c665c]">
-        {caption}
-      </figcaption>
-    </figure>
-  );
-}
-
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -131,6 +105,7 @@ export default function SignupPage() {
   const [usernameHint, setUsernameHint] = useState("");
   const [usernameOptions, setUsernameOptions] = useState<string[]>([]);
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
   const countryOptions = useMemo(() => {
@@ -342,62 +317,46 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f] lg:h-[calc(100dvh-65px)] lg:min-h-0 lg:overflow-hidden">
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:h-full lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:py-8">
-        <div className="order-2 space-y-8 lg:order-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]">
-          <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-white px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
-            Create your account
+    <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14 lg:py-16">
+        <aside className="order-2 rounded-[2rem] border border-[#dbe7d2] bg-[#edf4e9] p-6 shadow-[0_18px_40px_rgba(54,64,46,0.08)] sm:p-8 lg:order-1 lg:sticky lg:top-8">
+          <div className="inline-flex items-center rounded-full border border-[#cbdcc0] bg-white/80 px-4 py-2 text-sm font-semibold text-[#58734b] shadow-sm">
+            Made for teachers
           </div>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Create your free teacher account
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-8 text-[#536152]">
+            Keep the vocabulary and activities you prepare, so each lesson takes less time to build next time.
+          </p>
 
-          <div className="max-w-2xl">
-            <h1 className="text-3xl font-semibold tracking-tight text-[#2f3a2f] sm:text-4xl md:text-6xl">
-              Create your FREE Classendo account
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-[#5c665c]">
-              Build lesson sets, save your resources, and reuse them across flashcards, games, worksheets, and lesson plans.
-            </p>
+          <ul className="mt-8 space-y-4" aria-label="What your Classendo account includes">
+            {[
+              ["Build focused lesson sets", "Choose visual vocabulary and keep your cards together for class."],
+              ["Teach from the same cards", "Open your lesson in Classroom Mode, games, worksheets, printables, or lesson plans."],
+              ["Save and reuse your work", "Return to your sets from your dashboard whenever you are ready to teach again."],
+            ].map(([title, description], index) => (
+              <li key={title} className="flex gap-4 rounded-2xl border border-white/80 bg-white/75 p-4">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#d5e6ca] text-sm font-bold text-[#557249]">{index + 1}</span>
+                <div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm leading-6 text-[#5c665c]">{description}</p></div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-7 rounded-2xl border border-[#d7e3ce] bg-white/80 p-4 text-sm leading-6 text-[#536152]">
+            <p className="font-semibold text-[#3f5138]">Your first 14 days include Premium access.</p>
+            <p className="mt-1">No payment details are required. After the welcome period, your account automatically moves to Basic unless you choose Premium.</p>
           </div>
+        </aside>
 
-          <div className="grid gap-8">
-            <LandingInfoImage
-              path="classendo-images/information/resources.png"
-              alt="Classendo resources for every lesson and learner"
-              caption="Resources and ready-made materials for your lessons."
-            />
-            <LandingInfoImage
-              path="classendo-images/information/pricing.png"
-              alt="Classendo premium monthly and yearly pricing"
-              caption="Start free, then upgrade when you need more."
-            />
-            <div className="flex flex-wrap gap-3">
-              <Link href="/upgrade" className="btn btn-primary px-6 py-3">
-                Go Premium
-              </Link>
-              <Link href="/upgrade" className="btn btn-secondary px-6 py-3">
-                View Pricing
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-[#e5e8de] bg-white/70 px-6 py-5 shadow-[0_14px_30px_rgba(54,64,46,0.06)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#6d8160]">
-              Why teachers sign up
-            </p>
-            <ul className="mt-4 space-y-3 text-base leading-7 text-[#5c665c]">
-              <li>• Create flashcards from your lesson tray.</li>
-              <li>• Turn the same cards into games, worksheets, and printables.</li>
-              <li>• Save your sets and return to them later from your dashboard.</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="order-1 lg:order-2 lg:min-h-0">
-          <div className="rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]">
-            <h2 className="text-3xl font-semibold text-[#2f3a2f]">
-              Create your free account
+        <div className="order-1 lg:order-2">
+          <div className="mx-auto max-w-2xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#6d8160]">Start free</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#2f3a2f] sm:text-4xl">
+              Set up your Classendo account
             </h2>
             <p className="mt-3 text-base leading-7 text-[#5c665c]">
-              Enjoy Premium on us for 14 days. You get full Premium access with no payment details required, then automatically move to Basic unless you choose Premium.
+              It takes a moment. Confirm your email and your account will be ready for your first lesson.
             </p>
 
             <form onSubmit={handleSignup} className="mt-8 space-y-5">
@@ -412,6 +371,7 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
                   className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]"
                 />
               </div>
@@ -432,6 +392,7 @@ export default function SignupPage() {
                   onBlur={() => setUsernameTouched(true)}
                   required
                   maxLength={24}
+                  autoComplete="username"
                   className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]"
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -509,22 +470,25 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-[#2f3a2f]" htmlFor="signup-password">
-                  Password
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label className="block text-sm font-semibold text-[#2f3a2f]" htmlFor="signup-password">Password</label>
+                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="text-sm font-semibold text-[#5f7f4b] underline underline-offset-4 hover:text-[#4d6a3d]" aria-controls="signup-password" aria-pressed={showPassword}>
+                    {showPassword ? "Hide" : "Show"} password
+                  </button>
+                </div>
                 <input
                   id="signup-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  autoComplete="new-password"
+                  aria-describedby="signup-password-help"
                   className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]"
                 />
-                <p className="mt-2 text-sm leading-6 text-[#6b756b]">
-                  Use the password you’ll keep for Classendo.
-                </p>
+                <p id="signup-password-help" className="mt-2 text-sm leading-6 text-[#6b756b]">Use at least 6 characters. Choose a password you can keep for Classendo.</p>
               </div>
 
               <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] p-4 text-sm leading-6 text-[#566056]">
@@ -545,12 +509,10 @@ export default function SignupPage() {
                 </span>
               </label>
 
-              <p className="text-sm leading-6 text-[#6b756b]">
-                Classendo accounts are for adult teachers. Do not upload identifiable or sensitive pupil information.
-              </p>
+              <p className="text-sm leading-6 text-[#6b756b]">Classendo accounts are for adult teachers. We use your email for your account, security, and essential Classendo messages. Do not upload identifiable or sensitive pupil information.</p>
 
               {message && (
-                <p className="rounded-2xl border border-[#dbe3d1] bg-[#f7faf4] px-4 py-3 text-sm leading-6 text-[#4c5f49]">
+                <p role="status" aria-live="polite" className="rounded-2xl border border-[#dbe3d1] bg-[#f7faf4] px-4 py-3 text-sm leading-6 text-[#4c5f49]">
                   {message}
                 </p>
               )}
@@ -560,7 +522,7 @@ export default function SignupPage() {
                 disabled={submitting}
                 className="btn btn-primary w-full px-6 py-4 text-base disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {submitting ? "Creating account..." : "Create account"}
+                {submitting ? "Creating account..." : "Create free account"}
               </button>
             </form>
 
