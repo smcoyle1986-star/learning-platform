@@ -343,14 +343,14 @@ export default function SignupPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f] lg:h-[calc(100dvh-65px)] lg:min-h-0 lg:overflow-hidden">
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:h-full lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:py-8">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:h-full lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:py-8">
         <div className="order-2 space-y-8 lg:order-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]">
           <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-white px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
             Create your account
           </div>
 
           <div className="max-w-2xl">
-            <h1 className="text-4xl font-semibold tracking-tight text-[#2f3a2f] md:text-6xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-[#2f3a2f] sm:text-4xl md:text-6xl">
               Create your FREE Classendo account
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-[#5c665c]">

@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
-      <section className="mx-auto flex min-h-[calc(100vh-80px)] max-w-5xl items-center px-6 py-12">
+      <section className="mx-auto flex min-h-[calc(100vh-80px)] max-w-5xl items-center px-4 py-8 sm:px-6 sm:py-12">
         <div className="w-full">
           <div className="mx-auto max-w-lg rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
             <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">

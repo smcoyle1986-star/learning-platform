@@ -212,7 +212,7 @@ function PrintablesPageContent() {
           ] : [{ label: "Flashcards", href: "/flashcards" }]}
         />
 
-        <div className="max-w-7xl mx-auto px-6 pt-6 pb-32 grid grid-cols-12 gap-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-12 gap-4 px-4 pb-24 pt-4 md:gap-6 md:px-6 md:pb-32 md:pt-6">
           <aside className="col-span-12 lg:col-span-3 self-start">
             <div className="bg-white rounded-2xl border shadow-sm p-4 space-y-4">
               <div>
@@ -279,7 +279,7 @@ function PrintablesPageContent() {
           ] : [{ label: "Flashcards", href: "/flashcards" }]}
         />
 
-        <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
+        <main className="mx-auto max-w-7xl px-4 pb-24 pt-6 md:px-6 md:pb-32 md:pt-10">
           <div className="text-center py-32 text-[var(--color-text-muted)]">
             <p className="text-2xl font-semibold mb-4">No cards to print</p>
             <p className="text-sm">
@@ -330,7 +330,7 @@ function PrintablesPageContent() {
       />
 
       {/* Layout: left options + main content (tray + preview). Main is wider. */}
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-32 grid grid-cols-12 gap-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-12 gap-4 px-4 pb-24 pt-4 md:gap-6 md:px-6 md:pb-32 md:pt-6">
         {/* LEFT: Print Options */}
         <aside className="col-span-12 lg:col-span-3 self-start">
           {!canUsePrintableOptions ? (

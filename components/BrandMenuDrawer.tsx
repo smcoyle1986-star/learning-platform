@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { LayoutDashboard, X } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { AdministratorBadge } from "@/components/admin/AdministratorBadge";
@@ -62,6 +63,8 @@ export default function BrandMenuDrawer() {
   const { isOpen, close } = useBrandMenu();
   const { user, profile, loading } = useAuth();
   const { access } = useBillingAccess();
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
 
   const displayName = getProfileDisplayName(profile, user?.email);
   const navigationLinks = LINKS;
@@ -70,6 +73,42 @@ export default function BrandMenuDrawer() {
     await supabase.auth.signOut();
     close();
     window.location.replace("/");
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [close, isOpen]);
+
+  const trapFocus = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled])'
+    );
+    if (!focusable?.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
 
   return (
@@ -81,7 +120,14 @@ export default function BrandMenuDrawer() {
         onClick={close}
       />
       <aside
-        className={`fixed left-0 top-0 z-[90] h-dvh w-[min(88vw,400px)] bg-white shadow-2xl border-r transition-transform duration-300 ${
+        ref={panelRef}
+        id="brand-menu-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Classendo navigation"
+        inert={!isOpen}
+        onKeyDown={trapFocus}
+        className={`fixed left-0 top-0 z-[90] h-dvh w-[min(88vw,400px)] overflow-y-auto bg-white shadow-2xl border-r transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!isOpen}
@@ -91,7 +137,8 @@ export default function BrandMenuDrawer() {
           <button
             type="button"
             onClick={close}
-            className="rounded-full border p-1.5 hover:bg-gray-50"
+            ref={closeButtonRef}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border hover:bg-gray-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#7fa36a]/25"
             aria-label="Close menu"
           >
             <X size={16} />
@@ -124,7 +171,7 @@ export default function BrandMenuDrawer() {
             </div>
           )}
 
-          <nav className="flex flex-col gap-1">
+          <nav className="flex flex-col gap-2">
             {navigationLinks.map((item) => (
               (() => {
                 const theme = resolveBrandTheme(item.href);
@@ -133,7 +180,7 @@ export default function BrandMenuDrawer() {
                 key={item.href}
                 href={item.href}
                 onClick={close}
-                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 transition hover:bg-gray-50"
+                className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:bg-gray-50"
               >
                 <div
                   className="h-6 w-6 flex-shrink-0 rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
@@ -142,7 +189,7 @@ export default function BrandMenuDrawer() {
                     borderColor: theme.circleBorder,
                   }}
                 />
-                <span className="text-xs font-medium text-gray-800">{item.label}</span>
+                <span className="text-sm font-medium text-gray-800">{item.label}</span>
               </Link>
                 );
               })()
@@ -152,33 +199,52 @@ export default function BrandMenuDrawer() {
               <Link
                 href="/admin"
                 onClick={close}
-                className="flex items-center gap-2 rounded-xl border border-[#b8c9af] bg-[#f1f7ed] px-3 py-1 text-[#426038] transition hover:bg-[#e7f0e1]"
+                className="flex min-h-11 items-center gap-2 rounded-xl border border-[#b8c9af] bg-[#f1f7ed] px-3 py-2.5 text-[#426038] transition hover:bg-[#e7f0e1]"
               >
                 <div className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full border border-[#a7ba9d] bg-white">
                   <LayoutDashboard aria-hidden="true" className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-xs font-semibold">Administrator Dashboard</span>
+                <span className="text-sm font-semibold">Administrator Dashboard</span>
               </Link>
             ) : null}
 
             {user ? (
-              <button
-                type="button"
-                onClick={signOut}
-                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 text-left transition hover:bg-gray-50"
-              >
-                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
-                <span className="text-xs font-medium text-gray-800">Log out</span>
-              </button>
+              <>
+                <Link
+                  href="/profile"
+                  onClick={close}
+                  className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:bg-gray-50"
+                >
+                  <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                  <span className="text-sm font-medium text-gray-800">Account</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-left transition hover:bg-gray-50"
+                >
+                  <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                  <span className="text-sm font-medium text-gray-800">Log out</span>
+                </button>
+              </>
             ) : (
-              <Link
-                href="/login"
-                onClick={close}
-                className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1 transition hover:bg-gray-50"
-              >
-                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
-                <span className="text-xs font-medium text-gray-800">Log in</span>
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  onClick={close}
+                  className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:bg-gray-50"
+                >
+                  <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                  <span className="text-sm font-medium text-gray-800">Log in</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={close}
+                  className="flex min-h-11 items-center justify-center rounded-xl bg-[#7fa36a] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6f955b]"
+                >
+                  Create a free account
+                </Link>
+              </>
             )}
           </nav>
         </div>

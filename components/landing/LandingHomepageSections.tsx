@@ -94,7 +94,7 @@ export default function LandingHomepageSections({
         </button>
       ) : null}
 
-      <section className="mx-auto max-w-[1760px] px-6 py-12 md:py-16">
+      <section className="mx-auto max-w-[1760px] px-4 py-10 sm:px-6 md:py-16">
         <LandingSectionImage
           path="classendo-images/information/resources.png"
           alt="Classendo resources for every lesson and learner"
@@ -102,7 +102,7 @@ export default function LandingHomepageSections({
         />
       </section>
 
-      <section className="mx-auto max-w-[1760px] px-6 py-12 md:py-16">
+      <section className="mx-auto max-w-[1760px] px-4 py-10 sm:px-6 md:py-16">
         <LandingSectionImage
           path="classendo-images/information/flowchart.png"
           alt="How teachers use Classendo"
@@ -110,7 +110,7 @@ export default function LandingHomepageSections({
         />
       </section>
 
-      <section className="mx-auto max-w-[1760px] px-6 py-12 md:py-16">
+      <section className="mx-auto max-w-[1760px] px-4 py-10 sm:px-6 md:py-16">
         <LandingSectionImage
           path="classendo-images/information/free_vs_premium.png"
           alt="Classendo free and premium plan comparison"
@@ -118,7 +118,7 @@ export default function LandingHomepageSections({
         />
       </section>
 
-      <section className="px-6 py-20 md:py-24">
+      <section className="px-4 py-14 sm:px-6 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-[#2f3a2f] md:text-5xl">
             Ready to unlock everything?
@@ -143,7 +143,7 @@ export default function LandingHomepageSections({
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-[1760px] px-6 py-12 md:py-16">
+      <section id="pricing" className="mx-auto max-w-[1760px] px-4 py-10 sm:px-6 md:py-16">
         <LandingSectionImage
           path="classendo-images/information/pricing.png"
           alt="Classendo premium monthly and yearly pricing"
@@ -151,7 +151,7 @@ export default function LandingHomepageSections({
         />
       </section>
 
-      <section className="px-6 py-20 md:py-24">
+      <section className="px-4 py-14 sm:px-6 md:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <h2 className="text-3xl font-semibold text-[#2f3a2f] md:text-4xl">
@@ -185,7 +185,7 @@ export default function LandingHomepageSections({
         </div>
       </section>
 
-      <section className="px-6 py-20 md:py-24">
+      <section className="px-4 py-14 sm:px-6 md:py-24">
         <div className="mx-auto max-w-4xl rounded-[2rem] border border-[#e5e8de] bg-white px-6 py-10 shadow-[0_16px_40px_rgba(54,64,46,0.08)] md:px-10 md:py-12">
           <h2 className="text-3xl font-semibold text-[#2f3a2f] md:text-4xl">
             Teaching resources designed for modern English classrooms and online lessons
@@ -204,7 +204,7 @@ export default function LandingHomepageSections({
         </div>
       </section>
 
-      <section className="px-6 py-20 md:py-24">
+      <section className="px-4 py-14 sm:px-6 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-[#2f3a2f] md:text-5xl">
             Ready to build your first lesson?
@@ -234,7 +234,7 @@ export default function LandingHomepageSections({
         </div>
       </section>
 
-      <footer className="border-t border-black/10 px-6 py-10">
+      <footer className="border-t border-black/10 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center text-sm text-[#6b756b] md:flex-row md:text-left">
           <p>© 2026 Classendo. Built for teachers.</p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">

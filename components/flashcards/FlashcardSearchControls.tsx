@@ -30,7 +30,7 @@ type FlashcardSearchControlsProps = {
 };
 
 function wordTypeButton(active: boolean) {
-  return `btn px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+  return `btn px-3 py-2 text-sm font-semibold transition-all sm:px-4 ${
     active ? "btn-primary" : "btn-secondary"
   }`;
 }
@@ -128,8 +128,8 @@ export default function FlashcardSearchControls({
   return (
     <>
       <section className="bg-[var(--color-bg-main)] border-b border-black/5">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3 max-w-4xl mx-auto">
+        <div className="mx-auto max-w-7xl px-4 py-4 md:px-6">
+          <div className="mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
@@ -152,14 +152,14 @@ export default function FlashcardSearchControls({
             <button
               type="button"
               onClick={onClearGrid}
-              className="btn btn-secondary px-4 py-2 flex items-center gap-2 whitespace-nowrap"
+              className="btn btn-secondary px-4 py-2.5 flex items-center gap-2 whitespace-nowrap"
             >
               <X size={16} />
               Clear Grid
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-3 mt-4 relative justify-center">
+          <div className="relative mt-4 flex flex-wrap justify-center gap-2 sm:gap-3">
             {(["noun", "verb", "adjective", "phonics", "preposition"] as const).map((type) => {
               const isSelectedType = !isMyCards && activeWordType === type;
 
@@ -185,7 +185,7 @@ export default function FlashcardSearchControls({
                   {openDropdown === type &&
                     (type === "adjective" ? (
                       <div
-                        className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain space-y-2"
+                        className="absolute left-1/2 z-50 mt-2 max-h-64 w-48 -translate-x-1/2 space-y-2 overflow-y-auto overscroll-contain rounded-2xl border bg-white p-2 shadow-lg sm:left-0 sm:translate-x-0"
                         data-dropdown-type={type}
                       >
                         {ADJECTIVE_THEME_GROUPS.flatMap((group) => group.items.map((theme) => ({
@@ -221,7 +221,7 @@ export default function FlashcardSearchControls({
                       </div>
                     ) : (
                       <div
-                        className="absolute z-50 mt-2 w-48 rounded-2xl bg-white shadow-lg border p-2 max-h-64 overflow-y-auto overscroll-contain space-y-2"
+                        className="absolute left-1/2 z-50 mt-2 max-h-64 w-48 -translate-x-1/2 space-y-2 overflow-y-auto overscroll-contain rounded-2xl border bg-white p-2 shadow-lg sm:left-0 sm:translate-x-0"
                         data-dropdown-type={type}
                       >
                         {FLASHCARD_THEMES[type].map((theme) => (

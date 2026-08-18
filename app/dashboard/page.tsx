@@ -655,7 +655,7 @@ export default function DashboardPage() {
       />
 
       {/* MAIN */}
-      <main className="max-w-7xl mx-auto px-6 pt-12 pb-32 space-y-16">
+      <main className="mx-auto max-w-7xl space-y-12 px-4 pb-24 pt-8 md:space-y-16 md:px-6 md:pb-32 md:pt-12">
         {onboardingMessage ? (
           <div className="rounded-2xl border border-[#cfe0c7] bg-[#f2f8ee] px-5 py-4 text-sm font-medium text-[#496143]" role="status">
             {onboardingMessage}

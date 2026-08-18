@@ -43,6 +43,17 @@
   :root[data-cookie-consent-banner="visible"] {
     --cookie-consent-banner-offset: 168px;
   }
+
+  .container-max {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* ======================================================

@@ -79,7 +79,7 @@ export default function CommunityPage() {
         ]}
       />
 
-      <main className="mx-auto max-w-[1500px] px-6 pb-16 pt-6">
+      <main className="mx-auto max-w-[1500px] px-4 pb-12 pt-4 md:px-6 md:pb-16 md:pt-6">
         <div className="mb-5 flex justify-center">
           <div className="inline-flex rounded-2xl border border-[#d7ddd1] bg-white p-1.5 shadow-sm" aria-label="Choose Community resource type">
             <button type="button" onClick={() => setLibraryKind("lesson_sets")} aria-pressed={libraryKind === "lesson_sets"} className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition ${libraryKind === "lesson_sets" ? "bg-[var(--color-primary)] text-white shadow-sm" : "text-[var(--color-text-muted)] hover:bg-slate-50"}`}>

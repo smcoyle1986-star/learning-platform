@@ -59,7 +59,7 @@ export default function LessonTrayBar({
 }: LessonTrayBarProps) {
   return (
     <section className="sticky top-0 z-40 bg-[var(--color-bg-main)] border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 py-2 flex flex-col gap-1">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 md:px-6">
         {editingLessonSetId && (
           <div className="text-[11px] leading-tight text-[var(--color-text-muted)]">
             <span className="font-medium mr-2">Editing:</span>
@@ -121,25 +121,25 @@ export default function LessonTrayBar({
           ))}
         </LessonTrayScroller>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {lessonTray.length > 0 && (
             <>
               <button
                 onClick={onGoClassroom}
-                className="btn btn-primary px-4 py-2 text-sm shadow-[0_8px_18px_rgba(126,167,106,0.2)]"
+                className="btn btn-primary w-full px-4 py-2.5 text-sm shadow-[0_8px_18px_rgba(126,167,106,0.2)] sm:w-auto"
                 title="Present these cards full-screen in Interactive Classroom"
               >
                 <Presentation size={17} />
                 Present {lessonTray.length} card{lessonTray.length === 1 ? "" : "s"} in Classroom
               </button>
-              <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-1 text-xs">
+              <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-2 text-sm sm:py-1 sm:text-xs">
                 {isGuest ? "Sign up to save" : "Save To Dashboard"}
               </button>
 
               {!isGuest ? (
                 <button
                   onClick={onGoWorksheets}
-                  className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
+                  className="btn btn-secondary px-3 py-2 text-sm sm:py-1 sm:text-xs flex items-center gap-1.5"
                   title="Create worksheets"
                 >
                   <FileSpreadsheet size={14} />
@@ -150,7 +150,7 @@ export default function LessonTrayBar({
               {isGuest && onGoLessonPlans ? (
                 <button
                   onClick={onGoLessonPlans}
-                  className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
+                  className="btn btn-secondary px-3 py-2 text-sm sm:py-1 sm:text-xs flex items-center gap-1.5"
                   title="Make a lesson plan from this temporary lesson"
                 >
                   <BookOpen size={14} />
@@ -160,14 +160,14 @@ export default function LessonTrayBar({
 
               <button
                 onClick={onPrint}
-                className="btn btn-secondary px-3 py-1 text-xs flex items-center gap-1.5"
+                className="btn btn-secondary px-3 py-2 text-sm sm:py-1 sm:text-xs flex items-center gap-1.5"
                 title="Print lesson"
               >
                 <Printer size={14} />
                 Print
               </button>
 
-              <button onClick={onClearTray} className="btn btn-secondary px-3 py-1 text-xs">
+              <button onClick={onClearTray} className="btn btn-secondary px-3 py-2 text-sm sm:py-1 sm:text-xs">
                 Remove all
               </button>
             </>

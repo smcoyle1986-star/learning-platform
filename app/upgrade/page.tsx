@@ -88,7 +88,7 @@ function UpgradePageContent() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen bg-[#f7f6f2] px-6 py-10 text-[#2f3a2f]">
+      <main className="min-h-screen bg-[#f7f6f2] px-4 py-8 text-[#2f3a2f] sm:px-6 sm:py-10">
         <section className="mx-auto max-w-5xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 md:p-8">
           <h1 className="text-4xl font-semibold tracking-tight">Classendo Premium</h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-[#5c665c]">{PAGE_CONTENT.upgrade.description}</p>
@@ -99,7 +99,7 @@ function UpgradePageContent() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#f7f6f2] px-6 py-10 text-[#2f3a2f]">
+      <main className="min-h-screen bg-[#f7f6f2] px-4 py-8 text-[#2f3a2f] sm:px-6 sm:py-10">
         <section className="mx-auto max-w-5xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
           <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
             Classendo Premium
@@ -120,7 +120,7 @@ function UpgradePageContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] px-6 py-10 text-[#2f3a2f]">
+    <main className="min-h-screen bg-[#f7f6f2] px-4 py-8 text-[#2f3a2f] sm:px-6 sm:py-10">
       <section className="mx-auto max-w-5xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
         <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
           Classendo Premium

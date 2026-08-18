@@ -136,7 +136,7 @@ function HomePageContent() {
     return (
       <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
         {/* ---------------- Header ---------------- */}
-        <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+        <header className="mx-auto hidden max-w-7xl items-center justify-between px-6 py-6 md:flex">
           <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
           <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
@@ -157,18 +157,18 @@ function HomePageContent() {
         </header>
 
         {/* ---------------- Hero (same marketing layout) ---------------- */}
-        <main className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
+        <main className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 md:gap-12 md:py-24">
           {/* Text */}
           <div>
-            <h2 className="text-5xl font-semibold leading-tight mb-6 whitespace-pre-line">
+            <h2 className="mb-5 whitespace-pre-line text-4xl font-semibold leading-tight sm:text-5xl md:mb-6">
               {LANDING_HERO_TITLE}
             </h2>
 
-            <p className="text-lg text-[#5c665c] mb-8 max-w-xl">
+            <p className="mb-7 max-w-xl text-base text-[#5c665c] sm:text-lg md:mb-8">
               {LANDING_HERO_DESCRIPTION}
             </p>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <button onClick={goToFlashcards} className="btn btn-primary px-8 py-4">
                 {heroButtonLabel}
               </button>
@@ -201,7 +201,7 @@ function HomePageContent() {
   return (
     <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       {/* ---------------- Header ---------------- */}
-      <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+        <header className="mx-auto hidden max-w-7xl items-center justify-between px-6 py-6 md:flex">
         <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80" />
 
         <nav className="flex flex-wrap items-center justify-end gap-2 text-sm">
@@ -230,18 +230,18 @@ function HomePageContent() {
       </header>
 
         {/* ---------------- Hero ---------------- */}
-      <section className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
+      <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 md:gap-12 md:py-24">
         {/* Text */}
         <div>
-          <h2 className="text-5xl font-semibold leading-tight mb-6 whitespace-pre-line">
+          <h2 className="mb-5 whitespace-pre-line text-4xl font-semibold leading-tight sm:text-5xl md:mb-6">
             {LANDING_HERO_TITLE}
           </h2>
 
-          <p className="text-lg text-[#5c665c] mb-8 max-w-xl">
+          <p className="mb-7 max-w-xl text-base text-[#5c665c] sm:text-lg md:mb-8">
             {LANDING_HERO_DESCRIPTION}
           </p>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <button onClick={goToFlashcards} className="btn btn-primary px-8 py-4">
               {heroButtonLabel}
             </button>

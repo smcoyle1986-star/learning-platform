@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { BrandMenuProvider } from "@/components/BrandMenuContext";
 import BrandMenuDrawer from "@/components/BrandMenuDrawer";
 import HeaderAuth from "@/components/HeaderAuth";
+import MobileSiteHeader from "@/components/MobileSiteHeader";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
@@ -49,8 +50,8 @@ export default function RootLayout({
             <BrandMenuDrawer />
             <BrandPageTheme />
             <div className="relative z-10">
-              {/* GLOBAL HEADER — THIS WAS MISSING */}
-              <header className="p-4 border-b flex justify-end">
+              <MobileSiteHeader />
+              <header className="hidden border-b p-4 md:flex md:justify-end">
                 <HeaderAuth />
               </header>
 

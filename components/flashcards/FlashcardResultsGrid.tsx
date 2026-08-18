@@ -44,7 +44,7 @@ export default function FlashcardResultsGrid({
   }
 
   return (
-    <section className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <section className="mt-6 grid grid-cols-2 gap-3 px-4 sm:mt-10 sm:grid-cols-3 sm:gap-6 sm:px-6 md:grid-cols-4 lg:grid-cols-5 xl:px-0">
       {results.map((card) => {
         const key = getCarouselKey(card);
         const availableImages = getCardImages(card);
@@ -77,7 +77,7 @@ export default function FlashcardResultsGrid({
           <div
             key={card.id}
             onClick={() => !isLockedPremium && onAddToLessonTray(card)}
-            className={`group relative rounded-2xl bg-white p-4 shadow-sm transition ${
+            className={`group relative rounded-2xl bg-white p-3 shadow-sm transition sm:p-4 ${
               isLockedPremium ? "cursor-default" : "cursor-pointer hover:shadow-md"
             }`}
           >
@@ -134,7 +134,7 @@ export default function FlashcardResultsGrid({
                     event.stopPropagation();
                     onStartCarouselSlide(card, "left");
                   }}
-                  className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/90 border shadow px-2 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute left-2 top-1/2 z-20 inline-flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-white/90 text-sm opacity-100 shadow transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Previous image"
                 >
                   ◀
@@ -147,14 +147,14 @@ export default function FlashcardResultsGrid({
                     event.stopPropagation();
                     onStartCarouselSlide(card, "right");
                   }}
-                  className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/90 border shadow px-2 py-1 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-2 top-1/2 z-20 inline-flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full border bg-white/90 text-sm opacity-100 shadow transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="Next image"
                 >
                   ▶
                 </button>
               )}
             </div>
-            <h3 className="font-semibold">{getDisplayWord(card).replaceAll("_", " ")}</h3>
+            <h3 className="text-sm font-semibold sm:text-base">{getDisplayWord(card).replaceAll("_", " ")}</h3>
 
             <p className="text-xs text-[var(--color-text-muted)] capitalize">
               {card.type}

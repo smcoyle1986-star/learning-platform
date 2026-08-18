@@ -45,23 +45,23 @@ export default function PageHeader({
       <header
         className={`${sticky ? "sticky top-0 z-50" : ""} bg-[var(--color-bg-main)]/80 backdrop-blur-md border-b border-black/5 ${className}`.trim()}
       >
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-4">
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[auto_1fr_auto] xl:items-center">
           <div className="flex items-center justify-between gap-4 xl:justify-start">
-            <BrandButton className="text-4xl md:text-5xl font-extrabold text-blue-700 hover:opacity-80 shrink-0" />
-            {rightSlot ? <div className="xl:hidden shrink-0">{rightSlot}</div> : null}
+            <BrandButton className="hidden shrink-0 text-4xl font-extrabold text-blue-700 hover:opacity-80 md:block md:text-5xl" />
+            {rightSlot ? <div className="hidden shrink-0 xl:hidden">{rightSlot}</div> : null}
           </div>
 
           <div className="flex flex-col gap-3 xl:min-w-0 xl:items-center">
             {title ? (
               <div className="min-w-0 xl:text-center">
-                <h1 className="text-3xl font-bold text-black whitespace-nowrap md:text-4xl">{title}</h1>
+                <h1 className="text-2xl font-bold text-black sm:text-3xl xl:whitespace-nowrap xl:text-4xl">{title}</h1>
               </div>
             ) : (
               <div />
             )}
 
-            <div className="flex flex-wrap items-center gap-2 xl:hidden">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 xl:hidden md:flex-wrap md:overflow-visible md:pb-0">
               {primaryItems.map((item) =>
                 item.href ? (
                   <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone, item.highlight)}>
@@ -103,7 +103,7 @@ export default function PageHeader({
         </div>
 
         {secondaryItems.length > 0 ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto border-t border-black/5 pb-1 pt-3 md:flex-wrap md:overflow-visible md:pb-0">
             {secondaryItems.map((item) =>
               item.href ? (
                 <Link
@@ -129,7 +129,7 @@ export default function PageHeader({
         </div>
       </header>
       {description ? (
-        <section className="mx-auto w-full max-w-7xl px-6 pt-5" aria-label={title ? `About ${title}` : "About this page"}>
+        <section className="mx-auto w-full max-w-7xl px-4 pt-4 md:px-6 md:pt-5" aria-label={title ? `About ${title}` : "About this page"}>
           <p className="max-w-3xl text-sm leading-6 text-[var(--color-text-muted)] md:text-base">
             {description}
           </p>
