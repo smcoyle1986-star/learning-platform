@@ -128,13 +128,18 @@ type GamePopularityPayload = {
   allTime: GamePopularityEntry[];
 };
 
+const rankingFrames = [
+  { border: "#e7cf84", background: "#fffaf0", shadow: "rgba(190, 154, 51, 0.18)" },
+  { border: "#ccd1d7", background: "#f8fafc", shadow: "rgba(100, 116, 139, 0.15)" },
+  { border: "#d9ad84", background: "#fff7f1", shadow: "rgba(161, 98, 55, 0.16)" },
+] as const;
+
 export default function GamesLandingPage() {
   const router = useRouter();
   const [lessonTray, setLessonTray] = useState<GameCard[]>([]);
   const [helpGame, setHelpGame] = useState<GameInfo | null>(null);
   const [popularity, setPopularity] = useState<GamePopularityPayload | null>(null);
   const gameGridRef = useRef<HTMLDivElement | null>(null);
-  const gameCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { access, canAccessGame } = useBillingAccess();
 
   useEffect(() => {
@@ -202,12 +207,6 @@ export default function GamesLandingPage() {
       .filter((entry) => entry.allTimeCount > 0)
       .slice(0, 3);
   }, [statsByGameId]);
-
-  function scrollToGameCard(gameId: string) {
-    const target = gameCardRefs.current[gameId];
-    if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
@@ -371,23 +370,18 @@ export default function GamesLandingPage() {
                       topThreeAllTime.map((game, index) => (
                         <button
                           key={game.id}
-                          onClick={() => scrollToGameCard(game.id)}
-                          className="group text-left rounded-2xl border border-black/5 bg-white/90 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                          onClick={() => enterGame(game.id)}
+                          className="group min-h-[112px] rounded-2xl border-2 p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(127,163,106,0.28)]"
+                          style={{
+                            borderColor: rankingFrames[index].border,
+                            backgroundColor: rankingFrames[index].background,
+                            boxShadow: `0 12px 28px ${rankingFrames[index].shadow}`,
+                          }}
+                          aria-label={`Open ${game.title}`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-bg-main)] text-sm font-black text-[var(--color-text-main)] shadow-sm">
-                              #{index + 1}
-                            </div>
-                            <div className="h-12 w-12 overflow-hidden rounded-2xl border border-black/5 bg-[var(--color-bg-main)]">
-                              <img
-                                src={game.image ?? "/placeholder.png"}
-                                alt={game.title}
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-sm font-black text-[var(--color-text-main)]">{game.title}</div>
-                              <div className="text-xs text-[var(--color-text-muted)]">{game.allTimeCount} plays</div>
+                          <div className="flex h-full min-h-[76px] items-center justify-center">
+                            <div className="text-xl font-black tracking-tight text-[var(--color-text-main)] transition-transform duration-300 group-hover:scale-[1.03]">
+                              {game.title}
                             </div>
                           </div>
                         </button>
@@ -433,9 +427,6 @@ export default function GamesLandingPage() {
                 return (
               <div
                 key={g.id}
-                ref={(el) => {
-                  gameCardRefs.current[g.id] = el;
-                }}
                 className={`group scroll-mt-[180px] rounded-[1.6rem] p-4 shadow-sm border transition-all duration-300 animate-fade-up ${
                   highlightFeatured
                     ? "cursor-pointer border-[#d7c27f] bg-[linear-gradient(180deg,#fffdf6_0%,#fff6df_100%)] shadow-[0_20px_46px_rgba(190,160,74,0.22)] ring-2 ring-[#f2df99]/80 hover:-translate-y-2 hover:shadow-[0_28px_58px_rgba(190,160,74,0.28)]"
