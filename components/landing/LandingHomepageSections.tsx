@@ -6,8 +6,8 @@ import { LANDING_FAQ_PREVIEW } from "@/lib/landing/faq";
 const featureLinks = [
   ["Flashcards", "/flashcards", "Choose visual vocabulary and build a focused lesson set."],
   ["Classroom Mode", "/flashcards/classroom", "Present classroom flashcards full screen and teach from the same set."],
-  ["ESL games", "/preview/games", "Turn your vocabulary flashcards into whole-class games."],
-  ["ESL worksheets", "/preview/worksheets", "Create printable vocabulary practice from the cards you already chose."],
+  ["ESL games", "/games", "Turn your vocabulary flashcards into whole-class games."],
+  ["ESL worksheets", "/worksheets", "Create printable vocabulary practice from the cards you already chose."],
   ["Printable teaching materials", "/printables", "Make classroom-ready card sheets and handouts."],
   ["Lesson plans", "/lessons", "Plan a clear classroom flow using the same lesson set."],
 ] as const;

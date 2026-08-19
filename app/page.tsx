@@ -5,12 +5,6 @@ import LandingCarousel from "@/components/landing/LandingCarousel";
 import LandingHomepageSections from "@/components/landing/LandingHomepageSections";
 import { LANDING_HERO_DESCRIPTION, LANDING_HERO_TITLE, LANDING_SECTIONS } from "@/lib/landing/content";
 
-const previewSlugs = new Set(["games", "worksheets", "dashboard", "community"]);
-
-function navigationHref(slug: string, href: string) {
-  return previewSlugs.has(slug) ? `/preview/${slug}` : href;
-}
-
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
@@ -20,7 +14,7 @@ export default function HomePage() {
           {LANDING_SECTIONS.map((section) => (
             <Link
               key={section.slug}
-              href={navigationHref(section.slug, section.href)}
+              href={section.href}
               className="btn btn-secondary"
             >
               {section.title}
