@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { LEGAL_DOCUMENTS } from "@/lib/legal/documents";
 import { TOPICS } from "@/lib/seo/topics";
+import { PUBLISHED_TWELVE_CARD_LESSON_PACKS } from "@/lib/twelve-card-lesson-packs/catalog";
 
 const siteUrl = "https://classendo.com";
 
@@ -62,5 +63,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...LEGAL_DOCUMENTS.map((document) => ({ url: `${siteUrl}/legal/${document.slug}`, changeFrequency: "yearly" as const, priority: 0.3 })),
     ...TOPICS.map((topic) => ({ url: `${siteUrl}/topics/${topic.slug}`, changeFrequency: "monthly" as const, priority: 0.8 })),
     ...FREE_RESOURCE_SLUGS.map((slug) => ({ url: `${siteUrl}/free-resources/${slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),
+    ...PUBLISHED_TWELVE_CARD_LESSON_PACKS.map((pack) => ({ url: `${siteUrl}/free-resources/${pack.slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),
   ];
 }

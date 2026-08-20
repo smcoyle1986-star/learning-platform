@@ -1,13 +1,18 @@
+import { PUBLISHED_TWELVE_CARD_LESSON_PACKS } from "@/lib/twelve-card-lesson-packs/catalog";
+
 export type FreeLessonPack = {
   slug: string;
   title: string;
-  type: "noun" | "verb" | "adjective" | "preposition";
+  type: "noun" | "verb" | "adjective" | "preposition" | "mixed";
   topic: string;
   worksheet: string;
   terms?: string[];
+  format?: "six-card" | "twelve-card";
+  cardCount?: number;
+  includes?: string[];
 };
 
-export const FREE_LESSON_PACKS: FreeLessonPack[] = [
+const SIX_CARD_LESSON_PACKS: FreeLessonPack[] = [
   ["animals-vocabulary-beginner-esl", "Animals Vocabulary", "noun", "Animals", "Picture vocabulary"],
   ["body-parts-vocabulary-beginner-esl", "Body Parts Vocabulary", "noun", "Body Parts", "Picture vocabulary"],
   ["classroom-objects-vocabulary-beginner-esl", "Classroom Objects Vocabulary", "noun", "Classroom Objects", "Picture vocabulary"],
@@ -56,4 +61,19 @@ export const FREE_LESSON_PACKS: FreeLessonPack[] = [
   ["movement-prepositions-beginner-esl", "Movement Prepositions", "preposition", "Movement", "Crossword"],
   ["directions-prepositions-beginner-esl", "Directions Prepositions", "preposition", "Directions", "Bullseye"],
   ["travel-routes-prepositions-beginner-esl", "Travel Routes Prepositions", "preposition", "Travel Routes", "Wordsearch"],
-].map(([slug, title, type, topic, worksheet]) => ({ slug, title, type, topic, worksheet })) as FreeLessonPack[];
+].map(([slug, title, type, topic, worksheet]) => ({ slug, title, type, topic, worksheet, format: "six-card" as const, cardCount: 6 })) as FreeLessonPack[];
+
+export const FREE_LESSON_PACKS: FreeLessonPack[] = [
+  ...SIX_CARD_LESSON_PACKS,
+  ...PUBLISHED_TWELVE_CARD_LESSON_PACKS.map((pack) => ({
+    slug: pack.slug,
+    title: pack.title,
+    type: pack.type,
+    topic: pack.topic,
+    worksheet: `${pack.studyWorksheets[0]?.title ?? "Study worksheet"} + ${pack.playWorksheets[0]?.title ?? "Play worksheet"}`,
+    terms: pack.words,
+    format: "twelve-card" as const,
+    cardCount: 12,
+    includes: ["lesson plan", "12 flashcards", "two study worksheets", "two play worksheets", "movement game"],
+  })),
+];

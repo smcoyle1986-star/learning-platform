@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, Home, Search } from "lucide-react";
+import { ArrowRight, BookOpen, Home, Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FREE_LESSON_PACKS, type FreeLessonPack } from "@/lib/free-resources/catalog";
 
 type TypeFilter = "all" | FreeLessonPack["type"];
+type FormatFilter = "all" | "six-card" | "twelve-card";
 
 const filters: { value: TypeFilter; label: string }[] = [
   { value: "all", label: "All packs" },
@@ -15,11 +16,18 @@ const filters: { value: TypeFilter; label: string }[] = [
   { value: "preposition", label: "Prepositions" },
 ];
 
+const formatFilters: { value: FormatFilter; label: string }[] = [
+  { value: "all", label: "All formats" },
+  { value: "six-card", label: "6 Card Packs" },
+  { value: "twelve-card", label: "12 Card Lesson Packs" },
+];
+
 const colours = {
   noun: "border-sky-200 bg-sky-50 text-sky-800",
   verb: "border-emerald-200 bg-emerald-50 text-emerald-800",
   adjective: "border-rose-200 bg-rose-50 text-rose-800",
   preposition: "border-amber-200 bg-amber-50 text-amber-800",
+  mixed: "border-violet-200 bg-violet-50 text-violet-800",
 };
 
 function normalise(value: string) {
@@ -37,6 +45,7 @@ function fuzzyMatch(term: string, target: string) {
 export default function FreeLessonPackDirectory() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TypeFilter>("all");
+  const [format, setFormat] = useState<FormatFilter>("all");
   const [perPage, setPerPage] = useState(9);
   const [page, setPage] = useState(1);
 
@@ -45,10 +54,11 @@ export default function FreeLessonPackDirectory() {
 
     return FREE_LESSON_PACKS.filter((pack) => {
       if (filter !== "all" && pack.type !== filter) return false;
-      const searchText = normalise(`${pack.title} ${pack.topic} ${pack.type} ${pack.worksheet} ${pack.slug}`);
+      if (format !== "all" && pack.format !== format) return false;
+      const searchText = normalise(`${pack.title} ${pack.topic} ${pack.type} ${pack.worksheet} ${pack.slug} ${pack.terms?.join(" ") ?? ""} ${pack.includes?.join(" ") ?? ""} ${pack.format ?? ""}`);
       return terms.every((term) => fuzzyMatch(term, searchText));
     });
-  }, [query, filter]);
+  }, [query, filter, format]);
 
   const totalPages = Math.max(1, Math.ceil(results.length / perPage));
   const currentPage = Math.min(page, totalPages);
@@ -59,6 +69,10 @@ export default function FreeLessonPackDirectory() {
   };
   const setSizeAndReset = (value: number) => {
     setPerPage(value);
+    setPage(1);
+  };
+  const setFormatAndReset = (value: FormatFilter) => {
+    setFormat(value);
     setPage(1);
   };
 
@@ -73,7 +87,7 @@ export default function FreeLessonPackDirectory() {
               </div>
               <h1 className="mt-5 text-4xl font-semibold tracking-tight md:text-6xl">Free Lesson Packs</h1>
               <p className="mt-5 text-lg leading-8 text-[#5c665c]">
-                Browse ready-to-teach beginner ESL packs with six visual cards, a worksheet, movement activity, lesson plan and printable PDF.
+                Browse ready-to-teach beginner ESL packs. Choose focused 6 Card Packs or expanded 12 Card Lesson Packs with flashcards, worksheets, teacher guidance and a movement activity.
               </p>
             </div>
             <Link href="/" className="btn btn-secondary shrink-0 px-4 py-2.5 text-sm">
@@ -125,6 +139,14 @@ export default function FreeLessonPackDirectory() {
           </label>
         </div>
 
+        <div className="mt-4 flex flex-wrap gap-2" aria-label="Lesson pack format">
+          {formatFilters.map((item) => (
+            <button key={item.value} type="button" onClick={() => setFormatAndReset(item.value)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${format === item.value ? "border-violet-500 bg-violet-600 text-white" : "border-violet-200 bg-violet-50 text-violet-800 hover:border-violet-400 hover:bg-violet-100"}`}>
+              {item.value === "twelve-card" && <Sparkles size={15} />}{item.label}
+            </button>
+          ))}
+        </div>
+
         <p className="mt-7 text-sm font-medium text-[#6b756b]">
           {results.length} lesson pack{results.length === 1 ? "" : "s"} found
         </p>
@@ -137,12 +159,12 @@ export default function FreeLessonPackDirectory() {
               className="group rounded-3xl border border-[#d8e6ce] bg-[#fcfcf8] p-6 shadow-[0_10px_30px_rgba(54,64,46,.08)] transition hover:-translate-y-1 hover:border-[#9fbc91] hover:bg-white hover:shadow-[0_16px_34px_rgba(54,64,46,.14)]"
             >
               <div className="flex items-start justify-between gap-4">
-                <span className={`rounded-full border px-3 py-1 text-xs font-bold capitalize ${colours[pack.type]}`}>{pack.type}</span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-bold capitalize ${pack.format === "twelve-card" ? "border-violet-200 bg-violet-50 text-violet-800" : colours[pack.type]}`}>{pack.format === "twelve-card" ? "12 Card Lesson Pack" : pack.type}</span>
                 <ArrowRight className="text-[#6f9560] transition group-hover:translate-x-1" size={19} />
               </div>
               <h2 className="mt-6 text-xl font-semibold leading-7">{pack.title}</h2>
               <p className="mt-2 text-sm text-[#6b756b]">{pack.topic} · {pack.worksheet}</p>
-              <p className="mt-6 text-sm font-semibold text-[#5d854d]">View free pack</p>
+              <p className="mt-6 text-sm font-semibold text-[#5d854d]">{pack.format === "twelve-card" ? "View 12 card lesson pack" : "View free pack"}</p>
             </Link>
           ))}
         </div>
