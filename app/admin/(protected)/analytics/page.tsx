@@ -74,7 +74,7 @@ function RankedList({
   title: string;
   description: string;
   items: AdminAnalyticsRankedItem[];
-  kind: "searches" | "flashcards" | "games" | "worksheets" | "community";
+  kind: "searches" | "flashcards" | "games" | "worksheets" | "community" | "attribution";
   empty: string;
 }) {
   const maximum = Math.max(1, ...items.map((item) => item.count));
@@ -105,6 +105,9 @@ function RankedList({
                 <p className="mt-1 text-[0.68rem] text-[#8a9189]">
                   {item.downloads} copies · {item.uses} recorded uses
                 </p>
+              )}
+              {kind === "attribution" && item.category && (
+                <p className="mt-1 text-[0.68rem] text-[#8a9189]">{item.category}</p>
               )}
             </li>
           ))}
@@ -191,6 +194,7 @@ export default async function AdminAnalyticsPage({
         <RankedList title="Most played games" description="Game starts captured by the existing Classendo game tracker." items={analytics.games} kind="games" empty="No game starts recorded for this period." />
         <RankedList title="Most generated worksheets" description="Worksheet previews plus saved worksheet records from the selected period." items={analytics.worksheets} kind="worksheets" empty="No worksheet activity recorded for this period." />
         <RankedList title="Most popular free lesson packs" description="Pack-page views and PDF downloads in the selected period." items={analytics.lessonPacks} kind="flashcards" empty="No lesson-pack activity recorded for this period." />
+        <RankedList title="Signup acquisition sources" description="First-touch UTM source or referring website for accounts created after attribution tracking was enabled." items={analytics.signupSources} kind="attribution" empty="No consented signup attribution has been recorded for this period yet." />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">

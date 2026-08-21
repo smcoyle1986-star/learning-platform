@@ -48,7 +48,15 @@ export type AdminAnalyticsSnapshot = {
   worksheets: AdminAnalyticsRankedItem[];
   lessonPacks: AdminAnalyticsRankedItem[];
   communitySets: AdminAnalyticsRankedItem[];
+  signupSources: AdminAnalyticsRankedItem[];
   trends: AdminAnalyticsTrend[];
+};
+
+type SignupAttributionRow = {
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  referrer_host: string | null;
 };
 
 function record(value: unknown): JsonRecord {
@@ -91,11 +99,51 @@ function normalizeList(value: unknown) {
 export async function getAdminAnalyticsSnapshot(
   periodDays: number | null,
 ): Promise<AdminAnalyticsSnapshot> {
-  const { data, error } = await getSupabaseAdmin().rpc(
-    "get_admin_analytics_snapshot",
-    { period_days: periodDays },
-  );
+  const admin = getSupabaseAdmin();
+  const since = periodDays
+    ? new Date(Date.now() - periodDays * 24 * 60 * 60 * 1_000).toISOString()
+    : null;
+  const attributionQuery = admin
+    .from("signup_attributions")
+    .select("utm_source,utm_medium,utm_campaign,referrer_host");
+  if (since) attributionQuery.gte("created_at", since);
+
+  const [{ data, error }, { data: attributionData, error: attributionError }] = await Promise.all([
+    admin.rpc("get_admin_analytics_snapshot", { period_days: periodDays }),
+    attributionQuery,
+  ]);
   if (error) throw new Error(`Could not load analytics: ${error.message}`);
+  if (attributionError) {
+    throw new Error(`Could not load signup attribution: ${attributionError.message}`);
+  }
+
+  const sourceCounts = new Map<string, AdminAnalyticsRankedItem>();
+  for (const item of (attributionData ?? []) as SignupAttributionRow[]) {
+    const source = text(item.utm_source) || text(item.referrer_host) || "Direct / unknown";
+    const medium = text(item.utm_medium);
+    const campaign = text(item.utm_campaign);
+    const category = [medium, campaign].filter(Boolean).join(" · ") || null;
+    const key = `${source.toLowerCase()}|${category ?? ""}`;
+    const existing = sourceCounts.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      sourceCounts.set(key, {
+        key,
+        label: source,
+        category,
+        count: 1,
+        generatedCount: 0,
+        savedCount: 0,
+        downloads: 0,
+        uses: 0,
+      });
+    }
+  }
+  const signupSources = [...sourceCounts.values()]
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, 8);
+
   const root = record(data);
   const summary = record(root.summary);
   return {
@@ -124,6 +172,7 @@ export async function getAdminAnalyticsSnapshot(
     worksheets: normalizeList(root.worksheets),
     lessonPacks: normalizeList(root.lesson_packs),
     communitySets: normalizeList(root.community_sets),
+    signupSources,
     trends: Array.isArray(root.trends)
       ? root.trends.map((value) => {
         const item = record(value);

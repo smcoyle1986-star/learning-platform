@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { captureSignupAttribution } from "@/lib/analytics/attribution";
 import { clearLessonTray } from "@/lib/lessons/tray";
 
 const WORKSHEET_KEYS: Record<string, string> = {
@@ -44,6 +45,8 @@ export function AnalyticsEventTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
+    captureSignupAttribution();
+
     if (pathname === "/flashcards") {
       void trackAnalyticsEvent({
         eventType: "flashcards_opened",

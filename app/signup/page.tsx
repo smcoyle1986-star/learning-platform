@@ -15,6 +15,7 @@ import {
   buildConfirmationRedirect,
   savePendingEmailConfirmation,
 } from "@/lib/auth/pending-confirmation";
+import { readSignupAttribution } from "@/lib/analytics/attribution";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
@@ -245,6 +246,7 @@ export default function SignupPage() {
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
       const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
       const onboardingStartedAt = new Date().toISOString();
+      const signupAttribution = readSignupAttribution();
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -258,6 +260,7 @@ export default function SignupPage() {
             terms_version: LEGAL_VERSION,
             privacy_notice_version: LEGAL_VERSION,
             classendo_onboarding_started_at: onboardingStartedAt,
+            signup_attribution: signupAttribution,
           },
         },
       });
