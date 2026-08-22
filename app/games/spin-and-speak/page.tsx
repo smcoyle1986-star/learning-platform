@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { trackGameStart } from "@/lib/games/track-game-start";
 import {
@@ -526,29 +527,22 @@ export default function SpinAndSpeakPage() {
               </div>
             </div>
 
-            {winnerModalOpen && winnerTeam && (
-              <div className="bg-white rounded-2xl shadow p-4 text-center">
-                <div className="text-xl font-extrabold">🏆 {winnerTeam.name} Wins!</div>
-                <div className="mt-2 text-sm text-gray-600">Great speaking, everyone!</div>
-                <div className="mt-3 flex justify-center gap-2">
-                  <button onClick={() => { setWinnerModalOpen(false); resetGame(true); }} className="btn btn-primary px-3 py-1">Play Again</button>
-                  <button onClick={() => { setWinnerModalOpen(false); router.push("/games"); }} className="btn btn-secondary px-3 py-1">Exit</button>
-                </div>
-                <div className="pointer-events-none mt-4 flex justify-center gap-2">
-                  <div className="w-3 h-6 bg-pink-400 animate-fall" />
-                  <div className="w-3 h-6 bg-yellow-400 animate-fall" />
-                  <div className="w-3 h-6 bg-green-400 animate-fall" />
-                  <div className="w-3 h-6 bg-blue-400 animate-fall" />
-                </div>
-              </div>
-            )}
-
             <div className="text-xs text-gray-700">
               Teacher controls on the right. Spin to choose a task; after popup the timer begins.
             </div>
           </aside>
         </div>
       </main>
+
+      {winnerModalOpen && winnerTeam && (
+        <GameWinnerModal
+          title={`${winnerTeam.name} wins!`}
+          message={`Congratulations — ${winnerTeam.name} finished with ${winnerTeam.score} points.`}
+          onClose={() => setWinnerModalOpen(false)}
+          onPlayAgain={() => resetGame(true)}
+          onReturnToGames={() => router.push("/games")}
+        />
+      )}
 
       {(showPointsPrompt || showPointsSpinner) && (
         <div className="fixed inset-0 z-60 flex items-center justify-center pointer-events-auto">

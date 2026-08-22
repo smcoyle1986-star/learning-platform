@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { trackGameStart } from "@/lib/games/track-game-start";
 import {
@@ -970,6 +971,16 @@ export default function CardRevealPage() {
           </div>
         </div>
       </main>
+
+      {showWinner && winner && (
+        <GameWinnerModal
+          title={`${winner.name} wins!`}
+          message={`${winner.name} finished Card Reveal with ${winner.score} points.`}
+          onClose={() => setShowWinner(false)}
+          onPlayAgain={() => { setTeams((current) => current.map((team) => ({ ...team, score: 0 }))); resetGame(); }}
+          onReturnToGames={() => router.push("/games")}
+        />
+      )}
 
       <style>{`
         body { --color-primary: #2563eb; }

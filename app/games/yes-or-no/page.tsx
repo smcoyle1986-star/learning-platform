@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
@@ -1706,15 +1707,13 @@ export default function YesOrNoPage() {
 
       {/* Winner modal */}
       {winnerOpen && winnerTeam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-8 shadow-xl text-center max-w-md w-full">
-            <h2 className="text-3xl font-extrabold">🎉 Winner!</h2>
-            <p className="mt-3 text-xl">{winnerTeam.name} wins with {winnerTeam.score} points</p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button onClick={() => { setWinnerOpen(false); router.push("/games"); }} className="btn btn-secondary px-3 py-1">Return to Games</button>
-            </div>
-          </div>
-        </div>
+        <GameWinnerModal
+          title={`${winnerTeam.name} wins!`}
+          message={`Congratulations — ${winnerTeam.name} finished with ${winnerTeam.score} points.`}
+          onClose={() => setWinnerOpen(false)}
+          onPlayAgain={() => resetGameState(true)}
+          onReturnToGames={() => router.push("/games")}
+        />
       )}
 
       <style jsx>{`

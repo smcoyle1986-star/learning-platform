@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
 type GameCard = {
@@ -1048,19 +1049,13 @@ export default function KaBoomPage() {
 
       {/* Winner modal */}
       {winnerModalOpen && winnerTeam && (
-        <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full text-center">
-            <h2 className="text-3xl font-extrabold mb-2">🎉 Winner!</h2>
-            <p className="text-xl mb-4">{winnerTeam.name} wins with {winnerTeam.score} points</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => {
-                setWinnerModalOpen(false);
-                router.push("/games");
-              }} className="px-4 py-2 rounded-md bg-[var(--color-primary)] text-white">Back to Games</button>
-              <button onClick={() => setWinnerModalOpen(false)} className="px-4 py-2 rounded-md bg-white border">Close</button>
-            </div>
-          </div>
-        </div>
+        <GameWinnerModal
+          title={`${winnerTeam.name} wins!`}
+          message={`Congratulations — ${winnerTeam.name} finished KaBoom with ${winnerTeam.score} points.`}
+          onClose={() => setWinnerModalOpen(false)}
+          onPlayAgain={resetGame}
+          onReturnToGames={() => router.push("/games")}
+        />
       )}
       <style>{`
         /* active score pulse */

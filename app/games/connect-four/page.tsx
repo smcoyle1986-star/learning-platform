@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -325,9 +326,12 @@ export default function ConnectFourPage() {
   const [aiFocusCol, setAiFocusCol] = useState<number | null>(null);
   const [winnerLine, setWinnerLine] = useState<[number, number][] | null>(null);
   const [matchWins, setMatchWins] = useState<Record<number, number>>({ 1: 0, 2: 0 });
+  const [matchWinnerModalOpen, setMatchWinnerModalOpen] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
   const didTrackMatchStartRef = useRef(false);
+  const matchCompletionShownRef = useRef(false);
   const activeBoardTheme = ACTIVE_BOARD_THEME[currentPlayer];
+  const matchWinner = (matchWins[1] ?? 0) >= firstToWins ? 1 : (matchWins[2] ?? 0) >= firstToWins ? 2 : null;
 
   // falling animation state
   const [falling, setFalling] = useState<{ col: number; row: number; player: Player } | null>(null);
@@ -401,7 +405,7 @@ export default function ConnectFourPage() {
   // keyboard controls
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (showSettings || showNoCardsModal || winnerLine || isAiThinking) return;
+      if (showSettings || showNoCardsModal || winnerLine || matchWinner || isAiThinking) return;
       if (e.key === "ArrowLeft") setCursorCol((c) => Math.max(0, c - 1));
       else if (e.key === "ArrowRight") setCursorCol((c) => Math.min(boardCols - 1, c + 1));
       else if (e.key === "Enter") handleColumnClick(cursorCol);
@@ -416,7 +420,7 @@ export default function ConnectFourPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSettings, showNoCardsModal, boardCols, cursorCol, winnerLine, isAiThinking]);
+  }, [showSettings, showNoCardsModal, boardCols, cursorCol, winnerLine, matchWinner, isAiThinking]);
 
   // Column click handler (shows learning modal for human players)
   function handleColumnClick(col: number) {
@@ -482,7 +486,7 @@ export default function ConnectFourPage() {
 
   // standard drop
   function handleDrop(col: number) {
-    if (showSettings || showNoCardsModal || winnerLine || isAiThinking) return;
+    if (showSettings || showNoCardsModal || winnerLine || matchWinner || isAiThinking) return;
     if (!didTrackMatchStartRef.current) {
       didTrackMatchStartRef.current = true;
       trackGameStart("connect-four");
@@ -509,7 +513,7 @@ export default function ConnectFourPage() {
 
   // animated falling drop
   function handleDropAnimated(col: number) {
-    if (showSettings || showNoCardsModal || winnerLine || isAiThinking || falling) return;
+    if (showSettings || showNoCardsModal || winnerLine || matchWinner || isAiThinking || falling) return;
     if (!didTrackMatchStartRef.current) {
       didTrackMatchStartRef.current = true;
       trackGameStart("connect-four");
@@ -545,12 +549,12 @@ export default function ConnectFourPage() {
 
   // AI drama + falling
   useEffect(() => {
-    if (showSettings || showNoCardsModal || winnerLine) return;
+    if (showSettings || showNoCardsModal || winnerLine || matchWinner) return;
     if (aiLevel !== "none" && aiPlaysAs === currentPlayer) {
       doAiMoveWithDrama();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPlayer, aiLevel, aiPlaysAs, showSettings, showNoCardsModal, winnerLine]);
+  }, [currentPlayer, aiLevel, aiPlaysAs, showSettings, showNoCardsModal, winnerLine, matchWinner]);
 
   async function doAiMoveWithDrama() {
     if (isAiThinking) return;
@@ -622,6 +626,8 @@ export default function ConnectFourPage() {
     setWinnerLine(null);
     setGameOverDraw(false);
     setMatchWins({ 1: 0, 2: 0 });
+    setMatchWinnerModalOpen(false);
+    matchCompletionShownRef.current = false;
     setCurrentPlayer(1);
     setIsAiThinking(false);
     setFalling(null);
@@ -630,13 +636,15 @@ export default function ConnectFourPage() {
   }
 
   useEffect(() => {
-    if ((matchWins[1] ?? 0) >= firstToWins || (matchWins[2] ?? 0) >= firstToWins) {
+    if (matchWinner && !matchCompletionShownRef.current) {
+      matchCompletionShownRef.current = true;
       setWinnerLine(null);
-      setShowSettings(true);
+      setGameOverDraw(false);
+      setMatchWinnerModalOpen(true);
       cancelAiTimeouts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchWins]);
+  }, [matchWinner]);
 
   useEffect(() => {
     return () => {
@@ -706,7 +714,7 @@ export default function ConnectFourPage() {
                           key={col}
                           type="button"
                           onClick={() => handleColumnClick(col)}
-                          disabled={showSettings || showNoCardsModal || !!winnerLine || isAiThinking || !columnHasSpace}
+                          disabled={showSettings || showNoCardsModal || !!winnerLine || !!matchWinner || isAiThinking || !columnHasSpace}
                           className={`rounded-full border px-2 py-2 font-extrabold transition-transform ${
                             aiFocused
                               ? "bg-[var(--color-accent)] text-white border-transparent scale-110 shadow-[0_12px_30px_rgba(37,99,235,0.35)]"
@@ -749,7 +757,7 @@ export default function ConnectFourPage() {
                                 key={`${r}-${c}`}
                                 type="button"
                                 onClick={() => handleColumnClick(c)}
-                                disabled={showSettings || showNoCardsModal || !!winnerLine || isAiThinking || r !== 0}
+                                disabled={showSettings || showNoCardsModal || !!winnerLine || !!matchWinner || isAiThinking || r !== 0}
                                 className={`relative rounded-[22px] border-2 transition-all duration-200 overflow-hidden ${
                                   isActiveColumn ? "ring-2 ring-[var(--color-accent)] ring-offset-2" : ""
                                 } ${isWinning ? "scale-[1.04]" : ""} ${aiFocused ? "ring-4 ring-blue-300 ring-offset-2" : ""}`}
@@ -1026,6 +1034,18 @@ export default function ConnectFourPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {matchWinner && matchWinnerModalOpen && (
+          <GameWinnerModal
+            title={aiLevel !== "none" && matchWinner === aiPlaysAs ? "Better luck next time!" : `Congratulations, Player ${matchWinner}!`}
+            message={aiLevel !== "none" && matchWinner === aiPlaysAs
+              ? `The AI reached ${firstToWins} wins first. Try another match!`
+              : `First to ${firstToWins} wins — Player ${matchWinner} takes the match.`}
+            onClose={() => setMatchWinnerModalOpen(false)}
+            onPlayAgain={restartMatch}
+            onReturnToGames={() => router.push("/games")}
+          />
+        )}
       </div>
     </div>
   );

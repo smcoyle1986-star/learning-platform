@@ -6,6 +6,7 @@ import { HelpCircle, RefreshCcw, Shield, Swords, X } from "lucide-react";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown, GameSettingsModal } from "@/components/games/GameSettingsSurface";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -1651,21 +1652,16 @@ export default function ConquerPage() {
       )}
 
       {winnerModalOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-2xl rounded-[2rem] border border-black/8 bg-white p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.24)]">
-            <div className="text-[0.72rem] font-black uppercase tracking-[0.42em] text-[var(--color-text-muted)]">
-              Conquer Complete
-            </div>
-            <div className="mt-3 text-4xl font-black tracking-tight text-[var(--color-text-main)] md:text-5xl">
-              {winningTeams.length > 1 ? "It's a tie!" : `${winningTeams[0]?.name ?? "Team 1"} wins!`}
-            </div>
-            <p className="mt-3 text-base text-[var(--color-text-muted)]">
-              {winningTeams.length > 1
-                ? winningTeams.map((team) => team.name).join(" and ")
-                : winningTeams[0]?.name} finished with the most territory.
-            </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <GameWinnerModal
+          title={winningTeams.length > 1 ? "It's a tie!" : `${winningTeams[0]?.name ?? "Team 1"} wins!`}
+          message={winningTeams.length > 1
+            ? `${winningTeams.map((team) => team.name).join(" and ")} finished level on territory.`
+            : `${winningTeams[0]?.name ?? "Team 1"} finished with the most territory.`}
+          onClose={() => setWinnerModalOpen(false)}
+          onPlayAgain={rebuildGame}
+          onReturnToGames={() => router.push("/games")}
+        >
+            <div className="grid gap-3 sm:grid-cols-2">
               {winningTeams.map((team) => (
                 <div
                   key={team.id}
@@ -1682,23 +1678,7 @@ export default function ConquerPage() {
                 </div>
               ))}
             </div>
-
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <button
-                onClick={() => router.push("/games")}
-                className="btn btn-secondary px-5 py-3 text-sm"
-              >
-                Return to Games
-              </button>
-              <button
-                onClick={() => rebuildGame()}
-                className="btn btn-primary px-5 py-3 text-sm"
-              >
-                Play Again
-              </button>
-            </div>
-          </div>
-        </div>
+        </GameWinnerModal>
       )}
 
       <style jsx global>{`

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
 /*
@@ -192,6 +193,7 @@ export default function MemoryFlipPage() {
   const [flipped, setFlipped] = useState<number[]>([]);
   const [locked, setLocked] = useState(false);
   const [matchedPair, setMatchedPair] = useState<{ a: number; b: number } | null>(null);
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false);
 
   // Generator / overlays
   const [showGenerator, setShowGenerator] = useState(false);
@@ -206,6 +208,7 @@ export default function MemoryFlipPage() {
   const confettiLoadedRef = useRef<boolean>(false);
   const confettiLoadingRef = useRef<Promise<void> | null>(null);
   const hasTrackedStartRef = useRef(false);
+  const completionShownRef = useRef(false);
 
   // Layout helpers
   const gridCols = gridSize === 20 ? 5 : 4;
@@ -248,6 +251,8 @@ export default function MemoryFlipPage() {
     setFlipped([]);
     setLocked(false);
     setMatchedPair(null);
+    setWinnerModalOpen(false);
+    completionShownRef.current = false;
     setShowGenerator(false);
     setGeneratorValue(null);
     setGeneratorShowingFinal(false);
@@ -259,6 +264,13 @@ export default function MemoryFlipPage() {
     buildDeck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trayCards, gridSize, gameStyle]);
+
+  const allCardsMatched = cards.length > 0 && cards.every((card) => card.matched);
+  useEffect(() => {
+    if (!allCardsMatched || matchedPair || showGenerator || showBomb || completionShownRef.current) return;
+    completionShownRef.current = true;
+    setWinnerModalOpen(true);
+  }, [allCardsMatched, matchedPair, showBomb, showGenerator]);
 
   // Flip / match
   function flipCard(index: number) {
@@ -968,6 +980,16 @@ export default function MemoryFlipPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {winnerModalOpen && (
+            <GameWinnerModal
+              title="Memory Flip complete!"
+              message={`${teams.reduce((best, team) => team.score > best.score ? team : best, teams[0])?.name ?? "Your class"} matched the most pairs.`}
+              onClose={() => setWinnerModalOpen(false)}
+              onPlayAgain={resetGame}
+              onReturnToGames={() => router.push("/games")}
+            />
+          )}
 
           {/* Reward overlay */}
           <AnimatePresence>

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
 /*
@@ -616,16 +617,13 @@ export default function FourCornersPage() {
 
       {/* Finished modal */}
       {phase === "finished" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-lg">
-            <div className="text-3xl font-extrabold mb-2">Congratulations — you survived!</div>
-            <div className="text-sm text-gray-600 mb-6">All flashcards used or all quarters eliminated.</div>
-            <div className="flex items-center justify-center gap-4">
-              <button onClick={() => { setUsedIndices([]); setEliminated([false,false,false,false]); setPhase("idle"); }} className="btn btn-primary px-4 py-2">Play again</button>
-              <button onClick={() => router.push("/games")} className="btn btn-secondary px-3 py-1">Return to Games</button>
-            </div>
-          </div>
-        </div>
+        <GameWinnerModal
+          title="Congratulations!"
+          message="You survived Four Corners. All flashcards have been used or all corners were eliminated."
+          onClose={() => setPhase("idle")}
+          onPlayAgain={() => { setUsedIndices([]); setEliminated([false, false, false, false]); setPhase("idle"); }}
+          onReturnToGames={() => router.push("/games")}
+        />
       )}
     </div>
   );
