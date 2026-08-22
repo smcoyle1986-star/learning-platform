@@ -694,7 +694,10 @@ export default function KaBoomPage() {
   const tilesRemaining = tilesRemoved.some((t) => !t);
 
   return (
-    <div ref={containerRef} className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
+    <div
+      ref={containerRef}
+      className={`${isFullscreen ? "game-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}
+    >
       <GameHeader
         title="KaBoom!"
         onExit={() => {
@@ -829,9 +832,9 @@ export default function KaBoomPage() {
       )}
 
       {/* Scoreboard + controls */}
-      <div ref={controlsRef} className="">
-        <div className={isFullscreen ? "game-mobile-chrome pt-[28px] max-w-7xl mx-auto px-4" : "game-mobile-chrome pt-[36px] max-w-7xl mx-auto px-4"}>
-          <div className="flex items-center justify-between gap-3 mb-2">
+      <div ref={controlsRef} className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
+        <div className={isFullscreen ? "game-mobile-chrome game-fullscreen-scoreboard pt-[72px] max-w-7xl mx-auto px-4" : "game-mobile-chrome pt-[36px] max-w-7xl mx-auto px-4"}>
+          <div className="game-fullscreen-scorebar flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Scoreboard</h2>
               <div className="text-sm text-[var(--color-text-muted)]">Teams</div>
@@ -852,13 +855,13 @@ export default function KaBoomPage() {
           </div>
 
           {/* Team boxes */}
-          <div className="mb-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="game-fullscreen-team-grid mb-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {teams.map((team, idx) => {
               const isActive = idx === activeTeamIndex;
               return (
                 <div
                   key={team.id}
-                  className={`min-h-[58px] px-3 py-2 rounded-2xl border flex items-center justify-between gap-3 transition-transform ${
+                  className={`game-fullscreen-team-card min-h-[58px] px-3 py-2 rounded-2xl border flex items-center justify-between gap-3 transition-transform ${
                     isActive ? "scale-[1.02] ring-2 ring-[var(--color-accent)]" : ""
                   }`}
                   style={{
@@ -872,7 +875,7 @@ export default function KaBoomPage() {
                     {isActive && <div className="text-[11px] opacity-70 mt-0.5">Active team</div>}
                   </div>
 
-                  <div className={`${isActive ? "text-3xl md:text-4xl font-extrabold active-score" : "text-2xl font-bold"} w-14 text-center tabular-nums`}>
+                  <div className={`game-fullscreen-team-score ${isActive ? "text-3xl md:text-4xl font-extrabold active-score" : "text-2xl font-bold"} w-14 text-center tabular-nums`}>
                     {team.score}
                   </div>
                 </div>
@@ -883,10 +886,10 @@ export default function KaBoomPage() {
       </div>
 
       {/* Main grid */}
-      <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2">
-        <div className="flex justify-center items-start">
+      <main data-game-stage className={isFullscreen ? "game-fullscreen-stage flex min-h-0 flex-1 max-w-7xl mx-auto w-full px-4 pb-2" : "max-w-7xl mx-auto px-4 pb-2"}>
+        <div className={`flex justify-center ${isFullscreen ? "h-full min-h-0 w-full items-center" : "items-start"}`}>
           <div
-            className={`game-mobile-aspect-stage w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border bg-white`}
+            className={`game-mobile-aspect-stage w-full ${isFullscreen ? "game-fullscreen-aspect-stage max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border bg-white`}
             style={{ aspectRatio: "16 / 9", marginTop: isFullscreen ? "0px" : undefined }}
           >
             <div className="relative w-full h-full bg-[#f3f4f6]">
@@ -1014,14 +1017,14 @@ export default function KaBoomPage() {
 
       {/* Modal */}
       {modalOpen && (modalImage || modalText) && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-[2rem] px-6 py-7 sm:px-8 sm:py-8 w-[min(92vw,64rem)] max-h-[90vh] min-h-[36rem] overflow-hidden flex flex-col items-center justify-center gap-8 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
-            <div className="w-full min-h-0 flex-1 flex flex-col items-center justify-center gap-6 overflow-hidden pb-2">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="flex h-[min(90svh,44rem)] max-h-[calc(100svh-1.5rem)] w-[min(92vw,64rem)] min-h-0 flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-white px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:gap-6 sm:px-8 sm:py-7">
+            <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto pb-1 sm:gap-6">
               {modalImage && (
                 <img
                   src={modalImage}
                   alt={modalText ?? ""}
-                  className="max-h-[56vh] max-w-[82vw] object-contain rounded-2xl"
+                  className="h-auto w-auto max-h-[min(56vh,28rem)] max-w-full object-contain rounded-2xl"
                 />
               )}
               {modalText && (
@@ -1031,7 +1034,7 @@ export default function KaBoomPage() {
               )}
             </div>
 
-            <div className="flex gap-5 shrink-0 pb-1">
+            <div className="flex shrink-0 gap-5 pt-1">
               <button onClick={handleModalIncorrect} className="px-6 py-3 rounded-full bg-white border border-red-200 text-red-600 text-lg font-semibold shadow-sm hover:-translate-y-0.5 transition-transform">
                 ❌
               </button>

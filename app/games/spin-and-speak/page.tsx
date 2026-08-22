@@ -408,11 +408,11 @@ export default function SpinAndSpeakPage() {
       />
 
       {/* Main */}
-      <main className="game-mobile-stage-shell pt-[72px] max-w-7xl mx-auto px-4 h-[calc(100vh-72px)]">
+      <main data-game-stage className="game-mobile-stage-shell pt-[72px] max-w-7xl mx-auto px-4 h-[calc(100vh-72px)]">
         <div className="h-full flex gap-6">
           {/* Wheel */}
           <section className="w-1/3 relative flex flex-col items-center justify-center">
-            <div data-game-stage className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
+            <div className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
               <PhaserGameHost
                 className="w-full h-full"
                 createGame={(context) => createSpinWheelGame({ ...context, segments: SEGMENTS })}

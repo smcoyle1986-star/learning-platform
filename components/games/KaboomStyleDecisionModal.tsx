@@ -30,20 +30,20 @@ export default function KaboomStyleDecisionModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-[2rem] px-6 py-7 sm:px-8 sm:py-8 w-[min(92vw,64rem)] max-h-[90vh] min-h-[36rem] overflow-hidden flex flex-col items-center justify-center gap-8 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
-        <div className="w-full min-h-0 flex-1 flex flex-col items-center justify-center gap-6 overflow-hidden pb-2">
-          <div className="w-full text-center">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+      <div className="flex h-[min(90svh,44rem)] max-h-[calc(100svh-1.5rem)] w-[min(92vw,64rem)] min-h-0 flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-white px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:gap-6 sm:px-8 sm:py-7">
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center gap-4 overflow-y-auto pb-1 sm:gap-5">
+          <div className="w-full shrink-0 text-center">
             <div className="text-lg font-bold">{title}</div>
             {description && <div className="text-sm text-gray-600">{description}</div>}
           </div>
 
-          <div className="w-full min-h-0 flex-1 flex items-center justify-center overflow-hidden">
+          <div className="flex w-full min-h-0 flex-1 items-center justify-center overflow-hidden">
             {children}
           </div>
         </div>
 
-        <div className="flex gap-5 shrink-0 pb-1">
+        <div className="flex shrink-0 gap-5 pt-1">
           <button
             onClick={onIncorrect}
             className="px-6 py-3 rounded-full bg-white border border-red-200 text-red-600 text-lg font-semibold shadow-sm hover:-translate-y-0.5 transition-transform"

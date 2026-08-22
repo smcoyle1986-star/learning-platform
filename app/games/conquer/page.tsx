@@ -938,10 +938,10 @@ export default function ConquerPage() {
     }
 
     return (
-      <div className="mx-auto flex min-h-[18rem] w-[min(92vw,56rem)] flex-col items-center justify-center gap-5 rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-8 py-8 text-center shadow-sm">
-        <div className="flex h-72 w-full items-center justify-center overflow-hidden rounded-[1.8rem] bg-white/80">
+      <div className="mx-auto flex min-h-0 w-[min(92vw,56rem)] max-h-full flex-col items-center justify-center gap-4 rounded-[2rem] border border-black/5 bg-[var(--color-bg-main)] px-5 py-5 text-center shadow-sm sm:px-8 sm:py-8">
+        <div className="flex h-[min(48vh,18rem)] min-h-0 w-full items-center justify-center overflow-hidden rounded-[1.8rem] bg-white/80">
           {image ? (
-            <img src={image} alt={label} className="h-full w-full object-contain" />
+            <img src={image} alt={label} className="h-auto w-auto max-h-full max-w-full object-contain" />
           ) : (
             <div className="text-6xl font-black text-[var(--color-text-muted)]">{label.slice(0, 1)}</div>
           )}

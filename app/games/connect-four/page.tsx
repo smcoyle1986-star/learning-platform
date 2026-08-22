@@ -850,11 +850,11 @@ export default function ConnectFourPage() {
                 initial={{ scale: 0.98 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.98 }}
-                className="flex w-full flex-col items-center gap-3"
+                className="flex min-h-0 w-full flex-1 flex-col items-center gap-3"
               >
                 <div className="w-full flex justify-center">
                   <div
-                    className="w-[min(82vw,40rem)] min-h-[20rem] bg-gray-100 rounded-[2rem] shadow flex items-center justify-center cursor-pointer overflow-hidden border border-black/5"
+                    className="flex h-[min(48vh,32rem)] min-h-0 w-[min(82vw,40rem)] max-h-full items-center justify-center overflow-hidden rounded-[2rem] border border-black/5 bg-gray-100 shadow cursor-pointer"
                     onClick={() => setShowLearningLabel((s) => !s)}
                   >
                     {modalDisplayMode !== "text" && learningCard.image ? (
@@ -862,7 +862,7 @@ export default function ConnectFourPage() {
                         <img
                           src={learningCard.image}
                           alt={learningCard.word}
-                          className={`h-full w-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
+                          className={`h-auto w-auto max-h-full max-w-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
                         />
                       </div>
                     ) : modalDisplayMode !== "text" ? (
