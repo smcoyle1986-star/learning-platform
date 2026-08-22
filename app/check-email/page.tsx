@@ -29,6 +29,7 @@ export default function CheckEmailPage() {
   const [resending, setResending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [emailInput, setEmailInput] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -42,6 +43,8 @@ export default function CheckEmailPage() {
         return;
       }
       setPending(saved);
+      const emailFromUrl = new URLSearchParams(window.location.search).get("email")?.trim().toLowerCase() ?? "";
+      setEmailInput(saved?.email ?? emailFromUrl);
       setCooldown(saved ? secondsUntilResend(saved.sentAt) : 0);
       setLoading(false);
     });
@@ -65,7 +68,11 @@ export default function CheckEmailPage() {
   );
 
   const resend = async () => {
-    if (!pending?.email || cooldown > 0 || resending) return;
+    const resendEmail = (pending?.email ?? emailInput).trim().toLowerCase();
+    if (!resendEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendEmail) || cooldown > 0 || resending) {
+      if (!resendEmail) setError("Enter the email address you used to sign up.");
+      return;
+    }
     setResending(true);
     setMessage("");
     setError("");
@@ -73,14 +80,18 @@ export default function CheckEmailPage() {
     try {
       const { error: resendError } = await supabase.auth.resend({
         type: "signup",
-        email: pending.email,
+        email: resendEmail,
         options: {
-          emailRedirectTo: buildConfirmationRedirect(window.location.origin, pending.nextPath),
+          emailRedirectTo: buildConfirmationRedirect(window.location.origin, pending?.nextPath ?? "/flashcards?onboarding=1"),
         },
       });
       if (resendError) throw resendError;
 
-      const nextPending = { ...pending, sentAt: Date.now() };
+      const nextPending = {
+        email: resendEmail,
+        nextPath: pending?.nextPath ?? "/flashcards?onboarding=1",
+        sentAt: Date.now(),
+      };
       savePendingEmailConfirmation(nextPending);
       setPending(nextPending);
       setCooldown(RESEND_COOLDOWN_SECONDS);
@@ -126,7 +137,7 @@ export default function CheckEmailPage() {
         <ul className="mt-6 space-y-2 text-sm leading-6 text-[#5c665c]">
           <li>• Check your spam or junk folder if it has not arrived.</li>
           <li>• Use the newest email if you requested more than one link.</li>
-          <li>• You will be signed in automatically after confirmation.</li>
+          <li>• You can open the confirmation link on this device or another one.</li>
         </ul>
 
         <div aria-live="polite" className="mt-5">
@@ -135,17 +146,28 @@ export default function CheckEmailPage() {
         </div>
 
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {pending?.email ? (
-            <button
-              type="button"
-              onClick={() => void resend()}
-              disabled={resending || cooldown > 0}
-              className="btn btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RefreshCw aria-hidden="true" className={`h-4 w-4 ${resending ? "animate-spin" : ""}`} />
-              {resending ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend confirmation email"}
-            </button>
+          {!pending?.email ? (
+            <label className="flex flex-1 flex-col gap-2 text-sm font-semibold text-[#2f3a2f] sm:min-w-[260px]">
+              Your signup email
+              <input
+                type="email"
+                value={emailInput}
+                onChange={(event) => setEmailInput(event.target.value)}
+                placeholder="teacher@example.com"
+                autoComplete="email"
+                className="rounded-xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 font-normal outline-none focus:border-[#98b37d]"
+              />
+            </label>
           ) : null}
+          <button
+            type="button"
+            onClick={() => void resend()}
+            disabled={resending || cooldown > 0}
+            className="btn btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw aria-hidden="true" className={`h-4 w-4 ${resending ? "animate-spin" : ""}`} />
+            {resending ? "Sending…" : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend confirmation email"}
+          </button>
           <Link href="/login" className="btn btn-secondary px-5 py-3 text-center">Return to login</Link>
           <button
             type="button"

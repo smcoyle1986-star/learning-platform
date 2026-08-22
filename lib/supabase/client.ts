@@ -71,6 +71,13 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     sameSite: "lax",
     secure: secureCookies,
   },
+  auth: {
+    // Confirmation emails may be opened on a phone after signup began on a
+    // computer. PKCE requires the original browser's verifier, whereas the
+    // implicit flow establishes the confirmed session in whichever browser
+    // opens the one-time link.
+    flowType: "implicit",
+  },
 });
 
 export const supabaseReady =
