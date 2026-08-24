@@ -11,19 +11,10 @@ import { supabase } from "@/lib/supabase/client";
 import { getProfileDisplayName } from "@/lib/auth/profile";
 import { resolveBrandTheme } from "@/lib/brand/theme";
 
-const LINKS = [
-  { label: "Home", href: "/" },
-  { label: "Flashcards", href: "/flashcards" },
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Community", href: "/teacher/community" },
-  { label: "Free Lesson Packs", href: "/free-resources" },
-  { label: "ESL Topics", href: "/topics" },
-  { label: "Creator", href: "/creator" },
-  { label: "Games", href: "/games" },
-  { label: "Printables", href: "/printables" },
-  { label: "Worksheets", href: "/worksheets" },
-  { label: "Lesson Plans", href: "/lessons" },
-  { label: "Editor", href: "/teacher/editor" },
+const LINK_GROUPS = [
+  { label: "Build", links: [{ label: "Flashcards", href: "/flashcards" }, { label: "My Cards", href: "/creator" }, { label: "Community", href: "/teacher/community" }] },
+  { label: "Your work", links: [{ label: "My Lessons", href: "/dashboard" }] },
+  { label: "Resources", links: [{ label: "Free Lesson Packs", href: "/free-resources" }, { label: "ESL Topics", href: "/topics" }] },
 ];
 
 function FaceBadge({ mood }: { mood: "happy" | "sad" }) {
@@ -67,7 +58,6 @@ export default function BrandMenuDrawer() {
   const panelRef = useRef<HTMLElement>(null);
 
   const displayName = getProfileDisplayName(profile, user?.email);
-  const navigationLinks = LINKS;
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -156,6 +146,11 @@ export default function BrandMenuDrawer() {
                 <div className="text-sm font-semibold text-gray-800">
                   {loading ? "Loading..." : displayName}
                 </div>
+                {access ? (
+                  <div className="mt-1 text-xs font-semibold text-[#64755e]">
+                    {access.accountPlan === "welcome_trial" ? `Premium trial · ${access.welcomeTrial.daysRemaining}d left` : access.isPremium ? "Premium" : "Free plan"}
+                  </div>
+                ) : null}
                 {access?.administratorRole ? (
                   <div className="mt-1">
                     <AdministratorBadge role={access.administratorRole} compact />
@@ -171,11 +166,14 @@ export default function BrandMenuDrawer() {
             </div>
           )}
 
-          <nav className="flex flex-col gap-2">
-            {navigationLinks.map((item) => (
-              (() => {
-                const theme = resolveBrandTheme(item.href);
-                return (
+          <nav className="flex flex-col gap-4" aria-label="Main navigation">
+            {LINK_GROUPS.map((group) => (
+              <section key={group.label}>
+                <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#73806e]">{group.label}</p>
+                <div className="flex flex-col gap-2">
+                {group.links.map((item) => {
+                  const theme = resolveBrandTheme(item.href);
+                  return (
               <Link
                 key={item.href}
                 href={item.href}
@@ -191,9 +189,19 @@ export default function BrandMenuDrawer() {
                 />
                 <span className="text-sm font-medium text-gray-800">{item.label}</span>
               </Link>
-                );
-              })()
+                  );
+                })}
+                </div>
+              </section>
             ))}
+
+            <section>
+              <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#73806e]">Account</p>
+              <Link href="/upgrade" onClick={close} className="flex min-h-11 items-center gap-2 rounded-xl border border-[#efd6a5] bg-[#fffaf0] px-3 py-2.5 transition hover:bg-[#fff3da]">
+                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#efc88d] bg-[linear-gradient(180deg,#fff9dc,#ffe5a5)]" />
+                <span className="text-sm font-semibold text-[#765316]">Pricing</span>
+              </Link>
+            </section>
 
             {access?.isAdministrator ? (
               <Link

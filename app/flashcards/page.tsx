@@ -391,11 +391,11 @@ export default function FlashcardsPage() {
           }, tone: "classroom" },
         ]}
         secondaryItems={user ? [
-          { label: "Creator", onClick: () => {
+          { label: "My Cards", onClick: () => {
             persistLessonTray();
             router.push("/creator");
           } },
-          { label: "Dashboard", onClick: () => {
+          { label: "My Lessons", onClick: () => {
             persistLessonTray();
             router.push("/dashboard");
           } },
@@ -403,13 +403,13 @@ export default function FlashcardsPage() {
             persistLessonTray();
             router.push("/teacher/community");
           } },
-          { label: "Editor", onClick: () => {
+          { label: "Edit Cards", onClick: () => {
             persistLessonTray();
             writeLastSavedTray(lessonTray as LessonCard[]);
             persistEditingLessonSetId(null);
             router.push("/teacher/editor");
           } },
-          { label: "Printables", onClick: () => {
+          { label: "Print Cards", onClick: () => {
             persistLessonTray();
             router.push("/printables?from=flashcards");
           } },
@@ -430,7 +430,7 @@ export default function FlashcardsPage() {
             persistLessonTray();
             router.push("/lessons");
           } },
-          { label: "Printables", onClick: () => {
+          { label: "Print Cards", onClick: () => {
             persistLessonTray();
             router.push("/printables?from=flashcards");
           } },
@@ -454,7 +454,7 @@ export default function FlashcardsPage() {
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <button type="button" onClick={() => { persistLessonTray(); router.push("/flashcards/classroom"); }} className="btn btn-secondary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Classroom</button>
-              <button type="button" onClick={() => { persistLessonTray(); router.push("/printables?from=flashcards"); }} className="btn btn-secondary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Printables</button>
+              <button type="button" onClick={() => { persistLessonTray(); router.push("/printables?from=flashcards"); }} className="btn btn-secondary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Print Cards</button>
               <button type="button" onClick={() => { persistLessonTray(); router.push("/lessons"); }} className="btn btn-primary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Lesson Plans</button>
             </div>
           </div>

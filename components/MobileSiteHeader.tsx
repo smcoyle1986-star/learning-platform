@@ -9,7 +9,7 @@ export default function MobileSiteHeader() {
   const { isOpen, open } = useBrandMenu();
 
   return (
-    <header className="border-b border-black/5 bg-[var(--color-bg-main)] px-4 py-3 md:hidden">
+    <header className="border-b border-black/5 bg-[var(--color-bg-main)] px-4 py-3 lg:hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         <Link
           href="/"

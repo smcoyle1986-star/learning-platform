@@ -637,7 +637,7 @@ export default function DashboardPage() {
       `}</style>
 
       <PageHeader
-        title="Dashboard"
+        title="My Lessons"
         description={PAGE_CONTENT.dashboard.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },

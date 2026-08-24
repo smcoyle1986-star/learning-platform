@@ -298,7 +298,7 @@ export default function CreatorPage() {
   return (
     <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       <PageHeader
-        title="Creator"
+        title="My Cards"
         description={PAGE_CONTENT.creator.description}
         sticky={false}
         primaryItems={[{ label: "Classroom", href: "/flashcards/classroom" }]}

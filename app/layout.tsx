@@ -4,6 +4,8 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { BrandMenuProvider } from "@/components/BrandMenuContext";
 import BrandMenuDrawer from "@/components/BrandMenuDrawer";
 import HeaderAuth from "@/components/HeaderAuth";
+import BrandButton from "@/components/BrandButton";
+import SiteNavigation from "@/components/SiteNavigation";
 import MobileSiteHeader from "@/components/MobileSiteHeader";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
@@ -51,8 +53,12 @@ export default function RootLayout({
             <BrandPageTheme />
             <div className="relative z-10">
               <MobileSiteHeader />
-              <header className="hidden border-b p-4 md:flex md:justify-end">
-                <HeaderAuth />
+              <header className="hidden border-b border-black/5 bg-[var(--color-bg-main)]/90 px-6 py-3 backdrop-blur-md lg:block">
+                <div className="mx-auto flex max-w-7xl items-center gap-6">
+                  <BrandButton className="shrink-0 text-3xl font-extrabold tracking-tight text-blue-700 transition hover:opacity-80" />
+                  <SiteNavigation />
+                  <div className="ml-auto"><HeaderAuth /></div>
+                </div>
               </header>
 
               {children}

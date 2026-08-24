@@ -362,7 +362,7 @@ export default function TeacherLessonTrayEditor() {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
-          title="Editor"
+          title="Edit Cards"
           description={PAGE_CONTENT.editor.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
@@ -386,7 +386,7 @@ export default function TeacherLessonTrayEditor() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
-        title="Editor"
+        title="Edit Cards"
         description={PAGE_CONTENT.editor.description}
         primaryItems={[
           { label: "Classroom", onClick: () => navigateDirect("/flashcards/classroom"), tone: "classroom" },
@@ -445,7 +445,7 @@ export default function TeacherLessonTrayEditor() {
             {trayCards.length > 0 && (
               <>
                 <button onClick={() => setShowSaveModal(true)} className="btn btn-primary px-4 py-2">
-                  Save To Dashboard
+                  Save to My Lessons
                 </button>
 
                 <button
@@ -476,7 +476,7 @@ export default function TeacherLessonTrayEditor() {
       <main className="max-w-7xl mx-auto px-6 pt-10 pb-32">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Edit Lesson Tray Cards</h1>
-          <p className="text-sm text-gray-600 mt-1">Edit the front/back text for each card. Click Save to persist to Dashboard.</p>
+          <p className="text-sm text-gray-600 mt-1">Edit the front/back text for each card. Click Save to keep the set in My Lessons.</p>
           <p className="text-xs text-gray-500 mt-2">
             Use this lesson card editor to update vocabulary, phrases, and classroom flashcards for future lessons, printable activities, worksheet creation, and interactive teaching games.
           </p>
@@ -487,7 +487,7 @@ export default function TeacherLessonTrayEditor() {
             <p className="text-gray-700">No cards in the lesson tray. Add cards from Flashcards to edit them here.</p>
             <div className="mt-4 flex gap-2">
               <button onClick={() => navigateDirect("/dashboard")} className="btn btn-primary px-3 py-2">
-                Redirect to Dashboard
+                Go to My Lessons
               </button>
             </div>
           </div>

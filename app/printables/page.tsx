@@ -197,7 +197,7 @@ function PrintablesPageContent() {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
-          title="Printables"
+          title="Print Cards"
           description={PAGE_CONTENT.printables.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
@@ -267,7 +267,7 @@ function PrintablesPageContent() {
     return (
       <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
         <PageHeader
-          title="Printables"
+          title="Print Cards"
           description={PAGE_CONTENT.printables.description}
           primaryItems={[
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
@@ -317,7 +317,7 @@ function PrintablesPageContent() {
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       {/* Header */}
       <PageHeader
-        title="Printables"
+        title="Print Cards"
         description={PAGE_CONTENT.printables.description}
         primaryItems={[
           { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },

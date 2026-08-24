@@ -53,7 +53,11 @@ export default function HeaderAuth() {
                 ? `Premium trial · ${access.welcomeTrial.daysRemaining}d`
                 : "Premium"}
             </span>
-          ) : null}
+          ) : (
+            <span className="inline-flex items-center rounded-full border border-[#d7e2d1] bg-[#f5f8f3] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#60725b] no-underline">
+              Free
+            </span>
+          )}
         </Link>
         <button
           onClick={signOut}
