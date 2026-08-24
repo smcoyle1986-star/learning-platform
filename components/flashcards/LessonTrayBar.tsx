@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileSpreadsheet, Presentation, Printer, X } from "lucide-react";
+import { BookOpen, FileSpreadsheet, Pencil, Presentation, Printer, X } from "lucide-react";
 
 import { TrayItem } from "@/lib/flashcards/types";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
@@ -25,6 +25,7 @@ type LessonTrayBarProps = {
   onRemoveFromTray: (id: string) => void;
   onOpenSaveModal: () => void;
   onGuestSave?: () => void;
+  onEditCardText: () => void;
   onGoClassroom: () => void;
   onGoLessonPlans?: () => void;
   onGoWorksheets: () => void;
@@ -51,6 +52,7 @@ export default function LessonTrayBar({
   onRemoveFromTray,
   onOpenSaveModal,
   onGuestSave,
+  onEditCardText,
   onGoClassroom,
   onGoLessonPlans,
   onGoWorksheets,
@@ -135,6 +137,17 @@ export default function LessonTrayBar({
               <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-2 text-sm sm:py-1 sm:text-xs">
                 {isGuest ? "Sign up to save" : "Save to My Lessons"}
               </button>
+
+              {!isGuest ? (
+                <button
+                  onClick={onEditCardText}
+                  className="btn btn-secondary px-3 py-2 text-sm sm:py-1 sm:text-xs flex items-center gap-1.5"
+                  title="Edit the text on these cards"
+                >
+                  <Pencil size={14} />
+                  Edit card text
+                </button>
+              ) : null}
 
               {!isGuest ? (
                 <button

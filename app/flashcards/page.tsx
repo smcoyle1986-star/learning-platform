@@ -480,6 +480,12 @@ export default function FlashcardsPage() {
         onRemoveFromTray={removeFromLessonTray}
         onOpenSaveModal={() => setShowSaveModal(true)}
         onGuestSave={() => setGuestPrompt("save")}
+        onEditCardText={() => {
+          persistLessonTray();
+          writeLastSavedTray(lessonTray as LessonCard[]);
+          persistEditingLessonSetId(editingLessonSetId);
+          router.push("/teacher/editor");
+        }}
         onGoClassroom={() => {
           persistLessonTray();
           router.push("/flashcards/classroom?from=flashcards");

@@ -122,7 +122,7 @@ export default function DashboardLessonCard({
 
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => onEnterClassroom(lesson)} disabled={locked} className="btn btn-primary px-3 py-1.5 text-xs disabled:opacity-40"><Play size={14} />Classroom</button>
-          <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Layers size={14} />Flashcards</button>
+          <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Layers size={14} />Edit in Flashcards</button>
           <button type="button" onClick={() => onPrint(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Printer size={14} />Print</button>
           <button type="button" onClick={() => setToolsOpen((open) => !open)} className="btn btn-secondary px-3 py-1.5 text-xs" aria-expanded={toolsOpen}><MoreHorizontal size={14} />More tools <ChevronDown size={13} className={toolsOpen ? "rotate-180" : ""} /></button>
         </div>
@@ -174,16 +174,20 @@ export default function DashboardLessonCard({
         <span>{lesson.isPublic ? "Public" : "Private"}</span>
       </div>
 
-      <div className="mt-5 flex gap-2">
+      <div className="mt-5">
         <button
           onClick={() => onEnterClassroom(lesson)}
           disabled={locked}
-          className={`${enterButtonClassName} disabled:cursor-not-allowed disabled:opacity-40`}
+          className={`${enterButtonClassName} w-full disabled:cursor-not-allowed disabled:opacity-40`}
         >
           <Play size={14} />
           {enterLabel}
         </button>
-
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40">
+          <Layers size={15} /> Edit in Flashcards
+        </button>
         <button
           onClick={() => onPrint(lesson)}
           disabled={locked}
@@ -193,9 +197,6 @@ export default function DashboardLessonCard({
           Print
         </button>
       </div>
-      <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary mt-2 w-full px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40">
-        <Layers size={15} /> Open in Flashcards
-      </button>
       <div className="mt-2 border-t border-[#e4e9e1] pt-2">
         <button type="button" onClick={() => setToolsOpen((open) => !open)} className="btn btn-ghost w-full justify-between px-2 py-2 text-xs text-[var(--color-text-muted)]" aria-expanded={toolsOpen}>
           <span className="inline-flex items-center gap-2"><MoreHorizontal size={15} /> More tools</span>
@@ -204,7 +205,7 @@ export default function DashboardLessonCard({
         {toolsOpen ? <div className="mt-2 grid grid-cols-2 gap-2">
           <button type="button" onClick={() => onOpenWorksheets(lesson)} disabled={locked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><FileSpreadsheet size={14} /> Worksheets</button>
           <button type="button" onClick={() => onOpenGames(lesson)} disabled={locked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><Play size={14} /> Games</button>
-          <button type="button" onClick={() => onEdit(lesson)} disabled={locked || editLocked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><Edit size={14} /> Edit lesson</button>
+          <button type="button" onClick={() => onEdit(lesson)} disabled={locked || editLocked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><Edit size={14} /> Edit card text</button>
           <button type="button" onClick={() => onDelete(lesson.id)} className="btn btn-secondary border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 hover:bg-red-100"><Trash2 size={14} /> Delete</button>
         </div> : null}
       </div>
