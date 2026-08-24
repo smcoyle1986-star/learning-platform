@@ -58,6 +58,7 @@ export default function BrandMenuDrawer() {
   const panelRef = useRef<HTMLElement>(null);
 
   const displayName = getProfileDisplayName(profile, user?.email);
+  const hasPaidPremium = access?.premiumAccessSource === "stripe";
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -197,9 +198,23 @@ export default function BrandMenuDrawer() {
 
             <section>
               <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#73806e]">Account</p>
-              <Link href="/upgrade" onClick={close} className="flex min-h-11 items-center gap-2 rounded-xl border border-[#efd6a5] bg-[#fffaf0] px-3 py-2.5 transition hover:bg-[#fff3da]">
-                <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#efc88d] bg-[linear-gradient(180deg,#fff9dc,#ffe5a5)]" />
-                <span className="text-sm font-semibold text-[#765316]">Pricing</span>
+              <Link
+                href={hasPaidPremium ? "/profile" : "/upgrade"}
+                onClick={close}
+                className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2.5 transition ${
+                  hasPaidPremium
+                    ? "border-[#d7ddd1] bg-white hover:bg-gray-50"
+                    : "border-[#efd6a5] bg-[#fffaf0] hover:bg-[#fff3da]"
+                }`}
+              >
+                <div className={`h-6 w-6 flex-shrink-0 rounded-full border ${
+                  hasPaidPremium
+                    ? "border-[#d7ddd1] bg-[linear-gradient(180deg,#fff,#edf3e9)]"
+                    : "border-[#efc88d] bg-[linear-gradient(180deg,#fff9dc,#ffe5a5)]"
+                }`} />
+                <span className={`text-sm font-semibold ${hasPaidPremium ? "text-[#41503f]" : "text-[#765316]"}`}>
+                  {hasPaidPremium ? "Account" : "Pricing"}
+                </span>
               </Link>
             </section>
 

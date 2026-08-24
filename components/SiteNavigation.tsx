@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+
 const primaryLinks = [
   { label: "My Lessons", href: "/dashboard" },
   { label: "Flashcards", href: "/flashcards" },
@@ -11,6 +13,9 @@ const primaryLinks = [
 ];
 
 export default function SiteNavigation() {
+  const { access } = useBillingAccess();
+  const hasPaidPremium = access?.premiumAccessSource === "stripe";
+
   return (
     <nav aria-label="Main navigation" className="hidden items-center gap-1 lg:flex">
       {primaryLinks.map((item) => (
@@ -32,10 +37,14 @@ export default function SiteNavigation() {
         </div>
       </details>
       <Link
-        href="/upgrade"
-        className="rounded-lg px-3 py-2 text-sm font-semibold text-[#8b5a17] transition hover:bg-[#fff4d7]"
+        href={hasPaidPremium ? "/profile" : "/upgrade"}
+        className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+          hasPaidPremium
+            ? "text-[#41503f] hover:bg-[#edf3e9] hover:text-[#35512d]"
+            : "text-[#8b5a17] hover:bg-[#fff4d7]"
+        }`}
       >
-        Pricing
+        {hasPaidPremium ? "Account" : "Pricing"}
       </Link>
     </nav>
   );
