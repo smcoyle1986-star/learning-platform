@@ -33,7 +33,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
     previewBullets: [
       "Create a simple 50-minute plan for the class.",
       "Choose activities that match the level you want.",
-      "Save the plan and return to it later from your dashboard.",
+      "Save the plan and return to it later from My Lessons.",
     ],
     href: "/lessons",
   },
@@ -75,7 +75,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     slug: "dashboard",
-    title: "Dashboard",
+    title: "My Lessons",
     description: "Save, reopen, and edit your lessons anytime.",
     previewLead: "Keep your lessons organised and easy to return to.",
     previewBullets: [
@@ -92,7 +92,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
     previewLead: "Browse teacher-made sets and copy the ones that fit your class.",
     previewBullets: [
       "Preview shared lessons before you add them.",
-      "Save good ideas into your own dashboard.",
+      "Save good ideas into My Lessons.",
       "Share your own sets back with the community.",
     ],
     href: "/teacher/community",
@@ -110,6 +110,6 @@ export const LANDING_STEPS = [
   },
   {
     title: "3. Save and reuse the set",
-    description: "Keep the lesson in your Dashboard and bring it back whenever you need it.",
+    description: "Keep the lesson in My Lessons and bring it back whenever you need it.",
   },
 ];

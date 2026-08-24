@@ -136,7 +136,7 @@ export default function ProfilePage() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/dashboard" className="btn btn-primary px-6 py-3">
-            Go to Dashboard
+            Go to My Lessons
           </Link>
           <Link href="/flashcards" className="btn btn-secondary px-6 py-3">
             Open Flashcards

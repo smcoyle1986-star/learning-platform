@@ -67,8 +67,8 @@ const FALLBACK_SLIDES: Slide[] = [
   },
   {
     path: "landing/dashboard_1.png",
-    alt: "Classendo landing slide: dashboard 1",
-    label: "dashboard 1",
+    alt: "Classendo landing slide: my lessons",
+    label: "my lessons",
     caption: SLIDE_CAPTIONS.dashboard_1,
   },
   {

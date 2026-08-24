@@ -35,7 +35,7 @@ export default function CommunityWorksheetControls(props: Props) {
         <div className="w-full space-y-2 md:w-2/3">
           <div>
             <h2 className="text-xl font-bold">Shared Worksheet Library</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">Search public worksheets, preview the finished layout, then copy useful resources to your Dashboard.</p>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">Search public worksheets, preview the finished layout, then copy useful resources to My Lessons.</p>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -71,7 +71,7 @@ export default function CommunityWorksheetControls(props: Props) {
       </div>
       <div className="flex items-center justify-between gap-4 text-sm text-[var(--color-text-muted)]">
         <span>{props.totalCount !== null ? `${props.totalCount} worksheets available` : ""}</span>
-        <span>Preview first, then add the worksheet to your Dashboard.</span>
+        <span>Preview first, then add the worksheet to My Lessons.</span>
       </div>
     </div>
   );

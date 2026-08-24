@@ -317,7 +317,7 @@ export default function TeacherLessonTrayEditor() {
 
   function isDashboardSaveLimitError(error: unknown) {
     const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
-    return /free accounts can save up to \d+ (dashboard resources|lesson sets|worksheets)/.test(message);
+    return /free accounts can save up to \d+ (dashboard resources|saved resources(?: in my lessons)?|lesson sets|worksheets)/.test(message);
   }
 
   function applySavedLessonState(savedLesson: { id: string; name: string; cards: LessonCard[]; isPublic?: boolean }) {
@@ -368,7 +368,7 @@ export default function TeacherLessonTrayEditor() {
             { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
           ]}
           secondaryItems={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "My Lessons", href: "/dashboard" },
             { label: "Printables", href: "/printables" },
             { label: "Worksheets", href: "/worksheets" },
             { label: "Lesson Plans", href: "/lessons" },
@@ -392,7 +392,7 @@ export default function TeacherLessonTrayEditor() {
           { label: "Classroom", onClick: () => navigateDirect("/flashcards/classroom"), tone: "classroom" },
         ]}
         secondaryItems={[
-          { label: "Dashboard", onClick: () => navigateDirect("/dashboard") },
+          { label: "My Lessons", onClick: () => navigateDirect("/dashboard") },
           { label: "Printables", onClick: () => navigateDirect("/printables") },
           { label: "Worksheets", onClick: () => navigateDirect("/worksheets") },
           { label: "Lesson Plans", onClick: () => navigateDirect("/lessons") },

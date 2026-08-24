@@ -337,7 +337,7 @@ export default function SignupPage() {
             {[
               ["Build focused lesson sets", "Choose visual vocabulary and keep your cards together for class."],
               ["Teach from the same cards", "Open your lesson in Classroom Mode, games, worksheets, printables, or lesson plans."],
-              ["Save and reuse your work", "Return to your sets from your dashboard whenever you are ready to teach again."],
+              ["Save and reuse your work", "Return to your sets from My Lessons whenever you are ready to teach again."],
             ].map(([title, description], index) => (
               <li key={title} className="flex gap-4 rounded-2xl border border-white/80 bg-white/75 p-4">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#d5e6ca] text-sm font-bold text-[#557249]">{index + 1}</span>

@@ -115,7 +115,7 @@ export default function SaveLessonDialogs({
         <ModalShell onClose={onCancelSave} labelledBy="save-lesson-title">
           <ModalHeading
             eyebrow="Save lesson set"
-            title="Save to Dashboard"
+            title="Save to My Lessons"
             description={`Save this ${lessonCardCount}-card lesson so it is ready to reuse across Classendo.`}
             id="save-lesson-title"
           />
@@ -168,7 +168,7 @@ export default function SaveLessonDialogs({
                   <span className="mt-0.5 block text-xs leading-5 text-[#687268]">
                     {isPublic
                       ? "Other teachers can discover and copy this set from Community."
-                      : "Only you can access this set from your Dashboard."}
+                      : "Only you can access this set from My Lessons."}
                   </span>
                 </span>
               </label>
@@ -180,7 +180,7 @@ export default function SaveLessonDialogs({
               </button>
               <button type="submit" disabled={isSaving || !lessonName.trim()} className="btn btn-primary px-5 py-2.5 disabled:cursor-not-allowed disabled:opacity-55">
                 <Save size={16} />
-                {isSaving ? "Saving…" : "Save to Dashboard"}
+                {isSaving ? "Saving…" : "Save to My Lessons"}
               </button>
             </div>
           </form>
@@ -192,7 +192,7 @@ export default function SaveLessonDialogs({
           <ModalHeading
             eyebrow="Duplicate name"
             title="A set with this name is already saved"
-            description="Choose a different name, or replace the existing Dashboard set with the cards currently in your lesson tray."
+            description="Choose a different name, or replace the existing saved lesson with the cards currently in your lesson tray."
             id="replace-lesson-title"
           />
 
@@ -217,9 +217,9 @@ export default function SaveLessonDialogs({
       {showSaveLimitModal ? (
         <ModalShell onClose={onCloseSaveLimitModal} labelledBy="save-limit-title" layer="z-[60]">
           <ModalHeading
-            eyebrow="Dashboard storage"
-            title="Dashboard save limit reached"
-            description="Manage your saved sets to make space, or upgrade to Premium for additional Dashboard storage."
+            eyebrow="My Lessons storage"
+            title="My Lessons save limit reached"
+            description="Manage your saved sets to make space, or upgrade to Premium for additional My Lessons storage."
             id="save-limit-title"
           />
 
@@ -245,7 +245,7 @@ export default function SaveLessonDialogs({
           <div className="mt-4">
             <ModalHeading
               eyebrow="Save complete"
-              title="Saved to Dashboard"
+              title="Saved to My Lessons"
               description={`Your ${lessonCardCount}-card lesson set is saved and ready to use again.`}
               id="save-success-title"
             />
@@ -256,7 +256,7 @@ export default function SaveLessonDialogs({
               Keep building
             </button>
             <button type="button" onClick={onGoDashboardAfterSave} className="btn btn-secondary px-5 py-2.5">
-              <LayoutDashboard size={16} /> Open Dashboard
+              <LayoutDashboard size={16} /> Open My Lessons
             </button>
             <button type="button" onClick={onGoClassroomAfterSave} className="btn btn-primary px-5 py-2.5">
               <Presentation size={16} /> Go to Classroom

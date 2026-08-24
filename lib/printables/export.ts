@@ -2,7 +2,7 @@ import { PrintableBuildOptions } from "@/lib/printables/types";
 
 export function getPrintableHeaderHtml(from: string) {
   const returnUrl = from === "dashboard" ? "/dashboard" : "/flashcards";
-  const returnText = from === "dashboard" ? "Return to Dashboard" : "Return to Flashcards";
+  const returnText = from === "dashboard" ? "Return to My Lessons" : "Return to Flashcards";
   return `
     <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:12px 24px; display:flex; align-items:center; justify-content:space-between;">
       <div style="font-weight:800; color:#2563eb; font-size:28px;">Classendo</div>

@@ -224,7 +224,7 @@ export default function GamesLandingPage() {
         ]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
         ]}
         className="bg-[var(--color-bg-main)]/96"

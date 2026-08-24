@@ -311,7 +311,7 @@ export async function assertCanCreateDashboardResource(
   const usage = await countDashboardResourcesForUser(supabase, userId);
   if (usage.total >= FREE_DASHBOARD_SAVE_LIMIT) {
     throw new Error(
-      `Free accounts can save up to ${FREE_DASHBOARD_SAVE_LIMIT} dashboard resources. Upgrade to Premium to save unlimited lessons and worksheets.`
+      `Free accounts can save up to ${FREE_DASHBOARD_SAVE_LIMIT} saved resources in My Lessons. Upgrade to Premium to save unlimited lessons and worksheets.`
     );
   }
 

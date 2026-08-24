@@ -304,7 +304,7 @@ export default function CreatorPage() {
         primaryItems={[{ label: "Classroom", href: "/flashcards/classroom" }]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
           { label: "Games", href: "/games" },
           { label: "Worksheets", href: "/worksheets" },

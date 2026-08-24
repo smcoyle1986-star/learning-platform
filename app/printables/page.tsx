@@ -204,7 +204,7 @@ function PrintablesPageContent() {
           ]}
           secondaryItems={user ? [
             { label: "Flashcards", href: "/flashcards" },
-            { label: "Dashboard", onClick: () => {
+            { label: "My Lessons", onClick: () => {
               clearWorksheetPrintJob();
               window.location.href = "/dashboard";
             } },
@@ -274,7 +274,7 @@ function PrintablesPageContent() {
           ]}
           secondaryItems={user ? [
             { label: "Flashcards", href: "/flashcards" },
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "My Lessons", href: "/dashboard" },
             { label: "Community", href: "/teacher/community" },
           ] : [{ label: "Flashcards", href: "/flashcards" }]}
         />
@@ -285,7 +285,7 @@ function PrintablesPageContent() {
             <p className="text-sm">
               {isGuest
                 ? "Add up to 6 free flashcards to your temporary lesson tray first."
-                : "Add cards to your lesson tray on Flashcards or select a saved lesson on Dashboard."}
+                : "Add cards to your lesson tray on Flashcards or select a saved lesson in My Lessons."}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button
@@ -299,7 +299,7 @@ function PrintablesPageContent() {
                   onClick={() => (window.location.href = "/dashboard")}
                   className="btn btn-primary"
                 >
-                  Go to Dashboard
+                  Go to My Lessons
                 </button>
               ) : null}
             </div>
@@ -324,7 +324,7 @@ function PrintablesPageContent() {
         ]}
         secondaryItems={user ? [
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
         ] : [{ label: "Flashcards", href: "/flashcards" }]}
       />

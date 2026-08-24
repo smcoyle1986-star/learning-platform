@@ -43,7 +43,7 @@ export default function FlashcardsNavActions({
             className="absolute right-0 mt-2 w-44 rounded-2xl bg-white border shadow-lg p-2 z-50 animate-fade-up"
           >
             <button onClick={onGoDashboard} className="btn btn-secondary w-full px-3 py-2 text-left">
-              Dashboard
+              My Lessons
             </button>
             <button onClick={onGoGames} className="btn btn-secondary w-full px-3 py-2 text-left">
               Games

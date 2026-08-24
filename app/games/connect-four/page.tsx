@@ -925,7 +925,7 @@ export default function ConnectFourPage() {
                 <p className="text-sm text-gray-600 mb-4">This game expects lesson cards to be selected. Please select cards to use with classroom activities.</p>
                 <div className="flex justify-center gap-3">
                   <button className={CBUTTON} onClick={() => router.push("/flashcards")}>Go to Flashcards</button>
-                  <button className={CBUTTON} onClick={() => router.push("/")}>Return to Dashboard</button>
+                  <button className={CBUTTON} onClick={() => router.push("/")}>Return to My Lessons</button>
                 </div>
               </motion.div>
             </motion.div>

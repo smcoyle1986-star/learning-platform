@@ -32,7 +32,7 @@ export const LANDING_FAQ_PREVIEW: FaqItem[] = [
   {
     question: "What extra features are included with Premium?",
     answer:
-      "Premium includes multiple image variations, flashcard editing tools, classroom annotation tools, unlimited dashboard saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and future premium updates.",
+      "Premium includes multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and future premium updates.",
   },
 ];
 
@@ -85,7 +85,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "What extra features are included with Premium?",
     answer:
-      "Premium members receive access to multiple image variations, flashcard editing tools, classroom annotation tools, unlimited dashboard saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and additional classroom resources and tools.",
+      "Premium members receive access to multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and additional classroom resources and tools.",
   },
   {
     question: "What are image variations?",
@@ -95,7 +95,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "Can I save lessons for later?",
     answer:
-      "Yes. All users can save lessons to their dashboard for future use. Free accounts can save up to 6 lessons. Premium accounts include unlimited lesson saves.",
+      "Yes. All users can save lessons to My Lessons for future use. Free accounts can save up to 6 lessons. Premium accounts include unlimited lesson saves.",
   },
   {
     question: "Can I share lessons with other teachers?",

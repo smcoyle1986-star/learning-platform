@@ -124,16 +124,16 @@ export default function CommunitySetCard({
           title={
             canAddToDashboard
               ? isOwner
-                ? "Open this set in your Dashboard"
-                : "Add this set to your Dashboard"
-              : "Upgrade to Premium to use Community sets in your Dashboard"
+                ? "Open this set in My Lessons"
+                : "Add this set to My Lessons"
+              : "Upgrade to Premium to use Community sets in My Lessons"
           }
           className="btn btn-primary flex-1 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-55"
         >
           {canAddToDashboard
             ? isOwner
-              ? "Open in Dashboard"
-              : "Add to Dashboard"
+              ? "Open in My Lessons"
+              : "Add to My Lessons"
             : "Premium required"}
         </button>
 

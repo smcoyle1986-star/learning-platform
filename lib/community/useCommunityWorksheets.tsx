@@ -113,7 +113,7 @@ export function useCommunityWorksheets(active: boolean) {
 
   async function addToDashboard(worksheet: SavedWorksheetRecord) {
     if (!canCopyToDashboard) {
-      setToast({ message: "Upgrade to Premium to add Community worksheets to your Dashboard." });
+      setToast({ message: "Upgrade to Premium to add Community worksheets to My Lessons." });
       return;
     }
     if (!currentUserId) {
@@ -130,7 +130,7 @@ export function useCommunityWorksheets(active: boolean) {
     }
 
     try {
-      setToast({ message: "Adding worksheet to your Dashboard…" });
+      setToast({ message: "Adding worksheet to My Lessons…" });
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`/api/worksheets/${encodeURIComponent(worksheet.id)}/copy`, {
         method: "POST",
@@ -145,7 +145,7 @@ export function useCommunityWorksheets(active: boolean) {
         return;
       }
       setToast({
-        message: `“${worksheet.name}” was added to your Dashboard.`,
+        message: `“${worksheet.name}” was added to My Lessons.`,
         action: <button type="button" className="text-sm font-semibold text-blue-700 underline" onClick={() => openDashboardWorksheet(String(payload.worksheetId), "already_saved")}>Open worksheet</button>,
       });
       void fetchWorksheets();

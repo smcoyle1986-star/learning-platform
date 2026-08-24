@@ -25,7 +25,7 @@ export default function CommunityWorksheetPreviewModal({ worksheet, authorName, 
           </div>
           <div className="flex gap-2">
             <button type="button" onClick={() => onOpenWorksheet(worksheet)} className="btn btn-secondary px-4 py-2">Open Worksheet</button>
-            <button type="button" disabled={!canAddToDashboard} onClick={() => onAddToDashboard(worksheet)} className="btn btn-primary px-4 py-2 disabled:opacity-55">{canAddToDashboard ? (isOwner ? "Open in Dashboard" : "Add to Dashboard") : "Premium required"}</button>
+            <button type="button" disabled={!canAddToDashboard} onClick={() => onAddToDashboard(worksheet)} className="btn btn-primary px-4 py-2 disabled:opacity-55">{canAddToDashboard ? (isOwner ? "Open in My Lessons" : "Add to My Lessons") : "Premium required"}</button>
             <button type="button" onClick={onClose} className="btn btn-secondary px-4 py-2">Close</button>
           </div>
         </div>

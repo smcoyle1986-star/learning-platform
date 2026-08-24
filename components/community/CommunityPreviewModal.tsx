@@ -45,16 +45,16 @@ export default function CommunityPreviewModal({
               title={
                 canAddToDashboard
                   ? isOwner
-                    ? "Open this set in your Dashboard"
-                    : "Add this set to your Dashboard"
-                  : "Upgrade to Premium to use Community sets in your Dashboard"
+                    ? "Open this set in My Lessons"
+                    : "Add this set to My Lessons"
+                  : "Upgrade to Premium to use Community sets in My Lessons"
               }
               className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-55"
             >
               {canAddToDashboard
                 ? isOwner
-                  ? "Open in Dashboard"
-                  : "Add to Dashboard"
+                  ? "Open in My Lessons"
+                  : "Add to My Lessons"
                 : "Premium required"}
             </button>
 
@@ -68,7 +68,7 @@ export default function CommunityPreviewModal({
         </div>
 
         <div className="mb-4 text-sm text-[var(--color-text-muted)]">
-          Preview the card language first, then copy the set into your own dashboard to edit or teach from it.
+          Preview the card language first, then copy the set into My Lessons to edit or teach from it.
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[55vh] overflow-y-auto">

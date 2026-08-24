@@ -789,13 +789,13 @@ export default function MemoryFlipPage() {
         <main style={{ padding: 24, paddingTop: 96, flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "white", padding: 28, borderRadius: 12, boxShadow: "0 12px 40px rgba(2,6,23,0.08)", textAlign: "center", maxWidth: 720 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>No cards selected</h2>
-            <p style={{ color: "#6b7280", marginBottom: 18 }}>There are no cards in the lesson tray. Add cards in Flashcards or choose a saved lesson in Dashboard before starting the game.</p>
+            <p style={{ color: "#6b7280", marginBottom: 18 }}>There are no cards in the lesson tray. Add cards in Flashcards or choose a saved lesson in My Lessons before starting the game.</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1">
                 Go to Flashcards
               </button>
               <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1">
-                Return to Dashboard
+                Return to My Lessons
               </button>
             </div>
           </div>

@@ -207,7 +207,7 @@ export default function GamePage() {
                 onClick={() => (window.location.href = "/dashboard")}
                 className="btn btn-secondary px-3 py-1"
               >
-                Return to Dashboard
+                Return to My Lessons
               </button>
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function GamePage() {
               onClick={() => (window.location.href = "/dashboard")}
               className="btn btn-secondary px-3 py-1"
             >
-              Return to Dashboard
+              Return to My Lessons
             </button>
           </div>
         </div>

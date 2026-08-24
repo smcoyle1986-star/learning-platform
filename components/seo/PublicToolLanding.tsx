@@ -29,11 +29,11 @@ const toolContent = {
   community: {
     eyebrow: "Classendo teacher community",
     title: "Share and reuse ESL teaching resources",
-    description: "Classendo Community is a library of teacher-made lesson sets and worksheets. Sign in to browse resources, preview a useful idea, and copy it to your own dashboard for adapting in class.",
+    description: "Classendo Community is a library of teacher-made lesson sets and worksheets. Sign in to browse resources, preview a useful idea, and copy it to My Lessons for adapting in class.",
     benefits: [
       ["Lesson sets", "Find visual vocabulary collections prepared by other teachers."],
       ["Worksheets", "Explore classroom practice activities that can be adapted for your group."],
-      ["Your dashboard", "Save a useful resource, then make it your own before teaching."],
+      ["My Lessons", "Save a useful resource, then make it your own before teaching."],
     ],
   },
 } as const;

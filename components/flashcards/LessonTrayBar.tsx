@@ -133,7 +133,7 @@ export default function LessonTrayBar({
                 Present {lessonTray.length} card{lessonTray.length === 1 ? "" : "s"} in Classroom
               </button>
               <button onClick={isGuest ? onGuestSave : onOpenSaveModal} className="btn btn-primary px-3 py-2 text-sm sm:py-1 sm:text-xs">
-                {isGuest ? "Sign up to save" : "Save To Dashboard"}
+                {isGuest ? "Sign up to save" : "Save to My Lessons"}
               </button>
 
               {!isGuest ? (

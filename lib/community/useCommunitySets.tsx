@@ -325,7 +325,7 @@ export function useCommunitySets() {
   async function addToDashboard(setItem: CommunityLessonSet) {
     if (!canCopyToDashboard) {
       setToast({
-        message: "Upgrade to Premium to add Community sets to your Dashboard.",
+        message: "Upgrade to Premium to add Community sets to My Lessons.",
       });
       return;
     }
@@ -349,7 +349,7 @@ export function useCommunitySets() {
         return;
       }
 
-      setToast({ message: "Adding to your Dashboard..." });
+      setToast({ message: "Adding to My Lessons..." });
 
       const sourceIds = Array.from(new Set([setItem.id, setItem.copied_from].filter((value): value is string => Boolean(value))));
       const { data: existingCopies, error: existingCopyError } = await supabase
@@ -462,14 +462,14 @@ export function useCommunitySets() {
       }
 
       setToast({
-        message: "Added to your Dashboard",
+        message: "Added to My Lessons",
         action: (
           <div className="flex items-center gap-2">
             <Link
               href="/dashboard"
               className="text-sm text-[var(--color-text-main)] underline underline-offset-4"
             >
-              Open Dashboard
+              Open My Lessons
             </Link>
             <Link
               href="/teacher/editor"

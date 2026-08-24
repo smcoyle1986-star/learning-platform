@@ -24,7 +24,7 @@ export const PAGE_CONTENT = {
   },
   community: {
     title: "Community Teaching Resources",
-    description: "Explore lesson sets and worksheets shared by the Classendo community. Search, filter, preview, and copy useful teaching resources to your own dashboard.",
+    description: "Explore lesson sets and worksheets shared by the Classendo community. Search, filter, preview, and copy useful teaching resources to My Lessons.",
     path: "/teacher/community",
   },
   creator: {
@@ -33,13 +33,13 @@ export const PAGE_CONTENT = {
     path: "/creator",
   },
   dashboard: {
-    title: "Teaching Dashboard",
+    title: "My Lessons",
     description: "Keep your saved lessons and worksheets organised in one place. Return to recent resources, update your teaching materials, or open a saved set for classroom use.",
     path: "/dashboard",
   },
   editor: {
     title: "Lesson Card Editor",
-    description: "Review and organise the cards currently in your lesson tray. Change their order, remove cards you do not need, and save the completed lesson to your dashboard.",
+    description: "Review and organise the cards currently in your lesson tray. Change their order, remove cards you do not need, and save the completed lesson to My Lessons.",
     path: "/teacher/editor",
   },
   worksheets: {

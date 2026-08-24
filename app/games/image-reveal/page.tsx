@@ -713,10 +713,10 @@ export default function CardRevealPage() {
         <main className="pt-[72px] max-w-4xl mx-auto px-4 py-12">
           <div className="bg-white rounded-xl p-6 shadow">
             <h2 className="text-lg font-semibold mb-2">No cards selected</h2>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">Add cards from Flashcards or choose a saved set in Dashboard then open Games → Card Reveal.</p>
+            <p className="text-sm text-[var(--color-text-muted)] mb-4">Add cards from Flashcards or choose a saved lesson in My Lessons, then open Games → Card Reveal.</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => void leaveGame("/flashcards")} className="btn btn-primary px-3 py-1 text-sm">Go to Flashcards</button>
-              <button onClick={() => void leaveGame("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to Dashboard</button>
+              <button onClick={() => void leaveGame("/dashboard")} className="btn btn-secondary px-3 py-1 text-sm">Return to My Lessons</button>
             </div>
           </div>
         </main>

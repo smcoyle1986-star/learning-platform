@@ -380,7 +380,7 @@ function WorksheetsPageContent() {
         ]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
         ]}
       />

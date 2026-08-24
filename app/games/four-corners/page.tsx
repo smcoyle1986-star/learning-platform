@@ -433,7 +433,7 @@ export default function FourCornersPage() {
               <p className="text-sm text-gray-600 mb-6">Please add cards to the lesson tray before starting this game.</p>
               <div className="flex justify-center gap-3">
                 <button onClick={() => router.push("/flashcards")} className="btn btn-primary px-3 py-1">Go to Flashcards</button>
-                <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1">Return to Dashboard</button>
+                <button onClick={() => router.push("/dashboard")} className="btn btn-secondary px-3 py-1">Return to My Lessons</button>
               </div>
             </div>
           </div>

@@ -296,7 +296,7 @@ export default function LessonsPage() {
         ]}
         secondaryItems={user ? [
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
         ] : [
           { label: "Flashcards", href: "/flashcards" },

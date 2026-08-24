@@ -59,7 +59,7 @@ export default function LandingHomepageSections() {
             </ol>
           </div>
           <div className="order-1 lg:order-2">
-            <LandingSectionImage path="classendo-images/information/flowchart.png" alt="The Classendo flow from vocabulary flashcards to classroom activities" />
+            <LandingSectionImage path="classendo-images/information/flowchart_my_lessons_v2.png" alt="The Classendo flow from vocabulary flashcards to classroom activities" />
           </div>
         </div>
       </section>
@@ -87,7 +87,7 @@ export default function LandingHomepageSections() {
             </article>
           </div>
         </div>
-        <LandingSectionImage path="classendo-images/information/free_vs_premium.png" alt="Classendo Free and Premium teaching plan comparison" />
+        <LandingSectionImage path="classendo-images/information/free_vs_premium_my_lessons_v2.png" alt="Classendo Free and Premium teaching plan comparison" />
       </section>
 
       <section className="mx-auto max-w-[1760px] px-4 pb-12 sm:px-6 md:pb-16">

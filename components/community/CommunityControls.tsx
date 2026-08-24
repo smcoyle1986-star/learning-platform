@@ -42,7 +42,7 @@ export default function CommunityControls({
           <div>
             <h2 className="text-xl font-bold">Shared Lesson Library</h2>
             <p className="text-sm text-[var(--color-text-muted)] mt-1">
-              Search public lessons, preview them, then copy the ones you want into your own dashboard.
+              Search public lessons, preview them, then copy the ones you want into My Lessons.
             </p>
           </div>
 
@@ -102,7 +102,7 @@ export default function CommunityControls({
 
       <div className="flex items-center justify-between gap-4 text-sm text-[var(--color-text-muted)]">
         <div>{totalCount !== null ? `${totalCount} lessons available` : ""}</div>
-        <div>Preview first, then add to your dashboard when it fits your class.</div>
+        <div>Preview first, then add to My Lessons when it fits your class.</div>
       </div>
     </div>
   );

@@ -219,7 +219,7 @@ function LandingPageContent() {
         sticky={false}
         primaryItems={[
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
         ]}
         rightSlot={<HeaderAuth />}
@@ -278,7 +278,7 @@ function LandingPageContent() {
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <Link href="/dashboard" className="btn btn-primary px-6 py-3">
-              Go to Dashboard
+              Go to My Lessons
             </Link>
             <Link href="/faq" className="btn btn-secondary px-6 py-3">
               View FAQ
@@ -315,7 +315,7 @@ function LandingPageContent() {
                 "All worksheet types",
                 "Community access",
                 "Teacher editor access",
-                "Unlimited dashboard saves",
+                "Unlimited My Lessons saves",
                 "Premium image variations",
                 "Advanced printables options",
                 "Featured tools unlocked year-round",

@@ -81,7 +81,7 @@ export function useFlashcardLessonSave(params: {
 
   function isDashboardSaveLimitError(error: unknown) {
     const message = String((error as { message?: string } | null)?.message ?? "").toLowerCase();
-    return /free accounts can save up to \d+ (dashboard resources|lesson sets|worksheets)/.test(message);
+    return /free accounts can save up to \d+ (dashboard resources|saved resources(?: in my lessons)?|lesson sets|worksheets)/.test(message);
   }
 
   function getErrorMessage(error: unknown) {

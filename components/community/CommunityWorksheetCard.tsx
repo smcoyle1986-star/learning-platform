@@ -33,8 +33,8 @@ export default function CommunityWorksheetCard({ worksheet, authorName, isOwner,
         <button type="button" onClick={() => onOpenWorksheet(worksheet)} className="btn btn-secondary justify-center px-2 py-1 text-xs">
           Open Worksheet
         </button>
-        <button type="button" disabled={!canAddToDashboard} onClick={() => onAddToDashboard(worksheet)} className="btn btn-primary flex-1 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-55" title={canAddToDashboard ? (isOwner ? "Open this worksheet in your Dashboard" : "Add this worksheet to your Dashboard") : "Upgrade to Premium to use Community worksheets"}>
-          {canAddToDashboard ? (isOwner ? "Open in Dashboard" : "Add to Dashboard") : "Premium required"}
+        <button type="button" disabled={!canAddToDashboard} onClick={() => onAddToDashboard(worksheet)} className="btn btn-primary flex-1 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-55" title={canAddToDashboard ? (isOwner ? "Open this worksheet in My Lessons" : "Add this worksheet to My Lessons") : "Upgrade to Premium to use Community worksheets"}>
+          {canAddToDashboard ? (isOwner ? "Open in My Lessons" : "Add to My Lessons") : "Premium required"}
         </button>
         <span className="col-span-2 text-right text-[10px] text-[var(--color-text-muted)]">{worksheet.downloadCount ?? 0} copies</span>
       </div>

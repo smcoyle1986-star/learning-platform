@@ -69,7 +69,7 @@ export default function CommunityPage() {
         primaryItems={[{ label: "Classroom", href: "/flashcards/classroom", tone: "classroom" }]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "My Lessons", href: "/dashboard" },
           { label: "Creator", href: "/creator" },
           { label: "Editor", href: "/teacher/editor" },
           { label: "Printables", href: "/printables" },

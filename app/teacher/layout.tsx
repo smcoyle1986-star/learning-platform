@@ -36,7 +36,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           title={title}
           description={description}
           secondaryHref="/dashboard"
-          secondaryLabel="Return to Dashboard"
+          secondaryLabel="Return to My Lessons"
         />
       </div>
     );
