@@ -231,16 +231,18 @@ export default function BrandMenuDrawer() {
               </Link>
             ) : null}
 
-            {user ? (
-              <>
-                <Link
-                  href="/profile"
-                  onClick={close}
-                  className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:bg-gray-50"
-                >
-                  <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
-                  <span className="text-sm font-medium text-gray-800">Account</span>
-                </Link>
+          {user ? (
+            <>
+                {!hasPaidPremium ? (
+                  <Link
+                    href="/profile"
+                    onClick={close}
+                    className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:bg-gray-50"
+                  >
+                    <div className="h-6 w-6 flex-shrink-0 rounded-full border border-[#cfd5cc] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(203,213,225,0.25))]" />
+                    <span className="text-sm font-medium text-gray-800">Account</span>
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   onClick={signOut}
