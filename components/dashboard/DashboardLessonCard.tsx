@@ -1,14 +1,16 @@
-import { Edit, FileSpreadsheet, Folder, Play, Printer, Star, Trash2 } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, Edit, FileSpreadsheet, Folder, Layers, MoreHorizontal, Play, Printer, Star, Trash2 } from "lucide-react";
 
 import { LessonRecord } from "@/lib/lessons/types";
 
 type DashboardLessonCardProps = {
   lesson: LessonRecord;
-  selected?: boolean;
   enterLabel?: string;
   enterButtonClassName?: string;
-  onSelect: (lesson: LessonRecord) => void;
   onPreview: (lesson: LessonRecord) => void;
+  onOpenFlashcards: (lesson: LessonRecord) => void;
   onEdit: (lesson: LessonRecord) => void;
   onOpenGames: (lesson: LessonRecord) => void;
   onDelete: (lessonId: string) => void;
@@ -27,11 +29,10 @@ type DashboardLessonCardProps = {
 
 export default function DashboardLessonCard({
   lesson,
-  selected = false,
   enterLabel = "Enter Classroom",
   enterButtonClassName = "btn btn-primary flex-1 px-3 py-2 text-sm",
-  onSelect,
   onPreview,
+  onOpenFlashcards,
   onEdit,
   onOpenGames,
   onDelete,
@@ -47,6 +48,7 @@ export default function DashboardLessonCard({
   onToggleFavorite,
   onToggleArchived,
 }: DashboardLessonCardProps) {
+  const [toolsOpen, setToolsOpen] = useState(false);
   const setLimitLocked = lesson.lockReasons?.includes("set_limit") ?? false;
   const premiumImagesLocked = lesson.lockReasons?.includes("premium_images") ?? false;
   const locked = Boolean(lesson.isLocked);
@@ -96,18 +98,7 @@ export default function DashboardLessonCard({
 
   if (viewMode === "list") {
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => onSelect(lesson)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onSelect(lesson);
-          }
-        }}
-        className={`relative flex flex-col gap-3 rounded-2xl border bg-white px-4 py-3 shadow-sm transition md:flex-row md:items-center ${locked ? "border-amber-300 bg-amber-50/30" : "cursor-pointer hover:shadow-md"} ${selected ? "border-blue-600 ring-2 ring-blue-100" : ""}`}
-      >
+      <div className={`relative flex flex-col gap-3 rounded-2xl border bg-white px-4 py-3 shadow-sm transition md:flex-row md:items-center ${locked ? "border-amber-300 bg-amber-50/30" : "hover:shadow-md"}`}>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             {libraryControls}
@@ -129,39 +120,30 @@ export default function DashboardLessonCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>
-          <button type="button" onClick={() => onOpenWorksheets(lesson)} disabled={locked} className="btn btn-secondary px-2 py-1.5 text-xs disabled:opacity-40" title="Worksheets"><FileSpreadsheet size={14} /></button>
-          <button type="button" onClick={() => onOpenGames(lesson)} disabled={locked} className="btn btn-secondary px-2 py-1.5 text-xs disabled:opacity-40" title="Games" aria-label="Open Games"><Play size={14} /></button>
-          <button type="button" onClick={() => onEdit(lesson)} disabled={locked || editLocked} className="btn btn-secondary px-2 py-1.5 text-xs disabled:opacity-40" title="Edit"><Edit size={14} /></button>
-          <button type="button" onClick={() => onPrint(lesson)} disabled={locked} className="btn btn-secondary px-2 py-1.5 text-xs disabled:opacity-40" title="Print"><Printer size={14} /></button>
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => onEnterClassroom(lesson)} disabled={locked} className="btn btn-primary px-3 py-1.5 text-xs disabled:opacity-40"><Play size={14} />Classroom</button>
+          <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Layers size={14} />Flashcards</button>
+          <button type="button" onClick={() => onPrint(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Printer size={14} />Print</button>
+          <button type="button" onClick={() => setToolsOpen((open) => !open)} className="btn btn-secondary px-3 py-1.5 text-xs" aria-expanded={toolsOpen}><MoreHorizontal size={14} />More tools <ChevronDown size={13} className={toolsOpen ? "rotate-180" : ""} /></button>
+        </div>
+        {toolsOpen ? <div className="flex flex-wrap items-center gap-2 border-t border-[#e4e9e1] pt-3 md:ml-auto md:border-t-0 md:pt-0">
+          <button type="button" onClick={() => onOpenWorksheets(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><FileSpreadsheet size={14} />Worksheets</button>
+          <button type="button" onClick={() => onOpenGames(lesson)} disabled={locked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Play size={14} />Games</button>
+          <button type="button" onClick={() => onEdit(lesson)} disabled={locked || editLocked} className="btn btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"><Edit size={14} />Edit</button>
           {!isPremium && lesson.containsPremiumImages ? (
             <button type="button" onClick={onUpgrade} className="btn btn-primary px-3 py-1.5 text-xs">Upgrade</button>
           ) : null}
           {!isPremium && premiumImagesLocked && lesson.basicConversionAvailable ? (
             <button type="button" onClick={() => onConvertToBasic(lesson)} className="btn btn-secondary px-3 py-1.5 text-xs">Convert to Basic</button>
           ) : null}
-          <button type="button" onClick={() => onDelete(lesson.id)} className="btn btn-secondary border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700 hover:bg-red-100" title="Delete"><Trash2 size={14} /></button>
-        </div>
+          <button type="button" onClick={() => onDelete(lesson.id)} className="btn btn-secondary border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700 hover:bg-red-100"><Trash2 size={14} />Delete</button>
+        </div> : null}
       </div>
     );
   }
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelect(lesson)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(lesson);
-        }
-      }}
-      className={`bg-white rounded-2xl p-5 transition relative border shadow-sm ${locked ? "border-amber-300 bg-amber-50/30" : "hover:shadow-md cursor-pointer"} ${
-        selected ? "border-blue-600 ring-2 ring-blue-100 shadow-md" : ""
-      }`}
-    >
+    <div className={`bg-white rounded-2xl p-5 transition relative border shadow-sm ${locked ? "border-amber-300 bg-amber-50/30" : "hover:shadow-md"}`}>
       {showLibraryControls ? <div className="absolute right-3 top-3 z-20">{libraryControls}</div> : null}
       <div className={`mb-3 flex flex-wrap gap-2 ${showLibraryControls ? "pr-20" : ""}`}>
         {setLimitLocked ? <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">Locked · over 6-set Basic limit</span> : null}
@@ -186,95 +168,15 @@ export default function DashboardLessonCard({
         </button>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-2 mt-7">
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpenWorksheets(lesson);
-            }}
-            disabled={locked}
-            className="btn btn-secondary px-2 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
-            title="Worksheets"
-          >
-            <FileSpreadsheet size={14} />
-          </button>
-
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpenGames(lesson);
-            }}
-            disabled={locked}
-            className="btn btn-secondary px-2 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
-            title="Games"
-            aria-label="Open Games"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path d="M6 12c0-1.333-.667-2-2-2S2 10.667 2 12s.667 2 2 2 2-.667 2-2z" />
-              <path d="M22 12c0-1.333-.667-2-2-2s-2 .667-2 2 .667 2 2 2 2-.667 2-2z" />
-              <path d="M4.5 12h15a3.5 3.5 0 0 1 3.5 3.5V17a3.5 3.5 0 0 1-3.5 3.5H4.5A3.5 3.5 0 0 1 1 17v-1.5A3.5 3.5 0 0 1 4.5 12z" />
-              <path d="M9 15v.01" />
-              <path d="M12 13v4" />
-              <path d="M15 15v.01" />
-            </svg>
-          </button>
-
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(lesson);
-            }}
-            disabled={locked || editLocked}
-            className="btn btn-secondary px-2 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
-            title="Edit"
-          >
-            <Edit size={14} />
-          </button>
-
-          <button
-            onClick={(event) => {
-              event.stopPropagation();
-              onDelete(lesson.id);
-            }}
-            className="btn btn-secondary px-2 py-1.5 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-            title="Delete"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-
-        <div className="text-right text-xs text-[var(--color-text-muted)] flex flex-col gap-2 mt-7">
-          <div>{lesson.cards?.length ?? 0} cards</div>
-          <div>{lesson.useCount ?? 0} uses</div>
-          <div
-            className="self-end cb-badge-icon text-[var(--color-text-muted)]"
-            title={lesson.isPublic ? "Public" : "Private"}
-            aria-label={lesson.isPublic ? "Public" : "Private"}
-          >
-            {lesson.isPublic ? "🌍" : "🔒"}
-          </div>
-        </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)]">
+        <span>{lesson.cards?.length ?? 0} cards</span>
+        <span>{lesson.useCount ?? 0} uses</span>
+        <span>{lesson.isPublic ? "Public" : "Private"}</span>
       </div>
 
-      <div className="flex gap-2">
+      <div className="mt-5 flex gap-2">
         <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onEnterClassroom(lesson);
-          }}
+          onClick={() => onEnterClassroom(lesson)}
           disabled={locked}
           className={`${enterButtonClassName} disabled:cursor-not-allowed disabled:opacity-40`}
         >
@@ -283,16 +185,28 @@ export default function DashboardLessonCard({
         </button>
 
         <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onPrint(lesson);
-          }}
+          onClick={() => onPrint(lesson)}
           disabled={locked}
           className="btn btn-secondary px-3 py-2 flex items-center gap-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Printer size={14} />
           Print
         </button>
+      </div>
+      <button type="button" onClick={() => onOpenFlashcards(lesson)} disabled={locked} className="btn btn-secondary mt-2 w-full px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40">
+        <Layers size={15} /> Open in Flashcards
+      </button>
+      <div className="mt-2 border-t border-[#e4e9e1] pt-2">
+        <button type="button" onClick={() => setToolsOpen((open) => !open)} className="btn btn-ghost w-full justify-between px-2 py-2 text-xs text-[var(--color-text-muted)]" aria-expanded={toolsOpen}>
+          <span className="inline-flex items-center gap-2"><MoreHorizontal size={15} /> More tools</span>
+          <ChevronDown size={15} className={toolsOpen ? "rotate-180" : ""} />
+        </button>
+        {toolsOpen ? <div className="mt-2 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => onOpenWorksheets(lesson)} disabled={locked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><FileSpreadsheet size={14} /> Worksheets</button>
+          <button type="button" onClick={() => onOpenGames(lesson)} disabled={locked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><Play size={14} /> Games</button>
+          <button type="button" onClick={() => onEdit(lesson)} disabled={locked || editLocked} className="btn btn-secondary px-3 py-2 text-xs disabled:opacity-40"><Edit size={14} /> Edit lesson</button>
+          <button type="button" onClick={() => onDelete(lesson.id)} className="btn btn-secondary border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 hover:bg-red-100"><Trash2 size={14} /> Delete</button>
+        </div> : null}
       </div>
       {!isPremium && lesson.containsPremiumImages ? (
         <div className="mt-3 flex flex-wrap gap-2 border-t border-purple-100 pt-3">

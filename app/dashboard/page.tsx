@@ -62,7 +62,6 @@ export default function DashboardPage() {
   const [worksheets, setWorksheets] = useState<SavedWorksheetRecord[]>([]);
   const [previewWorksheet, setPreviewWorksheet] = useState<SavedWorksheetRecord | null>(null);
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [conversionMessage, setConversionMessage] = useState("");
   const [onboardingMessage, setOnboardingMessage] = useState("");
   const [libraryMessage, setLibraryMessage] = useState("");
@@ -271,7 +270,6 @@ export default function DashboardPage() {
     const lesson = lessons.find((item) => item.id === lessonId);
     if (!lesson) return;
     openedLessonFromQueryRef.current = true;
-    setSelectedLessonId(lesson.id);
     setLessonFilter(lesson.archivedAt ? "archive" : "all");
     setSearchQuery(lesson.name);
 
@@ -487,6 +485,18 @@ export default function DashboardPage() {
     window.location.href = "/worksheets";
   };
 
+  const openInFlashcards = (lesson: LessonRecord) => {
+    if (lesson.isLocked) return;
+    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    if (!cards.length) {
+      console.warn("openInFlashcards: lesson has no cards, aborting navigation.");
+      return;
+    }
+
+    writeLessonTray(cards);
+    window.location.href = "/flashcards";
+  };
+
   const openSavedWorksheet = (worksheet: SavedWorksheetRecord) => {
     writeLessonTray(worksheet.cards);
     setWorksheets((current) => current.map((item) => item.id === worksheet.id
@@ -496,15 +506,6 @@ export default function DashboardPage() {
       console.warn("Failed to update worksheet usage:", error);
     });
     window.location.href = `/worksheets?worksheet_id=${worksheet.id}`;
-  };
-
-  const selectLessonForTray = (lesson: LessonRecord) => {
-    if (lesson.isLocked) return;
-    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
-    if (!cards.length) return;
-
-    writeLessonTray(cards);
-    setSelectedLessonId(lesson.id);
   };
 
   const removeSavedWorksheet = async (worksheetId: string) => {
@@ -639,9 +640,6 @@ export default function DashboardPage() {
       <PageHeader
         title="My Lessons"
         description={PAGE_CONTENT.dashboard.description}
-        primaryItems={[
-          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
-        ]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
           { label: "Community", href: "/teacher/community" },
@@ -685,10 +683,9 @@ export default function DashboardPage() {
                 <div key={lesson.id} className="min-w-[360px] w-[360px]">
                   <DashboardLessonCard
                     lesson={lesson}
-                    selected={selectedLessonId === lesson.id}
                     enterButtonClassName="btn btn-primary flex-1 px-2.5 py-1.5 text-xs"
-                    onSelect={selectLessonForTray}
                     onPreview={setPreviewLesson}
+                    onOpenFlashcards={openInFlashcards}
                     onEdit={editLesson}
                     onOpenGames={openGames}
                   onDelete={openDeleteModal}
@@ -815,9 +812,8 @@ export default function DashboardPage() {
                   <DashboardLessonCard
                     key={lesson.id}
                     lesson={lesson}
-                    selected={selectedLessonId === lesson.id}
-                    onSelect={selectLessonForTray}
                     onPreview={setPreviewLesson}
+                    onOpenFlashcards={openInFlashcards}
                     onEdit={editLesson}
                     onOpenGames={openGames}
                     onDelete={openDeleteModal}
