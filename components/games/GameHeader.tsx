@@ -41,6 +41,11 @@ export default function GameHeader({
   }, []);
 
   useEffect(() => {
+    document.body.classList.toggle("classendo-game-fullscreen", isFullscreen);
+    return () => document.body.classList.remove("classendo-game-fullscreen");
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (!isFullscreen) return;
     const orientation = screen.orientation as LockableScreenOrientation;
     if (!orientation?.lock) return;
@@ -70,7 +75,7 @@ export default function GameHeader({
   if (hidden) return null;
 
   return (
-    <header data-game-header className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 backdrop-blur-md">
+    <header data-game-header data-game-fullscreen={isFullscreen ? "true" : undefined} className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <BrandButton className="hidden text-3xl font-extrabold text-blue-700 sm:block" />
 
@@ -115,6 +120,38 @@ export default function GameHeader({
           </Button>
         </div>
 
+        {isFullscreen ? (
+          <div className="flex items-center gap-1 sm:hidden">
+            {onToggleSettings ? (
+              <button
+                type="button"
+                onClick={openSettings}
+                className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/65 text-[var(--color-text-main)] shadow-sm"
+                aria-label={settingsOpen ? "Close settings" : "Open settings"}
+              >
+                <Settings2 size={17} />
+              </button>
+            ) : null}
+            {onToggleFullscreen ? (
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/65 text-[var(--color-text-main)] shadow-sm"
+                aria-label="Exit fullscreen"
+              >
+                <Minimize2 size={17} />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={exitGame}
+              className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/65 text-[var(--color-text-main)] shadow-sm"
+              aria-label="Exit game"
+            >
+              <LogOut size={17} />
+            </button>
+          </div>
+        ) : (
         <div className="relative sm:hidden">
           <button
             type="button"
@@ -134,6 +171,7 @@ export default function GameHeader({
             </div>
           ) : null}
         </div>
+        )}
       </div>
     </header>
   );

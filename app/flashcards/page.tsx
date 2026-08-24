@@ -391,7 +391,7 @@ export default function FlashcardsPage() {
           }, tone: "classroom" },
         ]}
         secondaryItems={user ? [
-          { label: "My Cards", onClick: () => {
+          { label: "My Uploads", onClick: () => {
             persistLessonTray();
             router.push("/creator");
           } },

@@ -1,0 +1,75 @@
+{"kind":"deck","id":"pr/n1f92k","name":"Deck"}
+{"kind":"layout","layoutId":"8d2b20af-981b-4ad6-9f45-759ba4b1e908","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"2c5fdfc0-4184-4933-aa07-d5edc19c3ebb","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/39rghf","slide":1,"title":"Slide 1","textShapes":0}
+{"kind":"image","id":"im/kf25wru5","slide":1,"name":"","alt":"Rooms at Home lesson pack page 1","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/39rghf","slide":1,"text":""}
+{"kind":"slide","id":"sl/d5mqzh","slide":2,"title":"Slide 2","textShapes":0}
+{"kind":"image","id":"im/adgrypor","slide":2,"name":"","alt":"Rooms at Home lesson pack page 2","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/d5mqzh","slide":2,"text":""}
+{"kind":"slide","id":"sl/uf24sa","slide":3,"title":"Slide 3","textShapes":0}
+{"kind":"image","id":"im/cnqtgvax","slide":3,"name":"","alt":"Rooms at Home lesson pack page 3","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/uf24sa","slide":3,"text":""}
+{"kind":"slide","id":"sl/rug0ed","slide":4,"title":"Slide 4","textShapes":0}
+{"kind":"image","id":"im/m94b2hob","slide":4,"name":"","alt":"Rooms at Home lesson pack page 4","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/rug0ed","slide":4,"text":""}
+{"kind":"slide","id":"sl/4rl5i1","slide":5,"title":"Slide 5","textShapes":0}
+{"kind":"image","id":"im/25s3ilcb","slide":5,"name":"","alt":"Rooms at Home lesson pack page 5","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/4rl5i1","slide":5,"text":""}
+{"kind":"slide","id":"sl/aczykp","slide":6,"title":"Slide 6","textShapes":0}
+{"kind":"image","id":"im/5orqdwru","slide":6,"name":"","alt":"Rooms at Home lesson pack page 6","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/aczykp","slide":6,"text":""}
+{"kind":"slide","id":"sl/m1ls3t","slide":7,"title":"Slide 7","textShapes":0}
+{"kind":"image","id":"im/nu98n2lo","slide":7,"name":"","alt":"Rooms at Home lesson pack page 7","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/m1ls3t","slide":7,"text":""}
+{"kind":"slide","id":"sl/rsat30","slide":8,"title":"Slide 8","textShapes":0}
+{"kind":"image","id":"im/c7u9k3ql","slide":8,"name":"","alt":"Rooms at Home lesson pack page 8","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/rsat30","slide":8,"text":""}
+{"kind":"slide","id":"sl/8sp7ox","slide":9,"title":"Slide 9","textShapes":0}
+{"kind":"image","id":"im/udofqlgr","slide":9,"name":"","alt":"Rooms at Home lesson pack page 9","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/8sp7ox","slide":9,"text":""}
+{"kind":"slide","id":"sl/sjbkhk","slide":10,"title":"Slide 10","textShapes":0}
+{"kind":"image","id":"im/6pk329sf","slide":10,"name":"","alt":"Rooms at Home lesson pack page 10","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/sjbkhk","slide":10,"text":""}
+{"kind":"slide","id":"sl/75h03v","slide":11,"title":"Slide 11","textShapes":0}
+{"kind":"image","id":"im/0vm5k3i9","slide":11,"name":"","alt":"Rooms at Home lesson pack page 11","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/75h03v","slide":11,"text":""}
+{"kind":"slide","id":"sl/qe5avs","slide":12,"title":"Slide 12","textShapes":0}
+{"kind":"image","id":"im/y5wvqh83","slide":12,"name":"","alt":"Rooms at Home lesson pack page 12","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/qe5avs","slide":12,"text":""}
+{"kind":"slide","id":"sl/3z5j8j","slide":13,"title":"Slide 13","textShapes":0}
+{"kind":"image","id":"im/j2psv2dw","slide":13,"name":"","alt":"Rooms at Home lesson pack page 13","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/3z5j8j","slide":13,"text":""}
+{"kind":"slide","id":"sl/ozn307","slide":14,"title":"Slide 14","textShapes":0}
+{"kind":"image","id":"im/q1wve54z","slide":14,"name":"","alt":"Rooms at Home lesson pack page 14","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/ozn307","slide":14,"text":""}
+{"kind":"slide","id":"sl/97gp94","slide":15,"title":"Slide 15","textShapes":0}
+{"kind":"image","id":"im/90nyh4v6","slide":15,"name":"","alt":"Rooms at Home lesson pack page 15","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/97gp94","slide":15,"text":""}
+{"kind":"slide","id":"sl/dpuau4","slide":16,"title":"Slide 16","textShapes":0}
+{"kind":"image","id":"im/ax47elkb","slide":16,"name":"","alt":"Rooms at Home lesson pack page 16","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/dpuau4","slide":16,"text":""}
+{"kind":"slide","id":"sl/xyve19","slide":17,"title":"Slide 17","textShapes":0}
+{"kind":"image","id":"im/ru1of2xc","slide":17,"name":"","alt":"Rooms at Home lesson pack page 17","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/xyve19","slide":17,"text":""}
+{"kind":"slide","id":"sl/nclxq6","slide":18,"title":"Slide 18","textShapes":0}
+{"kind":"image","id":"im/jm94bedk","slide":18,"name":"","alt":"Rooms at Home lesson pack page 18","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/nclxq6","slide":18,"text":""}
+{"kind":"slide","id":"sl/9niy1d","slide":19,"title":"Slide 19","textShapes":0}
+{"kind":"image","id":"im/v2hwfa58","slide":19,"name":"","alt":"Rooms at Home lesson pack page 19","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/9niy1d","slide":19,"text":""}
+{"kind":"slide","id":"sl/5093xr","slide":20,"title":"Slide 20","textShapes":0}
+{"kind":"image","id":"im/69knmlob","slide":20,"name":"","alt":"Rooms at Home lesson pack page 20","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/5093xr","slide":20,"text":""}
+{"kind":"slide","id":"sl/ujw4vq","slide":21,"title":"Slide 21","textShapes":0}
+{"kind":"image","id":"im/0z6dw3i9","slide":21,"name":"","alt":"Rooms at Home lesson pack page 21","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/ujw4vq","slide":21,"text":""}
+{"kind":"slide","id":"sl/1051gx","slide":22,"title":"Slide 22","textShapes":0}
+{"kind":"image","id":"im/rax8vapg","slide":22,"name":"","alt":"Rooms at Home lesson pack page 22","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/1051gx","slide":22,"text":""}
+{"kind":"slide","id":"sl/56n1yd","slide":23,"title":"Slide 23","textShapes":0}
+{"kind":"image","id":"im/yxsfylwb","slide":23,"name":"","alt":"Rooms at Home lesson pack page 23","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/56n1yd","slide":23,"text":""}
+{"kind":"slide","id":"sl/v9rzgz","slide":24,"title":"Slide 24","textShapes":0}
+{"kind":"image","id":"im/r698jal4","slide":24,"name":"","alt":"Rooms at Home lesson pack page 24","bbox":[0,0,816,1056]}
+{"kind":"notes","id":"nt/v9rzgz","slide":24,"text":""}

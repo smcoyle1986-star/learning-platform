@@ -140,7 +140,7 @@ export default function FlashcardSearchControls({
                     await onSearch();
                   }
                 }}
-                placeholder={isMyCards ? "Search My Cards" : "Select a tab before searching"}
+                placeholder={isMyCards ? "Search My Uploads" : "Select a tab before searching"}
                 className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] bg-white"
               />
             </div>
@@ -253,10 +253,10 @@ export default function FlashcardSearchControls({
               disabled={!canUseCreator}
               onClick={() => void onShowMyCards()}
               className={`${wordTypeButton(isMyCards)} flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-55`}
-              title={canUseCreator ? "Show your creator cards" : "My Cards is a premium feature"}
+              title={canUseCreator ? "Show your uploaded cards" : "My Uploads is a premium feature"}
             >
               {canUseCreator ? <Images size={16} /> : <Lock size={15} />}
-              My Cards
+              My Uploads
             </button>
           </div>
         </div>

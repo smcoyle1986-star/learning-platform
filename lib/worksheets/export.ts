@@ -160,7 +160,7 @@ function generateBattleshipPlacements(rows: number, cols: number, seed: number) 
 function resolveBoardImageSrc(card: LessonCard) {
   const raw = String(card.image ?? card.back ?? "").trim();
   if (!raw) return "";
-  if (raw.startsWith("http")) return raw;
+  if (raw.startsWith("http") || raw.startsWith("data:")) return raw;
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!baseUrl) return raw;
   return `${baseUrl}/storage/v1/object/public/vocab-images/${raw.replace(/^\/+/, "")}`;

@@ -225,7 +225,7 @@ export default function CreatorPage() {
       setCardTypeEdits((current) => ({ ...current, [card.id]: card.cardType }));
       setDrafts((current) => ({ ...current, [image.id]: "" }));
       setDraftTypes((current) => ({ ...current, [image.id]: "" }));
-      setNotice(`“${card.front}” saved to My Cards.`);
+      setNotice(`“${card.front}” saved to My Uploads.`);
     } catch (nextError) {
       setError(messageFor(nextError));
     } finally {
@@ -298,7 +298,7 @@ export default function CreatorPage() {
   return (
     <div className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       <PageHeader
-        title="My Cards"
+        title="My Uploads"
         description={PAGE_CONTENT.creator.description}
         sticky={false}
         primaryItems={[{ label: "Classroom", href: "/flashcards/classroom" }]}
@@ -510,7 +510,7 @@ export default function CreatorPage() {
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#718367]">Private card library</div>
-                    <h2 className="mt-1 text-2xl font-bold">My Cards</h2>
+                    <h2 className="mt-1 text-2xl font-bold">My Uploads</h2>
                   </div>
                   {cards.length > 0 ? (
                     <button type="button" onClick={() => addCardsToTray(cards)} className="btn btn-primary px-5 py-2.5">Add all to lesson tray</button>
@@ -518,7 +518,7 @@ export default function CreatorPage() {
                 </div>
 
                 {cards.length === 0 ? (
-                  <div className="mt-5 rounded-3xl border border-dashed border-black/15 bg-white/60 py-14 text-center text-[#6b756b]">Cards you create will appear here and under Flashcards → My Cards.</div>
+                  <div className="mt-5 rounded-3xl border border-dashed border-black/15 bg-white/60 py-14 text-center text-[#6b756b]">Cards you create will appear here and under Flashcards → My Uploads.</div>
                 ) : (
                   <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {cards.map((card) => (

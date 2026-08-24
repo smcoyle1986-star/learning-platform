@@ -1,8 +1,5 @@
-import { existsSync } from "node:fs";
-
-import { chromium } from "playwright";
-
 import { LessonRecord } from "@/lib/lessons/types";
+import { launchPdfBrowser } from "@/lib/pdf/browser";
 import {
   DEFAULT_LESSON_PLAN_PREFERENCES,
   LessonLevel,
@@ -44,29 +41,6 @@ function capitalizeLevel(level: LessonLevel) {
 function formatPreferenceLabel(value: string) {
   const spaced = value.replaceAll("-", " ");
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
-function resolveBrowserExecutablePath() {
-  const bundled = chromium.executablePath();
-  if (bundled && existsSync(bundled)) {
-    return bundled;
-  }
-
-  const candidates = [
-    process.env.PLAYWRIGHT_CHROMIUM_PATH,
-    process.env.CHROME_PATH,
-    process.env.GOOGLE_CHROME_BIN,
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  ].filter(Boolean) as string[];
-
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  return undefined;
 }
 
 function clampText(value: string, maxLength: number) {
@@ -868,11 +842,7 @@ function buildLessonPlanPdfHtml(lesson: LessonRecord, draft: LessonPlanDraft) {
 }
 
 async function renderHtmlToPdfBuffer(html: string) {
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: resolveBrowserExecutablePath(),
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const browser = await launchPdfBrowser();
 
   try {
     const page = await browser.newPage({

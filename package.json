@@ -12,6 +12,7 @@
     "noun-images:batch": "tsx scripts/generate-noun-images.ts"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^147.0.2",
     "@stripe/stripe-js": "^9.8.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",

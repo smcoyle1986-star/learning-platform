@@ -29,7 +29,7 @@ function flashcardCategory() {
 
 function trackVocabularySearch() {
   const input = document.querySelector<HTMLInputElement>(
-    'input[placeholder="Select a tab before searching"], input[placeholder="Search My Cards"]',
+    'input[placeholder="Select a tab before searching"], input[placeholder="Search My Uploads"]',
   );
   const label = input?.value.trim() ?? "";
   if (!label) return;

@@ -8,6 +8,7 @@ import { WorksheetDraft } from "@/lib/worksheets/types";
 import { LessonCard } from "@/lib/lessons/types";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type ExportPdfBody = {
   cards?: LessonCard[];

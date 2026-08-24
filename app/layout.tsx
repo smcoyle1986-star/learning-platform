@@ -53,7 +53,7 @@ export default function RootLayout({
             <BrandPageTheme />
             <div className="relative z-10">
               <MobileSiteHeader />
-              <header className="hidden border-b border-black/5 bg-[var(--color-bg-main)]/90 px-6 py-3 backdrop-blur-md lg:block">
+              <header className="relative z-[110] hidden border-b border-black/5 bg-[var(--color-bg-main)]/90 px-6 py-3 backdrop-blur-md lg:block">
                 <div className="mx-auto flex max-w-7xl items-center gap-6">
                   <BrandButton className="shrink-0 text-3xl font-extrabold tracking-tight text-blue-700 transition hover:opacity-80" />
                   <SiteNavigation />
