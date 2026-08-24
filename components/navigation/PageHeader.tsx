@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 type PageHeaderItem = {
   label: string;
@@ -29,19 +29,34 @@ function pillClassName(tone: PageHeaderItem["tone"], highlight = false) {
   return "btn btn-secondary rounded-full";
 }
 
-function MoreLessonTools() {
+function MoreLessonTools({
+  isOpen,
+  onToggle,
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <details className="group relative z-[110] shrink-0">
-      <summary className="btn btn-secondary flex cursor-pointer list-none items-center gap-1 rounded-full px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
-        More lesson tools <span aria-hidden="true" className="transition group-open:rotate-180">⌄</span>
-      </summary>
-      <div className="absolute right-0 top-full z-[70] mt-2 w-52 rounded-2xl border border-[#dfe7da] bg-white p-2 shadow-[0_18px_42px_rgba(54,64,46,0.16)]">
-        <Link href="/games" className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-[#344133] hover:bg-[#f2f7ef]">Games</Link>
-        <Link href="/worksheets" className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-[#344133] hover:bg-[#f2f7ef]">Worksheets</Link>
-        <Link href="/printables" className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-[#344133] hover:bg-[#f2f7ef]">Print Cards</Link>
-        <Link href="/lessons" className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-[#344133] hover:bg-[#f2f7ef]">Lesson Plans</Link>
-      </div>
-    </details>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={isOpen}
+      className="btn btn-secondary flex shrink-0 items-center gap-1 rounded-full px-4 py-3 text-sm"
+    >
+      More lesson tools <span aria-hidden="true" className={`transition ${isOpen ? "rotate-180" : ""}`}>⌄</span>
+    </button>
+  );
+}
+
+function LessonToolsPanel() {
+  return (
+    <section aria-label="More lesson tools" className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#dfe7da] bg-[#f7faf5] p-2.5 shadow-[0_10px_24px_rgba(54,64,46,0.08)]">
+      <span className="px-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#71806d]">Lesson tools</span>
+      <Link href="/games" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Games</Link>
+      <Link href="/worksheets" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Worksheets</Link>
+      <Link href="/printables" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Print Cards</Link>
+      <Link href="/lessons" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Lesson Plans</Link>
+    </section>
   );
 }
 
@@ -54,6 +69,7 @@ export default function PageHeader({
   sticky = true,
   className = "",
 }: PageHeaderProps) {
+  const [isLessonToolsOpen, setIsLessonToolsOpen] = useState(false);
   void _secondaryItems;
 
   return (
@@ -91,7 +107,7 @@ export default function PageHeader({
                   </button>
                 )
               )}
-              {primaryItems.length > 0 ? <MoreLessonTools /> : null}
+              {primaryItems.length > 0 ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
             </div>
           </div>
 
@@ -113,11 +129,12 @@ export default function PageHeader({
                 </button>
               )
             )}
-            {primaryItems.length > 0 ? <MoreLessonTools /> : null}
+            {primaryItems.length > 0 ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
             {rightSlot}
           </div>
         </div>
 
+        {primaryItems.length > 0 && isLessonToolsOpen ? <LessonToolsPanel /> : null}
         </div>
       </header>
       {description ? (
