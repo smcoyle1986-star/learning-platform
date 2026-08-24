@@ -330,6 +330,42 @@ body {
     max-width: 100% !important;
     max-height: 100% !important;
   }
+
+  /* Four Corners has its own fixed-height board. Let the fullscreen stage,
+     rather than the page viewport calculation, determine its available height. */
+  body.classendo-game-page.classendo-game-fullscreen .game-four-corners-stage {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  body.classendo-game-page.classendo-game-fullscreen .game-four-corners-board {
+    height: 100% !important;
+    min-height: 0;
+  }
+}
+
+/* KaBoom keeps a compact score strip above the board in fullscreen. The shell
+   must reserve that strip before sizing the 16:9 board, at every screen width. */
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell [data-game-stage] {
+  flex: 1 1 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden;
+}
+
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell [data-game-stage] > div {
+  min-height: 0;
 }
 
 /* Small helpers used across pages */

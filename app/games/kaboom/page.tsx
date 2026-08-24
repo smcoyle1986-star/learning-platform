@@ -466,10 +466,8 @@ export default function KaBoomPage() {
 
   // modal actions
   function handleModalIncorrect() {
-    setModalOpen(false);
-    setModalImage(null);
-    setModalText(null);
-    setModalTileIndex(null);
+    // A missed answer ends this team's turn, but leaves the tile in play.
+    handlePass();
   }
 
   function nextTeamIndex() {
@@ -887,7 +885,7 @@ export default function KaBoomPage() {
       </div>
 
       {/* Main grid */}
-      <main data-game-stage className={isFullscreen ? "game-fullscreen-stage flex min-h-0 flex-1 max-w-7xl mx-auto w-full px-4 pb-2" : "max-w-7xl mx-auto px-4 pb-2"}>
+      <main data-game-stage className={isFullscreen ? "game-fullscreen-stage flex min-h-0 flex-1 max-w-[100rem] mx-auto w-full px-4 pb-2" : "max-w-7xl mx-auto px-4 pb-2"}>
         <div className={`flex justify-center ${isFullscreen ? "h-full min-h-0 w-full items-center" : "items-start"}`}>
           <div
             className={`game-mobile-aspect-stage w-full ${isFullscreen ? "game-fullscreen-aspect-stage max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border bg-white`}
