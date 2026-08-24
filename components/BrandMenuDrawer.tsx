@@ -12,8 +12,8 @@ import { getProfileDisplayName } from "@/lib/auth/profile";
 import { resolveBrandTheme } from "@/lib/brand/theme";
 
 const LINK_GROUPS = [
-  { label: "Build", links: [{ label: "Flashcards", href: "/flashcards" }, { label: "My Cards", href: "/creator" }, { label: "Community", href: "/teacher/community" }] },
   { label: "Your work", links: [{ label: "My Lessons", href: "/dashboard" }] },
+  { label: "Build", links: [{ label: "Flashcards", href: "/flashcards" }, { label: "My Uploads", href: "/creator" }, { label: "Community", href: "/teacher/community" }] },
   { label: "Resources", links: [{ label: "Free Lesson Packs", href: "/free-resources" }, { label: "ESL Topics", href: "/topics" }] },
 ];
 

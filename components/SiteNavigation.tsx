@@ -4,10 +4,10 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 const primaryLinks = [
-  { label: "Flashcards", href: "/flashcards" },
-  { label: "My Cards", href: "/creator" },
-  { label: "Community", href: "/teacher/community" },
   { label: "My Lessons", href: "/dashboard" },
+  { label: "Flashcards", href: "/flashcards" },
+  { label: "My Uploads", href: "/creator" },
+  { label: "Community", href: "/teacher/community" },
 ];
 
 export default function SiteNavigation() {
