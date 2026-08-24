@@ -50,13 +50,14 @@ function MoreLessonTools({
 
 function LessonToolsPanel() {
   return (
-    <section aria-label="More lesson tools" className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#dfe7da] bg-[#f7faf5] p-2.5 shadow-[0_10px_24px_rgba(54,64,46,0.08)]">
-      <span className="px-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#71806d]">Lesson tools</span>
-      <Link href="/games" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Games</Link>
-      <Link href="/worksheets" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Worksheets</Link>
-      <Link href="/printables" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Print Cards</Link>
-      <Link href="/lessons" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Lesson Plans</Link>
-    </section>
+    <div className="mt-3 flex justify-end">
+      <section aria-label="More lesson tools" className="flex w-fit max-w-full flex-wrap justify-end gap-2 rounded-2xl border border-[#dfe7da] bg-[#f7faf5] p-2.5 shadow-[0_10px_24px_rgba(54,64,46,0.08)]">
+        <Link href="/games" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Games</Link>
+        <Link href="/worksheets" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Worksheets</Link>
+        <Link href="/printables" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Print Cards</Link>
+        <Link href="/lessons" className="btn btn-secondary rounded-xl px-3 py-2 text-sm">Lesson Plans</Link>
+      </section>
+    </div>
   );
 }
 
