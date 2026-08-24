@@ -31,7 +31,7 @@ function pillClassName(tone: PageHeaderItem["tone"], highlight = false) {
 
 function MoreLessonTools() {
   return (
-    <details className="group relative shrink-0">
+    <details className="group relative z-[110] shrink-0">
       <summary className="btn btn-secondary flex cursor-pointer list-none items-center gap-1 rounded-full px-4 py-3 text-sm [&::-webkit-details-marker]:hidden">
         More lesson tools <span aria-hidden="true" className="transition group-open:rotate-180">⌄</span>
       </summary>
