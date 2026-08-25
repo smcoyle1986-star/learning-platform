@@ -46,6 +46,51 @@ export default function GameHeader({
   }, [isFullscreen]);
 
   useEffect(() => {
+    if (!isFullscreen) {
+      document.documentElement.style.removeProperty("--game-viewport-height");
+      return;
+    }
+
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    let firstFrame = 0;
+    let settledFrame = 0;
+
+    const setViewportHeight = () => {
+      const height = viewport?.height ?? window.innerHeight;
+      root.style.setProperty("--game-viewport-height", `${height}px`);
+    };
+
+    // Fullscreen changes can update Android Chrome's usable viewport one or two
+    // frames after fullscreenchange. Read the live viewport on every lifecycle
+    // event instead of preserving the pre-fullscreen height.
+    const syncViewport = () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(settledFrame);
+      firstFrame = requestAnimationFrame(() => {
+        setViewportHeight();
+        settledFrame = requestAnimationFrame(setViewportHeight);
+      });
+    };
+
+    syncViewport();
+    document.addEventListener("fullscreenchange", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    window.addEventListener("orientationchange", syncViewport);
+    viewport?.addEventListener("resize", syncViewport);
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(settledFrame);
+      document.removeEventListener("fullscreenchange", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("orientationchange", syncViewport);
+      viewport?.removeEventListener("resize", syncViewport);
+      root.style.removeProperty("--game-viewport-height");
+    };
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (!isFullscreen) return;
     const orientation = screen.orientation as LockableScreenOrientation;
     if (!orientation?.lock) return;

@@ -187,7 +187,7 @@ body {
 
   body.classendo-game-page .game-fullscreen-stage {
     padding: 0 0.65rem calc(0.4rem + env(safe-area-inset-bottom)) !important;
-    height: auto !important;
+    height: 0 !important;
     max-height: none !important;
   }
 
@@ -379,7 +379,7 @@ body {
     inset: auto !important;
     z-index: auto;
     width: 100% !important;
-    height: auto !important;
+    height: 0 !important;
     max-height: none !important;
     padding-top: 0 !important;
   }
@@ -410,8 +410,8 @@ body {
 body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  min-height: 100dvh;
+  height: var(--game-viewport-height, 100dvh);
+  min-height: var(--game-viewport-height, 100dvh);
   overflow: hidden;
   overscroll-behavior: none;
 }
