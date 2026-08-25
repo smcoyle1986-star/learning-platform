@@ -428,6 +428,15 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell [data-
   min-height: 0;
 }
 
+/* KaBoom's score strip changes with the number of teams. Its fullscreen board
+   receives the measured remaining viewport height, so Android's fullscreen
+   transition cannot leave the nested aspect-ratio frame with a zero height. */
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-fullscreen-stage {
+  flex: 0 0 var(--kaboom-stage-height, 0px) !important;
+  height: var(--kaboom-stage-height, 0px) !important;
+  max-height: var(--kaboom-stage-height, 0px) !important;
+}
+
 /* Small helpers used across pages */
 .container-max {
   max-width: 1120px;

@@ -79,6 +79,56 @@ export default function KaBoomPage() {
     else enterFullscreen();
   }
 
+  useEffect(() => {
+    const container = containerRef.current;
+    const controls = controlsRef.current;
+    if (!isFullscreen || !container || !controls) {
+      container?.style.removeProperty("--kaboom-stage-height");
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    let firstFrame = 0;
+    let settledFrame = 0;
+
+    const measureStage = () => {
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const controlsHeight = controls.getBoundingClientRect().height;
+      container.style.setProperty(
+        "--kaboom-stage-height",
+        `${Math.max(0, Math.floor(viewportHeight - controlsHeight))}px`,
+      );
+    };
+
+    const scheduleMeasurement = () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(settledFrame);
+      firstFrame = requestAnimationFrame(() => {
+        measureStage();
+        settledFrame = requestAnimationFrame(measureStage);
+      });
+    };
+
+    const observer = new ResizeObserver(scheduleMeasurement);
+    observer.observe(controls);
+    scheduleMeasurement();
+    document.addEventListener("fullscreenchange", scheduleMeasurement);
+    window.addEventListener("resize", scheduleMeasurement);
+    window.addEventListener("orientationchange", scheduleMeasurement);
+    viewport?.addEventListener("resize", scheduleMeasurement);
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(settledFrame);
+      observer.disconnect();
+      document.removeEventListener("fullscreenchange", scheduleMeasurement);
+      window.removeEventListener("resize", scheduleMeasurement);
+      window.removeEventListener("orientationchange", scheduleMeasurement);
+      viewport?.removeEventListener("resize", scheduleMeasurement);
+      container.style.removeProperty("--kaboom-stage-height");
+    };
+  }, [isFullscreen]);
+
   /* ----------------------
      Lesson tray persistence (same approach as Card Reveal)
   ---------------------- */
