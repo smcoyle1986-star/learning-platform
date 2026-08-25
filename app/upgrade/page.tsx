@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
 
 import { openBillingPortal, startPremiumCheckout } from "@/lib/billing/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
@@ -22,7 +21,6 @@ type PublicStripePrice = {
 const DISPLAY_CURRENCY = "USD";
 
 function UpgradePageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { access, loading } = useBillingAccess();
@@ -48,13 +46,6 @@ function UpgradePageContent() {
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.replace("/signup?next=%2Fupgrade");
-    }
-  }, [authLoading, router, user]);
 
   const formatPrice = (price: PublicStripePrice | null) => {
     if (!price || price.unitAmount == null) return null;
@@ -100,19 +91,17 @@ function UpgradePageContent() {
   if (!user) {
     return (
       <main className="min-h-screen bg-[#f7f6f2] px-4 py-8 text-[#2f3a2f] sm:px-6 sm:py-10">
-        <section className="mx-auto max-w-5xl rounded-[2rem] border border-[#e2e6da] bg-white p-6 shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-8">
-          <div className="inline-flex items-center rounded-full border border-[#dbe3d1] bg-[#f7faf4] px-4 py-2 text-sm font-semibold text-[#6d8160] shadow-sm">
-            Classendo Premium
+        <section className="mx-auto max-w-5xl">
+          <div className="rounded-[2rem] border border-[#dbe3d1] bg-[#f3f7f0] p-6 text-center shadow-[0_18px_40px_rgba(54,64,46,0.10)] md:p-9">
+            <div className="inline-flex items-center rounded-full border border-[#c8d9bd] bg-white px-4 py-2 text-sm font-bold text-[#47613a]">Start with 14 days of Premium — free</div>
+            <h1 className="mt-5 text-4xl font-semibold tracking-tight">Everything you need for confident lessons</h1>
+            <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-[#5c665c]">Create an account to begin Premium access. No payment is taken during your two-week trial.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3"><Link href="/signup?next=%2Fupgrade" className="btn btn-primary px-6 py-3">Start free trial</Link><Link href="/login?next=/upgrade" className="btn btn-secondary px-6 py-3">Sign in</Link></div>
           </div>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[#2f3a2f]">
-            Unlock every Classendo teaching tool
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#5c665c]">
-            {PAGE_CONTENT.upgrade.description}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className="btn btn-primary px-6 py-3">Create a free account</Link>
-            <Link href="/login?next=/upgrade" className="btn btn-secondary px-6 py-3">Sign in</Link>
+          <div className="mt-7 grid gap-5 md:grid-cols-3">
+            <article className="rounded-[1.75rem] border border-[#dfe5d8] bg-white p-6"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#6d8160]">Free</div><h2 className="mt-3 text-2xl font-bold">Explore Classendo</h2><p className="mt-4 text-sm leading-6 text-[#667066]">Build a lesson tray and explore interactive flashcards before you subscribe.</p></article>
+            <article className="rounded-[1.75rem] border border-[#dfe5d8] bg-white p-6"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#6d8160]">Monthly</div><h2 className="mt-3 text-2xl font-bold">Premium Monthly</h2><div className="mt-4 text-4xl font-black">{monthlyPrice ?? "Monthly"}<span className="text-sm font-medium text-[#6b756b]"> / month</span></div><p className="mt-4 text-sm leading-6 text-[#667066]">Unlimited games, worksheets, printables and saved My Lessons.</p><Link href="/signup?next=%2Fupgrade" className="btn btn-primary mt-6 w-full px-4 py-3">Start free trial</Link></article>
+            <article className="rounded-[1.75rem] border border-[#efd8a7] bg-[linear-gradient(180deg,#fffaf0,white)] p-6 shadow-sm"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b5a17]">Best value · Yearly</div><h2 className="mt-3 text-2xl font-bold">Premium Yearly</h2><div className="mt-4 text-4xl font-black">{yearlyPrice ?? "Yearly"}<span className="text-sm font-medium text-[#6b756b]"> / year</span></div>{yearlySavings ? <p className="mt-3 text-sm font-semibold text-[#8b5a17]">Save {yearlySavings.amount} a year</p> : null}<p className="mt-4 text-sm leading-6 text-[#667066]">Unlimited teaching tools, lesson saving and Premium features.</p><Link href="/signup?next=%2Fupgrade" className="btn btn-primary mt-6 w-full px-4 py-3">Start free trial</Link></article>
           </div>
         </section>
       </main>

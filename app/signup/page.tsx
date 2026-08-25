@@ -323,6 +323,10 @@ export default function SignupPage() {
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14 lg:py-16">
         <aside className="order-2 rounded-[2rem] border border-[#dbe7d2] bg-[#edf4e9] p-6 shadow-[0_18px_40px_rgba(54,64,46,0.08)] sm:p-8 lg:order-1 lg:sticky lg:top-8">
+          <div className="rounded-2xl border border-[#c9ddbd] bg-white/90 p-4 text-sm leading-6 text-[#536152]">
+            <p className="font-semibold text-[#3f5138]">Your first 14 days include Premium access.</p>
+            <p className="mt-1">No payment details are required. After the welcome period, your account automatically moves to Basic unless you choose Premium.</p>
+          </div>
           <div className="inline-flex items-center rounded-full border border-[#cbdcc0] bg-white/80 px-4 py-2 text-sm font-semibold text-[#58734b] shadow-sm">
             Made for teachers
           </div>
@@ -335,21 +339,16 @@ export default function SignupPage() {
 
           <ul className="mt-8 space-y-4" aria-label="What your Classendo account includes">
             {[
-              ["Build focused lesson sets", "Choose visual vocabulary and keep your cards together for class."],
-              ["Teach from the same cards", "Open your lesson in Classroom Mode, games, worksheets, printables, or lesson plans."],
-              ["Save and reuse your work", "Return to your sets from My Lessons whenever you are ready to teach again."],
-            ].map(([title, description], index) => (
+              ["Unlimited teaching tools", "Use games, worksheets, printables and lesson plans from the same cards."],
+              ["Save every lesson", "Organise and reuse your work in My Lessons whenever you are ready to teach."],
+              ["More time for teaching", "Premium keeps your full lesson-building workflow ready for every class."],
+            ].map(([title, description]) => (
               <li key={title} className="flex gap-4 rounded-2xl border border-white/80 bg-white/75 p-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#d5e6ca] text-sm font-bold text-[#557249]">{index + 1}</span>
+                <span className="mt-1 h-3 w-3 shrink-0 rounded-full bg-[#7fa66d]" />
                 <div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm leading-6 text-[#5c665c]">{description}</p></div>
               </li>
             ))}
           </ul>
-
-          <div className="mt-7 rounded-2xl border border-[#d7e3ce] bg-white/80 p-4 text-sm leading-6 text-[#536152]">
-            <p className="font-semibold text-[#3f5138]">Your first 14 days include Premium access.</p>
-            <p className="mt-1">No payment details are required. After the welcome period, your account automatically moves to Basic unless you choose Premium.</p>
-          </div>
         </aside>
 
         <div className="order-1 lg:order-2">
