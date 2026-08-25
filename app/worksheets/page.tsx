@@ -396,7 +396,7 @@ function WorksheetsPageContent() {
               onClick={() => (window.location.href = "/flashcards")}
               className="btn btn-secondary shrink-0 px-3 py-1.5 text-sm"
             >
-              Add Cards
+              {user ? "Add Cards" : "Go back to Flashcards"}
             </button>
           </div>
 

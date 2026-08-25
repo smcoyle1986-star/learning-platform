@@ -37,6 +37,7 @@ import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import WelcomeTrialNotice from "@/components/billing/WelcomeTrialNotice";
 import { clearPendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
+import SignedInFeatureGate from "@/components/auth/SignedInFeatureGate";
 
 const RECENT_LIMIT = 8;
 const PAGE_SIZE_OPTIONS = [12, 24, 36] as const;
@@ -600,6 +601,8 @@ export default function DashboardPage() {
   /* ----------------------------------
      Render
   -----------------------------------*/
+  if (!user) return <SignedInFeatureGate featureName="My Lessons" nextPath="/dashboard" description="Save, organise and reuse your lesson sets from one place.">{null}</SignedInFeatureGate>;
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       {/* inject lightweight CSS for marquee/hover-scroll */}

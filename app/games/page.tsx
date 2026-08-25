@@ -14,6 +14,7 @@ import {
   writeLessonTray,
 } from "@/lib/lessons/tray";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { useAuth } from "@/components/AuthProvider";
 
 /**
  * Games Landing Page
@@ -141,6 +142,7 @@ export default function GamesLandingPage() {
   const [popularity, setPopularity] = useState<GamePopularityPayload | null>(null);
   const gameGridRef = useRef<HTMLDivElement | null>(null);
   const { access, canAccessGame } = useBillingAccess();
+  const { user } = useAuth();
 
   useEffect(() => {
     return subscribeToLessonTray((cards) => {
@@ -250,7 +252,7 @@ export default function GamesLandingPage() {
                 {lessonTray.length} cards ready
               </span>
               <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-secondary px-3 py-2 text-xs">
-                Add cards
+                {user ? "Add cards" : "Go back to Flashcards"}
               </button>
             </div>
           </div>
