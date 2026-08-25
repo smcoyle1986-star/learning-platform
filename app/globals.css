@@ -286,6 +286,66 @@ body {
     overflow-y: auto;
     padding: 1rem;
   }
+
+  /* Question modals must reserve room for their prompt and answer controls;
+     a large card image may shrink, but can never push the question out of view. */
+  body.classendo-game-page .game-question-modal {
+    align-items: center;
+    padding: 0.5rem;
+  }
+
+  body.classendo-game-page .game-question-modal__panel {
+    width: min(94vw, 64rem);
+    height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    gap: 0.5rem;
+    border-radius: 1.25rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  body.classendo-game-page .game-question-modal__content {
+    gap: 0.45rem;
+  }
+
+  body.classendo-game-page .game-question-modal__heading {
+    line-height: 1.15;
+  }
+
+  body.classendo-game-page .game-question-modal__heading > div:first-child {
+    font-size: 1rem;
+  }
+
+  body.classendo-game-page .game-question-modal__heading > div:last-child {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  body.classendo-game-page .game-question-modal__body,
+  body.classendo-game-page .game-question-modal__content > img,
+  body.classendo-game-page .game-question-modal__image {
+    max-height: min(42dvh, 16rem) !important;
+  }
+
+  body.classendo-game-page .game-question-modal__body img {
+    max-height: min(38dvh, 14rem) !important;
+    max-width: min(72vw, 32rem) !important;
+    object-fit: contain;
+  }
+
+  body.classendo-game-page .game-question-modal__text {
+    font-size: clamp(1.5rem, 5vw, 2.4rem);
+  }
+
+  body.classendo-game-page .game-question-modal__actions {
+    gap: 0.9rem;
+    padding-top: 0;
+  }
+
+  body.classendo-game-page .game-question-modal__actions button {
+    min-height: 2.6rem;
+    padding: 0.5rem 1.1rem;
+    font-size: 1rem;
+  }
 }
 
 /* This must remain after the landscape fallback above. It is the final

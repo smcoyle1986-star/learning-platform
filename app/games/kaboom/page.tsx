@@ -1016,24 +1016,24 @@ export default function KaBoomPage() {
 
       {/* Modal */}
       {modalOpen && (modalImage || modalText) && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-          <div className="flex h-[min(90svh,44rem)] max-h-[calc(100svh-1.5rem)] w-[min(92vw,64rem)] min-h-0 flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-white px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:gap-6 sm:px-8 sm:py-7">
-            <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto pb-1 sm:gap-6">
+        <div className="game-question-modal fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="game-question-modal__panel flex h-[min(90dvh,44rem)] max-h-[calc(100dvh-1.5rem)] w-[min(92vw,64rem)] min-h-0 flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-white px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:gap-6 sm:px-8 sm:py-7">
+            <div className="game-question-modal__content flex w-full min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto pb-1 sm:gap-6">
               {modalImage && (
                 <img
                   src={modalImage}
                   alt={modalText ?? ""}
-                  className="h-auto w-auto max-h-[min(56vh,28rem)] max-w-full object-contain rounded-2xl"
+                  className="game-question-modal__image h-auto w-auto max-h-[min(56dvh,28rem)] max-w-full object-contain rounded-2xl"
                 />
               )}
               {modalText && (
-                <div className="max-w-[90%] text-5xl md:text-6xl font-extrabold text-center leading-none tracking-tight">
+              <div className="game-question-modal__text max-w-[90%] text-5xl md:text-6xl font-extrabold text-center leading-none tracking-tight">
                   {modalText}
                 </div>
               )}
             </div>
 
-            <div className="flex shrink-0 gap-5 pt-1">
+            <div className="game-question-modal__actions flex shrink-0 gap-5 pt-1">
               <button onClick={handleModalIncorrect} className="px-6 py-3 rounded-full bg-white border border-red-200 text-red-600 text-lg font-semibold shadow-sm hover:-translate-y-0.5 transition-transform">
                 ❌
               </button>
