@@ -19,8 +19,11 @@ import type { LessonCard } from "@/lib/lessons/types";
 import { writeLessonTray } from "@/lib/lessons/tray";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
+import SignedInFeatureGate from "@/components/auth/SignedInFeatureGate";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function CommunityPage() {
+  const { user } = useAuth();
   const [libraryKind, setLibraryKind] = useState<CommunityLibraryKind>("lesson_sets");
   const lessons = useCommunitySets();
   const worksheets = useCommunityWorksheets(libraryKind === "worksheets");
@@ -60,6 +63,8 @@ export default function CommunityPage() {
   const openCommunityWorksheet = (worksheetId: string) => {
     window.location.assign(`/worksheets?community_worksheet_id=${encodeURIComponent(worksheetId)}`);
   };
+
+  if (!user) return <SignedInFeatureGate featureName="Community" nextPath="/teacher/community" description="Discover and save teacher-created lesson sets and worksheets.">{null}</SignedInFeatureGate>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
