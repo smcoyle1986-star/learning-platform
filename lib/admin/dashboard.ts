@@ -3,6 +3,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 
 import { getOptionalEnv } from "@/lib/server/env";
+import { getEmailDeliveryHealth, type EmailDeliveryHealth } from "@/lib/admin/email-delivery";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { getStripeServer } from "@/lib/server/stripe";
 
@@ -33,6 +34,7 @@ export type AdminDashboardSnapshot = {
     reportsConfigured: boolean;
     reportsPending: number | null;
     rejectedSignups24h: number;
+    emailDelivery: EmailDeliveryHealth;
   };
   recent: {
     registrations: Array<{
@@ -135,7 +137,7 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
   ]);
 
   const supabase = getSupabaseAdmin();
-  const [dashboardResult, rejectedSignupCountResult, rejectedSignupsResult] = await Promise.all([
+  const [dashboardResult, rejectedSignupCountResult, rejectedSignupsResult, emailDelivery] = await Promise.all([
     supabase.rpc("get_admin_dashboard_snapshot", {
       monthly_price_ids: monthlyPriceIds,
       yearly_price_ids: yearlyPriceIds,
@@ -149,6 +151,7 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
       .select("id,domain,reason,created_at")
       .order("created_at", { ascending: false })
       .limit(6),
+    getEmailDeliveryHealth(),
   ]);
   const { data, error } = dashboardResult;
 
@@ -231,6 +234,7 @@ export async function getAdminDashboardSnapshot(): Promise<AdminDashboardSnapsho
       reportsConfigured: boolean(platform.reports_configured),
       reportsPending: nullableCount(platform.reports_pending),
       rejectedSignups24h: rejectedSignupCountResult.count ?? 0,
+      emailDelivery,
     },
     recent: {
       registrations: array(recent.registrations).map((value) => {

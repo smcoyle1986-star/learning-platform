@@ -8,6 +8,7 @@ import {
   ImageIcon,
   Images,
   Layers3,
+  MailWarning,
   MessageSquareText,
   ShieldAlert,
   Sparkles,
@@ -274,6 +275,13 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <MetricCard
+              label="Confirmation email health"
+              value={snapshot.platform.emailDelivery.status === "healthy" ? "Healthy" : snapshot.platform.emailDelivery.status === "attention" ? "Needs attention" : "Unavailable"}
+              detail={snapshot.platform.emailDelivery.message}
+              icon={MailWarning}
+              unavailable={snapshot.platform.emailDelivery.status === "unavailable"}
+            />
+            <MetricCard
               label="Feedback pending"
               value={formatCount(snapshot.platform.feedbackPending)}
               detail={snapshot.platform.feedbackConfigured ? "Items awaiting review" : "Feedback storage will be added in its dedicated phase"}
@@ -294,6 +302,22 @@ export default async function AdminDashboardPage() {
               icon={ShieldAlert}
             />
           </div>
+          {snapshot.platform.emailDelivery.delayed.length ? (
+            <div className="mt-4 rounded-2xl border border-[#ead0c9] bg-[#fff8f6] p-5">
+              <h3 className="flex items-center gap-2 text-base font-semibold text-[#7f4f42]">
+                <MailWarning aria-hidden="true" className="h-4 w-4" />
+                Confirmation emails needing attention
+              </h3>
+              <ol className="mt-3 divide-y divide-[#f1ddd7]">
+                {snapshot.platform.emailDelivery.delayed.map((item) => (
+                  <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0 text-sm">
+                    <span className="font-semibold text-[#5e4038]">{item.email}</span>
+                    <span className="text-[#926255]">{item.status} · {item.ageMinutes} minutes ago</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </section>
 
         <section aria-labelledby="activity-heading">
