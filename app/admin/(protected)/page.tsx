@@ -312,7 +312,10 @@ export default async function AdminDashboardPage() {
                 {snapshot.platform.emailDelivery.delayed.map((item) => (
                   <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3 first:pt-0 last:pb-0 text-sm">
                     <span className="font-semibold text-[#5e4038]">{item.email}</span>
-                    <span className="text-[#926255]">{item.status} · {item.ageMinutes} minutes ago</span>
+                    <span className="text-right text-[#926255]">
+                      {item.status} · {item.detail} · {item.ageMinutes} minutes ago
+                      {item.suppressedAttempts > 0 ? ` · ${item.suppressedAttempts} blocked repeat${item.suppressedAttempts === 1 ? "" : "s"}` : ""}
+                    </span>
                   </li>
                 ))}
               </ol>

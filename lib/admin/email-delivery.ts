@@ -19,8 +19,11 @@ type DeliveryIssue = {
   id: string;
   email: string;
   status: string;
+  detail: string;
   sentAt: string;
   ageMinutes: number;
+  attempts: number;
+  suppressedAttempts: number;
 };
 
 export type EmailDeliveryHealth = {
@@ -54,6 +57,32 @@ function isDelivered(event: string) {
 
 function isFailure(event: string) {
   return ["bounced", "complained", "failed"].includes(event);
+}
+
+function statusPriority(event: string) {
+  if (event === "bounced" || event === "complained" || event === "failed") return 3;
+  if (event === "suppressed") return 2;
+  return 1;
+}
+
+function statusDetail(event: string) {
+  switch (event) {
+    case "bounced":
+      return "Recipient server rejected the address";
+    case "complained":
+      return "Recipient marked a previous message as spam";
+    case "failed":
+      return "Provider could not deliver the message";
+    case "suppressed":
+      return "Resend blocked a repeat after a bounce or spam complaint";
+    case "delivery delayed":
+    case "delivery_delayed":
+      return "Recipient server has not accepted the message yet";
+    case "sent":
+      return "No delivery event received yet";
+    default:
+      return "Delivery needs review";
+  }
 }
 
 async function listRecentResendEmails(apiKey: string): Promise<ResendEmail[]> {
@@ -105,23 +134,49 @@ export async function getEmailDeliveryHealth(): Promise<EmailDeliveryHealth> {
       return asString(email.subject) === SIGNUP_CONFIRMATION_SUBJECT && Number.isFinite(createdAt) && createdAt >= lookback;
     });
 
-    const delayed = confirmations.flatMap((email) => {
+    const delayedByRecipient = new Map<string, DeliveryIssue>();
+    for (const email of confirmations) {
       const recipients = asArray(email.to).map(asString).filter(Boolean);
       const sentAt = asString(email.created_at);
       const ageMinutes = Math.floor((now - Date.parse(sentAt)) / 60_000);
       const status = asString(email.last_event).toLowerCase() || "unknown";
-      if (ageMinutes < DELIVERY_GRACE_MINUTES || isDelivered(status)) return [];
+      if (ageMinutes < DELIVERY_GRACE_MINUTES || isDelivered(status)) continue;
 
-      return recipients
-        .filter((recipient) => recentlyUnconfirmed.has(recipient.toLowerCase()))
-        .map((recipient) => ({
-          id: asString(email.id) || `${recipient}-${sentAt}`,
+      for (const recipient of recipients) {
+        const recipientKey = recipient.toLowerCase();
+        if (!recentlyUnconfirmed.has(recipientKey)) continue;
+
+        const existing = delayedByRecipient.get(recipientKey);
+        const candidate = {
+          id: asString(email.id) || `${recipientKey}-${sentAt}`,
           email: maskEmail(recipient),
           status,
+          detail: statusDetail(status),
           sentAt,
           ageMinutes,
-        }));
-    });
+          attempts: 1,
+          suppressedAttempts: status === "suppressed" ? 1 : 0,
+        };
+        if (!existing) {
+          delayedByRecipient.set(recipientKey, candidate);
+          continue;
+        }
+
+        existing.attempts += 1;
+        existing.suppressedAttempts += candidate.suppressedAttempts;
+        const existingIsMoreSevere = statusPriority(existing.status) > statusPriority(candidate.status);
+        const sameSeverityButNewer = statusPriority(existing.status) === statusPriority(candidate.status)
+          && Date.parse(candidate.sentAt) > Date.parse(existing.sentAt);
+        if (!existingIsMoreSevere && (statusPriority(candidate.status) > statusPriority(existing.status) || sameSeverityButNewer)) {
+          Object.assign(existing, candidate, {
+            attempts: existing.attempts,
+            suppressedAttempts: existing.suppressedAttempts,
+          });
+        }
+      }
+    }
+    const delayed = Array.from(delayedByRecipient.values())
+      .sort((first, second) => Date.parse(second.sentAt) - Date.parse(first.sentAt));
     const failed24h = confirmations.filter((email) => isFailure(asString(email.last_event).toLowerCase())).length;
     const delivered24h = confirmations.filter((email) => isDelivered(asString(email.last_event).toLowerCase())).length;
     const status = delayed.length || failed24h ? "attention" : "healthy";
