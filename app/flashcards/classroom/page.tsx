@@ -63,10 +63,12 @@ export default function ClassroomMode() {
       return "text-5xl sm:text-6xl md:text-8xl lg:text-[10rem]";
     }
 
-    if (length > 48) return "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
-    if (length > 28) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
-    if (length > 16) return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
-    return "text-4xl sm:text-5xl md:text-7xl lg:text-8xl";
+    // In the combined layout, reserve the card for the image first. A short
+    // label such as “school bag” used to grow to 8xl and dominate the card.
+    if (length > 48) return "text-lg sm:text-xl md:text-2xl lg:text-3xl";
+    if (length > 28) return "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
+    if (length > 16) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
+    return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
   };
   const handleExit = () => {
     writeLessonTray(cards, user ? "account" : "guest");

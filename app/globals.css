@@ -75,6 +75,15 @@ body {
   line-height: 1.45;
 }
 
+/* Fullscreen play should contain only the game and its own controls. The
+   regular site navigation otherwise sits above the fixed game header. The
+   :fullscreen fallback also covers any fullscreen route that does not use
+   GameHeader (for example Classroom Mode). */
+body.classendo-game-page.classendo-game-fullscreen [data-site-chrome],
+html:fullscreen [data-site-chrome] {
+  display: none !important;
+}
+
 /* Mobile game play space -------------------------------------------------- */
 @media (max-width: 767px) {
   body.classendo-game-page [data-game-header] > div {
