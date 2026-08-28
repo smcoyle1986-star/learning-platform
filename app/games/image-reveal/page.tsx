@@ -26,6 +26,14 @@ type Team = {
 
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
+type RevealDifficulty = "easy" | "medium" | "hard";
+
+const REVEAL_DIFFICULTIES: Record<RevealDifficulty, { label: string; columns: number; rows: number }> = {
+  easy: { label: "Easy", columns: 4, rows: 3 },
+  medium: { label: "Medium", columns: 6, rows: 3 },
+  hard: { label: "Hard", columns: 6, rows: 4 },
+};
+
 function shuffleArray<T>(arr: T[]) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -198,10 +206,12 @@ export default function CardRevealPage() {
      Core game state (all gameplay logic preserved)
      ---------------------- */
   const [currentIndex, setCurrentIndex] = useState(0);
-  const TOTAL_TILES = 24;
+  const [difficulty, setDifficulty] = useState<RevealDifficulty>("medium");
+  const difficultyConfig = REVEAL_DIFFICULTIES[difficulty];
+  const totalTiles = difficultyConfig.columns * difficultyConfig.rows;
 
   const [tilesRemoved, setTilesRemoved] = useState<boolean[]>(() =>
-    Array.from({ length: TOTAL_TILES }).map(() => false)
+    Array.from({ length: REVEAL_DIFFICULTIES.medium.columns * REVEAL_DIFFICULTIES.medium.rows }).map(() => false)
   );
 
   // keep a ref for latest tilesRemoved to avoid stale closures in intervals/timeouts
@@ -218,7 +228,7 @@ export default function CardRevealPage() {
   }, [tilesRemoved]);
 
   useEffect(() => {
-    setTilesRemoved(Array.from({ length: TOTAL_TILES }).map(() => false));
+    setTilesRemoved(Array.from({ length: totalTiles }).map(() => false));
     setIsAwaitingDecision(false);
     clearTimer();
     setTimerSeconds(null);
@@ -235,7 +245,7 @@ export default function CardRevealPage() {
       pointsSpinTimeoutRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex]);
+  }, [currentIndex, totalTiles]);
 
   // Teams & turns
   const [teams, setTeams] = useState<Team[]>(() => [
@@ -566,7 +576,7 @@ export default function CardRevealPage() {
       gameTrayRef.current = shuffled;
       setCurrentIndex(0);
       setShowWinner(false);
-      setTilesRemoved(Array.from({ length: TOTAL_TILES }).map(() => false));
+      setTilesRemoved(Array.from({ length: totalTiles }).map(() => false));
       setImageRevealed(false);
     } catch (e) {
       console.error("Failed to reset game tray:", e);
@@ -598,9 +608,9 @@ export default function CardRevealPage() {
       specialRemoveActive,
       urgent,
       imageRevealed,
-      showRemoveButton: !isAwaitingDecision && !specialRemoveActive && tilesRemoved.filter(Boolean).length < TOTAL_TILES,
+      showRemoveButton: !isAwaitingDecision && !specialRemoveActive && tilesRemoved.filter(Boolean).length < totalTiles,
       removedCount: tilesRemoved.filter(Boolean).length,
-      totalTiles: TOTAL_TILES,
+      totalTiles,
     });
   }, [
     currentCard?.image,
@@ -610,7 +620,7 @@ export default function CardRevealPage() {
     urgent,
     imageRevealed,
     isAwaitingDecision,
-    TOTAL_TILES,
+    totalTiles,
   ]);
 
   function startRandomRemoveSequence() {
@@ -745,6 +755,31 @@ export default function CardRevealPage() {
         <div className="fixed top-[84px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[340px]">
             <div className="mb-4">
+              <div className="text-sm font-semibold mb-2">Difficulty</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(Object.keys(REVEAL_DIFFICULTIES) as RevealDifficulty[]).map((option) => {
+                  const config = REVEAL_DIFFICULTIES[option];
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => setDifficulty(option)}
+                      className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5 ${
+                        difficulty === option
+                          ? "bg-[var(--color-accent)] text-white border-transparent"
+                          : "bg-white text-black border-black/10"
+                      }`}
+                    >
+                      {config.label} ({config.columns * config.rows})
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                Fewer panels make each reveal panel larger.
+              </p>
+            </div>
+
+            <div className="mb-4">
               <div className="text-sm font-semibold mb-2">Teams</div>
           <div className="flex items-center gap-2 translate-y-4">
                 <button
@@ -871,11 +906,18 @@ export default function CardRevealPage() {
       {/* Main game grid */}
       <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>
         <div className={`flex h-full justify-center ${isFullscreen ? "items-center" : "items-start"}`}>
-          <div className={`game-mobile-aspect-stage w-full ${isFullscreen ? "game-image-reveal-aspect-stage max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border`} style={{ aspectRatio: "16/9" }}>
+          <div className={`game-mobile-aspect-stage game-image-reveal-responsive-stage ${isFullscreen ? "game-image-reveal-aspect-stage" : ""} rounded-3xl shadow-2xl overflow-hidden border`}>
             <div className="relative w-full h-full bg-gray-100">
               <PhaserGameHost
+                key={difficulty}
                 className="absolute inset-0"
-                createGame={createImageRevealGame}
+                createGame={(context) =>
+                  createImageRevealGame({
+                    ...context,
+                    columns: difficultyConfig.columns,
+                    rows: difficultyConfig.rows,
+                  })
+                }
                 onApiReady={(api) => {
                   sceneApiRef.current = api as ImageRevealApi | null;
                 }}
@@ -905,7 +947,7 @@ export default function CardRevealPage() {
                 !specialRemoveActive &&
                 !showPointsPrompt &&
                 !showPointsSpinner &&
-                tilesRemoved.filter(Boolean).length < TOTAL_TILES && (
+                tilesRemoved.filter(Boolean).length < totalTiles && (
                   <div className="absolute inset-0 z-60 flex items-center justify-center pointer-events-auto">
                     <button
                       onClick={startRandomRemoveSequence}

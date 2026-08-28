@@ -449,6 +449,22 @@ body.classendo-game-page.classendo-game-fullscreen .game-image-reveal-fullscreen
   aspect-ratio: 16 / 9;
 }
 
+/* Image Reveal scales from the usable screen area as one 16:9 canvas. The
+   image and panels therefore retain the same proportions on every display. */
+.game-image-reveal-responsive-stage {
+  width: min(92vw, calc((100dvh - 13rem) * 16 / 9));
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  flex: 0 0 auto;
+}
+
+body.classendo-game-page.classendo-game-fullscreen .game-image-reveal-fullscreen-shell .game-image-reveal-responsive-stage {
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
 /* KaBoom's score strip changes with the number of teams. Its fullscreen board
    receives the measured remaining viewport height, so Android's fullscreen
    transition cannot leave the nested aspect-ratio frame with a zero height. */

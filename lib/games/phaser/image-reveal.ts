@@ -29,17 +29,21 @@ export async function createImageRevealGame({
   parent,
   width,
   height,
+  columns,
+  rows,
   exposeApi,
 }: {
   Phaser: typeof import("phaser");
   parent: HTMLDivElement;
   width: number;
   height: number;
+  columns?: number;
+  rows?: number;
   emit: (event: ImageRevealEvent) => void;
   exposeApi: (api: ImageRevealApi) => void;
 }) {
-  const COLS = 6;
-  const ROWS = 4;
+  const COLS = columns ?? 6;
+  const ROWS = rows ?? 4;
   const PATCH_COLORS = [0xfde68a, 0xfca5a5, 0xc7d2fe, 0xbbf7d0, 0xfbcfe8, 0xfee2b3, 0xdbeafe, 0xd1fae5];
 
   class ImageRevealScene extends Phaser.Scene {
