@@ -728,7 +728,7 @@ export default function CardRevealPage() {
      Main playable layout with scoreboard changes
      ---------------------- */
   return (
-    <div ref={containerRef} className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
+    <div ref={containerRef} className={`${isFullscreen ? "game-fullscreen-shell game-image-reveal-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
       <GameHeader
         title="Card Reveal"
         onExit={() => {
@@ -811,7 +811,7 @@ export default function CardRevealPage() {
       )}
 
       {/* Compact scoreboard */}
-      <div className={`game-mobile-chrome pt-[92px] max-w-7xl mx-auto px-4`}>
+      <div className={`${isFullscreen ? "game-fullscreen-chrome " : ""}game-mobile-chrome pt-[92px] max-w-7xl mx-auto px-4`}>
         <div className="flex items-center justify-between gap-3 mb-1">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -870,8 +870,8 @@ export default function CardRevealPage() {
 
       {/* Main game grid */}
       <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>
-        <div className="flex justify-center items-start h-full">
-          <div className={`game-mobile-aspect-stage w-full ${isFullscreen ? "max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border`} style={{ aspectRatio: isFullscreen ? "16/9" : "16/9" }}>
+        <div className={`flex h-full justify-center ${isFullscreen ? "items-center" : "items-start"}`}>
+          <div className={`game-mobile-aspect-stage w-full ${isFullscreen ? "game-image-reveal-aspect-stage max-w-[1600px]" : "max-w-6xl"} rounded-3xl shadow-2xl overflow-hidden border`} style={{ aspectRatio: "16/9" }}>
             <div className="relative w-full h-full bg-gray-100">
               <PhaserGameHost
                 className="absolute inset-0"

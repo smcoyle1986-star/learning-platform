@@ -437,6 +437,18 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell [data-
   min-height: 0;
 }
 
+/* Image Reveal has a scoreboard above its board. On a wide external display,
+   sizing the 16:9 board from width alone can make the board taller than the
+   viewport left after that scoreboard. Let the flex stage supply the remaining
+   height, then derive the board width from that fitted 16:9 height. */
+body.classendo-game-page.classendo-game-fullscreen .game-image-reveal-fullscreen-shell .game-image-reveal-aspect-stage {
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 16 / 9;
+}
+
 /* KaBoom's score strip changes with the number of teams. Its fullscreen board
    receives the measured remaining viewport height, so Android's fullscreen
    transition cannot leave the nested aspect-ratio frame with a zero height. */
