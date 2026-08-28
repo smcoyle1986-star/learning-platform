@@ -966,7 +966,7 @@ export default function YesOrNoPage() {
                     src={currentCard.image}
                     alt={currentCard.word}
                     className={`w-full h-full object-contain select-none transition-all duration-300 ${
-                      shouldBlurCardImage ? "blur-xl scale-[1.08] md:scale-[1.12]" : "blur-0 scale-[1.16] md:scale-[1.22]"
+                      shouldBlurCardImage ? "blur-xl" : "blur-0"
                     }`}
                     draggable={false}
                   />
