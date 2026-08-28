@@ -508,6 +508,23 @@ export default function MemoryFlipPage() {
     const faceImage = typeof card.faceImage === "string" && card.faceImage.trim().length > 0
       ? card.faceImage
       : null;
+    const textLength = card.faceText?.trim().length ?? 0;
+    const singleLineTextSize =
+      textLength <= 6
+        ? "clamp(1.4rem, 3.1vw, 3.1rem)"
+        : textLength <= 10
+          ? "clamp(1.15rem, 2.55vw, 2.55rem)"
+          : textLength <= 14
+            ? "clamp(0.95rem, 2.05vw, 2.05rem)"
+            : "clamp(0.75rem, 1.55vw, 1.55rem)";
+    const singleLineTextStyle = {
+      fontWeight: 900,
+      fontSize: singleLineTextSize,
+      lineHeight: 1,
+      maxWidth: "92%",
+      whiteSpace: "nowrap" as const,
+      wordBreak: "normal" as const,
+    };
 
     if (gameStyle === "text-text")
       return (
@@ -523,13 +540,7 @@ export default function MemoryFlipPage() {
           }}
         >
           <div
-            style={{
-              fontWeight: 900,
-              fontSize: "clamp(2rem, 3.5vw, 3.4rem)",
-              lineHeight: 0.96,
-              maxWidth: "92%",
-              wordBreak: "break-word",
-            }}
+            style={singleLineTextStyle}
           >
             {card.faceText}
           </div>
@@ -609,13 +620,7 @@ export default function MemoryFlipPage() {
           }}
         >
           <div
-            style={{
-              fontWeight: 900,
-              fontSize: "clamp(2rem, 3.5vw, 3.4rem)",
-              lineHeight: 0.96,
-              maxWidth: "92%",
-              wordBreak: "break-word",
-            }}
+            style={singleLineTextStyle}
           >
             {card.faceText}
           </div>
