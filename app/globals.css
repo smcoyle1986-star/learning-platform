@@ -437,6 +437,18 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell [data-
   min-height: 0;
 }
 
+/* Yes/No keeps its play canvas within the space remaining below its compact
+   score strip, so normal, fullscreen, and HDMI/TV layouts share one scale. */
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-yes-no-stage {
+  display: flex;
+  width: 100% !important;
+  padding-top: 0.5rem;
+}
+
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-yes-no-stage > div {
+  flex: 1 1 0;
+}
+
 /* Image Reveal has a scoreboard above its board. On a wide external display,
    sizing the 16:9 board from width alone can make the board taller than the
    viewport left after that scoreboard. Let the flex stage supply the remaining

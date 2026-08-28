@@ -868,7 +868,7 @@ export default function YesOrNoPage() {
 
   // UI
   return (
-    <div className="h-screen overflow-hidden bg-[hsl(140,40%,95%)] text-black">
+    <div className={`${isFullscreen ? "game-fullscreen-shell" : "h-screen"} overflow-hidden bg-[hsl(140,40%,95%)] text-black`}>
       <GameHeader
         title="Yes or No"
         onExit={() => router.push("/games")}
@@ -906,6 +906,7 @@ export default function YesOrNoPage() {
         </div>
       </div>
 
+      <div className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
       {playMode === "team" ? (
         <div className="game-mobile-chrome pt-[72px] max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between gap-4 mb-2">
@@ -952,13 +953,14 @@ export default function YesOrNoPage() {
           </div>
         </div>
       )}
+      </div>
 
-      {/* Main game grid */}
-      <main data-game-stage className={`max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
+      {/* Kahoot-style responsive game canvas */}
+      <main data-game-stage className={`game-yes-no-stage w-full max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
         <div className="flex justify-center items-start h-full min-h-0">
-          <div className="relative w-full max-w-6xl bg-white rounded-3xl shadow-2xl p-4 md:p-5 flex flex-col items-center overflow-hidden h-full min-h-0">
-            <div className="relative w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 py-1">
-              <div className="relative w-full max-w-[1040px] flex-[1.55] min-h-0 rounded-[28px] border-2 border-slate-200 bg-[#f7faf7] shadow-inner overflow-hidden flex items-center justify-center">
+          <div className="relative w-full max-w-6xl rounded-3xl bg-white/85 shadow-2xl p-3 md:p-4 flex flex-col items-center overflow-hidden h-full min-h-0">
+            <div className="relative w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2">
+              <div className="relative w-full flex-[1.55] min-h-0 rounded-[28px] border-2 border-slate-200 bg-[#f7faf7] shadow-inner overflow-hidden flex items-center justify-center">
                 {currentCard?.image ? (
                   <img
                     src={currentCard.image}
@@ -1003,21 +1005,21 @@ export default function YesOrNoPage() {
                 )}
               </div>
 
-              <div className="w-full max-w-[920px] min-h-[72px] flex items-center justify-center px-4 text-center">
-                <p className={`text-2xl md:text-4xl font-extrabold tracking-tight text-slate-800 transition-all duration-300 ${showPrompt ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
+              <div className="w-full max-w-[1100px] min-h-[64px] flex items-center justify-center px-4 text-center">
+                <p className={`text-xl md:text-4xl font-extrabold tracking-tight text-slate-800 transition-all duration-300 ${showPrompt ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
                   {displayedText || "—"}
                 </p>
               </div>
             </div>
 
             {playMode === "team" ? (
-              <div className="relative z-10 flex items-center justify-center gap-4 pb-2 mt-auto">
+              <div className="relative z-10 mt-auto grid w-full grid-cols-2 gap-3 pt-1">
                 <button
                   onClick={() => void handleYesNo(true)}
                   disabled={!canAnswer}
-                  className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
+                  className={`h-[clamp(5.5rem,14vh,9rem)] rounded-[28px] border-[6px] border-white text-white font-extrabold text-3xl md:text-5xl shadow-2xl transition-transform duration-200 ${
                     canAnswer
-                      ? "bg-[linear-gradient(180deg,#6ee7a8,#16a34a)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(22,163,74,0.35)]"
+                      ? "bg-[linear-gradient(180deg,#6ee7a8,#16a34a)] animate-pulse ring-4 ring-white/70 ring-offset-2 ring-offset-transparent hover:scale-[1.02] hover:shadow-[0_28px_80px_rgba(22,163,74,0.35)]"
                       : "bg-[#a7f3d0] opacity-75 cursor-not-allowed"
                   }`}
                   aria-label="Yes"
@@ -1027,9 +1029,9 @@ export default function YesOrNoPage() {
                 <button
                   onClick={() => void handleYesNo(false)}
                   disabled={!canAnswer}
-                  className={`w-[112px] h-[112px] md:w-[124px] md:h-[124px] rounded-full border-[8px] border-white text-white font-extrabold text-2xl md:text-3xl shadow-2xl transition-transform duration-200 ${
+                  className={`h-[clamp(5.5rem,14vh,9rem)] rounded-[28px] border-[6px] border-white text-white font-extrabold text-3xl md:text-5xl shadow-2xl transition-transform duration-200 ${
                     canAnswer
-                      ? "bg-[linear-gradient(180deg,#fca5a5,#ef4444)] animate-pulse ring-4 ring-white/70 ring-offset-4 ring-offset-transparent hover:scale-105 hover:shadow-[0_28px_80px_rgba(239,68,68,0.35)]"
+                      ? "bg-[linear-gradient(180deg,#fca5a5,#ef4444)] animate-pulse ring-4 ring-white/70 ring-offset-2 ring-offset-transparent hover:scale-[1.02] hover:shadow-[0_28px_80px_rgba(239,68,68,0.35)]"
                       : "bg-[#fbcaca] opacity-75 cursor-not-allowed"
                   }`}
                   aria-label="No"
