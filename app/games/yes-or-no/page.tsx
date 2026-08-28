@@ -865,8 +865,8 @@ export default function YesOrNoPage() {
         trackGameKey={gameKey}
       />
 
+      {playMode === "team" && (
       <div className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
-      {playMode === "team" ? (
         <div className="game-mobile-chrome pt-[72px] max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-3">
@@ -897,22 +897,8 @@ export default function YesOrNoPage() {
             })}
           </div>
         </div>
-      ) : (
-        <div className="pt-[72px] max-w-7xl mx-auto px-4">
-          <div className="mb-2 rounded-[24px] border border-white/80 bg-white/78 px-5 py-3 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base md:text-lg font-semibold text-slate-800">Choose Your Side</h2>
-                <p className="text-sm text-slate-600">Students move to the YES side or the NO side. When the timer ends, the correct side reveals automatically.</p>
-              </div>
-              <div className="rounded-full border border-[#89ad70]/30 bg-[#eef5e6] px-4 py-2 text-sm font-semibold text-[#587446]">
-                {remainingCount} cards left
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       </div>
+      )}
 
       {/* Kahoot-style responsive game canvas */}
       <main data-game-stage className={`game-yes-no-stage w-full max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
