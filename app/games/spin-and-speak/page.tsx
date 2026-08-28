@@ -409,134 +409,104 @@ export default function SpinAndSpeakPage() {
       />
 
       {/* Main */}
-      <main data-game-stage className="game-mobile-stage-shell pt-[72px] max-w-7xl mx-auto px-4 h-[calc(100vh-72px)]">
-        <div className="h-full flex gap-6">
-          {/* Wheel */}
-          <section className="w-1/3 relative flex flex-col items-center justify-center">
-            <div
-              className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]"
-              style={isFullscreen ? { height: "min(420px, calc(var(--game-viewport-height, 100dvh) - 205px))" } : undefined}
-            >
-              <PhaserGameHost
-                className="w-full h-full"
-                createGame={(context) => createSpinWheelGame({ ...context, segments: SEGMENTS })}
-                onEvent={handleSpinSceneEvent}
-                onApiReady={(api) => {
-                  sceneApiRef.current = api as SpinWheelApi | null;
-                }}
-              />
-            </div>
-
-            <div className="mt-6">
-              <button
-                onClick={spinWheel}
-                disabled={spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0}
-                className={`btn btn-primary px-8 py-4 text-xl md:text-2xl font-extrabold shadow-2xl transition ${
-                  spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
-                } ${!spinning && !timerActive && !showPopup && !showPointsPrompt && !showPointsSpinner && tray.length > 0 ? "spin-pulse" : ""}`}
-              >
-                SPIN
-              </button>
-            </div>
-
-            <div className="mt-4 text-sm text-gray-700">{remainingCount} cards remaining</div>
-          </section>
-
-          {/* Center card */}
-          <section className="w-1/3 flex flex-col items-center justify-center">
-            <div
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-xl h-[22rem] md:h-[30rem] flex items-center justify-center overflow-hidden"
-              style={isFullscreen ? { height: "min(480px, calc(var(--game-viewport-height, 100dvh) - 255px))" } : undefined}
-            >
-              {currentCard ? (
-                imgSrc ? (
-                  <img
-                    src={imgSrc}
-                    alt={currentCard.word ?? ""}
-                    className={`object-contain w-full h-full p-3 md:p-4 transition-all duration-300 ${
-                      shouldBlurCardImage ? "blur-xl scale-[1.03]" : "blur-0 scale-100"
-                    }`}
-                  />
-                ) : (
-                  <div className="text-2xl text-gray-400">No image</div>
-                )
-              ) : (
-                <div className="text-xl text-gray-500">No card</div>
-              )}
-            </div>
-
-            <div className="text-6xl md:text-7xl font-extrabold text-center mt-5 min-h-[4.5rem] tracking-tight">
-              {showCardWord && currentCard ? currentCard.word : " "}
-            </div>
-
-            {showPopup && landedSegment && !showPointsPrompt && !showPointsSpinner && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center px-4 pointer-events-none">
-                <div className="bg-white/95 border border-black/10 rounded-[2rem] shadow-[0_26px_80px_rgba(15,23,42,0.22)] px-8 py-7 text-center animate-zoom-in w-[min(90vw,32rem)]">
-                  <div className="text-sm uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-2">Spin result</div>
-                  <div className="text-3xl md:text-4xl font-extrabold">{landedSegment.label}</div>
-                </div>
+      <main data-game-stage className="game-mobile-stage-shell game-spin-speak-stage pt-[72px] h-[calc(100vh-72px)] px-3 sm:px-4">
+        <div className="spin-speak-layout max-w-7xl mx-auto">
+          <section className="spin-speak-scorebar bg-white/90 rounded-2xl border border-black/5 shadow-sm px-3 py-2.5" aria-label="Scoreboard">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-bold text-[var(--color-text-main)]">Scoreboard</span>
+                <span className="text-xs text-[var(--color-text-muted)]">{remainingCount} cards left</span>
               </div>
-            )}
-
-            <div className="mt-7 flex flex-col items-center gap-3">
-              <div className={`px-5 py-3 rounded-2xl font-bold text-2xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-white text-black shadow-sm"}`}>
-                {timerActive && timerSeconds !== null ? `${timerSeconds}s` : `Ready`}
-              </div>
-
-              {timerActive && (
-                <div className="flex items-center gap-4">
-                  <button onClick={onCorrect} className="btn btn-primary px-6 py-2 font-bold shadow">✅ Correct</button>
-                  <button onClick={onPass} className="btn btn-secondary px-6 py-2 font-semibold shadow">❌ Pass</button>
-                </div>
-              )}
-
-              {timerActive && (
-                <button onClick={teacherEndTimerEarly} className="btn btn-secondary mt-2 px-4 py-2">
-                  End Early
-                </button>
-              )}
-            </div>
-          </section>
-
-          {/* Right scoreboard */}
-          <aside className="w-1/3 flex flex-col gap-4">
-            <div className="bg-white rounded-2xl shadow p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">Teams</div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3">
+              <div className="flex flex-wrap justify-end gap-2">
                 {teams.map((team, idx) => {
                   const isActive = idx === activeTeamIndex;
                   return (
-                    <div key={team.id} className={`flex items-center justify-between p-3 rounded-md transition ${isActive ? "scale-105 ring-2 ring-indigo-400 bg-indigo-50" : "bg-white"}`}>
-                      <div>
-                        <div className="text-sm font-semibold">{team.name}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`${isActive ? "text-3xl font-extrabold active-score" : "text-xl font-bold"}`}>{team.score}</div>
-                        <div className="flex gap-1">
-                          <button onClick={() => adjustScore(team.id, -1)} className="btn btn-secondary px-2 py-1">−</button>
-                          <button onClick={() => adjustScore(team.id, +1)} className="btn btn-secondary px-2 py-1">+</button>
-                        </div>
-                      </div>
+                    <div key={team.id} className={`flex items-center gap-1.5 rounded-xl border px-2 py-1.5 transition ${isActive ? "border-indigo-400 bg-indigo-50 shadow-sm" : "border-black/10 bg-white"}`}>
+                      <span className="max-w-24 truncate text-xs font-semibold">{team.name}</span>
+                      <span className={`${isActive ? "text-xl font-extrabold active-score" : "text-lg font-bold"}`}>{team.score}</span>
+                      <button onClick={() => adjustScore(team.id, -1)} aria-label={`Remove a point from ${team.name}`} className="btn btn-secondary px-2 py-0.5 text-sm">−</button>
+                      <button onClick={() => adjustScore(team.id, +1)} aria-label={`Add a point to ${team.name}`} className="btn btn-secondary px-2 py-0.5 text-sm">+</button>
                     </div>
                   );
                 })}
+                <button onClick={() => resetGame(false)} className="btn btn-secondary px-3 py-1.5 text-xs font-semibold">Reset turn</button>
               </div>
+            </div>
+          </section>
 
-              <div className="pt-2 border-t mt-2 flex items-center justify-between">
-                <button onClick={() => resetGame(false)} className="btn btn-secondary px-3 py-1">
-                  Reset Turn
+          <div className="spin-speak-playfield">
+            <section className="spin-speak-wheel flex flex-col items-center min-h-0">
+              <div className="spin-speak-wheel-canvas rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
+                <PhaserGameHost
+                  className="w-full h-full"
+                  createGame={(context) => createSpinWheelGame({ ...context, segments: SEGMENTS })}
+                  onEvent={handleSpinSceneEvent}
+                  onApiReady={(api) => {
+                    sceneApiRef.current = api as SpinWheelApi | null;
+                  }}
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  onClick={spinWheel}
+                  disabled={spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0}
+                  className={`btn btn-primary px-8 py-4 text-xl md:text-2xl font-extrabold shadow-2xl transition ${
+                    spinning || timerActive || showPopup || showPointsPrompt || showPointsSpinner || tray.length === 0 ? "opacity-60 cursor-not-allowed" : "hover:scale-105"
+                  } ${!spinning && !timerActive && !showPopup && !showPointsPrompt && !showPointsSpinner && tray.length > 0 ? "spin-pulse" : ""}`}
+                >
+                  SPIN
                 </button>
-                <div className="text-sm text-gray-500">Cards: {tray.length}</div>
+                <span className="text-sm text-gray-700 whitespace-nowrap">{remainingCount} remaining</span>
               </div>
-            </div>
+            </section>
 
-            <div className="text-xs text-gray-700">
-              Teacher controls on the right. Spin to choose a task; after popup the timer begins.
-            </div>
-          </aside>
+            <section className="spin-speak-card-panel bg-white rounded-3xl shadow-2xl min-h-0 overflow-hidden">
+              <div className="spin-speak-card-visual">
+                {currentCard ? (
+                  imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={currentCard.word ?? ""}
+                      className={`object-contain w-full h-full p-3 md:p-5 transition-all duration-300 ${
+                        shouldBlurCardImage ? "blur-xl scale-[1.03]" : "blur-0 scale-100"
+                      }`}
+                    />
+                  ) : (
+                    <div className="text-2xl text-gray-400">No image</div>
+                  )
+                ) : (
+                  <div className="text-xl text-gray-500">No card</div>
+                )}
+              </div>
+
+              {showPopup && landedSegment && !showPointsPrompt && !showPointsSpinner && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center px-4 pointer-events-none">
+                  <div className="bg-white/95 border border-black/10 rounded-[2rem] shadow-[0_26px_80px_rgba(15,23,42,0.22)] px-8 py-7 text-center animate-zoom-in w-[min(90vw,32rem)]">
+                    <div className="text-sm uppercase tracking-[0.3em] text-[var(--color-text-muted)] mb-2">Spin result</div>
+                    <div className="text-3xl md:text-4xl font-extrabold">{landedSegment.label}</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="spin-speak-turnbar">
+                <div className="min-w-0 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight truncate text-[var(--color-text-main)]">
+                  {showCardWord && currentCard ? currentCard.word : "Ready to spin"}
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className={`px-4 py-2 rounded-2xl font-bold text-xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-[#f3f7ee] text-[var(--color-text-main)]"}`}>
+                    {timerActive && timerSeconds !== null ? `${timerSeconds}s` : "Ready"}
+                  </div>
+                  {timerActive && (
+                    <>
+                      <button onClick={onCorrect} className="btn btn-primary px-4 py-2 font-bold shadow">Correct</button>
+                      <button onClick={onPass} className="btn btn-secondary px-4 py-2 font-semibold shadow">Pass</button>
+                      <button onClick={teacherEndTimerEarly} className="btn btn-secondary px-3 py-2 text-sm">End early</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </main>
 
@@ -628,6 +598,75 @@ export default function SpinAndSpeakPage() {
       )}
 
       <style jsx>{`
+        .spin-speak-layout {
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr);
+          gap: clamp(0.6rem, 1.4vh, 1rem);
+          height: 100%;
+          min-height: 0;
+        }
+        .spin-speak-playfield {
+          display: grid;
+          grid-template-columns: minmax(16rem, 0.88fr) minmax(0, 1.5fr);
+          gap: clamp(1rem, 2.5vw, 2.5rem);
+          min-height: 0;
+        }
+        .spin-speak-wheel {
+          justify-content: center;
+        }
+        .spin-speak-wheel-canvas {
+          width: min(100%, 34rem);
+          height: min(100%, 34rem);
+          min-height: 0;
+          aspect-ratio: 1;
+        }
+        .spin-speak-card-panel {
+          position: relative;
+          display: grid;
+          grid-template-rows: minmax(0, 1fr) auto;
+          min-height: 0;
+        }
+        .spin-speak-card-visual {
+          display: flex;
+          min-height: 0;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .spin-speak-turnbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: clamp(0.8rem, 1.8vh, 1.25rem) clamp(1rem, 2.3vw, 1.75rem);
+          border-top: 1px solid rgba(15, 23, 42, 0.08);
+          background: linear-gradient(135deg, rgba(241, 248, 239, 0.92), rgba(255, 255, 255, 0.98));
+        }
+        @media (max-width: 900px) and (orientation: portrait) {
+          .game-spin-speak-stage {
+            height: auto !important;
+            min-height: calc(100dvh - 4.5rem);
+          }
+          .spin-speak-playfield {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto minmax(26rem, 1fr);
+          }
+          .spin-speak-wheel-canvas {
+            height: auto;
+            aspect-ratio: 1;
+          }
+        }
+        @media (max-width: 640px) {
+          .spin-speak-scorebar > div,
+          .spin-speak-turnbar {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+          .spin-speak-scorebar > div > div:last-child,
+          .spin-speak-turnbar > div:last-child {
+            justify-content: flex-start;
+          }
+        }
         .animate-zoom-in {
           animation: zoom-in 420ms cubic-bezier(.2,.9,.3,1) both;
         }
