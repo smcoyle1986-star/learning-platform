@@ -7,6 +7,7 @@ import HeaderAuth from "@/components/HeaderAuth";
 import BrandButton from "@/components/BrandButton";
 import SiteNavigation from "@/components/SiteNavigation";
 import MobileSiteHeader from "@/components/MobileSiteHeader";
+import SiteChrome from "@/components/SiteChrome";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
@@ -52,16 +53,18 @@ export default function RootLayout({
             <BrandMenuDrawer />
             <BrandPageTheme />
             <div className="relative z-10">
-              <div data-site-chrome>
-                <MobileSiteHeader />
-              </div>
-              <header data-site-chrome className="relative z-[110] hidden border-b border-black/5 bg-[var(--color-bg-main)]/90 px-6 py-3 backdrop-blur-md lg:block">
-                <div className="mx-auto flex max-w-7xl items-center gap-6">
-                  <BrandButton className="shrink-0 text-3xl font-extrabold tracking-tight text-blue-700 transition hover:opacity-80" />
-                  <SiteNavigation />
-                  <div className="ml-auto"><HeaderAuth /></div>
+              <SiteChrome>
+                <div data-site-chrome>
+                  <MobileSiteHeader />
                 </div>
-              </header>
+                <header data-site-chrome className="relative z-[110] hidden border-b border-black/5 bg-[var(--color-bg-main)]/90 px-6 py-3 backdrop-blur-md lg:block">
+                  <div className="mx-auto flex max-w-7xl items-center gap-6">
+                    <BrandButton className="shrink-0 text-3xl font-extrabold tracking-tight text-blue-700 transition hover:opacity-80" />
+                    <SiteNavigation />
+                    <div className="ml-auto"><HeaderAuth /></div>
+                  </div>
+                </header>
+              </SiteChrome>
 
               {children}
               <SiteFooter />

@@ -10,7 +10,7 @@ export function FeedbackLauncher() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
 
-  if (loading || !user || pathname.startsWith("/feedback") || pathname.startsWith("/admin")) {
+  if (loading || !user || pathname.startsWith("/feedback") || pathname.startsWith("/admin") || pathname.startsWith("/games/")) {
     return null;
   }
 

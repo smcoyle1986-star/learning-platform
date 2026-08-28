@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Info, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -19,6 +20,7 @@ const legalLinks = [
 ] as const;
 
 export function SiteFooter() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const openerRef = useRef<HTMLButtonElement>(null);
@@ -49,7 +51,7 @@ export function SiteFooter() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isOpen]);
 
-  if (isFullscreen) return null;
+  if (isFullscreen || pathname.startsWith("/games/")) return null;
 
   return (
     <>
