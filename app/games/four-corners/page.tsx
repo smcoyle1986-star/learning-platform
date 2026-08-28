@@ -426,7 +426,7 @@ export default function FourCornersPage() {
       />
 
       {trayIsEmpty ? (
-        <main data-game-stage style={{ paddingTop: 80 }} className="game-four-corners-stage max-w-7xl mx-auto px-6 pb-12">
+        <main data-game-stage style={{ paddingTop: 80 }} className="game-four-corners-stage w-full max-w-7xl mx-auto px-6 pb-12">
           <div className={`${isFullscreen ? "h-full min-h-0" : "min-h-[calc(100vh-120px)]"} flex items-center justify-center`}>
             <div className="bg-white rounded-xl p-8 shadow-lg text-center">
               <h2 className="text-2xl font-bold mb-3">No cards selected</h2>
@@ -439,7 +439,7 @@ export default function FourCornersPage() {
           </div>
         </main>
       ) : (
-        <main data-game-stage style={{ paddingTop: 80 }} className="game-four-corners-stage max-w-7xl mx-auto px-6 pb-12">
+        <main data-game-stage style={{ paddingTop: 80 }} className="game-four-corners-stage w-full max-w-7xl mx-auto px-6 pb-12">
           <div className="game-four-corners-board relative rounded-2xl shadow-xl overflow-hidden bg-[#f8fafc]" style={{ height: isFullscreen ? "100%" : "calc(100vh - 120px)" }}>
             <div className="relative w-full h-full p-4 md:p-5">
               <div className="relative w-full h-full rounded-[28px] border border-slate-200 bg-[#f7faf7] shadow-inner overflow-hidden">
