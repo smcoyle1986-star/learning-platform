@@ -107,15 +107,15 @@ function GameEngine({ cards, onExit }: GameEngineProps) {
    Games list + mapping
    ------------------------- */
 const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] = [
-  { title: "Image Reveal", id: "image-reveal", subtitle: "Reveal parts of the picture", image: "/games/image-reveal.svg" },
-  { title: "KaBoom!", id: "kaboom", subtitle: "Avoid the bombs and score points", image: "/games/kaboom.svg" },
-  { title: "Spin and Speak", id: "spin-and-speak", subtitle: "Spin the wheel for quick class practice", image: "/games/spin-and-speak.svg" },
-  { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions", image: "/games/yes-or-no.svg" },
-  { title: "Choose Your Side", id: "choose-your-side", subtitle: "Move to the side you choose", image: "/games/choose-your-side.svg" },
-  { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/four-corners.svg" },
-  { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/memory-flip.svg" },
-  { title: "Connect Four", id: "connect-four", subtitle: "Connect four tokens in a line to win", image: "/games/connect-four.svg" },
-  { title: "Conquer", id: "conquer", subtitle: "Claim territory on a giant board", image: "/games/conquer.svg" },
+  { title: "Image Reveal", id: "image-reveal", subtitle: "Reveal parts of the picture", image: "/games/image-reveal-art.png" },
+  { title: "KaBoom!", id: "kaboom", subtitle: "Avoid the bombs and score points", image: "/games/kaboom-art.png" },
+  { title: "Spin and Speak", id: "spin-and-speak", subtitle: "Spin the wheel for quick class practice", image: "/games/spin-and-speak-art.png" },
+  { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions", image: "/games/yes-or-no-art.png" },
+  { title: "Choose Your Side", id: "choose-your-side", subtitle: "Move to the side you choose", image: "/games/choose-your-side-art.png" },
+  { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/four-corners-art.png" },
+  { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/memory-flip-art.png" },
+  { title: "Connect Four", id: "connect-four", subtitle: "Connect four tokens in a line to win", image: "/games/connect-four-art.png" },
+  { title: "Conquer", id: "conquer", subtitle: "Claim territory on a giant board", image: "/games/conquer-art.png" },
 ];
 
 type GameInfo = (typeof GAMES)[number];
