@@ -489,10 +489,10 @@ export default function SpinAndSpeakPage() {
               )}
 
               <div className="spin-speak-turnbar">
-                <div className="min-w-0 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight truncate text-[var(--color-text-main)]">
+                <div className="spin-speak-prompt font-extrabold tracking-tight text-[var(--color-text-main)]">
                   {showCardWord && currentCard ? currentCard.word : "Ready to spin"}
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="spin-speak-turn-controls flex flex-wrap items-center justify-center gap-2">
                   <div className={`px-4 py-2 rounded-2xl font-bold text-xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-[#f3f7ee] text-[var(--color-text-main)]"}`}>
                     {timerActive && timerSeconds !== null ? `${timerSeconds}s` : "Ready"}
                   </div>
@@ -634,13 +634,21 @@ export default function SpinAndSpeakPage() {
           overflow: hidden;
         }
         .spin-speak-turnbar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
+          display: grid;
+          grid-template-rows: auto auto;
+          gap: clamp(0.65rem, 1.3vh, 0.9rem);
           padding: clamp(0.8rem, 1.8vh, 1.25rem) clamp(1rem, 2.3vw, 1.75rem);
           border-top: 1px solid rgba(15, 23, 42, 0.08);
           background: linear-gradient(135deg, rgba(241, 248, 239, 0.92), rgba(255, 255, 255, 0.98));
+        }
+        .spin-speak-prompt {
+          width: 100%;
+          min-width: 0;
+          text-align: center;
+          font-size: clamp(2rem, 5vw, 4.5rem);
+          line-height: 0.98;
+          overflow-wrap: anywhere;
+          text-wrap: balance;
         }
         @media (max-width: 900px) and (orientation: portrait) {
           .game-spin-speak-stage {
@@ -657,13 +665,12 @@ export default function SpinAndSpeakPage() {
           }
         }
         @media (max-width: 640px) {
-          .spin-speak-scorebar > div,
-          .spin-speak-turnbar {
+          .spin-speak-scorebar > div {
             align-items: flex-start;
             flex-direction: column;
           }
           .spin-speak-scorebar > div > div:last-child,
-          .spin-speak-turnbar > div:last-child {
+          .spin-speak-turn-controls {
             justify-content: flex-start;
           }
         }
