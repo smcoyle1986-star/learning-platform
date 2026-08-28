@@ -249,7 +249,7 @@ export default function WhackAWordPage() {
 
   // UI components & markup
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-b from-[#F6F9FF] to-[#EAF7FF] text-[#0B2545]">
+    <div className={`${isFullscreen ? "game-whack-fullscreen px-3 pt-[64px]" : "min-h-screen p-6"} bg-gradient-to-b from-[#F6F9FF] to-[#EAF7FF] text-[#0B2545]`}>
       <div className="max-w-6xl mx-auto">
         <GameHeader
           title="Whack-a-Word"
@@ -258,7 +258,7 @@ export default function WhackAWordPage() {
           onToggleFullscreen={toggleFullscreen}
         />
 
-        <header className="flex items-center justify-between mb-4 pt-20">
+        <header className={`flex items-center justify-between ${isFullscreen ? "mb-2" : "mb-4 pt-20"}`}>
           <div>
             <h1 className="text-2xl font-bold">Kawaii Whack-a-Word</h1>
             <div className="text-sm text-slate-600">Cute classroom vocabulary practice — Classendo</div>
@@ -281,7 +281,7 @@ export default function WhackAWordPage() {
         </header>
 
         {/* HUD */}
-        <div className="mb-3 flex items-center justify-between">
+        <div className={`${isFullscreen ? "mb-2" : "mb-3"} flex items-center justify-between`}>
           <div className="flex items-center gap-4">
             <div className="bg-white/90 px-3 py-2 rounded shadow-sm">
               <div className="text-xs text-slate-500">Team Score</div>
@@ -308,9 +308,9 @@ export default function WhackAWordPage() {
         </div>
 
         {/* Board */}
-        <div className="bg-white/80 rounded-lg p-6 shadow-lg">
+        <div data-game-stage className={`bg-white/80 rounded-lg shadow-lg ${isFullscreen ? "p-3" : "p-6"}`}>
           {/* target display */}
-          <div className="mb-4 flex items-center justify-center">
+          <div className={`${isFullscreen ? "mb-2" : "mb-4"} flex items-center justify-center`}>
             <div className="text-center">
               <div className="text-sm text-slate-600">Target</div>
               <div className="mt-2">
@@ -331,7 +331,10 @@ export default function WhackAWordPage() {
             </div>
           </div>
 
-          <div className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden border border-[#dbeafe] bg-gradient-to-b from-[#fff8f3] to-[#fff0f5]">
+          <div
+            className="h-[420px] md:h-[520px] rounded-2xl overflow-hidden border border-[#dbeafe] bg-gradient-to-b from-[#fff8f3] to-[#fff0f5]"
+            style={isFullscreen ? { height: "min(520px, calc(var(--game-viewport-height, 100dvh) - 315px))" } : undefined}
+          >
             <PhaserGameHost
               className="w-full h-full"
               createGame={createWhackWordGame}

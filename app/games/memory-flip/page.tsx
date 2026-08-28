@@ -878,7 +878,9 @@ export default function MemoryFlipPage() {
               <div
                 className="relative w-full"
                 style={{
-                  height: "min(760px, 68vh)",
+                  height: isFullscreen
+                    ? "min(760px, calc(var(--game-viewport-height, 100dvh) - 190px))"
+                    : "min(760px, 68vh)",
                 }}
               >
                 <div

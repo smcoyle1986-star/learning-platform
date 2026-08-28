@@ -242,25 +242,31 @@ export default function ConquerPage() {
 
   useLayoutEffect(() => {
     function recomputeBoardMetrics() {
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
       const availableWidth = window.innerWidth - (isFullscreen ? 24 : 64);
-      const availableHeight = window.innerHeight - (isFullscreen ? 108 : 300);
+      // Fullscreen still includes the fixed game controls and the compact
+      // turn strip. Reserve both before sizing the eight board rows so a
+      // short external display cannot crop the final row.
+      const availableHeight = viewportHeight - (isFullscreen ? 200 : 300);
       const padding = isFullscreen ? 14 : 16;
       const gap = isFullscreen ? 6 : 6;
       const labelWidth = isFullscreen ? 28 : 24;
       const labelHeight = isFullscreen ? 28 : 24;
 
+      const minCellHeight = isFullscreen ? 44 : 70;
       const maxCellHeightFromViewport = Math.max(
-        70,
+        minCellHeight,
         Math.floor((availableHeight - padding * 2 - labelHeight - BOARD_SIZE * gap) / BOARD_SIZE)
       );
-      const cellHeight = Math.max(70, Math.min(maxCellHeightFromViewport, isFullscreen ? 112 : 98));
+      const cellHeight = Math.max(minCellHeight, Math.min(maxCellHeightFromViewport, isFullscreen ? 112 : 98));
 
+      const minCellWidth = isFullscreen ? 58 : 96;
       const maxCellWidthFromViewport = Math.max(
-        96,
+        minCellWidth,
         Math.floor((availableWidth - padding * 2 - labelWidth - BOARD_SIZE * gap) / BOARD_SIZE)
       );
       const preferredCellWidth = Math.floor(cellHeight * (isFullscreen ? 1.68 : 1.55));
-      const cellWidth = Math.max(96, Math.min(maxCellWidthFromViewport, preferredCellWidth));
+      const cellWidth = Math.max(minCellWidth, Math.min(maxCellWidthFromViewport, preferredCellWidth));
 
       const frameWidth = labelWidth + BOARD_SIZE * cellWidth + BOARD_SIZE * gap + padding * 2;
       const frameHeight = labelHeight + BOARD_SIZE * cellHeight + BOARD_SIZE * gap + padding * 2;
@@ -271,9 +277,11 @@ export default function ConquerPage() {
     recomputeBoardMetrics();
     window.addEventListener("resize", recomputeBoardMetrics);
     document.addEventListener("fullscreenchange", recomputeBoardMetrics);
+    window.visualViewport?.addEventListener("resize", recomputeBoardMetrics);
     return () => {
       window.removeEventListener("resize", recomputeBoardMetrics);
       document.removeEventListener("fullscreenchange", recomputeBoardMetrics);
+      window.visualViewport?.removeEventListener("resize", recomputeBoardMetrics);
     };
   }, [isFullscreen]);
 

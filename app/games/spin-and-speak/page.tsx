@@ -413,7 +413,10 @@ export default function SpinAndSpeakPage() {
         <div className="h-full flex gap-6">
           {/* Wheel */}
           <section className="w-1/3 relative flex flex-col items-center justify-center">
-            <div className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]">
+            <div
+              className="w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden border border-black/5 bg-[hsl(140,40%,95%)]"
+              style={isFullscreen ? { height: "min(420px, calc(var(--game-viewport-height, 100dvh) - 205px))" } : undefined}
+            >
               <PhaserGameHost
                 className="w-full h-full"
                 createGame={(context) => createSpinWheelGame({ ...context, segments: SEGMENTS })}
@@ -441,7 +444,10 @@ export default function SpinAndSpeakPage() {
 
           {/* Center card */}
           <section className="w-1/3 flex flex-col items-center justify-center">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl h-[22rem] md:h-[30rem] flex items-center justify-center overflow-hidden">
+            <div
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-xl h-[22rem] md:h-[30rem] flex items-center justify-center overflow-hidden"
+              style={isFullscreen ? { height: "min(480px, calc(var(--game-viewport-height, 100dvh) - 255px))" } : undefined}
+            >
               {currentCard ? (
                 imgSrc ? (
                   <img
