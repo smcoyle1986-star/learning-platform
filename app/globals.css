@@ -474,6 +474,17 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-
   max-height: var(--kaboom-stage-height, 0px) !important;
 }
 
+/* On wide external displays, a width-driven 16:9 KaBoom board can be taller
+   than the space below its score strip. Size from the measured stage height
+   instead, then derive width from the same aspect ratio. */
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-fullscreen-aspect-stage {
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 16 / 9;
+}
+
 /* Small helpers used across pages */
 .container-max {
   max-width: 1120px;
