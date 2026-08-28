@@ -901,7 +901,7 @@ export default function YesOrNoPage() {
       )}
 
       {/* Kahoot-style responsive game canvas */}
-      <main data-game-stage className={`game-yes-no-stage w-full max-w-7xl mx-auto px-4 pb-4 ${playMode === "team" ? "h-[calc(100vh-220px)]" : "h-[calc(100vh-184px)]"} min-h-0`}>
+      <main data-game-stage className={`game-yes-no-stage ${isChooseYourSide ? "game-choose-side-stage mt-[72px] h-[calc(100vh-72px)]" : "h-[calc(100vh-220px)]"} w-full max-w-7xl mx-auto px-4 pb-4 min-h-0`}>
         <div className="flex justify-center items-start h-full min-h-0">
           <div className="relative w-full max-w-6xl rounded-3xl bg-white/85 shadow-2xl p-3 md:p-4 flex flex-col items-center overflow-hidden h-full min-h-0">
             <div className="relative w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2">
@@ -988,7 +988,7 @@ export default function YesOrNoPage() {
               <div className="relative z-10 mt-auto w-full max-w-[980px] pb-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div
-                    className={`min-h-[130px] rounded-[28px] border-[3px] p-5 text-left shadow-xl transition-all duration-300 ${
+                    className={`min-h-[clamp(5.75rem,14vh,8.125rem)] rounded-[28px] border-[3px] p-[clamp(0.75rem,2vh,1.25rem)] text-left shadow-xl transition-all duration-300 ${
                       roundPhase === "feedback" && correctAnswerIsYes
                         ? "border-[#2f8a46] bg-[linear-gradient(180deg,#d5f7df,#8dd59d)] text-[#174c26] scale-[1.01]"
                         : "border-[#b7e1bf] bg-[linear-gradient(180deg,#effcf2,#c8f0d4)] text-[#245231]"
@@ -1003,7 +1003,7 @@ export default function YesOrNoPage() {
                     <p className="mt-2 text-sm md:text-base font-medium opacity-85">Move to the YES side of the classroom.</p>
                   </div>
                   <div
-                    className={`min-h-[130px] rounded-[28px] border-[3px] p-5 text-left shadow-xl transition-all duration-300 ${
+                    className={`min-h-[clamp(5.75rem,14vh,8.125rem)] rounded-[28px] border-[3px] p-[clamp(0.75rem,2vh,1.25rem)] text-left shadow-xl transition-all duration-300 ${
                       roundPhase === "feedback" && !correctAnswerIsYes
                         ? "border-[#d13d52] bg-[linear-gradient(180deg,#ffe0e4,#f7a4af)] text-[#6d1020] scale-[1.01]"
                         : "border-[#f1c6ce] bg-[linear-gradient(180deg,#fff3f5,#ffd9de)] text-[#7b2130]"
@@ -1019,7 +1019,7 @@ export default function YesOrNoPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 min-h-[52px] flex items-center justify-center">
+                <div className="mt-2 min-h-[clamp(2.25rem,5vh,3.25rem)] flex items-center justify-center">
                   {roundPhase === "feedback" ? (
                     <div className={`rounded-full px-6 py-3 text-lg md:text-xl font-extrabold shadow-lg ${
                       correctAnswerIsYes ? "bg-[#e6f8ea] text-[#1e6c34]" : "bg-[#fff0f2] text-[#b4233b]"
@@ -1039,10 +1039,10 @@ export default function YesOrNoPage() {
               <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-auto">
                 <button
                   onClick={handleStartGameClick}
-                  className="w-48 h-48 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
+                  className="h-[clamp(7rem,16vh,12rem)] w-[clamp(7rem,16vh,12rem)] rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[clamp(0.35rem,1vh,0.625rem)] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
                   title="Start"
                 >
-                  <span className="text-3xl font-extrabold leading-tight">Start</span>
+                  <span className="text-[clamp(1.5rem,4vh,2.25rem)] font-extrabold leading-tight">Start</span>
                 </button>
               </div>
             )}

@@ -449,6 +449,15 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-
   flex: 1 1 0;
 }
 
+/* Choose Your Side has no scoreboard or instruction strip. Reserve the fixed
+   game header inside the stage itself so the board always uses only the visible
+   space beneath it, including on HDMI displays with a shorter viewport. */
+body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-choose-side-stage {
+  margin-top: 0 !important;
+  padding-top: calc(4.5rem + env(safe-area-inset-top)) !important;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)) !important;
+}
+
 /* Image Reveal has a scoreboard above its board. On a wide external display,
    sizing the 16:9 board from width alone can make the board taller than the
    viewport left after that scoreboard. Let the flex stage supply the remaining
