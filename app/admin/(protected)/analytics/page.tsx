@@ -27,6 +27,7 @@ const GAME_LABELS: Record<string, string> = {
   "spin-and-speak": "Spin and Speak",
   "whack-a-word": "Whack-a-Word",
   "yes-or-no": "Yes or No",
+  "choose-your-side": "Choose Your Side",
 };
 
 const WORKSHEET_LABELS: Record<string, string> = {

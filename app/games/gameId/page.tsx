@@ -92,6 +92,7 @@ const GAMES: { title: string; id: string; subtitle?: string }[] = [
   { title: "Image Reveal", id: "image-reveal", subtitle: "Reveal parts of the picture" },
   { title: "KaBoom!", id: "kaboom", subtitle: "Avoid the bombs and score points" },
   { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions" },
+  { title: "Choose Your Side", id: "choose-your-side", subtitle: "Move to the side you choose" },
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs" },
   { title: "What’s Missing?", id: "whats-missing", subtitle: "Spot the missing item" },

@@ -1,0 +1,16 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="420" rx="44" fill="#F3F8F2"/>
+  <path d="M0 108C116 79 183 162 320 132C457 102 523 39 640 82V0H0V108Z" fill="#E0F1E2"/>
+  <rect x="44" y="52" width="552" height="184" rx="32" fill="white" stroke="#D8E3D7" stroke-width="6"/>
+  <rect x="68" y="76" width="504" height="136" rx="23" fill="#F8FBF8"/>
+  <circle cx="320" cy="144" r="54" fill="#F6CC6B"/>
+  <path d="M293 140L320 113L347 140L331 140L331 174H309V140H293Z" fill="#344436"/>
+  <path d="M196 315H72V270C72 251.222 87.2223 236 106 236H196V315Z" fill="#37B66A"/>
+  <path d="M444 315H568V270C568 251.222 552.778 236 534 236H444V315Z" fill="#F25D68"/>
+  <path d="M214 280L244 250V270H284V290H244V310L214 280Z" fill="white"/>
+  <path d="M426 280L396 250V270H356V290H396V310L426 280Z" fill="white"/>
+  <text x="134" y="379" fill="#176338" font-family="Arial, sans-serif" font-size="44" font-weight="800">YES</text>
+  <text x="448" y="379" fill="#B72438" font-family="Arial, sans-serif" font-size="44" font-weight="800">NO</text>
+  <rect x="253" y="278" width="134" height="55" rx="27.5" fill="#344436"/>
+  <text x="320" y="313" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="22" font-weight="800">CHOOSE</text>
+</svg>

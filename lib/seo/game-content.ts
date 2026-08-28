@@ -15,7 +15,11 @@ export const GAME_CONTENT = {
   },
   "yes-or-no": {
     title: "Yes or No Classroom Game",
-    description: "Present quick questions and ask students to choose between yes and no. Use classroom sides, teams, and selected vocabulary to create an active decision-making game.",
+    description: "Present quick questions and ask students to choose between yes and no. Use teams and selected vocabulary to create a fast whole-class decision game.",
+  },
+  "choose-your-side": {
+    title: "Choose Your Side Classroom Game",
+    description: "Show a prompt and have students move to the Yes or No side of the classroom. Choose Your Side turns saved vocabulary and teacher-written questions into an active whole-class decision game.",
   },
   "four-corners": {
     title: "Four Corners Classroom Game",

@@ -111,6 +111,7 @@ const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] 
   { title: "KaBoom!", id: "kaboom", subtitle: "Avoid the bombs and score points", image: "/games/kaboom.svg" },
   { title: "Spin and Speak", id: "spin-and-speak", subtitle: "Spin the wheel for quick class practice", image: "/games/spin-and-speak.svg" },
   { title: "Yes or No?", id: "yes-or-no", subtitle: "Quick decision questions", image: "/games/yes-or-no.svg" },
+  { title: "Choose Your Side", id: "choose-your-side", subtitle: "Move to the side you choose", image: "/games/choose-your-side.svg" },
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/four-corners.svg" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/memory-flip.svg" },
   { title: "Connect Four", id: "connect-four", subtitle: "Connect four tokens in a line to win", image: "/games/connect-four.svg" },

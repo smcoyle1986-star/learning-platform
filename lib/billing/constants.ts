@@ -13,6 +13,7 @@ export const PREMIUM_GAME_IDS = [
   "kaboom",
   "spin-and-speak",
   "yes-or-no",
+  "choose-your-side",
   "four-corners",
   "memory-flip",
   "connect-four",

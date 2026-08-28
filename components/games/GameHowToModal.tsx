@@ -170,6 +170,31 @@ function YesNoVisual({ cards }: { cards: LessonCard[] }) {
   );
 }
 
+function ChooseYourSideVisual({ cards }: { cards: LessonCard[] }) {
+  const card = cards[0];
+  return (
+    <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(127,163,106,0.12))] p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <MiniLabel>Move left</MiniLabel>
+        <MiniLabel>Move right</MiniLabel>
+      </div>
+      <div className="mt-4 rounded-[1.5rem] border border-black/8 bg-white p-4 shadow-sm">
+        <div className="rounded-[1.25rem] border border-black/10 bg-[var(--color-bg-main)] p-3 text-center">
+          <img src={resolveLessonImageUrl(card?.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || "Lesson card"} className="mx-auto h-28 w-full object-contain" />
+          <div className="mt-2 text-lg font-black text-[var(--color-text-main)]">{cleanWord(card?.word) || "Read the prompt"}</div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 text-center text-white">
+          <div className="rounded-2xl bg-emerald-500 px-3 py-5 text-lg font-black">← YES</div>
+          <div className="rounded-2xl bg-rose-500 px-3 py-5 text-lg font-black">NO →</div>
+        </div>
+      </div>
+      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
+        Students choose a side, then the board reveals the correct answer when the timer ends.
+      </p>
+    </div>
+  );
+}
+
 function FourCornersVisual({ cards }: { cards: LessonCard[] }) {
   const previewCards = ensureCards(cards, 4, "Corner");
   return (
@@ -382,6 +407,29 @@ function gameGuide(game: GameInfo, lessonCards: LessonCard[]) {
           },
         ],
         visual: <YesNoVisual cards={lessonCards} />,
+      };
+    case "choose-your-side":
+      return {
+        intro: "Show a prompt, start the timer, and have students move to the Yes or No side of the classroom.",
+        cards: [
+          {
+            title: "Board",
+            body: "The image and prompt stay centred, with a green YES side on the left and a red NO side on the right.",
+          },
+          {
+            title: "Move",
+            body: "Students decide, then move to the matching side while the timer counts down.",
+          },
+          {
+            title: "Reveal",
+            body: "The answer reveals automatically when time ends. Saved sets keep the cards, prompts, and correct answers together.",
+          },
+          {
+            title: "Tip",
+            body: "Leave a safe route to both sides of the classroom and use a short timer to keep the movement energetic.",
+          },
+        ],
+        visual: <ChooseYourSideVisual cards={lessonCards} />,
       };
     case "four-corners":
       return {

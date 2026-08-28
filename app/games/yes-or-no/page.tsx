@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
@@ -52,6 +52,9 @@ const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 export default function YesOrNoPage() {
   const router = useRouter();
+  const isChooseYourSide = usePathname() === "/games/choose-your-side";
+  const gameTitle = isChooseYourSide ? "Choose Your Side" : "Yes or No";
+  const gameKey = isChooseYourSide ? "choose-your-side" : "yes-or-no";
 
   // Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -108,7 +111,7 @@ export default function YesOrNoPage() {
   }, []);
 
   // Teams / Scoreboard
-  const [playMode, setPlayMode] = useState<PlayMode>("team");
+  const playMode: PlayMode = isChooseYourSide ? "classroom-sides" : "team";
   const [teams, setTeams] = useState<Team[]>([
     { id: "team-1", name: "Team 1", score: 0 },
     { id: "team-2", name: "Team 2", score: 0 },
@@ -162,11 +165,11 @@ export default function YesOrNoPage() {
   const [sentencesModalView, setSentencesModalView] = useState<"edit" | "saved">("edit");
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [modalFinishedTickVisible, setModalFinishedTickVisible] = useState(false);
-  const [promptSetName, setPromptSetName] = useState("Yes/No Set");
+  const [promptSetName, setPromptSetName] = useState("Activity Set");
   const [promptSetId, setPromptSetId] = useState<string | null>(null);
   const [promptSetIsPublic, setPromptSetIsPublic] = useState(true);
   const [savePromptModalOpen, setSavePromptModalOpen] = useState(false);
-  const [savePromptName, setSavePromptName] = useState("Yes/No Set");
+  const [savePromptName, setSavePromptName] = useState("Activity Set");
   const [savePromptNameError, setSavePromptNameError] = useState<string | null>(null);
   const [savedPromptSets, setSavedPromptSets] = useState<YesNoPromptSetRecord[]>([]);
   const [savedPromptSetsLoading, setSavedPromptSetsLoading] = useState(false);
@@ -257,7 +260,7 @@ export default function YesOrNoPage() {
     setTray(nextTray);
     localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(nextTray));
     setPromptSetId(preserveSavedId ? set.id : null);
-    setPromptSetName(set.name || "Yes/No Set");
+    setPromptSetName(set.name || "Activity Set");
     setPromptSetIsPublic(preserveSavedId ? set.isPublic : true);
     setSentencesMap(Object.fromEntries(set.rows.map((row) => [row.cardId, {
       text: row.text,
@@ -303,7 +306,7 @@ export default function YesOrNoPage() {
   }, [sentencesModalOpen, sentencesModalView, savedPromptSetsScope]);
 
   function openSavePromptModal() {
-    setSavePromptName(promptSetName || "Yes/No Set");
+    setSavePromptName(promptSetName || "Activity Set");
     setSavePromptNameError(null);
     setSavePromptModalOpen(true);
   }
@@ -385,7 +388,7 @@ export default function YesOrNoPage() {
       setSavedPromptSets((prev) => prev.filter((item) => item.id !== setId));
       if (promptSetId === setId) {
         setPromptSetId(null);
-        setPromptSetName("Yes/No Set");
+        setPromptSetName("Activity Set");
       }
     } catch (error) {
       console.error("Failed to delete Yes/No set", error);
@@ -782,7 +785,7 @@ export default function YesOrNoPage() {
   // Start Game button handler (starts first card)
   function handleStartGameClick() {
     if (currentCardIndex === null) return;
-    trackGameStart("yes-or-no");
+    trackGameStart(gameKey);
     setGameStarted(true);
     runPrepThenStart(currentCardIndex);
   }
@@ -842,23 +845,6 @@ export default function YesOrNoPage() {
     });
   }
 
-  function switchPlayMode(nextMode: PlayMode) {
-    if (nextMode === playMode) return;
-    clearPopupTimeout();
-    clearPointsSpinnerTimers();
-    setShowPointsPrompt(false);
-    setShowPointsSpinner(false);
-    setAwardedPoints(null);
-    setShowNoPoints(false);
-    stopTimer();
-    roundEndHandledRef.current = false;
-    setRoundPhase("hidden");
-    setGameStarted(false);
-    setWinnerOpen(false);
-    setWinnerTeam(null);
-    setPlayMode(nextMode);
-  }
-
   const remainingCount = Math.max(0, tray.length - usedIndices.length);
   const currentCard = currentCardIndex !== null ? tray[currentCardIndex] : null;
   const canAnswer = roundPhase === "timing";
@@ -870,41 +856,14 @@ export default function YesOrNoPage() {
   return (
     <div className={`${isFullscreen ? "game-fullscreen-shell" : "h-screen"} overflow-hidden bg-[hsl(140,40%,95%)] text-black`}>
       <GameHeader
-        title="Yes or No"
+        title={gameTitle}
         onExit={() => router.push("/games")}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
-        trackGameKey="yes-or-no"
+        trackGameKey={gameKey}
       />
-
-      <div className="fixed left-1/2 top-[78px] z-[75] -translate-x-1/2 -translate-y-4 opacity-25 transition-all duration-300 hover:translate-y-0 hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100">
-        <div className="rounded-full border border-white/80 bg-white/82 px-2 py-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl">
-          <div className="flex items-center gap-2 rounded-full bg-[#eef5ee] p-1">
-            <button
-              onClick={() => switchPlayMode("team")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                playMode === "team"
-                  ? "bg-[var(--color-accent)] text-white shadow"
-                  : "text-slate-600 hover:bg-white hover:text-slate-900"
-              }`}
-            >
-              Team Game
-            </button>
-            <button
-              onClick={() => switchPlayMode("classroom-sides")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                playMode === "classroom-sides"
-                  ? "bg-[#89ad70] text-white shadow"
-                  : "text-slate-600 hover:bg-white hover:text-slate-900"
-              }`}
-            >
-              Classroom Sides
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
       {playMode === "team" ? (
@@ -943,7 +902,7 @@ export default function YesOrNoPage() {
           <div className="mb-2 rounded-[24px] border border-white/80 bg-white/78 px-5 py-3 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-base md:text-lg font-semibold text-slate-800">Classroom Sides</h2>
+                <h2 className="text-base md:text-lg font-semibold text-slate-800">Choose Your Side</h2>
                 <p className="text-sm text-slate-600">Students move to the YES side or the NO side. When the timer ends, the correct side reveals automatically.</p>
               </div>
               <div className="rounded-full border border-[#89ad70]/30 bg-[#eef5e6] px-4 py-2 text-sm font-semibold text-[#587446]">
@@ -972,7 +931,7 @@ export default function YesOrNoPage() {
                   />
                 ) : tray.length === 0 ? (
                   <div className="flex max-w-md flex-col items-center px-6 text-center">
-                    <div className="text-xl font-semibold text-slate-700">Choose a saved Yes/No set</div>
+                    <div className="text-xl font-semibold text-slate-700">Choose a saved activity set</div>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       Load a reusable set to add its cards to the lesson tray and start the game.
                     </p>
@@ -1053,9 +1012,9 @@ export default function YesOrNoPage() {
                         : ""
                     } ${roundPhase === "timing" ? "animate-pulse" : ""}`}
                   >
-                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Left side</div>
+                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Move left ←</div>
                     <div className="mt-3 text-4xl md:text-5xl font-black tracking-tight">YES</div>
-                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Students move to the YES side of the classroom.</p>
+                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Move to the YES side of the classroom.</p>
                   </div>
                   <div
                     className={`min-h-[130px] rounded-[28px] border-[3px] p-5 text-left shadow-xl transition-all duration-300 ${
@@ -1068,9 +1027,9 @@ export default function YesOrNoPage() {
                         : ""
                     } ${roundPhase === "timing" ? "animate-pulse" : ""}`}
                   >
-                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Right side</div>
+                    <div className="text-xs font-black uppercase tracking-[0.35em] opacity-65">Move right →</div>
                     <div className="mt-3 text-4xl md:text-5xl font-black tracking-tight">NO</div>
-                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Students move to the NO side of the classroom.</p>
+                    <p className="mt-2 text-sm md:text-base font-medium opacity-85">Move to the NO side of the classroom.</p>
                   </div>
                 </div>
 
@@ -1173,7 +1132,7 @@ export default function YesOrNoPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-[#89ad70]/20 bg-[#f4f9f0] px-4 py-3 text-sm text-[#587446]">
-                  Team scoring stays in Team Game. Classroom Sides keeps the same prompts and timer, then reveals the answer automatically.
+                  Team scoring is available in Yes or No. Choose Your Side keeps the same prompts and timer, then reveals the answer automatically.
                 </div>
               )}
             </div>
@@ -1253,7 +1212,7 @@ export default function YesOrNoPage() {
               <div>
                 <h3 className="text-2xl font-bold">Enter sentences for each card</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Write the sentence that will appear for each card in Yes/No mode, mark whether it is correct, and save sets for reuse.
+                  Write the sentence that will appear for each card, mark whether it is correct, and save sets for reuse.
                 </p>
               </div>
               <div className="flex rounded-full bg-gray-100 p-1">
@@ -1281,7 +1240,7 @@ export default function YesOrNoPage() {
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e8decb] bg-white px-4 py-3">
                     <div>
                       <div className="text-sm font-semibold text-gray-800">{promptSetName}</div>
-                      <div className="mt-0.5 text-xs text-gray-500">{tray.length} cards in this Yes/No set</div>
+                      <div className="mt-0.5 text-xs text-gray-500">{tray.length} cards in this activity set</div>
                     </div>
                     <button
                       onClick={openSavePromptModal}
@@ -1501,8 +1460,8 @@ export default function YesOrNoPage() {
             </button>
 
             <div className="pr-10">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#6f895f]">Save Yes/No set</p>
-              <h2 id="save-yes-no-title" className="mt-2 text-2xl font-semibold text-[#2f3a2f]">Save Yes/No Set</h2>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[#6f895f]">Save activity set</p>
+              <h2 id="save-yes-no-title" className="mt-2 text-2xl font-semibold text-[#2f3a2f]">Save Activity Set</h2>
               <p className="mt-2 text-sm leading-6 text-[#687268]">
                 Save these {tray.length} cards, sentences, and answers so the activity is ready to reuse.
               </p>
@@ -1543,7 +1502,7 @@ export default function YesOrNoPage() {
                     checked={promptSetIsPublic}
                     onChange={() => setPromptSetIsPublic((current) => !current)}
                     disabled={savingPromptSet}
-                    aria-label="Make Yes/No set public"
+                    aria-label="Make activity set public"
                     className="mt-0.5 h-5 w-5 rounded border-[#b8c5b2] accent-[#6f895f]"
                   />
                   <span>
@@ -1597,7 +1556,7 @@ export default function YesOrNoPage() {
               Loading <span className="font-semibold text-gray-900">{pendingLoadPromptSet.set.name}</span> will change the cards in your lesson tray to the cards saved in this set.
             </p>
             <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              Your current tray will be replaced. The saved Yes/No set itself will not be changed.
+              Your current tray will be replaced. The saved activity set itself will not be changed.
             </div>
             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
@@ -1626,7 +1585,7 @@ export default function YesOrNoPage() {
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{previewPromptSet.name}</h3>
                 <p className="mt-1 text-sm text-gray-600">
-                  Preview of the saved Yes/No set. Images, sentences, and answers are shown read-only.
+                  Preview of the saved activity set. Images, sentences, and answers are shown read-only.
                 </p>
               </div>
               <button
