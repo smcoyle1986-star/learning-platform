@@ -231,6 +231,7 @@ export default function ConquerPage() {
     cellHeight: 76,
     padding: 16,
   });
+  const boardViewportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     function onFullChange() {
@@ -243,24 +244,25 @@ export default function ConquerPage() {
   useLayoutEffect(() => {
     function recomputeBoardMetrics() {
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      const availableWidth = window.innerWidth - (isFullscreen ? 24 : 64);
-      // Fullscreen still includes the fixed game controls and the compact
-      // turn strip. Reserve both before sizing the eight board rows so a
-      // short external display cannot crop the final row.
-      const availableHeight = viewportHeight - (isFullscreen ? 200 : 300);
+      const bounds = boardViewportRef.current?.getBoundingClientRect();
+      // Measure the actual flex area left after the header and board controls.
+      // This avoids guessing at browser/TV chrome heights and keeps every row
+      // plus the score button inside the visible game viewport.
+      const availableWidth = Math.floor(bounds?.width || window.innerWidth - (isFullscreen ? 24 : 64));
+      const availableHeight = Math.floor(bounds?.height || viewportHeight - (isFullscreen ? 160 : 250));
       const padding = isFullscreen ? 14 : 16;
       const gap = isFullscreen ? 6 : 6;
       const labelWidth = isFullscreen ? 28 : 24;
       const labelHeight = isFullscreen ? 28 : 24;
 
-      const minCellHeight = isFullscreen ? 44 : 70;
+      const minCellHeight = isFullscreen ? 32 : 46;
       const maxCellHeightFromViewport = Math.max(
         minCellHeight,
         Math.floor((availableHeight - padding * 2 - labelHeight - BOARD_SIZE * gap) / BOARD_SIZE)
       );
       const cellHeight = Math.max(minCellHeight, Math.min(maxCellHeightFromViewport, isFullscreen ? 112 : 98));
 
-      const minCellWidth = isFullscreen ? 58 : 96;
+      const minCellWidth = isFullscreen ? 46 : 62;
       const maxCellWidthFromViewport = Math.max(
         minCellWidth,
         Math.floor((availableWidth - padding * 2 - labelWidth - BOARD_SIZE * gap) / BOARD_SIZE)
@@ -278,10 +280,13 @@ export default function ConquerPage() {
     window.addEventListener("resize", recomputeBoardMetrics);
     document.addEventListener("fullscreenchange", recomputeBoardMetrics);
     window.visualViewport?.addEventListener("resize", recomputeBoardMetrics);
+    const observer = new ResizeObserver(recomputeBoardMetrics);
+    if (boardViewportRef.current) observer.observe(boardViewportRef.current);
     return () => {
       window.removeEventListener("resize", recomputeBoardMetrics);
       document.removeEventListener("fullscreenchange", recomputeBoardMetrics);
       window.visualViewport?.removeEventListener("resize", recomputeBoardMetrics);
+      observer.disconnect();
     };
   }, [isFullscreen]);
 
@@ -1048,10 +1053,10 @@ export default function ConquerPage() {
         </div>
       )}
 
-      <main className={isFullscreen ? "pt-2 pb-4" : "pt-4 pb-8"}>
-        <div className={`mx-auto ${isFullscreen ? "max-w-[96rem]" : "max-w-7xl"} px-6`}>
+      <main data-game-stage className="conquer-game-stage h-[100dvh] px-3 pb-3 pt-[76px] sm:px-5">
+        <div className={`mx-auto h-full ${isFullscreen ? "max-w-[96rem]" : "max-w-7xl"}`}>
           <section
-            className={`rounded-[2rem] border border-black/5 shadow-sm backdrop-blur-sm ${isFullscreen ? "p-4" : "p-6"}`}
+            className={`flex h-full min-h-0 flex-col rounded-[2rem] border border-black/5 shadow-sm backdrop-blur-sm ${isFullscreen ? "p-3" : "p-4 sm:p-5"}`}
             style={{
               background: `radial-gradient(circle at 50% 10%, ${activeTeam.theme.fill} 0%, rgba(255,255,255,0.92) 38%, rgba(255,255,255,0.84) 100%)`,
             }}
@@ -1063,7 +1068,7 @@ export default function ConquerPage() {
                   className="btn btn-secondary px-3 py-2 text-sm flex items-center gap-2"
                 >
                   <Shield size={15} />
-                  {scoresOpen ? "Hide scores" : "Show scores"}
+                  {scoresOpen ? "Hide scores" : "Reveal scores"}
                 </button>
                 <div className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
                   Conquer territory
@@ -1137,11 +1142,10 @@ export default function ConquerPage() {
               </div>
             )}
 
-            <div className={isFullscreen ? "mt-4 flex justify-start" : "mt-6 flex justify-center"}>
-              <div className={`w-full ${isFullscreen ? "max-w-[min(100vw,98rem)]" : "max-w-[min(92vw,72rem)]"}`}>
+            <div ref={boardViewportRef} className="mt-3 flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+              <div className="flex h-full w-full min-h-0 items-center justify-center">
                 <div
-                  data-game-stage
-                  className={`${isFullscreen ? "mx-0" : "mx-auto"} relative overflow-hidden rounded-[2rem] border border-black/10 bg-[rgba(242,248,239,0.88)] shadow-[0_20px_60px_rgba(15,23,42,0.12)] ${
+                  className={`relative shrink-0 overflow-hidden rounded-[2rem] border border-black/10 bg-[rgba(242,248,239,0.88)] shadow-[0_20px_60px_rgba(15,23,42,0.12)] ${
                     bombAnimation ? "conquer-bomb-board" : ""
                   }`}
                   style={{
@@ -1151,6 +1155,7 @@ export default function ConquerPage() {
                     height: `${boardMetrics.frameHeight}px`,
                     padding: `${boardMetrics.padding}px`,
                     maxWidth: "100%",
+                    maxHeight: "100%",
                   }}
                 >
                   <div
