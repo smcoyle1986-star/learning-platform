@@ -25,6 +25,12 @@ const KABOOM_SELECTION_MODE_KEY = "kaboom-selection-mode";
 
 type SelectionMode = "random" | "manual";
 
+type BonusTile = {
+  removed: boolean;
+  points: number | null;
+  bomb: boolean;
+};
+
 function shuffleArray<T>(arr: T[]) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -40,6 +46,11 @@ function generateLetters(count: number) {
     letters.push(String.fromCharCode(65 + i));
   }
   return letters;
+}
+
+function createFinalBonusTiles(baseTileCount: number, teamCount: number): BonusTile[] {
+  const additionalTurns = teamCount > 0 ? (teamCount - (baseTileCount % teamCount)) % teamCount : 0;
+  return Array.from({ length: additionalTurns }, () => ({ removed: false, points: null, bomb: false }));
 }
 
 export default function KaBoomPage() {
@@ -252,6 +263,13 @@ export default function KaBoomPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [bonusTiles, setBonusTiles] = useState<BonusTile[]>([]);
+  const [glowingBonusIndex, setGlowingBonusIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setBonusTiles(createFinalBonusTiles(rows * cols, teams.length));
+    setGlowingBonusIndex(null);
+  }, [rows, cols, teams.length]);
   function addTeam() {
     if (teams.length >= 6) return;
     const next = teams.length + 1;
@@ -274,6 +292,7 @@ export default function KaBoomPage() {
   const [modalImage, setModalImage] = useState<string | null>(null);
   const [modalText, setModalText] = useState<string | null>(null);
   const [modalTileIndex, setModalTileIndex] = useState<number | null>(null);
+  const [modalBonusIndex, setModalBonusIndex] = useState<number | null>(null);
 
   // center reveal
   const [centerReveal, setCenterReveal] = useState<{ kind: "points" | "bomb"; value?: number } | null>(null);
@@ -431,6 +450,16 @@ export default function KaBoomPage() {
   const lastGlowingRef = useRef<number | null>(null);
   const lastFinalPickRef = useRef<number | null>(null);
 
+  function stopSelectionSequence() {
+    if (sequenceRef.current?.intervalId) window.clearInterval(sequenceRef.current.intervalId);
+    if (sequenceRef.current?.timeoutId) window.clearTimeout(sequenceRef.current.timeoutId);
+    sequenceRef.current = null;
+    setSpecialRemoveActive(false);
+    setGlowingIndex(null);
+    setGlowingBonusIndex(null);
+    lastGlowingRef.current = null;
+  }
+
   function getRemainingTileIndexes(excludeIndex: number | null = null) {
     const remaining = tilesRemovedRef.current
       .map((r, idx) => (!r ? idx : -1))
@@ -443,15 +472,7 @@ export default function KaBoomPage() {
   function startRandomHighlightSequence(autoSelect = false) {
     trackGameStart("kaboom");
     // stop any existing sequence first
-    if (sequenceRef.current?.intervalId) {
-      clearInterval(sequenceRef.current.intervalId);
-    }
-    if (sequenceRef.current?.timeoutId) {
-      clearTimeout(sequenceRef.current.timeoutId);
-    }
-    sequenceRef.current = null;
-    setGlowingIndex(null);
-    lastGlowingRef.current = null;
+    stopSelectionSequence();
 
     const remaining = getRemainingTileIndexes(lastFinalPickRef.current);
     if (remaining.length === 0) return;
@@ -526,16 +547,30 @@ export default function KaBoomPage() {
 
   function handleModalCorrect() {
     const idx = modalTileIndex;
-    if (idx === null) return;
+    const bonusIndex = modalBonusIndex;
+    if (idx === null && bonusIndex === null) return;
 
     const isBomb = Math.random() < kaboomProbability;
-    if (isBomb) {
+    if (bonusIndex !== null) {
+      if (isBomb) {
+        setBonusTiles((prev) => prev.map((tile, index) => (index === bonusIndex ? { ...tile, bomb: true, removed: true } : tile)));
+        setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: Math.max(0, t.score - 5) } : t)));
+        setCenterReveal({ kind: "bomb" });
+        playKaboom();
+      } else {
+        const points = Math.floor(Math.random() * 5) + 1;
+        setBonusTiles((prev) => prev.map((tile, index) => (index === bonusIndex ? { ...tile, points, removed: true } : tile)));
+        setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: t.score + points } : t)));
+        setCenterReveal({ kind: "points", value: points });
+        playReveal();
+      }
+    } else if (isBomb && idx !== null) {
       setTilesBomb((prev) => prev.map((v, i) => (i === idx ? true : v)));
       setTilesRemoved((prev) => prev.map((v, i) => (i === idx ? true : v)));
       setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: Math.max(0, t.score - 5) } : t)));
       setCenterReveal({ kind: "bomb" });
       playKaboom();
-    } else {
+    } else if (idx !== null) {
       const points = Math.floor(Math.random() * 5) + 1;
       setTilesPoints((prev) => prev.map((v, i) => (i === idx ? points : v)));
       setTilesRemoved((prev) => prev.map((v, i) => (i === idx ? true : v)));
@@ -548,6 +583,7 @@ export default function KaBoomPage() {
     setModalImage(null);
     setModalText(null);
     setModalTileIndex(null);
+    setModalBonusIndex(null);
 
     // advance to next team after a reveal
     setActiveTeamIndex(nextTeamIndex());
@@ -559,20 +595,13 @@ export default function KaBoomPage() {
   }
 
   function handlePass() {
-    if (sequenceRef.current?.intervalId) {
-      clearInterval(sequenceRef.current.intervalId);
-    }
-    if (sequenceRef.current?.timeoutId) {
-      clearTimeout(sequenceRef.current.timeoutId);
-    }
-    sequenceRef.current = null;
-    lastGlowingRef.current = null;
-    setGlowingIndex(null);
+    stopSelectionSequence();
 
     setModalOpen(false);
     setModalImage(null);
     setModalText(null);
     setModalTileIndex(null);
+    setModalBonusIndex(null);
 
     setActiveTeamIndex(nextTeamIndex());
   }
@@ -584,6 +613,7 @@ export default function KaBoomPage() {
   // Reset game function (restore tray, reset tiles & metadata but keep teams)
   function resetGame() {
     try {
+      stopSelectionSequence();
       const raw = originalTrayRawRef.current;
       if (!raw) return;
       const parsed = JSON.parse(raw);
@@ -611,7 +641,10 @@ export default function KaBoomPage() {
       setModalImage(null);
       setModalText(null);
       setModalTileIndex(null);
+      setModalBonusIndex(null);
       lastFinalPickRef.current = null;
+      setBonusTiles(createFinalBonusTiles(rows * cols, teams.length));
+      setGlowingBonusIndex(null);
     } catch (e) {
       console.error("Failed to reset game tray:", e);
     }
@@ -621,7 +654,8 @@ export default function KaBoomPage() {
   useEffect(() => {
     const total = rows * cols;
     const removedCount = tilesRemoved.filter(Boolean).length;
-    if (removedCount > 0 && removedCount === total) {
+    const bonusComplete = bonusTiles.every((tile) => tile.removed);
+    if (removedCount > 0 && removedCount === total && bonusComplete) {
       // delay winner modal until center reveal clears (max 3s). show after 3.1s
       if (winnerTimerRef.current) {
         window.clearTimeout(winnerTimerRef.current);
@@ -639,7 +673,7 @@ export default function KaBoomPage() {
         winnerTimerRef.current = null;
       }
     };
-  }, [tilesRemoved, rows, cols, teams]);
+  }, [tilesRemoved, bonusTiles, rows, cols, teams]);
 
   // helper label
   function labelForIndex(index: number) {
@@ -688,8 +722,68 @@ export default function KaBoomPage() {
     }
 
     setModalTileIndex(index);
+    setModalBonusIndex(null);
     setModalOpen(true);
     playHighlight();
+  }
+
+  function handleBonusTileClick(index: number, source: "manual" | "auto" = "manual") {
+    if (bonusTiles[index]?.removed) return;
+    if (selectionMode !== "manual" && source === "manual") return;
+    trackGameStart("kaboom");
+    const card = pickRandomCardFromTray();
+    if (!card) {
+      alert("No cards in lesson tray — add cards first.");
+      return;
+    }
+
+    if (flashcardMode === "text") {
+      if (!card.word) {
+        alert("No text available for selected card.");
+        return;
+      }
+      setModalText(card.word);
+      setModalImage(null);
+    } else if (flashcardMode === "image") {
+      if (!card.image) {
+        alert("No images in lesson tray — add image cards first.");
+        return;
+      }
+      setModalImage(card.image);
+      setModalText(null);
+    } else {
+      setModalImage(card.image ?? null);
+      setModalText(card.word ?? null);
+    }
+
+    setModalTileIndex(null);
+    setModalBonusIndex(index);
+    setModalOpen(true);
+    playHighlight();
+  }
+
+  function startBonusRandomHighlightSequence() {
+    const remaining = bonusTiles.flatMap((tile, index) => (tile.removed ? [] : [index]));
+    if (remaining.length === 0 || specialRemoveActive || centerReveal) return;
+    trackGameStart("kaboom");
+    stopSelectionSequence();
+    setSpecialRemoveActive(true);
+    sequenceRef.current = {};
+    let step = 0;
+    sequenceRef.current.intervalId = window.setInterval(() => {
+      setGlowingBonusIndex(remaining[step % remaining.length]);
+      step += 1;
+      playHighlight();
+    }, 300);
+
+    sequenceRef.current.timeoutId = window.setTimeout(() => {
+      if (sequenceRef.current?.intervalId) window.clearInterval(sequenceRef.current.intervalId);
+      const finalPick = remaining[Math.floor(Math.random() * remaining.length)];
+      sequenceRef.current = null;
+      setGlowingBonusIndex(null);
+      setSpecialRemoveActive(false);
+      handleBonusTileClick(finalPick, "auto");
+    }, 2400);
   }
 
   // no-tray UI flag
@@ -739,8 +833,10 @@ export default function KaBoomPage() {
     );
   }
 
-  // Are any tiles remaining? (for internal usage)
-  const tilesRemaining = tilesRemoved.some((t) => !t);
+  const baseTilesRemaining = tilesRemoved.some((tile) => !tile);
+  const bonusTilesRemaining = bonusTiles.some((tile) => !tile.removed);
+  const bonusRoundActive = !baseTilesRemaining && bonusTilesRemaining;
+  const tilesRemaining = baseTilesRemaining || bonusTilesRemaining;
 
   return (
     <div
@@ -942,19 +1038,66 @@ export default function KaBoomPage() {
             style={{ aspectRatio: "16 / 9", marginTop: isFullscreen ? "0px" : undefined }}
           >
             <div className="relative w-full h-full bg-[#f3f4f6]">
-              {!tilesRemaining && !specialRemoveActive && !centerReveal ? null : (
-                !specialRemoveActive && !centerReveal && (
-                  <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+              {bonusRoundActive ? (
+                <div className="absolute inset-0 z-30 flex items-center justify-center p-5">
+                  <div className="w-full max-w-3xl rounded-[2rem] border border-[#b8d5ae] bg-white/96 p-6 text-center shadow-[0_22px_70px_rgba(47,78,40,0.18)] backdrop-blur-sm sm:p-8">
+                    <div className="text-xs font-bold uppercase tracking-[0.3em] text-[#6f895f]">Bonus Blast!</div>
+                    <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[var(--color-text-main)] sm:text-4xl">Every team gets one last chance to score before we crown the winners.</h2>
+                    <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--color-text-muted)] sm:text-base">
+                      Choose a bonus tile to reveal points — but watch out for KaBoom!
+                    </p>
+                    <div className="mt-6 flex flex-wrap justify-center gap-4">
+                      {bonusTiles.map((tile, index) => {
+                        const glowing = glowingBonusIndex === index && !tile.removed;
+                        const reveal = tile.removed && (tile.bomb || tile.points !== null);
+                        return (
+                          <button
+                            key={`bonus-${index}`}
+                            type="button"
+                            onClick={() => handleBonusTileClick(index)}
+                            disabled={tile.removed || selectionMode !== "manual" || specialRemoveActive || !!centerReveal}
+                            className={`relative flex h-32 w-32 flex-col items-center justify-center overflow-hidden rounded-[1.7rem] border-2 font-extrabold shadow-lg transition sm:h-40 sm:w-40 ${
+                              glowing
+                                ? "scale-105 border-yellow-300 bg-yellow-100 shadow-[0_0_0_7px_rgba(250,204,21,0.22)]"
+                                : tile.removed
+                                  ? "border-slate-200 bg-slate-100 text-slate-500"
+                                  : "border-[#9bd3ab] bg-[#dff7e6] text-[#28452e] hover:-translate-y-1 hover:shadow-xl"
+                            }`}
+                          >
+                            {reveal ? (
+                              <span className="text-4xl sm:text-5xl">{tile.bomb ? "💣" : `+${tile.points}`}</span>
+                            ) : (
+                              <>
+                                <span className="text-xs uppercase tracking-[0.22em] opacity-70">Bonus</span>
+                                <span className="mt-1 text-3xl sm:text-4xl">{index + 1}</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                     {selectionMode === "random" && (
                       <button
-                        onClick={() => startRandomHighlightSequence(true)}
-                        disabled={!tilesRemaining || specialRemoveActive || !!centerReveal}
-                        className="pointer-events-auto w-48 h-48 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Randomly pick a tile for the active team"
+                        onClick={startBonusRandomHighlightSequence}
+                        disabled={specialRemoveActive || !!centerReveal}
+                        className="mt-6 rounded-full border-[8px] border-white/85 bg-[linear-gradient(180deg,#60a5fa,#2563eb)] px-7 py-4 text-xl font-extrabold text-white shadow-xl transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <span className="text-3xl font-extrabold leading-tight">Random Select</span>
+                        Random Select
                       </button>
                     )}
+                  </div>
+                </div>
+              ) : (
+                baseTilesRemaining && !specialRemoveActive && !centerReveal && selectionMode === "random" && (
+                  <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                    <button
+                      onClick={() => startRandomHighlightSequence(true)}
+                      disabled={specialRemoveActive || !!centerReveal}
+                      className="pointer-events-auto w-48 h-48 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Randomly pick a tile for the active team"
+                    >
+                      <span className="text-3xl font-extrabold leading-tight">Random Select</span>
+                    </button>
                   </div>
                 )
               )}
