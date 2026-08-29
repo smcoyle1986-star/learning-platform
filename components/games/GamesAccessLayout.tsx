@@ -20,7 +20,7 @@ export default function GamesAccessLayout({ children, publicFallback }: { childr
 
 function SignedInGamesLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { access, loading, canAccessGame } = useBillingAccess();
+  const { access, canAccessGame } = useBillingAccess();
 
   if (pathname === "/games") {
     return <>{children}</>;
@@ -33,7 +33,11 @@ function SignedInGamesLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  if (loading || !access) {
+  // `useBillingAccess` refreshes after Supabase auth events such as a token
+  // renewal. Keep an already-authorized game mounted during that background
+  // request; unmounting it would discard the in-memory board and scores.
+  // We still block the initial visit until an access snapshot exists.
+  if (!access) {
     return <div className="min-h-[40vh] bg-[var(--color-bg-main)]" />;
   }
 
