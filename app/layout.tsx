@@ -14,6 +14,7 @@ import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience"
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://classendo.com"),
@@ -68,6 +69,7 @@ export default function RootLayout({
             </div>
           </BrandMenuProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
