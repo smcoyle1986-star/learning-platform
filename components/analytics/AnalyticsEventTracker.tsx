@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { captureSignupAttribution } from "@/lib/analytics/attribution";
+import { trackConversion } from "@/lib/analytics/vercel";
 import { clearLessonTray } from "@/lib/lessons/tray";
 
 const WORKSHEET_KEYS: Record<string, string> = {
@@ -48,6 +49,7 @@ export function AnalyticsEventTracker() {
     captureSignupAttribution();
 
     if (pathname === "/flashcards") {
+      trackConversion("lesson_opened", { format: "flashcards" });
       void trackAnalyticsEvent({
         eventType: "flashcards_opened",
         itemKey: "flashcards",
@@ -58,6 +60,7 @@ export function AnalyticsEventTracker() {
     }
 
     if (pathname === "/flashcards/classroom") {
+      trackConversion("lesson_opened", { format: "classroom" });
       void trackAnalyticsEvent({
         eventType: "classroom_opened",
         itemKey: "classroom",
@@ -69,6 +72,7 @@ export function AnalyticsEventTracker() {
 
     const packSlug = pathname.match(/^\/free-resources\/([^/]+)$/)?.[1];
     if (packSlug) {
+      trackConversion("lesson_opened", { format: "free_resource" });
       void trackAnalyticsEvent({
         eventType: "lesson_pack_viewed",
         itemKey: packSlug,

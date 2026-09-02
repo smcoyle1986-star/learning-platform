@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { supabase, supabaseReady } from "@/lib/supabase/client";
+import { trackConversion } from "@/lib/analytics/vercel";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
@@ -32,6 +33,9 @@ export default function AuthCallbackPage() {
       }
 
       const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+      trackConversion("welcome_trial_started", {
+        destination: next === "/upgrade" ? "upgrade" : "flashcards",
+      });
       const destination = new URL(next, window.location.origin);
       destination.searchParams.set("email_confirmed", "1");
       router.replace(`${destination.pathname}${destination.search}`);

@@ -16,6 +16,7 @@ import {
   savePendingEmailConfirmation,
 } from "@/lib/auth/pending-confirmation";
 import { readSignupAttribution } from "@/lib/analytics/attribution";
+import { trackConversion } from "@/lib/analytics/vercel";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
@@ -247,6 +248,9 @@ export default function SignupPage() {
       const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
       const onboardingStartedAt = new Date().toISOString();
       const signupAttribution = readSignupAttribution();
+      trackConversion("signup_submitted", {
+        destination: requestedNext === "/upgrade" ? "upgrade" : "flashcards",
+      });
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -274,6 +278,10 @@ export default function SignupPage() {
         setMessage("We could not finish creating your account just now. Please try again.");
         return;
       }
+
+      trackConversion("signup_account_created", {
+        email_confirmation_required: !data.session,
+      });
 
       if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         setMessage(DUPLICATE_EMAIL_MESSAGE);
