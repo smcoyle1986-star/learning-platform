@@ -155,7 +155,7 @@ export default function LandingCarousel() {
 
     const load = async () => {
       try {
-        const response = await fetch("/api/landing-images", { cache: "no-store" });
+        const response = await fetch("/api/landing-images");
         const json = (await response.json().catch(() => ({}))) as {
           slides?: Array<{ path: string; label?: string; version?: string | null }>;
         };
@@ -207,25 +207,17 @@ export default function LandingCarousel() {
   return (
     <div className="flex h-[420px] flex-col rounded-3xl bg-gradient-to-br from-[#dfe8d1] to-[#cfd9c1] p-4 shadow-[0_18px_40px_rgba(54,64,46,0.12)] ring-1 ring-black/5">
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[2rem]">
-        {carouselSlides.map((slide, index) => {
-          const active = index === effectiveActiveIndex;
-          return (
-            <div
-              key={slide.path}
-              className={`absolute inset-0 flex items-center justify-center p-1 transition-opacity duration-1000 ease-in-out ${
-                active ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <div className="h-full w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-4 shadow-xl backdrop-blur-sm">
-                <img
-                  src={landingImageUrl(slide)}
-                  alt={slide.alt}
-                  className="h-full w-full object-contain object-center"
-                />
-              </div>
-            </div>
-          );
-        })}
+        <div className="absolute inset-0 flex items-center justify-center p-1">
+          <div className="h-full w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-4 shadow-xl backdrop-blur-sm">
+            <img
+              src={landingImageUrl(activeSlide)}
+              alt={activeSlide.alt}
+              className="h-full w-full object-contain object-center"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
+        </div>
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/15 via-transparent to-black/5" />
       </div>

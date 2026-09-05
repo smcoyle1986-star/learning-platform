@@ -98,7 +98,16 @@ export async function GET() {
     const bucket = supabase.storage.from(BUCKET);
     const slides = await listRecursive(bucket, ROOT_FOLDER);
 
-    return NextResponse.json({ slides });
+    return NextResponse.json(
+      { slides },
+      {
+        headers: {
+          // The carousel can refresh in the background, but its slide list should not
+          // make every homepage visit wait on a Storage listing.
+          "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400",
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to load landing images:", error);
     return NextResponse.json({ slides: [] }, { status: 200 });

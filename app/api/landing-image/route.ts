@@ -93,7 +93,9 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         "Content-Type": sniffContentType(buffer, path),
-        "Cache-Control": "public, max-age=3600",
+        // Images are immutable for the normal browsing session and can be served from
+        // Vercel's CDN while a newer object is fetched in the background.
+        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
       },
     });
   } catch (error) {
