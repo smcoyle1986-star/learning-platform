@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CarouselEntry, FlashcardImageVariant } from "@/lib/flashcards/types";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 
 type FlashcardResultsGridProps = {
   results: Card[];
@@ -87,7 +88,7 @@ export default function FlashcardResultsGrid({
               </div>
             )}
             <div className="relative aspect-square rounded-xl bg-[var(--color-bg-card)] mb-3 overflow-hidden">
-              <img
+              <ResponsiveStorageImage
                 src={currentImage}
                 alt={card.word}
                 className={`absolute inset-0 h-full w-full object-contain transition-transform duration-300 ${
@@ -97,13 +98,18 @@ export default function FlashcardResultsGrid({
                       : "translate-x-full"
                     : "translate-x-0"
                 }`}
+                sizes="(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 20vw"
+                widths={[160, 240, 320, 480]}
               />
               {carousel.animating && (
-                <img
+                <ResponsiveStorageImage
                   src={nextImage}
                   alt={card.word}
                   onTransitionEnd={() => onFinishCarouselSlide(card)}
                   className="absolute inset-0 h-full w-full object-contain transition-transform duration-300"
+                  sizes="(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 20vw"
+                  widths={[160, 240, 320, 480]}
+                  loading="eager"
                   style={{
                     transform:
                       carousel.phase === "start"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -89,13 +90,29 @@ export async function GET(request: Request) {
     }
 
     const buffer = Buffer.from(await data.arrayBuffer());
-    return new NextResponse(buffer, {
+    const requestedWidth = Number(url.searchParams.get("width"));
+    const requestedQuality = Number(url.searchParams.get("quality"));
+    const width = Number.isFinite(requestedWidth)
+      ? Math.min(Math.max(Math.round(requestedWidth), 160), 1920)
+      : null;
+    const quality = Number.isFinite(requestedQuality)
+      ? Math.min(Math.max(Math.round(requestedQuality), 40), 90)
+      : 72;
+    const shouldTransform = width !== null || url.searchParams.get("format") === "webp";
+    const output = shouldTransform
+      ? await sharp(buffer)
+          .resize({ width: width ?? undefined, withoutEnlargement: true })
+          .webp({ quality })
+          .toBuffer()
+      : buffer;
+
+    return new NextResponse(output, {
       status: 200,
       headers: {
-        "Content-Type": sniffContentType(buffer, path),
-        // Images are immutable for the normal browsing session and can be served from
-        // Vercel's CDN while a newer object is fetched in the background.
-        "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+        "Content-Type": shouldTransform ? "image/webp" : sniffContentType(buffer, path),
+        // Versioned landing URLs allow browser and edge caches to retain a compact
+        // derived asset without making future artwork uploads impossible to publish.
+        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
       },
     });
   } catch (error) {

@@ -1,12 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 
 type ExpandedImage = { src: string; alt: string };
 
 export function LandingSectionImage({ path, alt }: { path: string; alt: string }) {
   const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(null);
-  const src = `/api/landing-image?path=${encodeURIComponent(path)}`;
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const containerRef = useRef<HTMLSpanElement | null>(null);
+  const src = `/api/landing-image?path=${encodeURIComponent(path)}&v=2026-09-06`;
+
+  useEffect(() => {
+    const target = containerRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!expandedImage) return;
@@ -25,15 +43,17 @@ export function LandingSectionImage({ path, alt }: { path: string; alt: string }
         className="group block w-full touch-manipulation cursor-zoom-in rounded-[2rem] text-left outline-none transition-transform duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-[#86a96a]/50"
         aria-label={`Expand ${alt}`}
       >
-        <span className="block rounded-[2rem] border-[3px] border-[#d8e6ce] bg-[#fcfcf8] p-3 shadow-[0_16px_40px_rgba(54,64,46,0.08)] transition-shadow duration-200 group-hover:shadow-[0_22px_48px_rgba(54,64,46,0.16)]">
-          <img
-            src={src}
-            alt={alt}
-            className="block h-full w-full rounded-[1.35rem] object-contain"
-            style={{ maxHeight: "min(80vh, 1200px)" }}
-            loading="lazy"
-            decoding="async"
-          />
+        <span ref={containerRef} className="block aspect-[3/2] rounded-[2rem] border-[3px] border-[#d8e6ce] bg-[#fcfcf8] p-3 shadow-[0_16px_40px_rgba(54,64,46,0.08)] transition-shadow duration-200 group-hover:shadow-[0_22px_48px_rgba(54,64,46,0.16)]">
+          {shouldLoad ? (
+            <ResponsiveStorageImage
+              src={src}
+              alt={alt}
+              className="block h-full w-full rounded-[1.35rem] object-contain"
+              sizes="(max-width: 1023px) calc(100vw - 2rem), 60vw"
+              widths={[480, 768, 1024]}
+              loading="lazy"
+            />
+          ) : null}
         </span>
       </button>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 
 type Slide = {
   path: string;
@@ -30,13 +31,9 @@ const SLIDE_CAPTIONS: Record<string, string> = {
   games_5: "Simple and effective game design for classrooms.",
 };
 
-function isInformationSlide(path: string) {
-  return path.startsWith("landing/information/");
-}
-
 function landingImageUrl(slide: Slide) {
-  const params = new URLSearchParams({ path: slide.path });
-  if (slide.version) params.set("v", slide.version);
+  const params = new URLSearchParams({ path: slide.path, v: "2026-09-06" });
+  if (slide.version) params.set("asset", slide.version);
   return `/api/landing-image?${params.toString()}`;
 }
 
@@ -146,61 +143,18 @@ const FALLBACK_SLIDES: Slide[] = [
 ];
 
 export default function LandingCarousel() {
-  const [slides, setSlides] = useState<Slide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [rotationKey, setRotationKey] = useState(0);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const response = await fetch("/api/landing-images");
-        const json = (await response.json().catch(() => ({}))) as {
-          slides?: Array<{ path: string; label?: string; version?: string | null }>;
-        };
-        if (cancelled) return;
-
-        const apiSlides =
-          Array.isArray(json.slides) && json.slides.length > 0
-            ? json.slides
-                .filter((slide) => !isInformationSlide(slide.path))
-                .map((slide) => ({
-                  path: slide.path,
-                  alt: slide.label ? `Classendo landing slide: ${slide.label}` : "Classendo landing carousel slide",
-                  label: slide.label ?? "",
-                  caption: SLIDE_CAPTIONS[slide.label?.replace(/\s+/g, "_") ?? ""] ?? "",
-                  version: slide.version ?? null,
-                }))
-            : [];
-
-        const nextSlides = apiSlides.length > 0 ? apiSlides : FALLBACK_SLIDES;
-
-        setSlides(nextSlides);
-        setActiveIndex(0);
-      } catch {
-        if (!cancelled) {
-          setSlides(FALLBACK_SLIDES);
-          setActiveIndex(0);
-        }
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (slides.length <= 1) return;
+    if (FALLBACK_SLIDES.length <= 1) return;
     const id = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
+      setActiveIndex((current) => (current + 1) % FALLBACK_SLIDES.length);
     }, 5000);
     return () => window.clearInterval(id);
-  }, [slides.length, rotationKey]);
+  }, [rotationKey]);
 
-  const carouselSlides = useMemo(() => (slides.length > 0 ? slides : FALLBACK_SLIDES), [slides]);
+  const carouselSlides = useMemo(() => FALLBACK_SLIDES, []);
   const effectiveActiveIndex = activeIndex < carouselSlides.length ? activeIndex : 0;
   const activeSlide = carouselSlides[effectiveActiveIndex];
 
@@ -209,12 +163,15 @@ export default function LandingCarousel() {
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[2rem]">
         <div className="absolute inset-0 flex items-center justify-center p-1">
           <div className="h-full w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-4 shadow-xl backdrop-blur-sm">
-            <img
+            <ResponsiveStorageImage
               src={landingImageUrl(activeSlide)}
               alt={activeSlide.alt}
               className="h-full w-full object-contain object-center"
+              sizes="(max-width: 767px) calc(100vw - 2rem), 50vw"
+              widths={[480, 768, 1024]}
+              quality={76}
+              loading="eager"
               fetchPriority="high"
-              decoding="async"
             />
           </div>
         </div>

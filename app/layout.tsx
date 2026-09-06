@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { BrandMenuProvider } from "@/components/BrandMenuContext";
@@ -12,11 +13,14 @@ import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
 import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience";
+import { BillingAccessProvider } from "@/lib/billing/useBillingAccess";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://classendo.com"),
@@ -46,12 +50,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
-          <AnalyticsEventTracker />
-          <PremiumTrialExperience />
-          <BrandMenuProvider>
+          <BillingAccessProvider>
+            <AnalyticsEventTracker />
+            <PremiumTrialExperience />
+            <BrandMenuProvider>
             <BrandMenuDrawer />
             <BrandPageTheme />
             <div className="relative z-10">
@@ -73,7 +78,8 @@ export default function RootLayout({
               <FeedbackLauncher />
               <CookieConsentBanner />
             </div>
-          </BrandMenuProvider>
+            </BrandMenuProvider>
+          </BillingAccessProvider>
         </AuthProvider>
         <Analytics />
         <SpeedInsights />

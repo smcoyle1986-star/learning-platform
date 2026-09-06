@@ -5,6 +5,7 @@ import { BookOpen, FileSpreadsheet, Pencil, Presentation, Printer, X } from "luc
 import { TrayItem } from "@/lib/flashcards/types";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 
 type LessonTrayBarProps = {
   editingLessonSetId: string | null;
@@ -103,10 +104,12 @@ export default function LessonTrayBar({
               title={`${formatWord(card.word)} — use Left/Right to move, Delete to remove`}
             >
               {card.image ? (
-                <img
+                <ResponsiveStorageImage
                   src={resolveLessonImageUrl(card.image)}
                   alt={formatWord(card.word)}
                   className="w-8 h-8 rounded-md object-cover border border-black/10 bg-white shrink-0"
+                  sizes="32px"
+                  widths={[64, 96]}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-md border border-dashed border-black/10 bg-white/70 shrink-0" />

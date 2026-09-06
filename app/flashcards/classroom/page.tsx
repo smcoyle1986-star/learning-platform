@@ -13,6 +13,7 @@ import ClassroomCanvas from "@/components/classroom/ClassroomCanvas";
 import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
 import { useAuth } from "@/components/AuthProvider";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 import { readLessonTray, writeLessonTray } from "@/lib/lessons/tray";
 
 
@@ -555,10 +556,15 @@ export default function ClassroomMode() {
                 {(displayMode === "image+text") ||
                  (displayMode === "image") ||
                  (displayMode === "text" && revealToggle) ? (
-                  <img
+                  <ResponsiveStorageImage
                     src={resolveLessonImageUrl(card.image || "/placeholder.png")}
                     alt={card.word}
                     className="h-full w-full object-contain"
+                    sizes="100vw"
+                    widths={[640, 1024, 1440, 1920]}
+                    quality={82}
+                    loading="eager"
+                    fetchPriority="high"
                   />
                 ) : (
                   <div className="text-2xl text-gray-400"> </div>

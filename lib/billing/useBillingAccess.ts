@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { supabase, supabaseReady } from "@/lib/supabase/client";
 import {
@@ -23,12 +23,18 @@ type BillingState = {
   canUsePremiumImageVariations: boolean;
 };
 
-export function useBillingAccess(): BillingState {
+const BillingAccessContext = createContext<BillingState | null>(null);
+
+function useBillingAccessState(): BillingState {
   const [access, setAccess] = useState<BillingAccessSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const refreshInFlight = useRef<Promise<void> | null>(null);
 
   const refresh = useCallback(async () => {
+    if (refreshInFlight.current) return refreshInFlight.current;
+
+    const request = (async () => {
     setLoading(true);
     setError(null);
 
@@ -54,12 +60,23 @@ export function useBillingAccess(): BillingState {
     } finally {
       setLoading(false);
     }
+    })();
+
+    refreshInFlight.current = request;
+    try {
+      await request;
+    } finally {
+      refreshInFlight.current = null;
+    }
   }, []);
 
   useEffect(() => {
     void refresh();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      // The explicit initial refresh above already covers this event. Ignoring
+      // it avoids a second access request on every new page load.
+      if (event === "INITIAL_SESSION") return;
       void refresh();
     });
 
@@ -79,4 +96,17 @@ export function useBillingAccess(): BillingState {
     canUsePrintableOptions: access ? canUsePrintableOptions(access) : false,
     canUsePremiumImageVariations: access ? canUsePremiumImageVariations(access) : false,
   };
+}
+
+export function BillingAccessProvider({ children }: { children: React.ReactNode }) {
+  const billing = useBillingAccessState();
+  return createElement(BillingAccessContext.Provider, { value: billing }, children);
+}
+
+export function useBillingAccess(): BillingState {
+  const shared = useContext(BillingAccessContext);
+  if (!shared) {
+    throw new Error("useBillingAccess must be used within BillingAccessProvider");
+  }
+  return shared;
 }
