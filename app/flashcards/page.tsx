@@ -15,6 +15,7 @@ import LessonTrayBar from "@/components/flashcards/LessonTrayBar";
 import SaveLessonDialogs from "@/components/flashcards/SaveLessonDialogs";
 import GuestFlashcardPrompt from "@/components/flashcards/GuestFlashcardPrompt";
 import NewUserOnboarding from "@/components/flashcards/NewUserOnboarding";
+import StarterLessonTopics from "@/components/flashcards/StarterLessonTopics";
 import {
   GUEST_LESSON_TRAY_LIMIT,
   readLastSavedTray,
@@ -51,6 +52,7 @@ export default function FlashcardsPage() {
   const [creatorCards, setCreatorCards] = useState<Card[]>([]);
   const [guestPrompt, setGuestPrompt] = useState<"limit" | "save" | null>(null);
   const [shouldHighlightClassroom, setShouldHighlightClassroom] = useState(false);
+  const [starterLessonName, setStarterLessonName] = useState<string | null>(null);
 
   // NOTE: changed to preserve original case — only replace underscores with spaces.
   const formatWord = (word: string) => String(word ?? "").replace(/_/g, " ");
@@ -203,6 +205,12 @@ export default function FlashcardsPage() {
     writeLessonTray(lessonTray as LessonCard[], user ? "account" : "guest");
   }, [authLoading, lessonTray, lessonTrayReady, user]);
 
+  useEffect(() => {
+    if (lessonTrayReady && lessonTray.length === 0) {
+      setStarterLessonName(null);
+    }
+  }, [lessonTray.length, lessonTrayReady]);
+
   const {
     carouselState,
     getCarouselKey,
@@ -341,6 +349,15 @@ export default function FlashcardsPage() {
     writeLessonTray([], isGuest ? "guest" : "account");
   }
 
+  function useStarterLesson(topic: { title: string }, cards: LessonCard[]) {
+    if (lessonTray.length > 0) return;
+    const next = cards as TrayItem[];
+    setLessonTray(next);
+    writeLessonTray(next as LessonCard[], isGuest ? "guest" : "account");
+    setStarterLessonName(topic.title);
+    setShouldHighlightClassroom(true);
+  }
+
   function persistLessonTray() {
     writeLessonTray(lessonTray as LessonCard[], isGuest ? "guest" : "account");
   }
@@ -450,7 +467,7 @@ export default function FlashcardsPage() {
             <div>
               <p className="text-sm font-semibold text-[#40533b]">Use Classendo without signing up</p>
               <p className="mt-1 text-xs leading-5 text-[#63705f]">
-                Choose up to 6 free Image 1 flashcards, then use them in Classroom Mode, Printables, or Lesson Plans. Your temporary lesson lasts for this browser session.
+                Choose up to 6 standard illustrated flashcards, then use them in Classroom Mode, Printables, or Lesson Plans. Your temporary lesson lasts for this browser session.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
@@ -506,6 +523,19 @@ export default function FlashcardsPage() {
         }}
         onClearTray={clearLessonTray}
       />
+
+      {lessonTrayReady && lessonTray.length === 0 && !isMyCards && results.length === 0 ? (
+        <StarterLessonTopics onUseStarter={useStarterLesson} />
+      ) : null}
+
+      {starterLessonName && lessonTray.length > 0 ? (
+        <section className="border-b border-[#cfe0c5] bg-[#f2f8ed]">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm sm:px-6">
+            <p className="font-medium text-[#45643c]"><span className="font-bold">{starterLessonName} is ready in Your lesson.</span> Open Classroom Mode whenever you are ready to teach.</p>
+            <button type="button" onClick={() => { persistLessonTray(); router.push("/flashcards/classroom?from=starter"); }} className="btn btn-primary px-4 py-2 text-sm">Teach in Classroom Mode</button>
+          </div>
+        </section>
+      ) : null}
 
       <FlashcardSearchControls
         openDropdown={openDropdown}
