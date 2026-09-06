@@ -544,13 +544,13 @@ export default function FourCornersPage() {
                             />
                           ) : (
                             <div className="px-8 text-center">
-                              <div className="text-4xl md:text-6xl font-extrabold text-slate-800">{currentCard?.word ?? ""}</div>
+                              <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="text-4xl md:text-6xl font-bold text-slate-800">{currentCard?.word ?? ""}</div>
                             </div>
                           )}
                         </div>
                         {currentCard?.word && (
                           <div className="max-w-[min(90vw,760px)] rounded-[24px] border-2 border-slate-200 bg-white/96 px-6 py-3 shadow-xl">
-                            <div className="text-2xl md:text-4xl font-extrabold text-slate-800 text-center leading-tight">
+                            <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="text-2xl md:text-4xl font-bold text-slate-800 text-center leading-tight">
                               {currentCard.word}
                             </div>
                           </div>

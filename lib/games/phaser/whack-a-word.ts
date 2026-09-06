@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import type { PhaserVocabCard } from "@/lib/games/phaser/types";
 import { makeTextureKey } from "@/lib/games/phaser/types";
+import { PHASER_UI_FONT, waitForPhaserStudentFont } from "@/lib/games/phaser/ui-theme";
 
 export type WhackDifficulty = "easy" | "medium" | "hard";
 export type WhackMode = "idle" | "playing";
@@ -47,6 +48,7 @@ export async function createWhackWordGame({
   emit: (event: WhackSceneEvent) => void;
   exposeApi: (api: WhackSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   type HoleState = {
     container: Phaser.GameObjects.Container;
     content: Phaser.GameObjects.Container;
@@ -227,7 +229,7 @@ export async function createWhackWordGame({
       const labelBg = this.add.rectangle(0, 0, 150, 80, 0xffffff).setStrokeStyle(2, 0xdbeafe);
       const labelText = this.add
         .text(0, 0, word, {
-          fontFamily: "Arial",
+          fontFamily: PHASER_UI_FONT,
           fontSize: "28px",
           color: "#0b2545",
           fontStyle: "bold",

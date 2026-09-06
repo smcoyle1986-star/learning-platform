@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { PHASER_UI_FONT, waitForPhaserStudentFont } from "@/lib/games/phaser/ui-theme";
 
 export type SpinSegment = {
   id: string;
@@ -30,6 +31,7 @@ export async function createSpinWheelGame({
   exposeApi: (api: SpinWheelApi) => void;
   segments: SpinSegment[];
 }) {
+  await waitForPhaserStudentFont();
   class SpinWheelScene extends Phaser.Scene {
     private wheelContainer!: Phaser.GameObjects.Container;
     private pointer!: Phaser.GameObjects.Polygon;
@@ -176,7 +178,7 @@ export async function createSpinWheelGame({
           this.drawQuestionIcon(icon);
           iconGroup.add(
             this.add.text(0, 0, "?", {
-              fontFamily: "Arial, Helvetica, sans-serif",
+              fontFamily: PHASER_UI_FONT,
               fontSize: "22px",
               fontStyle: "bold",
               color: "#2563eb",
@@ -194,6 +196,7 @@ export async function createSpinWheelGame({
 
         const label = this.add
           .text(x, y + 34, segments[i].label.toUpperCase(), {
+            fontFamily: PHASER_UI_FONT,
             fontSize: segments[i].label.length > 6 ? "19px" : "24px",
             fontStyle: "bold",
             color: "#0f172a",

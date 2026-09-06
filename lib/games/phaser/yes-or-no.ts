@@ -7,6 +7,7 @@ import {
   PHASER_PRIMARY_DARK,
   PHASER_TEXT,
   PHASER_UI_FONT,
+  waitForPhaserStudentFont,
 } from "@/lib/games/phaser/ui-theme";
 
 export type YesNoSceneState = {
@@ -51,6 +52,7 @@ export async function createYesNoGame({
   emit: (event: YesNoSceneEvent) => void;
   exposeApi: (api: YesNoSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   class YesNoScene extends Phaser.Scene {
     private state: YesNoSceneState = {
       imageUrl: null,

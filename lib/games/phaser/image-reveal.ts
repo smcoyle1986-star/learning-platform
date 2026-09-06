@@ -4,6 +4,7 @@ import {
   PHASER_PANEL_STROKE,
   PHASER_TEXT,
   PHASER_UI_FONT,
+  waitForPhaserStudentFont,
 } from "@/lib/games/phaser/ui-theme";
 
 export type ImageRevealState = {
@@ -42,6 +43,7 @@ export async function createImageRevealGame({
   emit: (event: ImageRevealEvent) => void;
   exposeApi: (api: ImageRevealApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   const COLS = columns ?? 6;
   const ROWS = rows ?? 4;
   const PATCH_COLORS = [0xfde68a, 0xfca5a5, 0xc7d2fe, 0xbbf7d0, 0xfbcfe8, 0xfee2b3, 0xdbeafe, 0xd1fae5];

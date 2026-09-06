@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import { PHASER_TEXT, PHASER_UI_FONT } from "@/lib/games/phaser/ui-theme";
+import { PHASER_TEXT, PHASER_UI_FONT, waitForPhaserStudentFont } from "@/lib/games/phaser/ui-theme";
 
 export type KaboomCenterReveal =
   | { kind: "points"; value?: number }
@@ -56,6 +56,7 @@ export async function createKaboomGame({
   emit: (event: KaboomSceneEvent) => void;
   exposeApi: (api: KaboomSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   class KaboomScene extends Phaser.Scene {
     private state: KaboomSceneState = {
       rows: 6,

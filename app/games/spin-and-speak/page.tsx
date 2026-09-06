@@ -489,7 +489,7 @@ export default function SpinAndSpeakPage() {
               )}
 
               <div className="spin-speak-turnbar">
-                <div className="spin-speak-prompt font-extrabold tracking-tight text-[var(--color-text-main)]">
+                <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="spin-speak-prompt font-bold text-[var(--color-text-main)]">
                   {showCardWord && currentCard ? currentCard.word : "Ready to spin"}
                 </div>
                 <div className="spin-speak-turn-controls flex flex-wrap items-center justify-center gap-2">

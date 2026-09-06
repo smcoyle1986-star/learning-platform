@@ -28,6 +28,10 @@ type Card = {
   type: string;
 };
 
+const studentDisplayStyle = {
+  fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive",
+};
+
 
 export default function ClassroomMode({ demo = false, tutorialStart = true }: { demo?: boolean; tutorialStart?: boolean }) {
   const { user, loading: authLoading } = useAuth();
@@ -78,15 +82,15 @@ export default function ClassroomMode({ demo = false, tutorialStart = true }: { 
       if (length > 48) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
       if (length > 28) return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
       if (length > 16) return "text-4xl sm:text-5xl md:text-6xl lg:text-7xl";
-      return "text-5xl sm:text-6xl md:text-8xl lg:text-[10rem]";
+      return "text-5xl sm:text-6xl md:text-7xl lg:text-[8rem]";
     }
 
     // In the combined layout, reserve the card for the image first. A short
     // label such as “school bag” used to grow to 8xl and dominate the card.
     if (length > 48) return "text-lg sm:text-xl md:text-2xl lg:text-3xl";
     if (length > 28) return "text-xl sm:text-2xl md:text-3xl lg:text-4xl";
-    if (length > 16) return "text-2xl sm:text-3xl md:text-4xl lg:text-5xl";
-    return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
+    if (length > 16) return "text-2xl sm:text-3xl md:text-4xl lg:text-[4.5rem]";
+    return "text-3xl sm:text-4xl md:text-5xl lg:text-[5rem]";
   };
   const handleExit = () => {
     if (isDemo) {
@@ -633,7 +637,7 @@ export default function ClassroomMode({ demo = false, tutorialStart = true }: { 
         {displayMode === "text" && !revealToggle ? (
           // centered text (no image visible)
           <div className="flex h-full w-full items-center justify-center px-4">
-            <h2 className={`max-w-[92%] break-words text-center font-extrabold leading-[1.05] tracking-wide text-balance ${flashcardTextSize(card.word, "text-only")}`}>
+            <h2 style={studentDisplayStyle} className={`max-w-[92%] break-words text-center font-bold leading-[1.05] text-balance ${flashcardTextSize(card.word, "text-only")}`}>
               {formatWord(card.word)}
             </h2>
           </div>
@@ -687,7 +691,7 @@ export default function ClassroomMode({ demo = false, tutorialStart = true }: { 
                 || (displayMode === "image" && revealToggle)
                 || (displayMode === "text") // in text mode, when revealToggle true we still show text (moved down); when false handled above
               ) && (
-                <h2 className={`max-w-[92%] break-words text-center font-extrabold leading-[1.1] tracking-wide text-balance ${flashcardTextSize(card.word, "image-and-text")} ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
+                <h2 style={studentDisplayStyle} className={`max-w-[92%] break-words text-center font-bold leading-[1.1] text-balance ${flashcardTextSize(card.word, "image-and-text")} ${displayMode === "text" && revealToggle ? "mb-4" : ""}`}>
                   {formatWord(card.word)}
                 </h2>
               )}

@@ -6,6 +6,7 @@ import {
   PHASER_PRIMARY_DARK,
   PHASER_TEXT,
   PHASER_UI_FONT,
+  waitForPhaserStudentFont,
 } from "@/lib/games/phaser/ui-theme";
 
 export type FourCornersPhase = "idle" | "countdown" | "animating" | "bomb" | "showcard" | "finished";
@@ -51,6 +52,7 @@ export async function createFourCornersGame({
   emit: (event: FourCornersSceneEvent) => void;
   exposeApi: (api: FourCornersSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   class FourCornersScene extends Phaser.Scene {
     private state: FourCornersSceneState = {
       phase: "idle",

@@ -951,7 +951,7 @@ export default function YesOrNoPage() {
               </div>
 
               <div className="w-full max-w-[1100px] min-h-[64px] flex items-center justify-center px-4 text-center">
-                <p className={`text-xl md:text-4xl font-extrabold tracking-tight text-slate-800 transition-all duration-300 ${showPrompt ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
+                <p style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className={`text-xl md:text-4xl font-bold text-slate-800 transition-all duration-300 ${showPrompt ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}>
                   {displayedText || "—"}
                 </p>
               </div>

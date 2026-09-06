@@ -1,5 +1,5 @@
 import { makeTextureKey } from "@/lib/games/phaser/types";
-import { PHASER_TEXT, PHASER_UI_FONT } from "@/lib/games/phaser/ui-theme";
+import { PHASER_TEXT, PHASER_UI_FONT, waitForPhaserStudentFont } from "@/lib/games/phaser/ui-theme";
 
 export type MemoryPhaserCard = {
   id: string;
@@ -52,6 +52,7 @@ export async function createMemoryFlipGame({
   emit: (event: MemoryFlipSceneEvent) => void;
   exposeApi: (api: MemoryFlipSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   class MemoryFlipScene extends Phaser.Scene {
     private state: MemoryFlipSceneState = {
       cards: [],

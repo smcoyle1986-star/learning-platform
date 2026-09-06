@@ -1,11 +1,21 @@
 import type Phaser from "phaser";
 
-export const PHASER_UI_FONT = "Arial";
+export const PHASER_UI_FONT = '"Comic Neue", "Comic Sans MS", "Comic Sans", cursive';
 export const PHASER_PRIMARY = 0x2563eb;
 export const PHASER_PRIMARY_DARK = 0x1d4ed8;
 export const PHASER_PANEL_STROKE = 0xcbd5e1;
 export const PHASER_TEXT = "#0f172a";
 export const PHASER_MUTED = "#475569";
+
+/** Canvas games need the webfont loaded before Phaser paints their first frame. */
+export async function waitForPhaserStudentFont() {
+  if (typeof document === "undefined" || !document.fonts) return;
+  try {
+    await document.fonts.load("700 32px 'Comic Neue'");
+  } catch {
+    // The family list above includes safe fallbacks for offline classrooms.
+  }
+}
 
 export function applyButtonFeedback(
   container: Phaser.GameObjects.Container,

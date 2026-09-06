@@ -54,6 +54,7 @@ export async function createConnectFourGame({
   emit: (event: ConnectFourSceneEvent) => void;
   exposeApi: (api: ConnectFourSceneApi) => void;
 }) {
+  await waitForPhaserStudentFont();
   class ConnectFourScene extends Phaser.Scene {
     private state: ConnectFourSceneState = {
       rows: 6,
@@ -253,4 +254,4 @@ export async function createConnectFourGame({
 
   return { game };
 }
-import { PHASER_PANEL_STROKE, PHASER_UI_FONT } from "@/lib/games/phaser/ui-theme";
+import { PHASER_PANEL_STROKE, PHASER_UI_FONT, waitForPhaserStudentFont } from "@/lib/games/phaser/ui-theme";
