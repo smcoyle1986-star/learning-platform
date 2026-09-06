@@ -101,7 +101,7 @@ function UpgradePageContent() {
           <div className="mt-7 grid gap-5 md:grid-cols-3">
             <article className="rounded-[1.75rem] border border-[#dfe5d8] bg-white p-6"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#6d8160]">Free</div><h2 className="mt-3 text-2xl font-bold">Explore Classendo</h2><p className="mt-4 text-sm leading-6 text-[#667066]">Build a lesson tray and explore interactive flashcards before you subscribe.</p></article>
             <article className="rounded-[1.75rem] border border-[#dfe5d8] bg-white p-6"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#6d8160]">Monthly</div><h2 className="mt-3 text-2xl font-bold">Premium Monthly</h2><div className="mt-4 text-4xl font-black">{monthlyPrice ?? "Monthly"}<span className="text-sm font-medium text-[#6b756b]"> / month</span></div><p className="mt-4 text-sm leading-6 text-[#667066]">Unlimited games, worksheets, printables and saved My Lessons.</p><Link href="/signup?next=%2Fupgrade" className="btn btn-primary mt-6 w-full px-4 py-3">Start free trial</Link></article>
-            <article className="rounded-[1.75rem] border border-[#efd8a7] bg-[linear-gradient(180deg,#fffaf0,white)] p-6 shadow-sm"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b5a17]">Best value · Yearly</div><h2 className="mt-3 text-2xl font-bold">Premium Yearly</h2><div className="mt-4 text-4xl font-black">{yearlyPrice ?? "Yearly"}<span className="text-sm font-medium text-[#6b756b]"> / year</span></div>{yearlySavings ? <p className="mt-3 text-sm font-semibold text-[#8b5a17]">Save {yearlySavings.amount} a year</p> : null}<p className="mt-4 text-sm leading-6 text-[#667066]">Unlimited teaching tools, lesson saving and Premium features.</p><Link href="/signup?next=%2Fupgrade" className="btn btn-primary mt-6 w-full px-4 py-3">Start free trial</Link></article>
+            <article className="rounded-[1.75rem] border border-[#efd8a7] bg-[linear-gradient(180deg,#fffaf0,white)] p-6 shadow-sm"><div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8b5a17]">Yearly</div><h2 className="mt-3 text-2xl font-bold">Premium Yearly</h2><div className="mt-4 text-4xl font-black">{yearlyPrice ?? "Yearly"}<span className="text-sm font-medium text-[#6b756b]"> / year</span></div>{yearlySavings ? <p className="mt-3 text-sm font-semibold text-[#8b5a17]">Save {yearlySavings.amount} a year</p> : null}<p className="mt-4 text-sm leading-6 text-[#667066]">Unlimited teaching tools, lesson saving and Premium features.</p><Link href="/signup?next=%2Fupgrade" className="btn btn-primary mt-6 w-full px-4 py-3">Start free trial</Link></article>
           </div>
         </section>
       </main>
@@ -161,7 +161,7 @@ function UpgradePageContent() {
           <article className="relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-[#efd8a7] bg-[linear-gradient(180deg,#fffaf0,white)] p-6 shadow-[0_18px_36px_rgba(191,132,44,0.12)]">
             <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-[#efc88d] bg-[#fff0cf] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8b5a17]">
               <Sparkles size={12} />
-              Best value
+              Yearly plan
             </div>
             <div className="text-sm font-semibold uppercase tracking-[0.22em] text-[#6d8160]">Yearly</div>
             <h2 className="mt-3 text-2xl font-bold">Premium Yearly</h2>

@@ -69,13 +69,13 @@ export default function LandingHomepageSections() {
           <SectionEyebrow>Plans for growing classrooms</SectionEyebrow>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when you need more.</h2>
           <p className="mt-5 text-base leading-8 text-[#5c665c]">
-            Classendo&apos;s Free plan lets teachers explore visual vocabulary and build classroom activities. Premium adds expanded access for teachers who create, save, and reuse more teaching resources.
+            The Free plan includes visual flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.
           </p>
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             <article className="rounded-3xl border border-[#dfe6d9] bg-white p-5 shadow-sm">
               <h3 className="text-xl font-semibold">Free</h3>
-              <p className="mt-2 text-sm leading-6 text-[#5c665c]">Explore flashcards and make a temporary six-card lesson without signing up.</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Interactive classroom flashcards</li><li>Guest printables and lesson plans</li><li>Free account for saved basics</li></ul>
+              <p className="mt-2 text-sm leading-6 text-[#5c665c]">Use core teaching tools at no cost. Creating an account lets you save up to six lessons.</p>
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Flashcards, Classroom Mode, printables, and lesson plans</li><li>One rotating game and one rotating worksheet</li><li>Up to six saved lessons with a free account</li></ul>
               <Link href="/flashcards" className="btn btn-secondary mt-5 w-full px-4 py-3 text-center">Explore Free</Link>
             </article>
             <article className="rounded-3xl border border-[#e7ca90] bg-[#fffaf0] p-5 shadow-sm">
@@ -94,6 +94,21 @@ export default function LandingHomepageSections() {
         <LandingSectionImage path="classendo-images/information/pricing_my_lessons_v2.png" alt="Classendo Premium monthly and yearly plan visual" />
       </section>
 
+      <section className="bg-[#eef4ea] px-4 py-14 sm:px-6 md:py-18">
+        <div className="mx-auto grid max-w-6xl gap-8 rounded-[2rem] border border-[#d9e5d3] bg-white p-7 shadow-sm md:grid-cols-[1.2fr_0.8fr] md:p-10">
+          <div>
+            <SectionEyebrow>Built around your lesson</SectionEyebrow>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Make the tools fit your classroom.</h2>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#5c665c]">Choose the words and images that suit your learners, then carry the same set into presentation, practice, games, worksheets, and printables. Classendo is designed to help teachers adapt a lesson rather than start from a fixed sequence.</p>
+          </div>
+          <aside className="rounded-3xl border border-[#dfe8da] bg-[#f7faf4] p-6">
+            <h3 className="text-xl font-semibold">Help us keep it clear</h3>
+            <p className="mt-3 text-sm leading-7 text-[#5c665c]">Spot an unclear image, wording issue, or classroom problem? Signed-in teachers can send feedback from inside Classendo so we can review it in context.</p>
+            <Link href="/feedback" className="btn btn-secondary mt-5 px-5 py-3">Send feedback</Link>
+          </aside>
+        </div>
+      </section>
+
       <section className="bg-white/70 px-4 py-14 sm:px-6 md:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="text-center"><SectionEyebrow>Questions from teachers</SectionEyebrow><h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Frequently asked questions</h2><p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-[#6b756b]">Quick answers for teachers getting started with Classendo.</p></div>
@@ -109,7 +124,7 @@ export default function LandingHomepageSections() {
           <SectionEyebrow>Made for English teachers</SectionEyebrow>
           <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Teaching resources for modern English classrooms and online lessons</h2>
           <div className="mt-6 space-y-5 text-base leading-8 text-[#5c665c]">
-            <p>Classendo helps ESL teachers create engaging English lessons with vocabulary flashcards, classroom games, ESL worksheets, printable teaching materials, lesson plans, interactive classroom activities, and ready-to-use resources for online teaching.</p>
+            <p>Classendo helps ESL teachers build adaptable English lessons with vocabulary flashcards, classroom games, ESL worksheets, printable teaching materials, lesson plans, interactive classroom activities, and ready-to-use resources for online teaching.</p>
             <p>Whether you are introducing first vocabulary words, reviewing phonics, practising grammar, building speaking confidence, teaching in person, or leading online English lessons, Classendo provides flexible tools that save preparation time and make learning more engaging.</p>
           </div>
         </div>

@@ -1,6 +1,4 @@
-"use client";
-
-import { useBrandMenu } from "@/components/BrandMenuContext";
+import Link from "next/link";
 
 type BrandButtonProps = {
   className?: string;
@@ -8,16 +6,13 @@ type BrandButtonProps = {
 };
 
 export default function BrandButton({ className, label = "Classendo" }: BrandButtonProps) {
-  const { toggle } = useBrandMenu();
-
   return (
-    <button
-      type="button"
-      onClick={toggle}
+    <Link
+      href="/"
       className={className}
-      aria-label="Open Classendo menu"
+      aria-label="Classendo home"
     >
       {label}
-    </button>
+    </Link>
   );
 }

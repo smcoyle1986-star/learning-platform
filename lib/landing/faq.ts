@@ -7,7 +7,7 @@ export const LANDING_FAQ_PREVIEW: FaqItem[] = [
   {
     question: "Is Classendo free to use?",
     answer:
-      "Yes. Classendo includes a Free Plan with core tools such as flashcards, classroom mode, lesson planning, printables, a featured game, and a featured worksheet. Teachers can upgrade to Premium at any time for full access.",
+      "Yes. The Free Plan includes flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.",
   },
   {
     question: "What age groups is Classendo designed for?",
@@ -40,7 +40,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "Is Classendo free to use?",
     answer:
-      "Yes. Classendo includes a Free Plan that gives teachers access to core tools including flashcards, classroom mode, lesson planning, printables, a featured game, and a featured worksheet. Teachers can upgrade to Premium at any time for access to all features and resources.",
+      "Yes. The Free Plan includes flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.",
   },
   {
     question: "What age groups is Classendo designed for?",

@@ -8,6 +8,7 @@ import HeaderAuth from "@/components/HeaderAuth";
 import BrandButton from "@/components/BrandButton";
 import SiteNavigation from "@/components/SiteNavigation";
 import MobileSiteHeader from "@/components/MobileSiteHeader";
+import DesktopMenuButton from "@/components/DesktopMenuButton";
 import SiteChrome from "@/components/SiteChrome";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
@@ -68,7 +69,7 @@ export default function RootLayout({
                   <div className="mx-auto flex max-w-7xl items-center gap-6">
                     <BrandButton className="shrink-0 text-3xl font-extrabold tracking-tight text-blue-700 transition hover:opacity-80" />
                     <SiteNavigation />
-                    <div className="ml-auto"><HeaderAuth /></div>
+                    <div className="ml-auto flex items-center gap-3"><DesktopMenuButton /><HeaderAuth /></div>
                   </div>
                 </header>
               </SiteChrome>
