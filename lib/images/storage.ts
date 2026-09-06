@@ -34,6 +34,10 @@ export function getOptimizedStorageImageUrl(
   const next = new URL(parsed.url.toString());
   next.pathname = `${SUPABASE_RENDER_PATH}${parsed.objectPath}`;
   next.searchParams.set("width", String(Math.round(width)));
+  // Supabase defaults a one-dimensional transform to `cover`, which crops
+  // square flashcard artwork into a portrait strip. `contain` preserves the
+  // complete illustration while still serving a right-sized WebP asset.
+  next.searchParams.set("resize", "contain");
   next.searchParams.set("quality", String(quality));
   next.searchParams.set("format", "webp");
   return next.toString();
