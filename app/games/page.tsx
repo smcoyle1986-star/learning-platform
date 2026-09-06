@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDown, Gamepad2, HelpCircle, Play, Sparkles, X } from "lucide-react";
 import { GameHowToModal } from "@/components/games/GameHowToModal";
@@ -14,6 +15,7 @@ import {
   writeLessonTray,
 } from "@/lib/lessons/tray";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { getFeaturedWeeklyGameId } from "@/lib/billing/featured";
 import { useAuth } from "@/components/AuthProvider";
 
 /**
@@ -144,6 +146,12 @@ export default function GamesLandingPage() {
   const gameGridRef = useRef<HTMLDivElement | null>(null);
   const { access, canAccessGame } = useBillingAccess();
   const { user } = useAuth();
+  const featuredGameId = access?.featuredGameId ?? getFeaturedWeeklyGameId();
+  const featuredGame = GAMES.find((game) => game.id === featuredGameId) ?? {
+    id: featuredGameId,
+    title: "Whack-a-Word",
+    subtitle: "Spot the right vocabulary word before it disappears.",
+  };
 
   useEffect(() => {
     return subscribeToLessonTray((cards) => {
@@ -338,11 +346,9 @@ export default function GamesLandingPage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Games</div>
                   <div className="mt-2 text-3xl font-black text-[var(--color-text-main)]">{GAMES.length}</div>
                   <div className="mt-1 text-sm text-[var(--color-text-muted)]">Ready to play now</div>
-                  {access && !access.isPremium ? (
-                    <div className="mt-2 text-xs font-semibold text-[#6d8160]">
-                      Free this week: {access.featuredGameId.replaceAll("-", " ")}
-                    </div>
-                  ) : null}
+                  <div className="mt-2 text-xs font-semibold text-[#6d8160]">
+                    Free this week: {featuredGame.title}
+                  </div>
                 </div>
                 <div className="rounded-2xl border border-black/5 bg-white/90 p-4 shadow-sm">
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Most popular this week</div>
@@ -398,6 +404,42 @@ export default function GamesLandingPage() {
             </div>
           </section>
 
+          <section className="mt-10 overflow-hidden rounded-[1.8rem] border border-[#d8e5ce] bg-[linear-gradient(135deg,#f4f9ef_0%,#ffffff_48%,#fff8e6_100%)] p-5 shadow-[0_16px_38px_rgba(88,133,72,0.12)] md:p-6">
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-[#bdd4ac] bg-white px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#4d6e3d]">
+                    Free with an account
+                  </span>
+                  <span className="text-sm font-semibold text-[#6d8160]">This week&apos;s featured game</span>
+                </div>
+                <h2 className="mt-3 text-2xl font-black tracking-tight text-[var(--color-text-main)] md:text-3xl">Play {featuredGame.title} free this week</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
+                  Create a free account, add your own lesson cards, then use this complete classroom game at no cost. The featured game changes each week.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {!user ? (
+                    <Link href="/signup?next=%2Fflashcards" className="btn btn-primary px-5 py-3 text-sm">
+                      Create a free account
+                    </Link>
+                  ) : lessonTray.length === 0 ? (
+                    <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-primary px-5 py-3 text-sm">
+                      Add cards to play
+                    </button>
+                  ) : (
+                    <button onClick={() => enterGame(featuredGame.id)} className="btn btn-primary px-5 py-3 text-sm">
+                      Play {featuredGame.title}
+                    </button>
+                  )}
+                  <span className="text-xs font-medium text-[#667663]">1. Add cards · 2. Open the game · 3. Teach</span>
+                </div>
+              </div>
+              <div className="mx-auto aspect-[4/3] w-full max-w-[220px] overflow-hidden rounded-2xl border border-white/80 bg-white shadow-sm">
+                <img src={featuredGame.image ?? "/placeholder.png"} alt={`${featuredGame.title} game preview`} className="h-full w-full object-cover" />
+              </div>
+            </div>
+          </section>
+
           <div className="mt-10 mb-6 flex items-end justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">Choose a game</h3>
@@ -405,27 +447,11 @@ export default function GamesLandingPage() {
             </div>
           </div>
 
-          {access && !access.isPremium ? (
-            <div className="mb-6 overflow-hidden rounded-[1.8rem] border border-[#e4d5ae] bg-[linear-gradient(135deg,#fff8e7_0%,#fffdf6_48%,#eef7df_100%)] px-5 py-4 text-sm text-[#6e5a2c] shadow-[0_16px_38px_rgba(190,160,74,0.16)]">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-[#dfc77b] bg-white/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#9a6b14]">
-                  Featured Free Game
-                </span>
-                <span className="text-base font-semibold text-[#5f4c26]">
-                  This week’s unlocked game is <span className="text-[#315b2a]">{access.featuredGameId.replaceAll("-", " ")}</span>.
-                </span>
-              </div>
-              <p className="mt-2 text-[13px] text-[#7a6543]">
-                Free accounts can jump into this special pick right now. Upgrade to unlock every classroom game any time.
-              </p>
-            </div>
-          ) : null}
-
           <div ref={gameGridRef} id="games-grid" className="scroll-mt-[180px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {GAMES.map((g, index) => (
               (() => {
                 const isLocked = access ? !canAccessGame(g.id) : false;
-                const isFeaturedFree = access ? access.featuredGameId === g.id : false;
+                const isFeaturedFree = featuredGameId === g.id;
                 const highlightFeatured = Boolean(access && !access.isPremium && isFeaturedFree);
                 return (
               <div
@@ -464,7 +490,7 @@ export default function GamesLandingPage() {
                           ? "border border-[#dfc77b] bg-[#fff2c7] text-[#9a6b14] shadow-sm"
                           : "border border-[#dbe3d1] bg-[#f7faf4] text-[#6d8160]"
                       }`}>
-                        Free this week
+                        Free with an account
                       </span>
                     ) : null}
                     {isLocked ? (

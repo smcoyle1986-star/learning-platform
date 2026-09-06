@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
@@ -30,6 +31,7 @@ import {
   WorksheetType,
 } from "@/lib/worksheets/types";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { getFeaturedWeeklyWorksheetType } from "@/lib/billing/featured";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { DemoTutorial } from "@/components/demo/DemoTutorial";
 import { ANIMALS_DEMO_CARDS } from "@/lib/demo/animals";
@@ -55,6 +57,7 @@ export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = 
   const isDemo = forceDemo || searchParams.get("demo") === "animals";
   const { user } = useAuth();
   const { access, canAccessWorksheetType } = useBillingAccess();
+  const featuredWorksheetTypeId = access?.featuredWorksheetType ?? getFeaturedWeeklyWorksheetType();
 
   const [cards, setCards] = useState<LessonCard[]>(() => forceDemo ? ANIMALS_DEMO_CARDS : []);
   const [draft, setDraft] = useState<WorksheetDraft>(() => forceDemo ? {
@@ -147,6 +150,10 @@ export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = 
   const selectedType = useMemo(
     () => WORKSHEET_TYPES.find((item) => item.id === draft.type) ?? null,
     [draft.type]
+  );
+  const featuredWorksheetType = useMemo(
+    () => WORKSHEET_TYPES.find((item) => item.id === featuredWorksheetTypeId) ?? WORKSHEET_TYPES[0],
+    [featuredWorksheetTypeId]
   );
   const activeWorksheetLocked =
     !isDemo && Boolean(selectedType && access && !canAccessWorksheetType(selectedType.id));
@@ -418,6 +425,45 @@ export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = 
             <span className="font-bold">Animals demo · Step 3 of 3.</span> This is a preview only. It uses its own cards and does not change your lesson tray.
           </div>
         ) : null}
+        {!isDemo ? (
+          <section className="overflow-hidden rounded-[1.8rem] border border-[#d8e5ce] bg-[linear-gradient(135deg,#f4f9ef_0%,#ffffff_52%,#fff8e7_100%)] p-5 shadow-[0_16px_38px_rgba(88,133,72,0.12)] md:p-6">
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_190px] md:items-center">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-[#bdd4ac] bg-white px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#4d6e3d]">
+                    Free with an account
+                  </span>
+                  <span className="text-sm font-semibold text-[#6d8160]">This week&apos;s featured worksheet</span>
+                </div>
+                <h2 className="mt-3 text-2xl font-black tracking-tight text-[var(--color-text-main)] md:text-3xl">Make a {featuredWorksheetType.label} worksheet free this week</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">
+                  {featuredWorksheetType.description} Add your own lesson cards first, then create and print this worksheet at no cost. The featured worksheet changes each week.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {!user ? (
+                    <Link href="/signup?next=%2Fflashcards" className="btn btn-primary px-5 py-3 text-sm">Create a free account</Link>
+                  ) : cards.length === 0 ? (
+                    <button onClick={() => (window.location.href = "/flashcards")} className="btn btn-primary px-5 py-3 text-sm">Add cards to begin</button>
+                  ) : (
+                    <button onClick={() => selectWorksheetType(featuredWorksheetType.id)} className="btn btn-primary px-5 py-3 text-sm">Use {featuredWorksheetType.label}</button>
+                  )}
+                  <span className="text-xs font-medium text-[#667663]">1. Add cards · 2. Choose the worksheet · 3. Print or play</span>
+                </div>
+              </div>
+              <div aria-label={`${featuredWorksheetType.label} worksheet preview`} className="mx-auto w-full max-w-[190px] rounded-2xl border border-[#dce6d6] bg-white p-3 shadow-[0_12px_28px_rgba(54,64,46,0.12)]">
+                <div className="rounded-lg border border-[#dce8d5] bg-[#fbfcfa] p-3">
+                  <div className="text-center text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#5d7550]">Classendo worksheet</div>
+                  <div className="mt-2 text-center text-sm font-black text-[#314031]">{featuredWorksheetType.label}</div>
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    {Array.from({ length: 9 }, (_, index) => <span key={index} className={`aspect-square rounded-md border ${index === 4 ? "border-[#bcd8ab] bg-[#e9f5df]" : "border-[#e1e6dc] bg-white"}`} />)}
+                  </div>
+                  <div className="mt-3 h-1.5 rounded-full bg-[#dce8d5]" />
+                  <div className="mt-1.5 h-1.5 w-4/5 rounded-full bg-[#e8eee4]" />
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
         <section className="shrink-0 rounded-2xl border bg-white px-4 py-2 shadow-sm">
           <div className="mb-1.5 flex items-center justify-between gap-3">
             <div>
@@ -481,7 +527,7 @@ export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = 
                   onClick={() => item.available && selectWorksheetType(item.id)}
                   disabled={!item.available}
                   className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    access && !access.isPremium && access.featuredWorksheetType === item.id
+                    !access?.isPremium && featuredWorksheetTypeId === item.id
                       ? isSelected
                         ? "border-[#cfb25a] bg-[linear-gradient(135deg,#ffe7a8,#ffd46b)] text-[#744f0f] shadow-[0_16px_34px_rgba(190,160,74,0.26)] ring-2 ring-[#f2df99]/80"
                         : "border-[#d8c27e] bg-[linear-gradient(135deg,#fff8e2,#fff0b8)] text-[#8a6117] shadow-[0_12px_28px_rgba(190,160,74,0.18)] hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(190,160,74,0.24)]"
@@ -494,9 +540,9 @@ export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = 
                   title={item.description}
                 >
                   <span>{item.label}</span>
-                  {access && !access.isPremium && access.featuredWorksheetType === item.id ? (
+                  {!access?.isPremium && featuredWorksheetTypeId === item.id ? (
                     <span className="ml-2 rounded-full border border-[#e1c97b] bg-white/70 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.18em] text-[#9a6b14]">
-                      Free this week
+                      Free with an account
                     </span>
                   ) : null}
                   {access && !access.isPremium && access.featuredWorksheetType !== item.id ? (
