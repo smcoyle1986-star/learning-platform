@@ -5,11 +5,11 @@ import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageIma
 
 type ExpandedImage = { src: string; alt: string };
 
-export function LandingSectionImage({ path, alt }: { path: string; alt: string }) {
+export function LandingSectionImage({ path, alt, version = "2026-09-06" }: { path: string; alt: string; version?: string }) {
   const [expandedImage, setExpandedImage] = useState<ExpandedImage | null>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const containerRef = useRef<HTMLSpanElement | null>(null);
-  const src = `/api/landing-image?path=${encodeURIComponent(path)}&v=2026-09-06`;
+  const src = `/api/landing-image?path=${encodeURIComponent(path)}&v=${encodeURIComponent(version)}`;
 
   useEffect(() => {
     const target = containerRef.current;
@@ -64,7 +64,11 @@ export function LandingSectionImage({ path, alt }: { path: string; alt: string }
           className="fixed inset-0 z-[200] flex touch-manipulation cursor-zoom-out items-center justify-center bg-[#182016]/90 p-4 outline-none sm:p-8"
           aria-label="Close fullscreen image"
         >
-          <img src={expandedImage.src} alt={expandedImage.alt} className="max-h-full max-w-full rounded-2xl object-contain shadow-2xl" />
+          <img
+            src={expandedImage.src}
+            alt={expandedImage.alt}
+            className="h-auto w-full max-h-[calc(100dvh-2rem)] max-w-[calc(100dvw-2rem)] rounded-2xl object-contain shadow-2xl sm:max-h-[calc(100dvh-4rem)] sm:max-w-[calc(100dvw-4rem)]"
+          />
           <span className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white">
             Tap, click, or press Escape to close
           </span>

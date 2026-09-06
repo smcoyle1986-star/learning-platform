@@ -90,8 +90,10 @@ export async function GET(request: Request) {
     }
 
     const buffer = Buffer.from(await data.arrayBuffer());
-    const requestedWidth = Number(url.searchParams.get("width"));
-    const requestedQuality = Number(url.searchParams.get("quality"));
+    const widthParam = url.searchParams.get("width");
+    const qualityParam = url.searchParams.get("quality");
+    const requestedWidth = widthParam === null ? Number.NaN : Number(widthParam);
+    const requestedQuality = qualityParam === null ? Number.NaN : Number(qualityParam);
     const width = Number.isFinite(requestedWidth)
       ? Math.min(Math.max(Math.round(requestedWidth), 160), 1920)
       : null;

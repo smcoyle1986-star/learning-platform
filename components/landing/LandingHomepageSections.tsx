@@ -91,7 +91,7 @@ export default function LandingHomepageSections() {
       </section>
 
       <section className="mx-auto max-w-[1760px] px-4 pb-12 sm:px-6 md:pb-16">
-        <LandingSectionImage path="classendo-images/information/pricing_my_lessons_v2.png" alt="Classendo Premium monthly and yearly plan visual" />
+        <LandingSectionImage path="classendo-images/information/pricing_my_lessons_v3.png" version="2026-09-06-pricing-v3" alt="Classendo Premium monthly and yearly plan visual" />
       </section>
 
       <section className="bg-[#eef4ea] px-4 py-14 sm:px-6 md:py-18">
