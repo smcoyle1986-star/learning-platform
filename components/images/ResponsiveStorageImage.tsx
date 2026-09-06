@@ -60,7 +60,10 @@ export function ResponsiveStorageImage({
 
   const largest = candidates[candidates.length - 1];
   return (
-    <picture>
+    // `display: contents` keeps this responsive-source wrapper out of the
+    // layout tree. Consumers such as Classroom need the image itself—not an
+    // intrinsic-size `<picture>` flex item—to fill their available panel.
+    <picture className="contents">
       <source
         type="image/webp"
         sizes={sizes}
