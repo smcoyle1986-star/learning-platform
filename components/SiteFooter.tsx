@@ -106,6 +106,7 @@ export function SiteFooter() {
           <nav aria-label="Site links" className="flex flex-wrap gap-x-5 gap-y-3 font-medium">
             <Link href="/topics" onClick={() => setIsOpen(false)} className="font-semibold text-[#334033] hover:underline">ESL topics</Link>
             <Link href="/free-resources" onClick={() => setIsOpen(false)} className="font-semibold text-[#334033] hover:underline">Free lesson packs</Link>
+            <Link href="/feedback" onClick={() => setIsOpen(false)} className="font-semibold text-[#334033] hover:underline">Send feedback</Link>
             <Link href="/legal" onClick={() => setIsOpen(false)} className="font-semibold text-[#334033] hover:underline">Legal centre</Link>
             {legalLinks.map(([label, href]) => (
               <Link key={href} href={href} onClick={() => setIsOpen(false)} className="underline-offset-4 hover:underline">{label}</Link>

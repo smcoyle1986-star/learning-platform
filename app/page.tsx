@@ -11,7 +11,7 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 md:gap-12 md:py-24">
         <div>
           <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#6d8160]">
-            ESL teaching resources for real classrooms
+            Live ESL &amp; EFL teaching tool
           </p>
           <h1 className="mb-5 max-w-3xl whitespace-pre-line text-4xl font-semibold leading-tight sm:text-5xl md:mb-6">
             {LANDING_HERO_TITLE}
@@ -24,13 +24,13 @@ export default function HomePage() {
               <Play size={19} fill="currentColor" /> Try the Animals Demo
             </Link>
             <Link href="/flashcards" className="btn btn-secondary bg-white px-6 py-4">
-              Browse Flashcards
+              Build a lesson
             </Link>
             <Link href="/login" className="text-sm font-medium underline underline-offset-4">
               Sign in as a Teacher →
             </Link>
           </div>
-          <p className="mt-3 text-sm font-medium text-[#667663]">No account needed · See Classroom Mode, Connect Four, and Bullseye in one lesson.</p>
+          <p className="mt-3 text-sm font-medium text-[#667663]">No account needed · See a lesson move from Classroom Mode to Connect Four and Bullseye.</p>
         </div>
 
         <LandingCarousel />

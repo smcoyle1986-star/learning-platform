@@ -7,16 +7,16 @@ export type LandingSection = {
   href: string;
 };
 
-export const LANDING_HERO_TITLE = "Interactive flashcards\nfor English classrooms";
+export const LANDING_HERO_TITLE = "Build one English lesson.\nTeach it live.";
 
 export const LANDING_HERO_DESCRIPTION =
-  "Start free with visual flashcards and Classroom Mode. Build a vocabulary set, then reuse it in games, worksheets, printables, and lesson plans when those tools fit your teaching.";
+  "Open Classendo on a projector, TV, interactive whiteboard, laptop, or tablet. Choose your lesson cards once, present them full screen, annotate as you teach, then reuse the same lesson in games, worksheets, printables, and activities.";
 
 export const LANDING_SECTIONS: LandingSection[] = [
   {
     slug: "flashcards",
-    title: "Flashcards",
-    description: "Build lesson sets from your own vocabulary.",
+    title: "Build a lesson",
+    description: "Choose the vocabulary and images for one focused lesson.",
     previewLead: "Create focused word sets from the cards in your lesson tray.",
     previewBullets: [
       "Search and sort by grammar or theme.",
@@ -27,7 +27,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     slug: "lessons",
-    title: "Lesson Plans",
+    title: "Lesson plans",
     description: "Plan complete lessons with clear classroom flow.",
     previewLead: "Build a full lesson plan from the same Classendo cards.",
     previewBullets: [
@@ -39,7 +39,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     slug: "games",
-    title: "Games",
+    title: "Classroom games",
     description: "Turn your cards into whole-class activities.",
     previewLead: "Use the same cards to run simple, teacher-led classroom games.",
     previewBullets: [
@@ -51,7 +51,7 @@ export const LANDING_SECTIONS: LandingSection[] = [
   },
   {
     slug: "worksheets",
-    title: "Worksheets",
+    title: "Worksheets and printables",
     description: "Make printable practice pages from your cards.",
     previewLead: "Build worksheet activities straight from the lesson tray.",
     previewBullets: [
@@ -101,15 +101,15 @@ export const LANDING_SECTIONS: LandingSection[] = [
 
 export const LANDING_STEPS = [
   {
-    title: "1. Build your lesson tray",
-    description: "Start in Flashcards and gather the words or images you want to teach.",
+    title: "1. Build your lesson",
+    description: "Choose the words and images you want to teach once.",
   },
   {
-    title: "2. Choose a classroom activity",
-    description: "Send the same cards into games, worksheets, or printables without starting again.",
+    title: "2. Open Classroom Mode",
+    description: "Present the same cards full screen on your classroom display and annotate as you teach.",
   },
   {
-    title: "3. Save and reuse the set",
-    description: "Keep the lesson in My Lessons and bring it back whenever you need it.",
+    title: "3. Reuse the lesson",
+    description: "Take the same set into games, worksheets, printables, and future lessons without rebuilding it.",
   },
 ];

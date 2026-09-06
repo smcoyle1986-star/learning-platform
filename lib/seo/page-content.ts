@@ -8,8 +8,8 @@ type PageContent = {
 
 export const PAGE_CONTENT = {
   home: {
-    title: "Free Interactive ESL Flashcards & Classroom Activities",
-    description: "Classendo gives ESL teachers free interactive flashcards and classroom activities. Build a visual vocabulary set, then reuse it in Classroom Mode, games, worksheets, printables, and lesson plans.",
+    title: "Live ESL & EFL Classroom Teaching Tool",
+    description: "Classendo helps ESL and EFL teachers build one visual English lesson, teach it live in Classroom Mode, then reuse the same cards in games, worksheets, printables, and lesson plans.",
     path: "/",
   },
   flashcards: {

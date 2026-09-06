@@ -17,9 +17,9 @@ const SLIDE_CAPTIONS: Record<string, string> = {
   flashcards_1: "Use vocabulary to easily build lessons.",
   flashcards_2: "Intuitive search to find vocabulary.",
   flashcards_3: "Different grammar and themes to use.",
-  classroom_1: "Fullscreen images for classroom use.",
-  classroom_2: "Clear images and text for students.",
-  classroom_3: "Teacher can annotate images during class.",
+  classroom_1: "Use full-screen visuals on your classroom display.",
+  classroom_2: "Keep images and target language clear for every learner.",
+  classroom_3: "Annotate while you teach, then move into the next activity.",
   printables_1: "Easy to print flashcards for students to use.",
   dashboard_1: "Save your lesson sets for future use.",
   community_1: "Join the community to find and share lessons.",
@@ -154,7 +154,7 @@ export default function LandingCarousel() {
     return () => window.clearInterval(id);
   }, [rotationKey]);
 
-  const carouselSlides = useMemo(() => FALLBACK_SLIDES, []);
+  const carouselSlides = useMemo(() => FALLBACK_SLIDES.slice(0, 3), []);
   const effectiveActiveIndex = activeIndex < carouselSlides.length ? activeIndex : 0;
   const activeSlide = carouselSlides[effectiveActiveIndex];
 
