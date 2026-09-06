@@ -68,12 +68,12 @@ const CATALOG_SOURCES: SourceWorksheet[] = [
   { title: "Classendo Movement Paths Tic-Tac-Toe", contentType: "preposition", topic: "movement", worksheetType: "tic-tac-toe", catalogTheme: "movement", catalogOffset: 3 },
   { title: "Classendo Giving Directions Bullseye", contentType: "preposition", topic: "directions", worksheetType: "bullseye", catalogTheme: "directions", catalogOffset: 1 },
 
-  { title: "Classendo Short A Matching", contentType: "phonics", topic: "short a", worksheetType: "matching", catalogTheme: "short a" },
-  { title: "Classendo Short E Crossword", contentType: "phonics", topic: "short e", worksheetType: "crossword", catalogTheme: "short e" },
-  { title: "Classendo Short I Wordsearch", contentType: "phonics", topic: "short i", worksheetType: "wordsearch", catalogTheme: "short i" },
-  { title: "Classendo Short O Battleship", contentType: "phonics", topic: "short o", worksheetType: "battleship", catalogTheme: "short o" },
-  { title: "Classendo Short U Tic-Tac-Toe", contentType: "phonics", topic: "short u", worksheetType: "tic-tac-toe", catalogTheme: "short u" },
-  { title: "Classendo Long A Bullseye", contentType: "phonics", topic: "long a", worksheetType: "bullseye", catalogTheme: "long a" },
+  { title: "Classendo Short Vowels Matching", contentType: "phonics", topic: "short vowels", worksheetType: "matching", catalogTheme: "short vowels" },
+  { title: "Classendo Silent-E Long Vowels Crossword", contentType: "phonics", topic: "silent-e long vowels", worksheetType: "crossword", catalogTheme: "silent-e long vowels" },
+  { title: "Classendo Vowel Teams Wordsearch", contentType: "phonics", topic: "vowel teams and diphthongs", worksheetType: "wordsearch", catalogTheme: "vowel teams & diphthongs" },
+  { title: "Classendo R-Controlled Vowels Battleship", contentType: "phonics", topic: "r-controlled vowels", worksheetType: "battleship", catalogTheme: "r-controlled vowels" },
+  { title: "Classendo Consonant Blends Tic-Tac-Toe", contentType: "phonics", topic: "consonant blends", worksheetType: "tic-tac-toe", catalogTheme: "consonant blends" },
+  { title: "Classendo Digraphs Bullseye", contentType: "phonics", topic: "digraphs", worksheetType: "bullseye", catalogTheme: "digraphs" },
 ];
 
 const SOURCES = [...SET_BASED_SOURCES, ...CATALOG_SOURCES];
