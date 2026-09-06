@@ -83,6 +83,20 @@ html:fullscreen [data-site-chrome] {
   display: none !important;
 }
 
+/* The guided demo uses the classroom/game surface as its whole page even when
+   a browser refuses programmatic native fullscreen. */
+body.classendo-demo-immersive [data-site-chrome] {
+  display: none !important;
+}
+
+body.classendo-demo-immersive {
+  overflow: hidden;
+}
+
+body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
+  display: none !important;
+}
+
 /* Mobile game play space -------------------------------------------------- */
 @media (max-width: 767px) {
   body.classendo-game-page [data-game-header] > div {

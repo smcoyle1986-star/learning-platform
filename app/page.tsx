@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Play } from "lucide-react";
 
 import LandingCarousel from "@/components/landing/LandingCarousel";
 import LandingHomepageSections from "@/components/landing/LandingHomepageSections";
@@ -19,13 +20,17 @@ export default function HomePage() {
             {LANDING_HERO_DESCRIPTION}
           </p>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <Link href="/flashcards" className="btn btn-primary px-8 py-4">
-              Try Flashcards Free
+            <Link href="/demo/animals" className="btn btn-primary px-8 py-4 text-base shadow-[0_16px_34px_rgba(88,133,72,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(88,133,72,0.34)]">
+              <Play size={19} fill="currentColor" /> Try the Animals Demo
+            </Link>
+            <Link href="/flashcards" className="btn btn-secondary bg-white px-6 py-4">
+              Browse Flashcards
             </Link>
             <Link href="/login" className="text-sm font-medium underline underline-offset-4">
               Sign in as a Teacher →
             </Link>
           </div>
+          <p className="mt-3 text-sm font-medium text-[#667663]">No account needed · See Classroom Mode, Connect Four, and Bullseye in one lesson.</p>
         </div>
 
         <LandingCarousel />

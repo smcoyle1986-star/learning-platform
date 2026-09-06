@@ -9,6 +9,8 @@ import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModa
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { DemoNextStep, DemoTutorial } from "@/components/demo/DemoTutorial";
+import { ANIMALS_DEMO_CARDS, isAnimalsDemoSearch } from "@/lib/demo/animals";
 
 /*
   Connect Four — Classendo style
@@ -275,12 +277,28 @@ function selectAiMove(board: Cell[][], rows: number, cols: number, level: AiLeve
    React component
    --------------------------- */
 
-export default function ConnectFourPage() {
+export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
   const router = useRouter();
+  const [isDemo, setIsDemo] = useState(demo);
 
   // lesson-tray
-  const [tray, setTray] = useState<TrayCard[]>([]);
+  const [tray, setTray] = useState<TrayCard[]>(() => demo ? ANIMALS_DEMO_CARDS.map((card) => ({
+    id: card.id,
+    word: card.word,
+    image: card.image ?? null,
+  })) : []);
   useEffect(() => {
+    const demoActive = demo || isAnimalsDemoSearch(window.location.search);
+    setIsDemo(demoActive);
+    if (demoActive) {
+      setTray(ANIMALS_DEMO_CARDS.map((card) => ({
+        id: card.id,
+        word: card.word,
+        image: card.image ?? null,
+      })));
+      setShowSettings(false);
+      return;
+    }
     try {
       const raw = localStorage.getItem("classendo-lesson-tray");
       if (!raw) { setTray([]); return; }
@@ -301,7 +319,7 @@ export default function ConnectFourPage() {
     } catch {
       setTray([]);
     }
-  }, []);
+  }, [demo]);
 
   // fullscreen expansion
   const [inFullscreen, setInFullscreen] = useState<boolean>(false);
@@ -311,8 +329,17 @@ export default function ConnectFourPage() {
     return () => document.removeEventListener("fullscreenchange", onFull);
   }, []);
 
+  useEffect(() => {
+    if (!isDemo) return;
+    document.body.classList.add("classendo-demo-immersive");
+    if (!document.fullscreenElement) {
+      void document.documentElement.requestFullscreen().catch(() => undefined);
+    }
+    return () => document.body.classList.remove("classendo-demo-immersive");
+  }, [isDemo]);
+
   // settings
-  const [showSettings, setShowSettings] = useState<boolean>(true);
+  const [showSettings, setShowSettings] = useState<boolean>(!demo);
   const [showNoCardsModal, setShowNoCardsModal] = useState<boolean>(false);
   const [aiLevel, setAiLevel] = useState<AiLevel>("none");
   const [firstToWins, setFirstToWins] = useState<number>(3);
@@ -384,6 +411,10 @@ export default function ConnectFourPage() {
   const [showLearningLabel, setShowLearningLabel] = useState<boolean>(false);
   const [showMissedTurn, setShowMissedTurn] = useState<boolean>(false);
   const [modalDisplayMode, setModalDisplayMode] = useState<"image+text" | "image" | "text">("image+text");
+  const [demoRoundPromptDismissed, setDemoRoundPromptDismissed] = useState(false);
+  const [showDemoWorksheetPrompt, setShowDemoWorksheetPrompt] = useState(false);
+  const [showDemoFinalWorksheetPrompt, setShowDemoFinalWorksheetPrompt] = useState(false);
+  const [demoWorksheetLinkVisible, setDemoWorksheetLinkVisible] = useState(false);
 
   // Show no-cards modal when tray empty
   useEffect(() => {
@@ -647,6 +678,15 @@ export default function ConnectFourPage() {
   }, [matchWinner]);
 
   useEffect(() => {
+    if (!isDemo || matchWinner || demoRoundPromptDismissed || (!winnerLine && !gameOverDraw)) return;
+    setShowDemoWorksheetPrompt(true);
+  }, [demoRoundPromptDismissed, gameOverDraw, isDemo, matchWinner, winnerLine]);
+
+  useEffect(() => {
+    if (isDemo && matchWinner) setShowDemoFinalWorksheetPrompt(true);
+  }, [isDemo, matchWinner]);
+
+  useEffect(() => {
     return () => {
       cancelAiTimeouts();
       if (musicIntervalRef.current) clearInterval(musicIntervalRef.current);
@@ -656,11 +696,11 @@ export default function ConnectFourPage() {
 
   // UI
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)] p-6 pt-24">
+    <div data-demo-immersive={isDemo || undefined} className={`${isDemo ? "min-h-[100dvh] overflow-hidden p-3 pt-20" : "min-h-screen p-6 pt-24"} bg-[var(--color-bg-main)] text-[var(--color-text-main)]`}>
       <div className={`mx-auto ${inFullscreen ? "max-w-full" : "max-w-6xl"}`}>
         <GameHeader
           title="Connect Four"
-          onExit={() => router.push("/games")}
+          onExit={() => router.push(isDemo ? "/demo/animals" : "/games")}
           isFullscreen={inFullscreen}
           onToggleFullscreen={() => {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -669,11 +709,13 @@ export default function ConnectFourPage() {
           settingsOpen={showSettings}
           onToggleSettings={() => setShowSettings((s) => !s)}
           trackGameKey="connect-four"
+          exitLabel={isDemo ? "Back to home" : undefined}
+          hideBrand={isDemo}
         />
 
-        <div className="flex items-start gap-6">
+        <div className={`${isDemo ? "flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4" : "flex items-start gap-6"}`}>
           {/* Left: scoreboard */}
-          <div className="w-56 bg-white rounded p-3 shadow flex flex-col">
+          <div className={`${isDemo ? "w-full lg:w-56" : "w-56"} bg-white rounded p-3 shadow flex flex-col`}>
             <div>
               <div className="font-semibold mb-2">Match (first to {firstToWins})</div>
               <div className="flex flex-col gap-2 text-sm">
@@ -684,12 +726,12 @@ export default function ConnectFourPage() {
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <div
               data-game-stage
               className="p-4 rounded-[32px] border shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
               style={{
-                height: inFullscreen ? "78vh" : "620px",
+                height: inFullscreen || isDemo ? "calc(100dvh - 7rem)" : "620px",
                 background: activeBoardTheme.shell,
                 borderColor: activeBoardTheme.border,
                 boxShadow: `${activeBoardTheme.glow}, 0 18px 50px rgba(0,0,0,0.08)`,
@@ -1028,14 +1070,14 @@ export default function ConnectFourPage() {
                 <div className="flex justify-center gap-3 mt-2">
                   <button onClick={() => { didTrackMatchStartRef.current = false; setBoard(createEmptyBoard(boardRows, boardCols)); setWinnerLine(null); setGameOverDraw(false); setCurrentPlayer(1); }} className={CBUTTON}>Play Again</button>
                   <button onClick={() => { restartMatch(); }} className={CBUTTON}>Restart Match</button>
-                  <button onClick={() => router.push("/games")} className={CBUTTON}>Back to Games</button>
+                  <button onClick={() => router.push(isDemo ? "/demo/animals" : "/games")} className={CBUTTON}>{isDemo ? "Back to home" : "Back to Games"}</button>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {matchWinner && matchWinnerModalOpen && (
+        {matchWinner && matchWinnerModalOpen && !isDemo && (
           <GameWinnerModal
             title={aiLevel !== "none" && matchWinner === aiPlaysAs ? "Better luck next time!" : `Congratulations, Player ${matchWinner}!`}
             message={aiLevel !== "none" && matchWinner === aiPlaysAs
@@ -1046,6 +1088,35 @@ export default function ConnectFourPage() {
             onReturnToGames={() => router.push("/games")}
           />
         )}
+
+        {isDemo && showDemoWorksheetPrompt ? (
+          <DemoTutorial
+            title="One game down — keep the match going!"
+            description="That was one complete Connect Four game. Keep playing until a team reaches three wins, or preview how the same Animals lesson becomes a Bullseye speaking worksheet."
+            nextHref="/demo/animals/bullseye"
+            nextLabel="Preview Bullseye"
+            onClose={() => {
+              setShowDemoWorksheetPrompt(false);
+              setDemoRoundPromptDismissed(true);
+              setDemoWorksheetLinkVisible(true);
+            }}
+          />
+        ) : null}
+
+        {isDemo && demoWorksheetLinkVisible ? (
+          <DemoNextStep href="/demo/animals/bullseye">Next: Preview Bullseye →</DemoNextStep>
+        ) : null}
+
+        {isDemo && showDemoFinalWorksheetPrompt ? (
+          <DemoTutorial
+            title="Match complete — ready for the next activity?"
+            description="You have finished a first-to-three Connect Four match with the Animals lesson. Now see those same cards as a ready-to-print Bullseye speaking activity."
+            nextHref="/demo/animals/bullseye"
+            nextLabel="Go to Bullseye"
+            onClose={() => undefined}
+            showClose={false}
+          />
+        ) : null}
       </div>
     </div>
   );

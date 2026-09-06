@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BrandButton from "@/components/BrandButton";
-import { Maximize2, Minimize2, Settings2, LogOut, Menu, X, RotateCw } from "lucide-react";
+import { Maximize2, Minimize2, Settings2, LogOut, Home, Menu, X, RotateCw } from "lucide-react";
 
 import Button from "@/components/ui/Button";
 
@@ -16,6 +16,8 @@ type GameHeaderProps = {
   onToggleSettings?: () => void;
   extraActions?: React.ReactNode;
   trackGameKey?: string;
+  exitLabel?: string;
+  hideBrand?: boolean;
 };
 
 type LockableScreenOrientation = ScreenOrientation & {
@@ -32,6 +34,8 @@ export default function GameHeader({
   onToggleSettings,
   extraActions,
   trackGameKey: _trackGameKey,
+  exitLabel = "Exit",
+  hideBrand = false,
 }: GameHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -116,13 +120,14 @@ export default function GameHeader({
     setMobileMenuOpen(false);
     onExit();
   };
+  const ExitIcon = exitLabel === "Back to home" ? Home : LogOut;
 
   if (hidden) return null;
 
   return (
     <header data-game-header data-game-fullscreen={isFullscreen ? "true" : undefined} className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <BrandButton className="hidden text-3xl font-extrabold text-blue-700 sm:block" />
+        {hideBrand ? <div className="hidden w-36 sm:block" aria-hidden="true" /> : <BrandButton className="hidden text-3xl font-extrabold text-blue-700 sm:block" />}
 
         <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 pointer-events-none">
           <h1 className="text-lg font-bold text-[var(--color-text-main)] sm:text-2xl">{title}</h1>
@@ -160,8 +165,8 @@ export default function GameHeader({
             onClick={exitGame}
             className="inline-flex items-center gap-2 px-3 py-2 text-sm"
           >
-            <LogOut size={16} />
-            Exit
+            <ExitIcon size={16} />
+            {exitLabel}
           </Button>
         </div>
 
@@ -191,9 +196,9 @@ export default function GameHeader({
               type="button"
               onClick={exitGame}
               className="grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white/65 text-[var(--color-text-main)] shadow-sm"
-              aria-label="Exit game"
+              aria-label={exitLabel}
             >
-              <LogOut size={17} />
+              <ExitIcon size={17} />
             </button>
           </div>
         ) : (
@@ -212,7 +217,7 @@ export default function GameHeader({
             <div id="mobile-game-controls" className="absolute right-0 top-12 z-[80] w-56 rounded-2xl border border-black/10 bg-white/95 p-2 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop-blur">
               {onToggleSettings ? <button type="button" onClick={openSettings} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#f2f6ee]"><Settings2 size={17} />Settings</button> : null}
               {onToggleFullscreen ? <button type="button" onClick={toggleFullscreen} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#f2f6ee]">{isFullscreen ? <Minimize2 size={17} /> : <RotateCw size={17} />}{isFullscreen ? "Exit fullscreen" : "Play landscape"}</button> : null}
-              <button type="button" onClick={exitGame} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#fdf1ee]"><LogOut size={17} />Exit game</button>
+              <button type="button" onClick={exitGame} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[#fdf1ee]"><ExitIcon size={17} />{exitLabel}</button>
             </div>
           ) : null}
         </div>

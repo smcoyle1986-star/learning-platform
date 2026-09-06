@@ -31,6 +31,8 @@ import {
 } from "@/lib/worksheets/types";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
+import { DemoTutorial } from "@/components/demo/DemoTutorial";
+import { ANIMALS_DEMO_CARDS } from "@/lib/demo/animals";
 
 function buildReadingLinesFromCards(nextCards: LessonCard[]) {
   if (nextCards.length === 0) {
@@ -48,13 +50,20 @@ function buildWritingLinesFromCards(nextCards: LessonCard[]) {
   return nextCards.map((card) => formatWorksheetWord(card.word));
 }
 
-function WorksheetsPageContent() {
+export function WorksheetsPageContent({ forceDemo = false, showDemoCompletion = true }: { forceDemo?: boolean; showDemoCompletion?: boolean }) {
   const searchParams = useSearchParams();
+  const isDemo = forceDemo || searchParams.get("demo") === "animals";
   const { user } = useAuth();
   const { access, canAccessWorksheetType } = useBillingAccess();
 
-  const [cards, setCards] = useState<LessonCard[]>([]);
-  const [draft, setDraft] = useState<WorksheetDraft>(DEFAULT_WORKSHEET_DRAFT);
+  const [cards, setCards] = useState<LessonCard[]>(() => forceDemo ? ANIMALS_DEMO_CARDS : []);
+  const [draft, setDraft] = useState<WorksheetDraft>(() => forceDemo ? {
+    ...buildWorksheetDraft("bullseye"),
+    title: "Animals Bullseye",
+    instructions: "Say the animal, drop a token, and score points for your team.",
+    bullseyeImageMode: "image",
+    shuffleSeed: 20260906,
+  } : DEFAULT_WORKSHEET_DRAFT);
   const [worksheetId, setWorksheetId] = useState<string | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [worksheetName, setWorksheetName] = useState("");
@@ -65,15 +74,29 @@ function WorksheetsPageContent() {
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showDemoCompletionModal, setShowDemoCompletionModal] = useState(isDemo && showDemoCompletion);
+  const [showDemoWorksheetHelp, setShowDemoWorksheetHelp] = useState(false);
 
   useEffect(() => {
+    if (isDemo) {
+      setCards(ANIMALS_DEMO_CARDS);
+      setDraft({
+        ...buildWorksheetDraft("bullseye"),
+        title: "Animals Bullseye",
+        instructions: "Say the animal, drop a token, and score points for your team.",
+        bullseyeImageMode: "image",
+        shuffleSeed: 20260906,
+      });
+      return;
+    }
     setCards(readLessonTray());
     return subscribeToLessonTray((nextCards) => {
       setCards(nextCards);
     });
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
+    if (isDemo) return;
     const communityWorksheetId = searchParams.get("community_worksheet_id");
     const existingWorksheetId = searchParams.get("worksheet_id") ?? communityWorksheetId;
     if (!existingWorksheetId) return;
@@ -119,14 +142,14 @@ function WorksheetsPageContent() {
     return () => {
       mounted = false;
     };
-  }, [searchParams]);
+  }, [isDemo, searchParams]);
 
   const selectedType = useMemo(
     () => WORKSHEET_TYPES.find((item) => item.id === draft.type) ?? null,
     [draft.type]
   );
   const activeWorksheetLocked =
-    Boolean(selectedType && access && !canAccessWorksheetType(selectedType.id));
+    !isDemo && Boolean(selectedType && access && !canAccessWorksheetType(selectedType.id));
   const isQuestionBuilder = draft.type === "questions";
   const isSentenceScramble = draft.type === "sentence-scramble";
   const worksheetCards = cards;
@@ -372,11 +395,15 @@ function WorksheetsPageContent() {
   return (
     <div className="min-h-full bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <PageHeader
-        title="Worksheets"
-        description={PAGE_CONTENT.worksheets.description}
+        title={isDemo ? "Animals Demo: Bullseye" : "Worksheets"}
+        description={isDemo ? "The same eight lesson cards are now a ready-to-print speaking activity." : PAGE_CONTENT.worksheets.description}
         sticky={false}
+        showMoreLessonTools={!isDemo}
+        showPrimaryLabel={!isDemo}
         primaryItems={[
-          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
+          isDemo
+            ? { label: "Back to home", href: "/", tone: "classroom" }
+            : { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}
         secondaryItems={[
           { label: "Flashcards", href: "/flashcards" },
@@ -386,18 +413,23 @@ function WorksheetsPageContent() {
       />
 
       <main className="mx-auto w-full max-w-7xl space-y-3 px-6 py-4">
+        {isDemo ? (
+          <div className="rounded-2xl border border-[#d8e7d1] bg-[#f1f7ed] px-4 py-3 text-sm text-[#4f6944]">
+            <span className="font-bold">Animals demo · Step 3 of 3.</span> This is a preview only. It uses its own cards and does not change your lesson tray.
+          </div>
+        ) : null}
         <section className="shrink-0 rounded-2xl border bg-white px-4 py-2 shadow-sm">
           <div className="mb-1.5 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold">Lesson Tray</h2>
               <p className="text-xs text-[var(--color-text-muted)]">{trayDescription}</p>
             </div>
-            <button
+            {!isDemo ? <button
               onClick={() => (window.location.href = "/flashcards")}
               className="btn btn-secondary shrink-0 px-3 py-1.5 text-sm"
             >
               {user ? "Add Cards" : "Go back to Flashcards"}
-            </button>
+            </button> : null}
           </div>
 
           <LessonTrayScroller className="pb-1" contentClassName="gap-2">
@@ -426,20 +458,20 @@ function WorksheetsPageContent() {
                     </div>
                   </div>
 
-                  <button
+                  {!isDemo ? <button
                     onClick={() => removeCard(card.id)}
                     className="absolute top-1 right-1 h-4.5 w-4.5 rounded-full bg-white border border-red-200 text-red-600 flex items-center justify-center text-[10px] hover:bg-red-50"
                     aria-label={`Remove ${formatWorksheetWord(card.word)}`}
                   >
                     x
-                  </button>
+                  </button> : null}
                 </div>
               ))
             )}
           </LessonTrayScroller>
         </section>
 
-        <section className="shrink-0">
+        {!isDemo ? <section className="shrink-0">
           <LessonTrayScroller className="pb-1" contentClassName="gap-2">
             {WORKSHEET_TYPES.map((item) => {
               const isSelected = selectedType?.id === item.id;
@@ -475,11 +507,11 @@ function WorksheetsPageContent() {
               );
             })}
           </LessonTrayScroller>
-        </section>
+        </section> : null}
 
         <div className="grid items-start grid-cols-12 gap-4">
           <aside className={`${activeWorksheetLocked ? "hidden" : "col-span-12 lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 lg:self-start"}`}>
-            {selectedType && !activeWorksheetLocked && access && !access.isPremium ? (
+            {selectedType && !activeWorksheetLocked && !isDemo && access && !access.isPremium ? (
               <div className="rounded-2xl border bg-white p-4 text-sm text-[var(--color-text-muted)] shadow-sm">
                 Advanced worksheet controls are part of Premium. Free accounts can still use the featured weekly worksheet with its default layout.
               </div>
@@ -522,13 +554,13 @@ function WorksheetsPageContent() {
             ) : (
               <div>
                 <div className="mb-3 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:justify-end">
-                  <button
-                    onClick={() => setShowSaveModal(true)}
-                    disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
-                    className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
-                  >
-                    Save Worksheet
-                  </button>
+                  {!isDemo ? <button
+                      onClick={() => setShowSaveModal(true)}
+                      disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0)}
+                      className="btn btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                    >
+                      Save Worksheet
+                    </button> : null}
                   <button
                     onClick={handleExportPdf}
                     disabled={activeWorksheetLocked || !draft.type || (!isQuestionBuilder && cards.length === 0) || isExporting}
@@ -578,7 +610,17 @@ function WorksheetsPageContent() {
         onCloseSuccess={() => setShowSaveSuccessModal(false)}
         onOpenDashboard={() => { window.location.href = `/dashboard?worksheet_id=${encodeURIComponent(worksheetId ?? "")}`; }}
       />
-      {selectedType && !activeWorksheetLocked ? <WorksheetHelpModal worksheetType={selectedType} /> : null}
+      {selectedType && !activeWorksheetLocked && !isDemo ? <WorksheetHelpModal worksheetType={selectedType} /> : null}
+      {selectedType && isDemo && showDemoWorksheetHelp ? <WorksheetHelpModal worksheetType={selectedType} forceOpen /> : null}
+      {isDemo && showDemoCompletionModal ? (
+        <DemoTutorial
+          title="Your Animals lesson is now a Bullseye activity"
+          description="Bullseye turns the same vocabulary into a speaking game: learners say the animal, drop a token, and score points. Classendo also includes matching, word searches, writing, crosswords, and more when you build your own lesson."
+          nextHref="/"
+          nextLabel="Back to home"
+          onClose={() => { setShowDemoCompletionModal(false); setShowDemoWorksheetHelp(true); }}
+        />
+      ) : null}
     </div>
   );
 }

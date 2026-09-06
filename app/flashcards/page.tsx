@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase/client";
 // removed duplicate createClient import to avoid creating a second client that triggers refresh token errors
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import FlashcardSearchControls from "@/components/flashcards/FlashcardSearchControls";
 import FlashcardResultsGrid from "@/components/flashcards/FlashcardResultsGrid";
 import LessonTrayBar from "@/components/flashcards/LessonTrayBar";
@@ -454,6 +455,7 @@ export default function FlashcardsPage() {
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <button type="button" onClick={() => { persistLessonTray(); router.push("/flashcards/classroom"); }} className="btn btn-secondary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Classroom</button>
+              <Link href="/demo/animals" className="btn btn-primary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Try the Animals Demo</Link>
               <button type="button" onClick={() => { persistLessonTray(); router.push("/printables?from=flashcards"); }} className="btn btn-secondary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Print Cards</button>
               <button type="button" onClick={() => { persistLessonTray(); router.push("/lessons"); }} className="btn btn-primary px-3 py-2 text-sm sm:py-1.5 sm:text-xs">Lesson Plans</button>
             </div>

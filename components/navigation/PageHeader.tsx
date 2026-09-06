@@ -20,6 +20,8 @@ type PageHeaderProps = {
   rightSlot?: ReactNode;
   sticky?: boolean;
   className?: string;
+  showMoreLessonTools?: boolean;
+  showPrimaryLabel?: boolean;
 };
 
 function pillClassName(tone: PageHeaderItem["tone"], highlight = false) {
@@ -69,6 +71,8 @@ export default function PageHeader({
   rightSlot,
   sticky = true,
   className = "",
+  showMoreLessonTools = true,
+  showPrimaryLabel = true,
 }: PageHeaderProps) {
   const [isLessonToolsOpen, setIsLessonToolsOpen] = useState(false);
   void _secondaryItems;
@@ -90,7 +94,7 @@ export default function PageHeader({
               <div />
             )}
 
-            {primaryItems.length > 0 ? <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#71806d]">Use this lesson</p> : null}
+            {primaryItems.length > 0 && showPrimaryLabel ? <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#71806d]">Use this lesson</p> : null}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 xl:hidden md:flex-wrap md:overflow-visible md:pb-0">
               {primaryItems.map((item) =>
                 item.href ? (
@@ -108,12 +112,12 @@ export default function PageHeader({
                   </button>
                 )
               )}
-              {primaryItems.length > 0 ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
+              {primaryItems.length > 0 && showMoreLessonTools ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
             </div>
           </div>
 
           <div className="hidden xl:flex xl:shrink-0 xl:items-center xl:justify-end xl:gap-2">
-            {primaryItems.length > 0 ? <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#71806d]">Use this lesson</span> : null}
+            {primaryItems.length > 0 && showPrimaryLabel ? <span className="mr-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#71806d]">Use this lesson</span> : null}
             {primaryItems.map((item) =>
               item.href ? (
                 <Link key={`${item.label}-${item.href}`} href={item.href} className={pillClassName(item.tone, item.highlight)}>
@@ -130,12 +134,12 @@ export default function PageHeader({
                 </button>
               )
             )}
-            {primaryItems.length > 0 ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
+            {primaryItems.length > 0 && showMoreLessonTools ? <MoreLessonTools isOpen={isLessonToolsOpen} onToggle={() => setIsLessonToolsOpen((current) => !current)} /> : null}
             {rightSlot}
           </div>
         </div>
 
-        {primaryItems.length > 0 && isLessonToolsOpen ? <LessonToolsPanel /> : null}
+        {primaryItems.length > 0 && showMoreLessonTools && isLessonToolsOpen ? <LessonToolsPanel /> : null}
         </div>
       </header>
       {description ? (

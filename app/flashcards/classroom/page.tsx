@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Shuffle,
   Maximize,
+  Home,
   Menu,
   X,
 } from "lucide-react";
@@ -14,7 +15,10 @@ import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
 import { useAuth } from "@/components/AuthProvider";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
+import { getOptimizedImageUrl } from "@/lib/images/storage";
 import { readLessonTray, writeLessonTray } from "@/lib/lessons/tray";
+import { DemoNextStep, DemoTutorial } from "@/components/demo/DemoTutorial";
+import { ANIMALS_DEMO_CARDS, isAnimalsDemoSearch } from "@/lib/demo/animals";
 
 
 type Card = {
@@ -25,10 +29,18 @@ type Card = {
 };
 
 
-export default function ClassroomMode() {
+export default function ClassroomMode({ demo = false, tutorialStart = true }: { demo?: boolean; tutorialStart?: boolean }) {
   const { user, loading: authLoading } = useAuth();
-  const [cards, setCards] = useState<Card[]>([]);
-  const [trayReady, setTrayReady] = useState(false);
+  const [isDemo, setIsDemo] = useState(() =>
+    demo || (typeof window !== "undefined" && isAnimalsDemoSearch(window.location.search))
+  );
+  const [cards, setCards] = useState<Card[]>(() => demo ? ANIMALS_DEMO_CARDS.map((card) => ({
+    id: card.id,
+    word: card.word,
+    image: card.image ?? "",
+    type: card.type ?? "noun",
+  })) : []);
+  const [trayReady, setTrayReady] = useState(demo);
   const [index, setIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
   const [intervalMs, setIntervalMs] = useState(4000);
@@ -51,6 +63,11 @@ export default function ClassroomMode() {
   const [size, setSize] = useState(8);
 
   const [cardAvailableHeight, setCardAvailableHeight] = useState<number | null>(null);
+  const [demoPrompt, setDemoPrompt] = useState<"intro" | "game" | null>(demo && tutorialStart ? "intro" : null);
+  const [demoNextStepVisible, setDemoNextStepVisible] = useState(false);
+  const [demoGamePromptDismissed, setDemoGamePromptDismissed] = useState(false);
+  const demoSeenCardIds = useRef(new Set<string>(demo ? [ANIMALS_DEMO_CARDS[0].id] : []));
+  const demoInitializedRef = useRef(demo);
 
   const formatWord = (word: string) => word.replace(/_/g, " ");
 
@@ -72,6 +89,10 @@ export default function ClassroomMode() {
     return "text-3xl sm:text-4xl md:text-5xl lg:text-6xl";
   };
   const handleExit = () => {
+    if (isDemo) {
+      window.location.href = "/demo/animals";
+      return;
+    }
     writeLessonTray(cards, user ? "account" : "guest");
 
     // ✅ Check where we came from
@@ -89,6 +110,40 @@ export default function ClassroomMode() {
   };
 
   useEffect(() => {
+    setIsDemo(demo || isAnimalsDemoSearch(window.location.search));
+  }, [demo]);
+
+  useEffect(() => {
+    if (!isDemo) return;
+    document.body.classList.add("classendo-demo-immersive");
+    // Browsers that allow fullscreen from a page transition enter native
+    // fullscreen immediately. Others require a gesture, so the visible demo
+    // layout is already immersive and the Full screen control remains ready.
+    if (!document.fullscreenElement) {
+      void document.documentElement.requestFullscreen().catch(() => undefined);
+    }
+    return () => document.body.classList.remove("classendo-demo-immersive");
+  }, [isDemo]);
+
+  useEffect(() => {
+    if (isDemo) {
+      if (!demoInitializedRef.current) {
+        const demoCards = ANIMALS_DEMO_CARDS.map((card) => ({
+          id: card.id,
+          word: card.word,
+          image: card.image ?? "",
+          type: card.type ?? "noun",
+        }));
+        setCards(demoCards);
+        setIndex(0);
+        demoSeenCardIds.current = new Set(demoCards.slice(0, 1).map((card) => card.id));
+        setDemoPrompt(tutorialStart ? "intro" : null);
+        demoInitializedRef.current = true;
+      }
+      setTrayReady(true);
+      return;
+    }
+    demoInitializedRef.current = false;
     if (authLoading) return;
     const stored = readLessonTray(user ? "account" : "guest").map((card) => ({
       id: card.id,
@@ -98,7 +153,23 @@ export default function ClassroomMode() {
     }));
     setCards(stored);
     setTrayReady(true);
-  }, [authLoading, user]);
+  }, [authLoading, isDemo, tutorialStart, user]);
+
+  useEffect(() => {
+    if (!isDemo) return;
+
+    // The current card loads immediately. Warm the remaining small demo set
+    // after first paint so advancing a card never waits on a cold CDN image.
+    const preloadTimer = window.setTimeout(() => {
+      ANIMALS_DEMO_CARDS.slice(1).forEach((demoCard) => {
+        const source = getOptimizedImageUrl(demoCard.image ?? "", 1440, 82);
+        if (!source) return;
+        const image = new Image();
+        image.src = source;
+      });
+    }, 250);
+    return () => window.clearTimeout(preloadTimer);
+  }, [isDemo]);
 
   useEffect(() => {
     if (!autoPlay || cards.length === 0) return;
@@ -107,6 +178,12 @@ export default function ClassroomMode() {
     }, intervalMs);
     return () => clearInterval(timer);
   }, [autoPlay, intervalMs, cards.length]);
+
+  useEffect(() => {
+    if (isDemo && !demoGamePromptDismissed && cards.length > 0 && demoSeenCardIds.current.size === cards.length) {
+      setDemoPrompt((current) => current ?? "game");
+    }
+  }, [cards, demoGamePromptDismissed, index, isDemo]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -125,7 +202,13 @@ export default function ClassroomMode() {
     setFade(false);
     setTimeout(() => {
       setDirection("next");
-      setIndex((prev) => (prev + 1) % cards.length);
+      setIndex((prev) => {
+        const next = (prev + 1) % cards.length;
+        if (isDemo && cards[next]) {
+          demoSeenCardIds.current.add(cards[next].id);
+        }
+        return next;
+      });
       setFade(true);
     }, 200);
   };
@@ -134,7 +217,13 @@ export default function ClassroomMode() {
     setFade(false);
     setTimeout(() => {
       setDirection("prev");
-      setIndex((prev) => (prev - 1 + cards.length) % cards.length);
+      setIndex((prev) => {
+        const next = (prev - 1 + cards.length) % cards.length;
+        if (isDemo && cards[next]) {
+          demoSeenCardIds.current.add(cards[next].id);
+        }
+        return next;
+      });
       setFade(true);
     }, 200);
   };
@@ -190,7 +279,7 @@ export default function ClassroomMode() {
       document.removeEventListener("fullscreenchange", recomputeAvailableCardHeight);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mobileMenuOpen]);
+  }, [isDemo, mobileMenuOpen]);
 
   // touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -245,7 +334,7 @@ export default function ClassroomMode() {
     }
   };
 
-  if (!trayReady || authLoading) {
+  if (!trayReady || (authLoading && !isDemo)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg-main)] text-[var(--color-text-muted)]">
         Loading lesson…
@@ -272,8 +361,8 @@ export default function ClassroomMode() {
 
   const card = cards[index];
   const cardKey = String(card?.id ?? index);
-  const inFullscreen = !!document.fullscreenElement;
-  const isCompactViewport = window.innerWidth < 640;
+  const inFullscreen = typeof document !== "undefined" && !!document.fullscreenElement;
+  const isCompactViewport = typeof window !== "undefined" && window.innerWidth < 640;
 
   // determine inline styles for the card container when fullscreen:
   const cardStyle: React.CSSProperties = {};
@@ -302,7 +391,7 @@ export default function ClassroomMode() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] flex flex-col justify-between">
+    <div data-demo-immersive={isDemo || undefined} className={`${isDemo ? "min-h-[100dvh] overflow-hidden" : "min-h-screen"} bg-[var(--color-bg-main)] flex flex-col justify-between`}>
       <div
         ref={mobileHeaderRef}
         className="sticky top-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 px-4 py-3 backdrop-blur md:hidden"
@@ -395,7 +484,7 @@ export default function ClassroomMode() {
                 <Maximize size={17} /> Full screen
               </button>
               <button onClick={handleExit} className="btn btn-secondary px-3 py-2.5 text-sm">
-                <X size={17} /> Exit
+                {isDemo ? <Home size={17} /> : <X size={17} />} {isDemo ? "Back to home" : "Exit"}
               </button>
             </div>
           </div>
@@ -520,14 +609,15 @@ export default function ClassroomMode() {
             onClick={handleExit}
             className="btn btn-secondary px-4 py-2 flex items-center gap-2"
           >
-            <X size={18} />
-            Exit
+            {isDemo ? <Home size={18} /> : <X size={18} />}
+            {isDemo ? "Back to home" : "Exit"}
           </button>
         </div>
       </div>
 
       {/* Flashcard */}
       <div
+        id="demo-card"
         // card container: when fullscreen we use measured height; otherwise we use aspect ratio via classes
         ref={cardContainerRef}
         onClick={handleCardClick}
@@ -560,8 +650,8 @@ export default function ClassroomMode() {
                     src={resolveLessonImageUrl(card.image || "/placeholder.png")}
                     alt={card.word}
                     className="h-full w-full object-contain"
-                    sizes="100vw"
-                    widths={[640, 1024, 1440, 1920]}
+                    sizes={isDemo ? "(min-width: 1600px) 1440px, 100vw" : "100vw"}
+                    widths={isDemo ? [768, 1024, 1440] : [640, 1024, 1440, 1920]}
                     quality={82}
                     loading="eager"
                     fetchPriority="high"
@@ -628,6 +718,31 @@ export default function ClassroomMode() {
           {index + 1} / {cards.length}
         </div>
       </div>
+
+      {isDemo && demoPrompt === "intro" ? (
+        <DemoTutorial
+          title="Welcome to your Animals lesson"
+          description="This is the classroom screen teachers use live with a projector, TV, or laptop. Use the arrows to show every animal card, then you’ll take the same lesson into a game."
+          nextHref="/demo/animals/classroom/cards"
+          nextLabel="Show the cards"
+          onClose={() => { setDemoPrompt(null); setDemoNextStepVisible(true); }}
+          onNext={() => { setDemoPrompt(null); setDemoNextStepVisible(true); }}
+        />
+      ) : null}
+
+      {isDemo && demoPrompt === "game" ? (
+        <DemoTutorial
+          title="Nice teaching — now make it a game"
+          description="You have shown all eight animals. The same cards are ready in Connect Four, so students can identify an image before dropping a counter."
+          nextHref="/demo/animals/connect-four"
+          nextLabel="Play Connect Four"
+          onClose={() => { setDemoPrompt(null); setDemoGamePromptDismissed(true); setDemoNextStepVisible(true); }}
+        />
+      ) : null}
+
+      {isDemo && demoNextStepVisible ? (
+        <DemoNextStep href="/demo/animals/connect-four">Next: Play Connect Four →</DemoNextStep>
+      ) : null}
     </div>
   );
 }

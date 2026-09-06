@@ -66,7 +66,7 @@ const HELP: Record<WorksheetTypeOption["id"], HelpContent> = {
   },
 };
 
-export default function WorksheetHelpModal({ worksheetType }: { worksheetType: WorksheetTypeOption }) {
+export default function WorksheetHelpModal({ worksheetType, forceOpen = false }: { worksheetType: WorksheetTypeOption; forceOpen?: boolean }) {
   const { user } = useAuth();
   const titleId = useId();
   const [isOpen, setIsOpen] = useState(false);
@@ -77,6 +77,13 @@ export default function WorksheetHelpModal({ worksheetType }: { worksheetType: W
     let active = true;
 
     function readPreference() {
+      if (forceOpen) {
+        if (active) {
+          setIsOpen(true);
+          setIsLoading(false);
+        }
+        return;
+      }
       if (!user) {
         if (active) {
           setIsOpen(false);
@@ -95,7 +102,7 @@ export default function WorksheetHelpModal({ worksheetType }: { worksheetType: W
 
     readPreference();
     return () => { active = false; };
-  }, [user, worksheetType.id]);
+  }, [forceOpen, user, worksheetType.id]);
 
   async function dismissPermanently() {
     if (!user) return;
