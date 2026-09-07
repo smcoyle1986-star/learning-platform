@@ -16,6 +16,7 @@ import type {
 import { CREATOR_CARD_TYPES, type CreatorCardType } from "@/lib/creator/types";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { requireVerifiedClassendoEmail } from "@/lib/auth/server-verification";
 
 export class CreatorApiError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -42,6 +43,11 @@ export async function requireCreatorUser(request: NextRequest | Request) {
 
 export async function requirePremiumCreator(request: NextRequest | Request) {
   const user = await requireCreatorUser(request);
+  try {
+    await requireVerifiedClassendoEmail(user.id);
+  } catch {
+    throw new CreatorApiError("Verify your email before uploading Creator content.", 403);
+  }
   const access = await getBillingAccessForUser(getSupabaseAdmin(), user.id);
   if (!access.isPremium) {
     throw new CreatorApiError("Creator is available to Premium accounts.", 403);

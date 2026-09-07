@@ -17,6 +17,7 @@ import { BillingAccessProvider } from "@/lib/billing/useBillingAccess";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
+import EmailVerificationNotice from "@/components/auth/EmailVerificationNotice";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -78,6 +79,8 @@ export default function RootLayout({
                   </div>
                 </header>
               </SiteChrome>
+
+              <EmailVerificationNotice />
 
               {children}
               <SiteFooter />

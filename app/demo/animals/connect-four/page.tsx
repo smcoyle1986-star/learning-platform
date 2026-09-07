@@ -1,6 +1,6 @@
 "use client";
 
-import ConnectFourPage from "@/app/games/connect-four/page";
+import ConnectFourPage from "@/components/games/ConnectFourPage";
 
 export default function AnimalsDemoConnectFourPage() {
   return <ConnectFourPage demo />;

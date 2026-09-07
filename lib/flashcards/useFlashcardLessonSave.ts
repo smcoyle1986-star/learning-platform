@@ -29,13 +29,13 @@ export function useFlashcardLessonSave(params: {
   const [showSavedIndicator, setShowSavedIndicator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [lastSavedTray, setLastSavedTray] = useState<LessonCard[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (showSaveModal && !editingLessonSetId) {
-      setIsPublic(true);
+      setIsPublic(false);
     }
   }, [showSaveModal, editingLessonSetId]);
 
@@ -55,7 +55,7 @@ export function useFlashcardLessonSave(params: {
         const data = await loadLessonMetadata(supabase, editingLessonSetId);
         if (data?.name) {
           setLessonName(data.name);
-          setIsPublic(Boolean(data.is_public ?? true));
+          setIsPublic(Boolean(data.is_public ?? false));
         }
       } catch (error) {
         console.error("Failed to load lesson_set name/is_public for editing:", error);
@@ -75,7 +75,7 @@ export function useFlashcardLessonSave(params: {
     setNameError("");
     setExistingLessonId(null);
     setShowSaveModal(false);
-    setIsPublic(true);
+    setIsPublic(false);
     setEditingLessonSetId(null);
   }
 

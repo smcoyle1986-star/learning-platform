@@ -1,6 +1,6 @@
 "use client";
 
-import ClassroomMode from "@/app/flashcards/classroom/page";
+import ClassroomMode from "@/components/classroom/ClassroomMode";
 import { ANIMALS_DEMO_CARDS } from "@/lib/demo/animals";
 import { getOptimizedImageUrl } from "@/lib/images/storage";
 

@@ -41,7 +41,7 @@ export function normalizeWorksheet(raw: unknown): SavedWorksheetRecord {
     name: String(source.name ?? "Untitled Worksheet"),
     userId: String(source.user_id),
     worksheetType: normalizeWorksheetType(source.worksheet_type),
-    isPublic: Boolean(source.is_public ?? true),
+    isPublic: Boolean(source.is_public ?? false),
     cards: Array.isArray(source.cards) ? source.cards.map(normalizeLessonCard) : [],
     draft: {
       type: normalizeWorksheetType(draft.type),

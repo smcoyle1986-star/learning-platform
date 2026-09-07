@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -10,22 +11,11 @@ import {
   normalizeUsername,
   suggestUsernameFromEmail,
 } from "@/lib/auth/username";
-import { LEGAL_VERSION } from "@/lib/legal/constants";
-import {
-  buildConfirmationRedirect,
-  savePendingEmailConfirmation,
-} from "@/lib/auth/pending-confirmation";
 import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
+import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
-
-const DUPLICATE_EMAIL_MESSAGE = "An account already exists with this email address. Please sign in instead.";
-
-function isDuplicateSignupError(error: unknown) {
-  const message = String((error as { message?: unknown } | null)?.message ?? "").toLowerCase();
-  return /already registered|already exists|user already|email.*taken|duplicate/.test(message);
-}
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -108,6 +98,8 @@ export default function SignupPage() {
   const [usernameOptions, setUsernameOptions] = useState<string[]>([]);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
   const countryOptions = useMemo(() => {
@@ -188,6 +180,12 @@ export default function SignupPage() {
     };
   }, [username]);
 
+  useEffect(() => {
+    const target = window as typeof window & { onClassendoTurnstile?: (token: string) => void };
+    target.onClassendoTurnstile = setTurnstileToken;
+    return () => { delete target.onClassendoTurnstile; };
+  }, []);
+
   const applySuggestion = (value: string) => {
     setUsernameTouched(true);
     setUsername(value);
@@ -229,98 +227,43 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
-      const availabilityResponse = await fetch("/api/auth/email-availability", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail }),
-      });
-      const availability = await availabilityResponse.json().catch(() => null);
-      if (availabilityResponse.ok && availability?.available === false) {
-        setMessage(DUPLICATE_EMAIL_MESSAGE);
-        return;
-      }
-      if (!availabilityResponse.ok) {
-        setMessage("We could not verify this email right now. Please try again shortly.");
-        return;
-      }
-
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
       const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
-      const onboardingStartedAt = new Date().toISOString();
       const signupAttribution = readSignupAttribution();
       trackConversion("signup_submitted", {
         destination: requestedNext === "/upgrade" ? "upgrade" : "flashcards",
       });
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password,
-        options: {
-          emailRedirectTo: buildConfirmationRedirect(window.location.origin, welcomeDestination),
-          data: {
-            username: cleanUsername,
-            country_region: cleanCountry,
-            age_confirmed: true,
-            terms_accepted_at: new Date().toISOString(),
-            terms_version: LEGAL_VERSION,
-            privacy_notice_version: LEGAL_VERSION,
-            classendo_onboarding_started_at: onboardingStartedAt,
-            signup_attribution: signupAttribution,
-          },
-        },
-      });
-
-      if (error) {
-        setMessage(isDuplicateSignupError(error) ? DUPLICATE_EMAIL_MESSAGE : `Error: ${error.message}`);
-        return;
-      }
-
-      if (!data.user) {
-        setMessage("We could not finish creating your account just now. Please try again.");
-        return;
-      }
-
-      trackConversion("signup_account_created", {
-        email_confirmation_required: !data.session,
-      });
-
-      if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-        setMessage(DUPLICATE_EMAIL_MESSAGE);
-        return;
-      }
-
-      if (data.session) {
-        const { error: profileError } = await supabase.from("profiles").upsert(
-          {
-            id: data.user.id,
-            display_name: cleanUsername,
-            username: cleanUsername,
-            country_region: cleanCountry,
-            avatar_url: null,
-          },
-          { onConflict: "id" }
-        );
-
-        if (profileError) {
-          const messageText = String(profileError.message || "").toLowerCase();
-          if (!messageText.includes("column") && !messageText.includes("does not exist")) {
-            setMessage(
-              "Account created, but we could not save your profile yet. Please sign in again after email confirmation."
-            );
-            return;
-          }
-        }
-      }
-
-      if (!data.session) {
-        savePendingEmailConfirmation({
+      const signupResponse = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: cleanEmail,
-          nextPath: welcomeDestination,
-          sentAt: Date.now(),
-        });
+          password,
+          username: cleanUsername,
+          countryRegion: cleanCountry,
+          legalAccepted,
+          attribution: signupAttribution,
+          turnstileToken,
+        }),
+      });
+      const payload = await signupResponse.json().catch(() => null) as {
+        error?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
+        session?: { accessToken?: string; refreshToken?: string };
+      } | null;
+      if (!signupResponse.ok) { setMessage(String(payload?.error ?? "We could not create your account just now.")); return; }
+      if (payload?.requiresLegacyConfirmation || !payload?.session?.accessToken || !payload.session.refreshToken) {
+        // Safe transitional fallback while Supabase Confirm Email remains on.
+        // It can be removed only after the production setting is disabled.
+        savePendingEmailConfirmation({ email: cleanEmail, nextPath: welcomeDestination, sentAt: Date.now() });
         router.replace("/check-email");
         return;
       }
-
+      const { error } = await supabase.auth.setSession({ access_token: payload.session.accessToken, refresh_token: payload.session.refreshToken });
+      if (error) { setMessage("Your account was created, but we could not start your session. Please sign in."); return; }
+      trackConversion("signup_account_created", { email_confirmation_required: false });
+      if (!payload.verificationEmailSent) {
+        sessionStorage.setItem("classendo-verification-email-pending", "1");
+      }
       router.replace(welcomeDestination);
     } finally {
       setSubmitting(false);
@@ -366,7 +309,7 @@ export default function SignupPage() {
               Set up your Classendo account
             </h2>
             <p className="mt-3 text-base leading-7 text-[#5c665c]">
-              It takes a moment. Confirm your email and your account will be ready for your first lesson.
+              Start teaching straight away. Verify your email afterwards to activate your 14-day Premium welcome trial.
             </p>
 
             <form onSubmit={handleSignup} className="mt-8 space-y-5">
@@ -520,6 +463,11 @@ export default function SignupPage() {
               </label>
 
               <p className="text-sm leading-6 text-[#6b756b]">Classendo accounts are for adult teachers. We use your email for your account, security, and essential Classendo messages. Do not upload identifiable or sensitive pupil information.</p>
+
+              {turnstileSiteKey ? <>
+                <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+                <div className="cf-turnstile" data-sitekey={turnstileSiteKey} data-callback="onClassendoTurnstile" />
+              </> : process.env.NODE_ENV === "production" ? <p className="text-sm text-[#a45d49]">Signup protection is temporarily unavailable.</p> : null}
 
               {message && (
                 <p role="status" aria-live="polite" className="rounded-2xl border border-[#dbe3d1] bg-[#f7faf4] px-4 py-3 text-sm leading-6 text-[#4c5f49]">

@@ -4,6 +4,7 @@ import { getBillingAccessForUser } from "@/lib/billing/access";
 import { upsertStripeCustomerLink } from "@/lib/billing/subscription-sync";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { requireVerifiedClassendoEmail } from "@/lib/auth/server-verification";
 import {
   getAppBaseUrl,
   getStripePriceId,
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest) {
     const user = await getRequestUser(request);
     if (!user?.id || !user.email) {
       return NextResponse.json({ error: "You must be signed in to upgrade." }, { status: 401 });
+    }
+    try {
+      await requireVerifiedClassendoEmail(user.id);
+    } catch {
+      return NextResponse.json({ error: "Verify your email before starting checkout." }, { status: 403 });
     }
 
     const body = (await request.json().catch(() => ({}))) as CheckoutBody;

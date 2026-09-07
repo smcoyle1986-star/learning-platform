@@ -4,6 +4,7 @@ import { assertCanCreateWorksheet } from "@/lib/billing/access";
 import { saveWorksheet } from "@/lib/worksheets/repository";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { requireVerifiedClassendoEmail } from "@/lib/auth/server-verification";
 import type { LessonCard } from "@/lib/lessons/types";
 import type { WorksheetDraft, WorksheetType } from "@/lib/worksheets/types";
 
@@ -37,6 +38,14 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as SaveWorksheetRequest;
     const supabase = getSupabaseAdmin();
 
+    if (body.isPublic) {
+      try {
+        await requireVerifiedClassendoEmail(user.id);
+      } catch {
+        return NextResponse.json({ error: "Verify your email before publishing a worksheet." }, { status: 403 });
+      }
+    }
+
     if (!body.worksheetId) {
       await assertCanCreateWorksheet(supabase, user.id);
     }
@@ -46,7 +55,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       name: String(body.name ?? ""),
       worksheetType: String(body.worksheetType ?? "crossword") as WorksheetType,
-      isPublic: Boolean(body.isPublic ?? true),
+      isPublic: Boolean(body.isPublic ?? false),
       cards: (Array.isArray(body.cards) ? body.cards : []) as LessonCard[],
       draft: (body.draft ?? {}) as WorksheetDraft,
     });

@@ -263,7 +263,7 @@ export default function YesOrNoPage() {
     localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(nextTray));
     setPromptSetId(preserveSavedId ? set.id : null);
     setPromptSetName(set.name || "Activity Set");
-    setPromptSetIsPublic(preserveSavedId ? set.isPublic : true);
+    setPromptSetIsPublic(preserveSavedId ? set.isPublic : false);
     setSentencesMap(Object.fromEntries(set.rows.map((row) => [row.cardId, {
       text: row.text,
       isYes: row.isYes,

@@ -72,7 +72,7 @@ export default function TeacherLessonTrayEditor() {
   const [editingLessonSetId, setEditingLessonSetId] = useState<string | null>(null);
 
   // NEW: public/private toggle state for Save modal (default true)
-  const [isPublic, setIsPublic] = useState<boolean>(true);
+  const [isPublic, setIsPublic] = useState<boolean>(false);
 
   // Unsaved change tracking
   const [lastSavedTray, setLastSavedTray] = useState<LessonCard[]>([]);
@@ -87,7 +87,7 @@ export default function TeacherLessonTrayEditor() {
         const data = await loadLessonMetadata(supabase, editingLessonSetId);
         if (data?.name) {
           setLessonName(data.name);
-          setIsPublic(Boolean(data.is_public ?? true));
+          setIsPublic(Boolean(data.is_public ?? false));
         }
       } catch (e) {
         console.error("Failed to load lesson_set metadata for editing:", e);
@@ -346,7 +346,7 @@ export default function TeacherLessonTrayEditor() {
     setEditingLessonSetId(savedLesson.id);
     persistEditingLessonSetId(savedLesson.id);
     setLessonName(savedLesson.name);
-    setIsPublic(Boolean(savedLesson.isPublic ?? true));
+    setIsPublic(Boolean(savedLesson.isPublic ?? false));
   }
 
   function finishSave() {

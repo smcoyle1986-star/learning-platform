@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       lessonId: body.lessonId ?? null,
       userId: user.id,
       name: String(body.name ?? ""),
-      isPublic: Boolean(body.isPublic ?? true),
+      isPublic: Boolean(body.isPublic ?? false),
       cards: cards as LessonCard[],
     });
 

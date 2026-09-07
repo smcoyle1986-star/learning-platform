@@ -48,6 +48,7 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
   const [stage, setStage] = useState<OnboardingStage>(null);
   const [savingPreference, setSavingPreference] = useState(false);
   const [preferenceError, setPreferenceError] = useState("");
+  const [emailJustVerified, setEmailJustVerified] = useState(false);
 
   const sessionKey = user ? `classendo_flashcards_tutorial_hidden:${user.id}` : "";
   const metadata = user?.user_metadata ?? {};
@@ -63,10 +64,15 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
 
     if (isFreshSignup) {
       clearPendingEmailConfirmation();
+      const didVerifyEmail = url.searchParams.get("email_verified") === "1";
       url.searchParams.delete("onboarding");
       url.searchParams.delete("email_confirmed");
+      url.searchParams.delete("email_verified");
       window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-      stageTimer = window.setTimeout(() => setStage("welcome"), 0);
+      stageTimer = window.setTimeout(() => {
+        setEmailJustVerified(didVerifyEmail);
+        setStage("welcome");
+      }, 0);
       return () => {
         if (stageTimer !== null) window.clearTimeout(stageTimer);
       };
@@ -122,10 +128,12 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
         </div>
         <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-[#7a8e6d]">Welcome to Classendo</p>
         <h2 id="premium-welcome-title" className="mt-2 pr-8 text-3xl font-semibold tracking-tight text-[#2f3a2f]">
-          Your 14-day Premium trial is ready
+          {emailJustVerified ? "Your 14-day Premium trial is ready" : "Your Classendo account is ready"}
         </h2>
         <p className="mt-4 text-base leading-7 text-[#5c665c]">
-          You now have full Premium access for {daysRemaining} {daysRemaining === 1 ? "day" : "days"}, with no payment details required. When the trial ends, your account automatically moves to Basic unless you choose Premium.
+          {emailJustVerified
+            ? <>You now have full Premium access for {daysRemaining} {daysRemaining === 1 ? "day" : "days"}, with no payment details required. When the trial ends, your account automatically moves to Basic unless you choose Premium.</>
+            : <>You can start building and teaching with Basic straight away. Verify your email from the reminder at the top of the page to activate your 14-day Premium welcome trial.</>}
         </p>
         <button type="button" onClick={closeWelcome} className="btn btn-primary mt-7 w-full px-5 py-3 sm:w-auto">
           Show me how Flashcards works
