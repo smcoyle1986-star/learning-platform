@@ -52,10 +52,20 @@ function buildWritingLinesFromCards(nextCards: LessonCard[]) {
   return nextCards.map((card) => formatWorksheetWord(card.word));
 }
 
-export default function WorksheetsPageContent() {
+type WorksheetsPageContentProps = {
+  forceDemo?: boolean;
+  showDemoCompletion?: boolean;
+};
+
+export default function WorksheetsPageContent({
+  forceDemo = false,
+  showDemoCompletion: shouldShowDemoCompletion = true,
+}: WorksheetsPageContentProps) {
   const searchParams = useSearchParams();
-  const isDemo = searchParams.get("demo") === "animals";
-  const showDemoCompletion = searchParams.get("demo_complete") !== "1";
+  const isDemo = forceDemo || searchParams.get("demo") === "animals";
+  const showDemoCompletion = forceDemo
+    ? shouldShowDemoCompletion
+    : searchParams.get("demo_complete") !== "1";
   const { user } = useAuth();
   const { access, canAccessWorksheetType } = useBillingAccess();
   const featuredWorksheetTypeId = access?.featuredWorksheetType ?? getFeaturedWeeklyWorksheetType();
@@ -410,7 +420,7 @@ export default function WorksheetsPageContent() {
         showPrimaryLabel={!isDemo}
         primaryItems={[
           isDemo
-            ? { label: "Back to home", href: "/", tone: "classroom" }
+            ? { label: "Return to homepage", href: "/landing", tone: "classroom" }
             : { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
         ]}
         secondaryItems={[
@@ -663,8 +673,8 @@ export default function WorksheetsPageContent() {
         <DemoTutorial
           title="Your Animals lesson is now a Bullseye activity"
           description="Bullseye turns the same vocabulary into a speaking game: learners say the animal, drop a token, and score points. Classendo also includes matching, word searches, writing, crosswords, and more when you build your own lesson."
-          nextHref="/"
-          nextLabel="Back to home"
+          nextHref="/landing"
+          nextLabel="Return to homepage"
           onClose={() => { setShowDemoCompletionModal(false); setShowDemoWorksheetHelp(true); }}
         />
       ) : null}
