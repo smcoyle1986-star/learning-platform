@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* These controls are duplicated only to provide a phone-specific placement.
+   The mobile media queries below reveal them; desktop keeps the original
+   controls inside each game board. */
+.game-mobile-board-controls {
+  display: none;
+}
+
 /* ======================================================
    Global design tokens (brand / theme)
    - Inter font and homepage brand blue remain available
@@ -120,6 +127,54 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
     max-height: none !important;
   }
 
+  /* On a horizontal phone the controls form a short row below the board.
+     The board's height calculation reserves that row before it is sized. */
+  body.classendo-game-page .game-mobile-page .game-board-control {
+    display: none !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls {
+    display: flex;
+    width: 100%;
+    min-height: 3.65rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls:empty {
+    display: none;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage .game-mobile-aspect-stage {
+    width: min(calc(100vw - 1rem), calc((100dvh - 7.75rem) * 16 / 9)) !important;
+    height: auto !important;
+    max-height: 100%;
+    aspect-ratio: 16 / 9 !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-mobile-primary-control {
+    width: 3.4rem;
+    height: 3.4rem;
+    border-width: 4px;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-mobile-primary-control span {
+    font-size: 0.68rem;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-reward-choice {
+    transform: scale(0.72);
+    transform-origin: center;
+  }
+
   body.classendo-game-page [data-game-header] > div {
     min-height: 3.5rem;
     padding-top: 0.5rem;
@@ -224,8 +279,34 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   }
 
   body.classendo-game-page .game-mobile-page .game-mobile-centered-stage > div {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     align-items: center !important;
+  }
+
+  /* Card Reveal and KaBoom keep their image/grid unobstructed on phones.
+     Their in-game actions and score feedback use the empty stage beneath it. */
+  body.classendo-game-page .game-mobile-page .game-board-control {
+    display: none !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls {
+    display: flex;
+    width: 100%;
+    min-height: 7.25rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.65rem;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls:empty {
+    display: none;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-primary-control {
+    flex: 0 0 auto;
   }
 
   body.classendo-game-page .game-mobile-page .game-mobile-centered-stage .game-mobile-aspect-stage {
@@ -233,6 +314,11 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
     height: auto !important;
     max-height: 100%;
     aspect-ratio: 16 / 9 !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-reward-overlay {
+    bottom: auto;
+    padding: 0;
   }
 
   body.classendo-game-page .game-reward-overlay {
@@ -273,6 +359,12 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
 
   body.classendo-game-page .game-reward-spinner .text-8xl {
     font-size: clamp(3.25rem, 14vw, 4.5rem) !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-reward-spinner,
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .kaboom-center-reveal {
+    width: 7rem !important;
+    height: 7rem !important;
   }
 
   body.classendo-game-page .kaboom-center-reveal {
@@ -605,10 +697,32 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   }
 
   body.classendo-game-page .game-mobile-page .game-mobile-centered-stage .game-mobile-aspect-stage {
-    width: min(calc(100vw - 1rem), calc((100dvh - 3.5rem) * 16 / 9)) !important;
+    /* Reserve a compact feedback row below the board before calculating its
+       landscape height, so neither the controls nor the board are clipped. */
+    width: min(calc(100vw - 1rem), calc((100dvh - 7.75rem) * 16 / 9)) !important;
     height: auto !important;
     max-height: 100%;
     aspect-ratio: 16 / 9 !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls {
+    min-height: 3.65rem;
+    margin-top: 0.25rem;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-mobile-primary-control {
+    width: 3.4rem;
+    height: 3.4rem;
+    border-width: 4px;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-mobile-primary-control span {
+    font-size: 0.68rem;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-board-controls .game-reward-choice {
+    transform: scale(0.72);
+    transform-origin: center;
   }
 }
 
@@ -710,6 +824,16 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   body.classendo-game-page .connect-four-stage .relative.mt-3 {
     margin-top: 0.35rem;
   }
+}
+
+/* Fullscreen retains its established in-board controls. The separate mobile
+   control row is only for the normal, browser-chrome layout. */
+body.classendo-game-page.classendo-game-fullscreen .game-mobile-board-controls {
+  display: none !important;
+}
+
+body.classendo-game-page.classendo-game-fullscreen .game-board-control {
+  display: flex !important;
 }
 
 /* This must remain after the landscape fallback above. It is the final

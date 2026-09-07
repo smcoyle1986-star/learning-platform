@@ -1095,7 +1095,7 @@ export default function KaBoomPage() {
                 </div>
               ) : (
                 baseTilesRemaining && !specialRemoveActive && !centerReveal && selectionMode === "random" && (
-                  <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                  <div className="game-board-control game-board-control--random absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
                     <button
                       onClick={() => startRandomHighlightSequence(true)}
                       disabled={specialRemoveActive || !!centerReveal}
@@ -1183,7 +1183,7 @@ export default function KaBoomPage() {
                   </div>
 
                   {centerReveal && (
-                    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                    <div className="game-board-control game-kaboom-reveal-desktop absolute inset-0 z-40 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
                       <div
                         className={`kaboom-center-reveal rounded-full border-[10px] shadow-2xl flex flex-col items-center justify-center text-center ${
                           centerReveal.kind === "bomb"
@@ -1209,6 +1209,43 @@ export default function KaBoomPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Phone-only feedback and selection controls stay outside the board. */}
+          <div className="game-mobile-board-controls" aria-live="polite">
+            {!bonusRoundActive && baseTilesRemaining && !specialRemoveActive && !centerReveal && selectionMode === "random" && (
+              <button
+                onClick={() => startRandomHighlightSequence(true)}
+                disabled={specialRemoveActive || !!centerReveal}
+                className="game-mobile-primary-control w-28 h-28 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[6px] border-white/85 flex items-center justify-center text-center px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Randomly pick a tile for the active team"
+              >
+                <span className="text-lg font-extrabold leading-tight">Random Select</span>
+              </button>
+            )}
+
+            {centerReveal && (
+              <div
+                className={`kaboom-center-reveal game-mobile-kaboom-reveal rounded-full border-[6px] shadow-xl flex flex-col items-center justify-center text-center ${
+                  centerReveal.kind === "bomb"
+                    ? "w-32 h-32 bg-[linear-gradient(180deg,#fb923c,#ef4444)] border-white text-white"
+                    : "w-32 h-32 bg-white border-[var(--color-accent)] text-[var(--color-accent)]"
+                }`}
+              >
+                {centerReveal.kind === "bomb" ? (
+                  <>
+                    <div className="text-2xl font-extrabold">BOOM!</div>
+                    <div className="mt-1 text-xs font-semibold">-5 points</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-[8px] uppercase tracking-[0.25em] text-[var(--color-text-muted)] mb-1">Points</div>
+                    <div className="text-5xl font-extrabold tabular-nums leading-none">+{centerReveal.value ?? 0}</div>
+                    <div className="mt-1 text-xs font-semibold text-[var(--color-text-muted)]">Great job!</div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

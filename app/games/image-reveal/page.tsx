@@ -929,7 +929,7 @@ export default function CardRevealPage() {
 
               {/* X/O buttons moved to bottom center of the game grid */}
               {isAwaitingDecision && (
-                <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-6 z-60 pointer-events-auto">
+                <div className="game-board-control game-board-control--decision absolute bottom-16 left-0 right-0 flex items-center justify-center gap-6 z-60 pointer-events-auto">
                   <button
                     onClick={handlePass}
                     className="btn btn-secondary w-20 h-20 rounded-full text-3xl shadow-xl border border-black/10 bg-white hover:-translate-y-0.5 transition-transform"
@@ -952,7 +952,7 @@ export default function CardRevealPage() {
                 !showPointsPrompt &&
                 !showPointsSpinner &&
                 tilesRemoved.filter(Boolean).length < totalTiles && (
-                  <div className="absolute inset-0 z-60 flex items-center justify-center pointer-events-auto">
+                  <div className="game-board-control game-board-control--random absolute inset-0 z-60 flex items-center justify-center pointer-events-auto">
                     <button
                       onClick={startRandomRemoveSequence}
                       className="w-48 h-48 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
@@ -964,7 +964,7 @@ export default function CardRevealPage() {
                 )}
 
                 {(showPointsPrompt || showPointsSpinner) && (
-                  <div className="game-reward-overlay absolute inset-x-0 bottom-8 z-70 flex justify-center px-6 pointer-events-none">
+                  <div className="game-board-control game-reward-desktop-overlay game-reward-overlay absolute inset-x-0 bottom-8 z-70 flex justify-center px-6 pointer-events-none">
                     {!showPointsSpinner ? (
                       <div className="game-reward-choice pointer-events-auto flex items-end gap-4 rounded-[2rem] border border-white/70 bg-white/78 px-6 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-md">
                         <button
@@ -1014,6 +1014,84 @@ export default function CardRevealPage() {
                   </div>
               )}
             </div>
+          </div>
+
+          {/* Phone-only controls live below the board so the revealed image stays visible. */}
+          <div className="game-mobile-board-controls" aria-live="polite">
+            {isAwaitingDecision && (
+              <div className="flex items-center justify-center gap-4 pointer-events-auto">
+                <button
+                  onClick={handlePass}
+                  className="btn btn-secondary w-16 h-16 rounded-full text-2xl shadow-xl border border-black/10 bg-white"
+                  title="Pass (X)"
+                >
+                  ❌
+                </button>
+                <button
+                  onClick={handleCorrect}
+                  className="btn btn-primary w-16 h-16 rounded-full text-2xl shadow-xl border border-transparent bg-[linear-gradient(180deg,#60a5fa,#2563eb)]"
+                  title="Correct (O)"
+                >
+                  ⭕
+                </button>
+              </div>
+            )}
+
+            {!isAwaitingDecision &&
+              !specialRemoveActive &&
+              !showPointsPrompt &&
+              !showPointsSpinner &&
+              tilesRemoved.filter(Boolean).length < totalTiles && (
+                <button
+                  onClick={startRandomRemoveSequence}
+                  className="game-mobile-primary-control w-28 h-28 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[6px] border-white/85 flex items-center justify-center text-center px-4"
+                  title="Remove tile"
+                >
+                  <span className="text-lg font-extrabold leading-tight">Remove tile</span>
+                </button>
+              )}
+
+            {(showPointsPrompt || showPointsSpinner) && (
+              <div className="game-reward-overlay static z-70 flex justify-center px-2 pointer-events-none">
+                {!showPointsSpinner ? (
+                  <div className="game-reward-choice pointer-events-auto flex items-end gap-3 rounded-[1.25rem] border border-white/70 bg-white/90 px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
+                    <button
+                      onClick={() => startPointsSpinner("gain")}
+                      className="w-24 h-24 rounded-full bg-[var(--color-accent)] text-white shadow-xl border-[6px] border-white/85 flex items-center justify-center text-center px-3"
+                      title="Get points"
+                    >
+                      <span className="text-base font-extrabold leading-tight">Get points!</span>
+                    </button>
+                    <button
+                      onClick={() => startPointsSpinner("loss")}
+                      className="w-20 h-20 rounded-full bg-[#ef4444] text-white shadow-xl border-[5px] border-white/90 flex flex-col items-center justify-center text-center px-2"
+                      title="Lose points"
+                    >
+                      <span className="text-sm font-extrabold leading-tight">Lose</span>
+                      <span className="text-sm font-extrabold leading-tight">points!</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className={`game-reward-spinner pointer-events-auto w-28 h-28 rounded-full shadow-xl flex flex-col items-center justify-center border-[6px] ${
+                      pointsMode === "loss"
+                        ? "bg-[color:rgba(255,255,255,0.97)] border-[#ef4444]"
+                        : "bg-white/96 border-[var(--color-accent)]"
+                    }`}
+                  >
+                    <div className={`text-[8px] uppercase tracking-[0.25em] mb-1 ${pointsMode === "loss" ? "text-[#ef4444]" : "text-[var(--color-text-muted)]"}`}>
+                      {pointsMode === "loss" ? "Minus points" : "Points"}
+                    </div>
+                    <div className={`text-5xl font-extrabold tabular-nums leading-none ${pointsMode === "loss" ? "text-[#ef4444]" : "text-[var(--color-accent)]"}`}>
+                      {pointsMode === "loss" ? "-" : ""}{spinningPoints}
+                    </div>
+                    <div className="mt-1 text-[10px] font-semibold text-[var(--color-text-muted)]">
+                      {awardedPoints !== null ? "Awarded" : "Spinning..."}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
