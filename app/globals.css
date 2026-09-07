@@ -213,6 +213,79 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
     max-height: 100%;
   }
 
+  /* Card Reveal and KaBoom are fixed-ratio canvases. On a portrait phone they
+     use the full safe width, then sit in the visual centre of the remaining
+     stage instead of leaving all unused height below the board. */
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage > div {
+    width: 100%;
+    align-items: center !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage .game-mobile-aspect-stage {
+    width: min(calc(100vw - 1rem), calc((100dvh - 4.75rem) * 16 / 9)) !important;
+    height: auto !important;
+    max-height: 100%;
+    aspect-ratio: 16 / 9 !important;
+  }
+
+  body.classendo-game-page .game-reward-overlay {
+    bottom: 0.55rem;
+    padding: 0.35rem;
+  }
+
+  body.classendo-game-page .game-reward-choice {
+    gap: 0.55rem;
+    padding: 0.55rem;
+    border-radius: 1.25rem;
+  }
+
+  body.classendo-game-page .game-reward-choice button:first-child {
+    width: clamp(6rem, 29vw, 7.5rem) !important;
+    height: clamp(6rem, 29vw, 7.5rem) !important;
+    border-width: 6px;
+    padding: 0.55rem;
+  }
+
+  body.classendo-game-page .game-reward-choice button:last-child {
+    width: clamp(5rem, 24vw, 6.25rem) !important;
+    height: clamp(5rem, 24vw, 6.25rem) !important;
+    border-width: 5px;
+    padding: 0.4rem;
+  }
+
+  body.classendo-game-page .game-reward-choice button:first-child span,
+  body.classendo-game-page .game-reward-choice button:last-child span {
+    font-size: clamp(1rem, 5vw, 1.35rem) !important;
+  }
+
+  body.classendo-game-page .game-reward-spinner {
+    width: clamp(7rem, 34vw, 8.5rem) !important;
+    height: clamp(7rem, 34vw, 8.5rem) !important;
+    border-width: 6px;
+  }
+
+  body.classendo-game-page .game-reward-spinner .text-8xl {
+    font-size: clamp(3.25rem, 14vw, 4.5rem) !important;
+  }
+
+  body.classendo-game-page .kaboom-center-reveal {
+    width: clamp(8rem, 42vw, 10rem) !important;
+    height: clamp(8rem, 42vw, 10rem) !important;
+    border-width: 6px;
+  }
+
+  body.classendo-game-page .kaboom-center-reveal .text-7xl,
+  body.classendo-game-page .kaboom-center-reveal .text-5xl {
+    font-size: clamp(2.5rem, 12vw, 3.75rem) !important;
+  }
+
   body.classendo-game-page .game-mobile-page .game-choose-side-stage {
     margin-top: 0 !important;
   }
@@ -517,6 +590,25 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   body.classendo-game-page .game-mobile-page [data-game-stage] {
     height: auto !important;
     max-height: none !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage > div {
+    width: 100%;
+    align-items: center !important;
+  }
+
+  body.classendo-game-page .game-mobile-page .game-mobile-centered-stage .game-mobile-aspect-stage {
+    width: min(calc(100vw - 1rem), calc((100dvh - 3.5rem) * 16 / 9)) !important;
+    height: auto !important;
+    max-height: 100%;
+    aspect-ratio: 16 / 9 !important;
   }
 }
 

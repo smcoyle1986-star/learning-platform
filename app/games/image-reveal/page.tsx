@@ -908,7 +908,7 @@ export default function CardRevealPage() {
       </MobileScorePanel>
 
       {/* Main game grid */}
-      <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>
+      <main data-game-stage className="game-mobile-centered-stage max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>
         <div className={`flex h-full justify-center ${isFullscreen ? "items-center" : "items-start"}`}>
           <div className={`game-mobile-aspect-stage game-image-reveal-responsive-stage ${isFullscreen ? "game-image-reveal-aspect-stage" : ""} rounded-3xl shadow-2xl overflow-hidden border`}>
             <div className="relative w-full h-full bg-gray-100">
@@ -964,9 +964,9 @@ export default function CardRevealPage() {
                 )}
 
                 {(showPointsPrompt || showPointsSpinner) && (
-                  <div className="absolute inset-x-0 bottom-8 z-70 flex justify-center px-6 pointer-events-none">
+                  <div className="game-reward-overlay absolute inset-x-0 bottom-8 z-70 flex justify-center px-6 pointer-events-none">
                     {!showPointsSpinner ? (
-                      <div className="pointer-events-auto flex items-end gap-4 rounded-[2rem] border border-white/70 bg-white/78 px-6 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-md">
+                      <div className="game-reward-choice pointer-events-auto flex items-end gap-4 rounded-[2rem] border border-white/70 bg-white/78 px-6 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.18)] backdrop-blur-md">
                         <button
                           onClick={() => startPointsSpinner("gain")}
                           className="w-44 h-44 rounded-full bg-[var(--color-accent)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 hover:shadow-[0_18px_50px_rgba(37,99,235,0.35)] transition-transform"
@@ -985,7 +985,7 @@ export default function CardRevealPage() {
                       </div>
                     ) : (
                       <div
-                        className={`pointer-events-auto w-44 h-44 rounded-full shadow-2xl flex flex-col items-center justify-center border-[10px] ${
+                        className={`game-reward-spinner pointer-events-auto w-44 h-44 rounded-full shadow-2xl flex flex-col items-center justify-center border-[10px] ${
                           pointsMode === "loss"
                             ? "bg-[color:rgba(255,255,255,0.97)] border-[#ef4444]"
                             : "bg-white/96 border-[var(--color-accent)]"
