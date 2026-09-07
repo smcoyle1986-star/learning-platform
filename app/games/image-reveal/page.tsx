@@ -740,7 +740,7 @@ export default function CardRevealPage() {
      Main playable layout with scoreboard changes
      ---------------------- */
   return (
-    <div ref={containerRef} className={`${isFullscreen ? "game-fullscreen-shell game-image-reveal-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
+    <div ref={containerRef} className={`${isFullscreen ? "game-fullscreen-shell game-image-reveal-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "game-mobile-page min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}>
       <GameHeader
         title="Card Reveal"
         onExit={() => {

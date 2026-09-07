@@ -250,19 +250,23 @@ export default function ConquerPage() {
       // plus the score button inside the visible game viewport.
       const availableWidth = Math.floor(bounds?.width || window.innerWidth - (isFullscreen ? 24 : 64));
       const availableHeight = Math.floor(bounds?.height || viewportHeight - (isFullscreen ? 160 : 250));
-      const padding = isFullscreen ? 14 : 16;
-      const gap = isFullscreen ? 6 : 6;
-      const labelWidth = isFullscreen ? 28 : 24;
-      const labelHeight = isFullscreen ? 28 : 24;
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const padding = isFullscreen ? 14 : isMobile ? 6 : 16;
+      const gap = isFullscreen ? 6 : isMobile ? 2 : 6;
+      const labelWidth = isFullscreen ? 28 : isMobile ? 18 : 24;
+      const labelHeight = isFullscreen ? 28 : isMobile ? 18 : 24;
 
-      const minCellHeight = isFullscreen ? 32 : 46;
+      const minCellHeight = isFullscreen ? 32 : isMobile ? 40 : 46;
       const maxCellHeightFromViewport = Math.max(
         minCellHeight,
         Math.floor((availableHeight - padding * 2 - labelHeight - BOARD_SIZE * gap) / BOARD_SIZE)
       );
       const cellHeight = Math.max(minCellHeight, Math.min(maxCellHeightFromViewport, isFullscreen ? 112 : 98));
 
-      const minCellWidth = isFullscreen ? 46 : 62;
+      // The desktop minimum cannot mathematically fit eight columns at 360px.
+      // This compact phone value keeps every territory accessible without a
+      // horizontally cropped board.
+      const minCellWidth = isFullscreen ? 46 : isMobile ? 34 : 62;
       const maxCellWidthFromViewport = Math.max(
         minCellWidth,
         Math.floor((availableWidth - padding * 2 - labelWidth - BOARD_SIZE * gap) / BOARD_SIZE)
@@ -970,7 +974,7 @@ export default function ConquerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
+    <div className="game-mobile-page min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]">
       <GameHeader
         title="Conquer"
         onExit={() => router.push("/games")}

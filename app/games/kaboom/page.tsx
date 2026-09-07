@@ -843,7 +843,7 @@ export default function KaBoomPage() {
   return (
     <div
       ref={containerRef}
-      className={`${isFullscreen ? "game-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}
+      className={`${isFullscreen ? "game-fullscreen-shell bg-[hsl(140,40%,95%)] text-black" : "game-mobile-page min-h-screen bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`}
     >
       <GameHeader
         title="KaBoom!"

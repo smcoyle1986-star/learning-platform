@@ -856,7 +856,7 @@ export default function YesOrNoPage() {
 
   // UI
   return (
-    <div className={`${isFullscreen ? "game-fullscreen-shell" : "h-screen"} overflow-hidden bg-[hsl(140,40%,95%)] text-black`}>
+    <div className={`${isFullscreen ? "game-fullscreen-shell" : "game-mobile-page h-screen"} overflow-hidden bg-[hsl(140,40%,95%)] text-black`}>
       <GameHeader
         title={gameTitle}
         onExit={() => router.push("/games")}

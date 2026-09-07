@@ -685,7 +685,7 @@ export default function MemoryFlipPage() {
 
   // JSX
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f0fdf4", fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" }}>
+    <div className="game-mobile-page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f0fdf4", fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" }}>
       <GameHeader
         title="Memory Flip"
         onExit={() => router.push("/games")}
@@ -876,8 +876,9 @@ export default function MemoryFlipPage() {
       </MobileScorePanel>
 
           {/* Grid */}
-          <div data-game-stage style={{ padding: 20, display: "flex", justifyContent: "center" }}>
+          <div data-game-stage className="memory-mobile-stage" style={{ padding: 20, display: "flex", justifyContent: "center" }}>
             <div
+              className="memory-mobile-frame"
               style={{
                 width: "min(1200px, 92vw)",
                 background: "#dff6e9",
@@ -887,7 +888,7 @@ export default function MemoryFlipPage() {
               }}
             >
               <div
-                className="relative w-full"
+                className="memory-mobile-board relative w-full"
                 style={{
                   height: isFullscreen
                     ? "min(760px, calc(var(--game-viewport-height, 100dvh) - 190px))"
