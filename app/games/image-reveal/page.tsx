@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
@@ -253,6 +254,7 @@ export default function CardRevealPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
 
   // Awaiting decision & timer
   const [isAwaitingDecision, setIsAwaitingDecision] = useState(false);
@@ -749,6 +751,8 @@ export default function CardRevealPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="image-reveal"
+        mobileScoreOpen={mobileScoreOpen}
+        onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
 
       {settingsOpen && (
@@ -846,7 +850,7 @@ export default function CardRevealPage() {
       )}
 
       {/* Compact scoreboard */}
-      <div className={`${isFullscreen ? "game-fullscreen-chrome " : ""}game-mobile-chrome pt-[92px] max-w-7xl mx-auto px-4`}>
+      <MobileScorePanel open={mobileScoreOpen} className={`${isFullscreen ? "game-fullscreen-chrome " : ""}game-mobile-chrome pt-[92px] max-w-7xl mx-auto px-4`}>
         <div className="flex items-center justify-between gap-3 mb-1">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Scoreboard</h2>
@@ -901,7 +905,7 @@ export default function CardRevealPage() {
             );
           })}
         </div>
-      </div>
+      </MobileScorePanel>
 
       {/* Main game grid */}
       <main data-game-stage className="max-w-7xl mx-auto px-4 pb-2" style={{ minHeight: "calc(100vh - 208px)" }}>

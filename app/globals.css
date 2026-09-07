@@ -108,6 +108,71 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   body.classendo-game-page [data-game-stage] {
     min-width: 0;
   }
+
+  /* A score panel is intentionally an overlay on phones: the board keeps its
+     measured play area whether scores are shown or hidden. */
+  body.classendo-game-page .game-score-panel {
+    display: none;
+  }
+
+  body.classendo-game-page .game-score-panel.game-score-panel--open {
+    display: block;
+    position: fixed;
+    z-index: 45;
+    top: calc(4rem + env(safe-area-inset-top));
+    right: 0.65rem;
+    left: 0.65rem;
+    max-height: calc(100dvh - 5rem - env(safe-area-inset-bottom));
+    overflow: auto;
+    padding: 0.5rem !important;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  }
+
+  body.classendo-game-page .game-score-panel.game-score-panel--open .game-mobile-chrome {
+    padding-top: 0.25rem !important;
+  }
+
+  body.classendo-game-page .connect-four-page {
+    box-sizing: border-box;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: calc(4rem + env(safe-area-inset-top)) 0.65rem calc(0.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.classendo-game-page .connect-four-layout {
+    height: 100%;
+    min-height: 0;
+  }
+
+  body.classendo-game-page .connect-four-stage {
+    height: 100% !important;
+    min-height: 0;
+    padding: 0.5rem;
+    border-radius: 1.25rem;
+  }
+
+  body.classendo-game-page .connect-four-stage > div {
+    margin-top: 0;
+    padding: 0.5rem;
+    border-radius: 1rem;
+  }
+
+  body.classendo-game-page .connect-four-stage .grid.shrink-0 {
+    gap: 0.35rem;
+  }
+
+  body.classendo-game-page .connect-four-stage .relative.mt-3 {
+    margin-top: 0.45rem;
+  }
+
+  body.classendo-game-page .connect-four-stage .grid.h-full.w-full {
+    gap: 0.3rem;
+    padding: 0.3rem;
+  }
 }
 
 /* Shared mobile fullscreen game shell. Game pages opt in with
@@ -835,4 +900,13 @@ body.classendo-game-page.classendo-game-fullscreen .game-fullscreen-shell .game-
   overflow: hidden;
   clip: rect(1px, 1px, 1px, 1px);
   white-space: nowrap;
+}
+
+/* The score overlay remains available in landscape even though normal game
+   chrome is intentionally hidden there to maximise the board. */
+@media (max-width: 900px) and (orientation: landscape) {
+  body.classendo-game-page .game-score-panel.game-score-panel--open.game-mobile-chrome,
+  body.classendo-game-page .game-score-panel.game-score-panel--open .game-mobile-chrome {
+    display: block !important;
+  }
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
@@ -97,6 +98,7 @@ export default function SpinAndSpeakPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   function addTeam() {
     if (teams.length >= 6) return;
@@ -406,11 +408,14 @@ export default function SpinAndSpeakPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="spin-and-speak"
+        mobileScoreOpen={mobileScoreOpen}
+        onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
 
       {/* Main */}
       <main data-game-stage className="game-mobile-stage-shell game-spin-speak-stage pt-[72px] h-[calc(100vh-72px)] px-3 sm:px-4">
         <div className="spin-speak-layout max-w-7xl mx-auto">
+          <MobileScorePanel open={mobileScoreOpen}>
           <section className="spin-speak-scorebar bg-white/90 rounded-2xl border border-black/5 shadow-sm px-3 py-2.5" aria-label="Scoreboard">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 shrink-0">
@@ -433,6 +438,7 @@ export default function SpinAndSpeakPage() {
               </div>
             </div>
           </section>
+          </MobileScorePanel>
 
           <div className="spin-speak-playfield">
             <section className="spin-speak-wheel flex flex-col items-center min-h-0">

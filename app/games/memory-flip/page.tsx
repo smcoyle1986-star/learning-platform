@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
@@ -121,6 +122,7 @@ export default function MemoryFlipPage() {
   // Teams / scoreboard
   const [teams, setTeams] = useState<Team[]>([{ id: "team-1", name: "Team 1", score: 0 }]);
   const [activeTeamIndex, setActiveTeamIndex] = useState<number>(0);
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
   const activeTeamIndexRef = useRef<number>(activeTeamIndex);
   useEffect(() => {
     activeTeamIndexRef.current = activeTeamIndex;
@@ -692,6 +694,8 @@ export default function MemoryFlipPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="memory-flip"
+        mobileScoreOpen={mobileScoreOpen}
+        onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
 
       <div style={{ position: "relative" }}>
@@ -808,7 +812,8 @@ export default function MemoryFlipPage() {
       ) : (
         <>
       {/* Scoreboard */}
-      <div className="game-mobile-chrome" style={{ maxWidth: "none", margin: 0, padding: "14px 24px 8px" }}>
+      <MobileScorePanel open={mobileScoreOpen} className="game-mobile-chrome">
+      <div style={{ maxWidth: "none", margin: 0, padding: "14px 24px 8px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Scoreboard</h2>
@@ -868,6 +873,7 @@ export default function MemoryFlipPage() {
           })}
         </div>
       </div>
+      </MobileScorePanel>
 
           {/* Grid */}
           <div data-game-stage style={{ padding: 20, display: "flex", justifyContent: "center" }}>

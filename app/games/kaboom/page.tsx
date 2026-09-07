@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
@@ -263,6 +264,7 @@ export default function KaBoomPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
   const [bonusTiles, setBonusTiles] = useState<BonusTile[]>([]);
   const [glowingBonusIndex, setGlowingBonusIndex] = useState<number | null>(null);
 
@@ -859,6 +861,8 @@ export default function KaBoomPage() {
         trackGameKey="kaboom"
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
+        mobileScoreOpen={mobileScoreOpen}
+        onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
 
       {settingsOpen && (
@@ -977,7 +981,8 @@ export default function KaBoomPage() {
       )}
 
       {/* Scoreboard + controls */}
-      <div ref={controlsRef} className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
+      <MobileScorePanel open={mobileScoreOpen} className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
+      <div ref={controlsRef}>
         <div className={isFullscreen ? "game-mobile-chrome game-fullscreen-scoreboard pt-[72px] max-w-7xl mx-auto px-4" : "game-mobile-chrome pt-[36px] max-w-7xl mx-auto px-4"}>
           <div className="game-fullscreen-scorebar flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
@@ -1029,6 +1034,7 @@ export default function KaBoomPage() {
           </div>
         </div>
       </div>
+      </MobileScorePanel>
 
       {/* Main grid */}
       <main data-game-stage className={isFullscreen ? "game-fullscreen-stage flex min-h-0 flex-1 max-w-[100rem] mx-auto w-full px-4 pb-2" : "max-w-7xl mx-auto px-4 pb-2"}>

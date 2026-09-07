@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
@@ -353,6 +354,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
   const [aiFocusCol, setAiFocusCol] = useState<number | null>(null);
   const [winnerLine, setWinnerLine] = useState<[number, number][] | null>(null);
   const [matchWins, setMatchWins] = useState<Record<number, number>>({ 1: 0, 2: 0 });
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
   const [matchWinnerModalOpen, setMatchWinnerModalOpen] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
   const didTrackMatchStartRef = useRef(false);
@@ -696,7 +698,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
 
   // UI
   return (
-    <div data-demo-immersive={isDemo || undefined} className={`${isDemo ? "min-h-[100dvh] overflow-hidden p-3 pt-20" : "min-h-screen p-6 pt-24"} bg-[var(--color-bg-main)] text-[var(--color-text-main)]`}>
+    <div data-demo-immersive={isDemo || undefined} className={`connect-four-page ${isDemo ? "min-h-[100dvh] overflow-hidden p-3 pt-20" : "min-h-screen p-6 pt-24"} bg-[var(--color-bg-main)] text-[var(--color-text-main)]`}>
       <div className={`mx-auto ${inFullscreen ? "max-w-full" : "max-w-6xl"}`}>
         <GameHeader
           title="Connect Four"
@@ -711,25 +713,29 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
           trackGameKey="connect-four"
           exitLabel={isDemo ? "Back to home" : undefined}
           hideBrand={isDemo}
+          mobileScoreOpen={mobileScoreOpen}
+          onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
         />
 
-        <div className={`${isDemo ? "flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4" : "flex items-start gap-6"}`}>
+        <div className={`connect-four-layout ${isDemo ? "flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4" : "flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-6"}`}>
           {/* Left: scoreboard */}
-          <div className={`${isDemo ? "w-full lg:w-56" : "w-56"} bg-white rounded p-3 shadow flex flex-col`}>
-            <div>
-              <div className="font-semibold mb-2">Match (first to {firstToWins})</div>
-              <div className="flex flex-col gap-2 text-sm">
-                <div className="flex justify-between"><div>Player 1</div><div className="font-bold">{matchWins[1] ?? 0}</div></div>
-                <div className="flex justify-between"><div>{aiLevel === "none" ? "Player 2" : `Player ${aiPlaysAs === 2 ? "AI" : "2"}`}</div><div className="font-bold">{matchWins[2] ?? 0}</div></div>
+          <MobileScorePanel open={mobileScoreOpen} className={isDemo ? "w-full lg:w-56" : "w-full lg:w-56"}>
+            <div className="bg-white rounded p-3 shadow flex flex-col">
+              <div>
+                <div className="font-semibold mb-2">Match (first to {firstToWins})</div>
+                <div className="flex flex-col gap-2 text-sm">
+                  <div className="flex justify-between"><div>Player 1</div><div className="font-bold">{matchWins[1] ?? 0}</div></div>
+                  <div className="flex justify-between"><div>{aiLevel === "none" ? "Player 2" : `Player ${aiPlaysAs === 2 ? "AI" : "2"}`}</div><div className="font-bold">{matchWins[2] ?? 0}</div></div>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">Use number keys or arrows to choose column, click number to see image, then ✅/❌.</div>
               </div>
-              <div className="mt-3 text-xs text-gray-500">Use number keys or arrows to choose column, click number to see image, then ✅/❌.</div>
             </div>
-          </div>
+          </MobileScorePanel>
 
           <div className="min-w-0 flex-1">
             <div
               data-game-stage
-              className="p-4 rounded-[32px] border shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+              className="connect-four-stage p-4 rounded-[32px] border shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
               style={{
                 height: inFullscreen || isDemo ? "calc(100dvh - 7rem)" : "620px",
                 background: activeBoardTheme.shell,

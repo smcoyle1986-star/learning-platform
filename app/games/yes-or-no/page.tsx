@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
+import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
@@ -117,6 +118,7 @@ export default function YesOrNoPage() {
     { id: "team-2", name: "Team 2", score: 0 },
   ]);
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
+  const [mobileScoreOpen, setMobileScoreOpen] = useState(false);
   function addTeam() {
     if (teams.length >= 6) return;
     const next = teams.length + 1;
@@ -863,10 +865,13 @@ export default function YesOrNoPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey={gameKey}
+        mobileScoreOpen={mobileScoreOpen}
+        onToggleMobileScore={playMode === "team" ? () => setMobileScoreOpen((open) => !open) : undefined}
       />
 
       {playMode === "team" && (
-      <div className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
+      <MobileScorePanel open={mobileScoreOpen} className={isFullscreen ? "game-fullscreen-chrome shrink-0" : ""}>
+      <div>
         <div className="game-mobile-chrome pt-[72px] max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between gap-4 mb-2">
             <div className="flex items-center gap-3">
@@ -898,6 +903,7 @@ export default function YesOrNoPage() {
           </div>
         </div>
       </div>
+      </MobileScorePanel>
       )}
 
       {/* Kahoot-style responsive game canvas */}

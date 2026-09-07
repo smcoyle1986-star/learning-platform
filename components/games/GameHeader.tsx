@@ -18,6 +18,8 @@ type GameHeaderProps = {
   trackGameKey?: string;
   exitLabel?: string;
   hideBrand?: boolean;
+  mobileScoreOpen?: boolean;
+  onToggleMobileScore?: () => void;
 };
 
 type LockableScreenOrientation = ScreenOrientation & {
@@ -36,6 +38,8 @@ export default function GameHeader({
   trackGameKey: _trackGameKey,
   exitLabel = "Exit",
   hideBrand = false,
+  mobileScoreOpen = false,
+  onToggleMobileScore,
 }: GameHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -172,6 +176,18 @@ export default function GameHeader({
 
         {isFullscreen ? (
           <div className="flex items-center gap-1 sm:hidden">
+            {onToggleMobileScore ? (
+              <button
+                type="button"
+                onClick={onToggleMobileScore}
+                className="rounded-full border border-black/10 bg-white/65 px-2.5 py-2 text-xs font-bold text-[var(--color-text-main)] shadow-sm"
+                aria-label={mobileScoreOpen ? "Hide score" : "Show score"}
+                aria-expanded={mobileScoreOpen}
+                aria-controls="mobile-game-score-panel"
+              >
+                Score
+              </button>
+            ) : null}
             {onToggleSettings ? (
               <button
                 type="button"
@@ -202,7 +218,19 @@ export default function GameHeader({
             </button>
           </div>
         ) : (
-        <div className="relative sm:hidden">
+        <div className="relative flex items-center gap-2 sm:hidden">
+          {onToggleMobileScore ? (
+            <button
+              type="button"
+              onClick={onToggleMobileScore}
+              className="rounded-full border border-black/10 bg-white/70 px-3 py-2 text-xs font-bold text-[var(--color-text-main)] shadow-sm backdrop-blur transition hover:bg-white"
+              aria-label={mobileScoreOpen ? "Hide score" : "Show score"}
+              aria-expanded={mobileScoreOpen}
+              aria-controls="mobile-game-score-panel"
+            >
+              Score
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setMobileMenuOpen((open) => !open)}
