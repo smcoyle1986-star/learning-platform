@@ -19,6 +19,7 @@ import {
 import {
   planNounImageVariants,
 } from "@/lib/noun-images/planner";
+import { uploadVocabularyStaticVariants } from "@/lib/images/static-vocab-variants.server";
 
 const IMAGE_BUCKET = "vocab-images";
 const IMAGE_CATEGORY = "noun";
@@ -139,6 +140,8 @@ async function uploadFinalImage(params: {
   if (upload.error) {
     throw new Error(`Supabase storage upload failed: ${upload.error.message}`);
   }
+
+  await uploadVocabularyStaticVariants(supabase, params.path, params.buffer, { force: true });
 
   const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(params.path);
   return data.publicUrl;

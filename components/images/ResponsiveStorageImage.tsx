@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties, ReactEventHandler, TransitionEventHandler } from "react";
-import { getOptimizedImageUrl } from "@/lib/images/storage";
+import { useMemo, useState, type CSSProperties, type ReactEventHandler, type TransitionEventHandler } from "react";
+import { getResponsiveImageUrl } from "@/lib/images/storage";
 
 type ResponsiveStorageImageProps = {
   src: string;
@@ -18,9 +18,9 @@ type ResponsiveStorageImageProps = {
 };
 
 /**
- * Uses Supabase's CDN transforms only for public Classendo artwork. Other URLs
- * (uploads, blobs, data URLs, or legacy sources) deliberately keep their
- * existing delivery path so no current card can be broken by this optimization.
+ * Uses pre-generated public WebP assets for vocabulary artwork. Landing images
+ * retain their existing application proxy; legacy and uploaded sources keep
+ * their direct URL. An original image is always available as a safe fallback.
  */
 export function ResponsiveStorageImage({
   src,
@@ -35,13 +35,22 @@ export function ResponsiveStorageImage({
   onLoad,
   onTransitionEnd,
 }: ResponsiveStorageImageProps) {
-  const candidates = Array.from(new Set(widths))
-    .filter((width) => Number.isFinite(width) && width > 0)
-    .sort((left, right) => left - right)
-    .map((width) => ({ width, url: getOptimizedImageUrl(src, width, quality) }))
-    .filter((candidate): candidate is { width: number; url: string } => Boolean(candidate.url));
+  // Store the failed source rather than a boolean. A new card naturally gets
+  // a fresh static-asset attempt without synchronously resetting state in an
+  // effect, while a missing derivative safely falls back to its master image.
+  const [failedStaticSource, setFailedStaticSource] = useState<string | null>(null);
+  const useOriginal = failedStaticSource === src;
 
-  if (candidates.length === 0) {
+  const candidates = useMemo(
+    () => Array.from(new Set(widths))
+      .filter((width) => Number.isFinite(width) && width > 0)
+      .sort((left, right) => left - right)
+      .map((width) => ({ width, url: getResponsiveImageUrl(src, width, quality) }))
+      .filter((candidate): candidate is { width: number; url: string } => Boolean(candidate.url)),
+    [quality, src, widths],
+  );
+
+  if (useOriginal || candidates.length === 0) {
     return (
       <img
         src={src}
@@ -60,27 +69,19 @@ export function ResponsiveStorageImage({
 
   const largest = candidates[candidates.length - 1];
   return (
-    // `display: contents` keeps this responsive-source wrapper out of the
-    // layout tree. Consumers such as Classroom need the image itself—not an
-    // intrinsic-size `<picture>` flex item—to fill their available panel.
-    <picture className="contents">
-      <source
-        type="image/webp"
-        sizes={sizes}
-        srcSet={candidates.map(({ url, width }) => `${url} ${width}w`).join(", ")}
-      />
-      <img
-        src={largest.url}
-        alt={alt}
-        className={className}
-        sizes={sizes}
-        loading={loading}
-        fetchPriority={fetchPriority}
-        decoding="async"
-        style={style}
-        onLoad={onLoad}
-        onTransitionEnd={onTransitionEnd}
-      />
-    </picture>
+    <img
+      src={largest.url}
+      srcSet={candidates.map(({ url, width }) => `${url} ${width}w`).join(", ")}
+      alt={alt}
+      className={className}
+      sizes={sizes}
+      loading={loading}
+      fetchPriority={fetchPriority}
+      decoding="async"
+      style={style}
+      onError={() => setFailedStaticSource(src)}
+      onLoad={onLoad}
+      onTransitionEnd={onTransitionEnd}
+    />
   );
 }

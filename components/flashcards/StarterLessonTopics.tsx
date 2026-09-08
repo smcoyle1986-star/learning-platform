@@ -149,7 +149,7 @@ export default function StarterLessonTopics({
                     const card = cards[index];
                     return (
                       <div key={definition.word} className="aspect-square overflow-hidden rounded-xl border border-white/80 bg-white">
-                        {card?.image ? <ResponsiveStorageImage src={card.image} alt={definition.word} className="h-full w-full object-contain" sizes="90px" widths={[96, 160]} /> : <div className="h-full w-full animate-pulse bg-[#e4eadf]" />}
+                        {card?.image ? <ResponsiveStorageImage src={card.image} alt={definition.word} className="h-full w-full object-contain" sizes="90px" widths={[160]} /> : <div className="h-full w-full animate-pulse bg-[#e4eadf]" />}
                       </div>
                     );
                   })}

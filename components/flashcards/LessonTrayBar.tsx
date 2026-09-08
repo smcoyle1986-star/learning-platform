@@ -61,7 +61,7 @@ export default function LessonTrayBar({
   onClearTray,
 }: LessonTrayBarProps) {
   return (
-    <section className="sticky top-0 z-40 bg-[var(--color-bg-main)] border-b border-black/5">
+    <section data-testid="lesson-tray" className="sticky top-0 z-40 bg-[var(--color-bg-main)] border-b border-black/5">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 md:px-6">
         {editingLessonSetId && (
           <div className="text-[11px] leading-tight text-[var(--color-text-muted)]">
@@ -109,7 +109,7 @@ export default function LessonTrayBar({
                   alt={formatWord(card.word)}
                   className="w-8 h-8 rounded-md object-cover border border-black/10 bg-white shrink-0"
                   sizes="32px"
-                  widths={[64, 96]}
+                  widths={[160]}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-md border border-dashed border-black/10 bg-white/70 shrink-0" />

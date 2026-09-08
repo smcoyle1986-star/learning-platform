@@ -45,7 +45,7 @@ export default function FlashcardResultsGrid({
   }
 
   return (
-    <section className="mt-6 grid grid-cols-2 gap-3 px-4 sm:mt-10 sm:grid-cols-3 sm:gap-6 sm:px-6 md:grid-cols-4 lg:grid-cols-5 xl:px-0">
+    <section data-testid="flashcard-results-grid" className="mt-6 grid grid-cols-2 gap-3 px-4 sm:mt-10 sm:grid-cols-3 sm:gap-6 sm:px-6 md:grid-cols-4 lg:grid-cols-5 xl:px-0">
       {results.map((card) => {
         const key = getCarouselKey(card);
         const availableImages = getCardImages(card);
@@ -99,7 +99,7 @@ export default function FlashcardResultsGrid({
                     : "translate-x-0"
                 }`}
                 sizes="(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 20vw"
-                widths={[160, 240, 320, 480]}
+                widths={[160, 480]}
               />
               {carousel.animating && (
                 <ResponsiveStorageImage
@@ -108,7 +108,7 @@ export default function FlashcardResultsGrid({
                   onTransitionEnd={() => onFinishCarouselSlide(card)}
                   className="absolute inset-0 h-full w-full object-contain transition-transform duration-300"
                   sizes="(max-width: 639px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 25vw, 20vw"
-                  widths={[160, 240, 320, 480]}
+                  widths={[160, 480]}
                   loading="eager"
                   style={{
                     transform:

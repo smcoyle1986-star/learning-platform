@@ -9,7 +9,10 @@
     "lint": "eslint",
     "postinstall": "playwright install chromium",
     "admin:bootstrap-owner": "tsx scripts/bootstrap-admin-owner.ts",
-    "noun-images:batch": "tsx scripts/generate-noun-images.ts"
+    "noun-images:batch": "tsx scripts/generate-noun-images.ts",
+    "vocab-images:variants": "tsx scripts/generate-vocab-static-variants.ts",
+    "vocab-images:smoke": "tsx scripts/verify-static-vocab-image-smoke.ts",
+    "vocab-images:integrity": "tsx scripts/check-vocab-static-variants.ts"
   },
   "dependencies": {
     "@sparticuz/chromium": "^147.0.2",

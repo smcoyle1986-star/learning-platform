@@ -15,7 +15,7 @@ import ClassroomToolbar from "@/components/classroom/ClassroomToolbar";
 import { useAuth } from "@/components/AuthProvider";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
-import { getOptimizedImageUrl } from "@/lib/images/storage";
+import { getResponsiveImageUrl } from "@/lib/images/storage";
 import { readLessonTray, writeLessonTray } from "@/lib/lessons/tray";
 import { DemoNextStep, DemoTutorial } from "@/components/demo/DemoTutorial";
 import { ANIMALS_DEMO_CARDS, isAnimalsDemoSearch } from "@/lib/demo/animals";
@@ -166,7 +166,7 @@ export default function ClassroomMode({ demo = false, tutorialStart = true }: { 
     // after first paint so advancing a card never waits on a cold CDN image.
     const preloadTimer = window.setTimeout(() => {
       ANIMALS_DEMO_CARDS.slice(1).forEach((demoCard) => {
-        const source = getOptimizedImageUrl(demoCard.image ?? "", 1440, 82);
+        const source = getResponsiveImageUrl(demoCard.image ?? "", 1024, 82);
         if (!source) return;
         const image = new Image();
         image.src = source;
@@ -655,7 +655,7 @@ export default function ClassroomMode({ demo = false, tutorialStart = true }: { 
                     alt={card.word}
                     className="h-full w-full object-contain"
                     sizes={isDemo ? "(min-width: 1600px) 1440px, 100vw" : "100vw"}
-                    widths={isDemo ? [768, 1024, 1440] : [640, 1024, 1440, 1920]}
+                    widths={[1024]}
                     quality={82}
                     loading="eager"
                     fetchPriority="high"
