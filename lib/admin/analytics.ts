@@ -35,6 +35,7 @@ export type AdminAnalyticsSnapshot = {
     classroomOpens: number;
     guestFlashcardsOpened: number;
     guestClassroomOpens: number;
+    animalsDemoStarts: number;
     lessonPackViews: number;
     lessonPackDownloads: number;
     gamePlays: number;
@@ -108,14 +109,32 @@ export async function getAdminAnalyticsSnapshot(
     .select("utm_source,utm_medium,utm_campaign,referrer_host");
   if (since) attributionQuery.gte("created_at", since);
 
-  const [{ data, error }, { data: attributionData, error: attributionError }] = await Promise.all([
+  const demoUsageQuery = admin
+    .from("analytics_events")
+    .select("id,session_key")
+    .eq("event_type", "classroom_opened")
+    .eq("item_key", "animals-demo");
+  if (since) demoUsageQuery.gte("created_at", since);
+
+  const [{ data, error }, { data: attributionData, error: attributionError }, { data: demoUsageData, error: demoUsageError }] = await Promise.all([
     admin.rpc("get_admin_analytics_snapshot", { period_days: periodDays }),
     attributionQuery,
+    demoUsageQuery,
   ]);
   if (error) throw new Error(`Could not load analytics: ${error.message}`);
   if (attributionError) {
     throw new Error(`Could not load signup attribution: ${attributionError.message}`);
   }
+  if (demoUsageError) {
+    throw new Error(`Could not load Animals demo usage: ${demoUsageError.message}`);
+  }
+
+  // A visitor can refresh or return to the demo within one browser session.
+  // Count that as one demo start, while retaining an id fallback for legacy
+  // records without a session key.
+  const animalsDemoStarts = new Set(
+    (demoUsageData ?? []).map((item) => item.session_key || item.id),
+  ).size;
 
   const sourceCounts = new Map<string, AdminAnalyticsRankedItem>();
   for (const item of (attributionData ?? []) as SignupAttributionRow[]) {
@@ -159,6 +178,7 @@ export async function getAdminAnalyticsSnapshot(
       classroomOpens: count(summary.classroom_opens),
       guestFlashcardsOpened: count(summary.guest_flashcards_opened),
       guestClassroomOpens: count(summary.guest_classroom_opens),
+      animalsDemoStarts,
       lessonPackViews: count(summary.lesson_pack_views),
       lessonPackDownloads: count(summary.lesson_pack_downloads),
       gamePlays: count(summary.game_plays),

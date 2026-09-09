@@ -5,6 +5,7 @@ import {
   Eye,
   FileText,
   Gamepad2,
+  Presentation,
   Search,
   UserPlus,
 } from "lucide-react";
@@ -142,6 +143,7 @@ export default async function AdminAnalyticsPage({
     { label: "PDF downloads", value: analytics.summary.lessonPackDownloads, icon: FileText },
     { label: "Guest flashcard starts", value: analytics.summary.guestFlashcardsOpened, icon: Search },
     { label: "Guest Classroom starts", value: analytics.summary.guestClassroomOpens, icon: Activity },
+    { label: "Animals demo starts", value: analytics.summary.animalsDemoStarts, icon: Presentation },
   ];
   const recentTrends = analytics.trends.slice(-14);
   const trendMaximum = Math.max(

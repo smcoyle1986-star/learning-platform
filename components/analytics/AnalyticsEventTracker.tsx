@@ -70,6 +70,19 @@ export function AnalyticsEventTracker() {
       return;
     }
 
+    // The demo has its own, predictable entry point. Record it separately
+    // from regular Classroom Mode so the administrator can see whether new
+    // visitors are actually starting the guided Animals lesson.
+    if (pathname === "/demo/animals/classroom") {
+      void trackAnalyticsEvent({
+        eventType: "classroom_opened",
+        itemKey: "animals-demo",
+        itemLabel: "Animals Demo",
+        category: "demo lesson",
+      });
+      return;
+    }
+
     const packSlug = pathname.match(/^\/free-resources\/([^/]+)$/)?.[1];
     if (packSlug) {
       trackConversion("lesson_opened", { format: "free_resource" });
