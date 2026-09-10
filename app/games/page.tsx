@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, Gamepad2, HelpCircle, Play, Sparkles, X } from "lucide-react";
 import { GameHowToModal } from "@/components/games/GameHowToModal";
 import PageHeader from "@/components/navigation/PageHeader";
-import { PAGE_CONTENT } from "@/lib/seo/page-content";
+import { GAME_NAMES, getGameTopic, findTopicForCards, topicsUrl, gameUrl } from "@/lib/games/topics";
+import { getGameSource, setGameSource, subscribeGameSource } from "@/lib/games/session";
+import { GameFlowDialog } from "@/components/games/GameFlowDialog";
+import { useTopicLaunch } from "@/components/games/useTopicLaunch";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
@@ -17,6 +20,7 @@ import {
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { getFeaturedWeeklyGameId } from "@/lib/billing/featured";
 import { useAuth } from "@/components/AuthProvider";
+import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 
 /**
  * Games Landing Page
@@ -117,6 +121,7 @@ const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] 
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/four-corners-art.png" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/memory-flip-art.png" },
   { title: "Connect Four", id: "connect-four", subtitle: "Connect four tokens in a line to win", image: "/games/connect-four-art.png" },
+  { title: "Whack-a-Word", id: "whack-a-word", subtitle: "Spot the right word before it disappears", image: "/games/whack-a-word.svg" },
   { title: "Conquer", id: "conquer", subtitle: "Claim territory on a giant board", image: "/games/conquer-art.png" },
 ];
 
@@ -140,12 +145,28 @@ const rankingFrames = [
 
 export default function GamesLandingPage() {
   const router = useRouter();
+  const params = useSearchParams();
+  const savedSource = useSyncExternalStore(subscribeGameSource, getGameSource, () => "topics");
+  const source = params.get("source") ?? savedSource;
+  const [reuseGame, setReuseGame] = useState<string | null>(null);
+  const retainedTopic = getGameTopic(params.get("topic"));
+  const topicLaunch = useTopicLaunch(reuseGame ?? "image-reveal");
   const [lessonTray, setLessonTray] = useState<GameCard[]>([]);
   const [helpGame, setHelpGame] = useState<GameInfo | null>(null);
   const [popularity, setPopularity] = useState<GamePopularityPayload | null>(null);
   const gameGridRef = useRef<HTMLDivElement | null>(null);
   const { access, canAccessGame } = useBillingAccess();
   const { user } = useAuth();
+  const topicsMode = !user || source === "topics";
+
+  useEffect(() => {
+    void trackFreeGameEvent({ eventType: "hub_viewed", source: topicsMode ? "public_topic" : "lesson_tray" });
+  }, [topicsMode]);
+  const trayTopic = findTopicForCards(lessonTray);
+  function changeSource(next: "topics" | "tray") {
+    setGameSource(next);
+    router.replace(`/games?source=${next}`, { scroll: false });
+  }
   const featuredGameId = access?.featuredGameId ?? getFeaturedWeeklyGameId();
   const featuredGame = GAMES.find((game) => game.id === featuredGameId) ?? {
     id: featuredGameId,
@@ -189,7 +210,8 @@ export default function GamesLandingPage() {
   };
 
   const enterGame = (gameId: string) => {
-    router.push(`/games/${gameId}`);
+    if (topicsMode && retainedTopic) { setReuseGame(gameId); return; }
+    router.push(topicsMode ? topicsUrl(gameId) : gameUrl(gameId, trayTopic?.id));
   };
 
   const scrollToGames = () => {
@@ -228,22 +250,29 @@ export default function GamesLandingPage() {
 
       {/* Header */}
       <PageHeader
-        title="Games"
-        description={PAGE_CONTENT.games.description}
-        primaryItems={[
-          { label: "Classroom", href: "/flashcards/classroom", tone: "classroom" },
-        ]}
-        secondaryItems={[
+        title="Free Classroom Games"
+        description="Every game. 24 ready-made topics. No signup needed."
+        primaryItems={user ? [{ label: "Classroom", href: "/flashcards/classroom", tone: "classroom" }] : []}
+        secondaryItems={user ? [
           { label: "Flashcards", href: "/flashcards" },
           { label: "My Lessons", href: "/dashboard" },
           { label: "Community", href: "/teacher/community" },
-        ]}
+        ] : []}
         className="bg-[var(--color-bg-main)]/96"
       />
 
       {/* Lesson Tray */}
       <section className="sticky top-[73px] z-40 border-b border-black/5 bg-[var(--color-bg-main)]/96 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 py-3">
+          {user && <div className="mb-3 inline-flex rounded-full border border-[#dce5d8] bg-white p-1" role="group" aria-label="Game vocabulary source">
+            <button aria-pressed={topicsMode} onClick={() => changeSource("topics")} className={`rounded-full px-5 py-2 text-sm font-semibold ${topicsMode ? "bg-[#73965e] text-white" : "text-[#617857]"}`}>Topics</button>
+            <button aria-pressed={!topicsMode} onClick={() => changeSource("tray")} className={`rounded-full px-5 py-2 text-sm font-semibold ${!topicsMode ? "bg-[#73965e] text-white" : "text-[#617857]"}`}>My Lesson Tray</button>
+          </div>}
+          {topicsMode ? <div className="rounded-2xl border border-[#dce5d8] bg-white/80 px-4 py-4">
+            <p className="text-sm font-semibold">{retainedTopic ? `Current topic: ${retainedTopic.title}` : "Choose a game, then pick a topic."}</p>
+            <p className="mt-1 text-xs text-[#718267]">{retainedTopic ? "Keep this topic for your next game, or choose another." : user ? "Your selected topic will load into your lesson tray when you start." : "Nouns, verbs, adjectives, phonics and prepositions — all free to play."}</p>
+          </div> : <>
+
           <div className="flex items-center justify-between gap-4 rounded-2xl border border-black/5 bg-white/80 px-4 py-3 shadow-sm">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--color-text-muted)]">
@@ -299,6 +328,7 @@ export default function GamesLandingPage() {
               </div>
             ))}
           </LessonTrayScroller>
+          </>}
         </div>
       </section>
 
@@ -319,25 +349,25 @@ export default function GamesLandingPage() {
                     Interactive Classroom Games
                   </h2>
                   <p className="max-w-2xl text-base text-[var(--color-text-muted)]">
-                    Fun learning activities automatically created from the cards you select.
+                    {topicsMode ? "Choose a game, then explore 24 ready-made vocabulary topics." : "Fun learning activities automatically created from the cards you select."}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => (window.location.href = "/flashcards")}
+                    onClick={() => topicsMode ? scrollToGames() : router.push("/flashcards")}
                     className="btn btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm shadow-sm"
                   >
                     <Play size={15} />
-                    Add cards in Flashcards
+                    {topicsMode ? "Choose a game" : "Add cards in Flashcards"}
                   </button>
-                  <button
+                  {!topicsMode && <button
                     onClick={scrollToGames}
                     className="btn btn-secondary inline-flex items-center gap-2 px-5 py-3 text-sm"
                   >
                     Go to games
                     <ArrowDown size={15} />
-                  </button>
+                  </button>}
                 </div>
               </div>
 
@@ -347,7 +377,7 @@ export default function GamesLandingPage() {
                   <div className="mt-2 text-3xl font-black text-[var(--color-text-main)]">{GAMES.length}</div>
                   <div className="mt-1 text-sm text-[var(--color-text-muted)]">Ready to play now</div>
                   <div className="mt-2 text-xs font-semibold text-[#6d8160]">
-                    Free this week: {featuredGame.title}
+                    {topicsMode ? "All free with ready-made topics" : `Free this week: ${featuredGame.title}`}
                   </div>
                 </div>
                 <div className="rounded-2xl border border-black/5 bg-white/90 p-4 shadow-sm">
@@ -404,7 +434,7 @@ export default function GamesLandingPage() {
             </div>
           </section>
 
-          <section className="mt-10 overflow-hidden rounded-[1.8rem] border border-[#d8e5ce] bg-[linear-gradient(135deg,#f4f9ef_0%,#ffffff_48%,#fff8e6_100%)] p-5 shadow-[0_16px_38px_rgba(88,133,72,0.12)] md:p-6">
+          {!topicsMode && <section className="mt-10 overflow-hidden rounded-[1.8rem] border border-[#d8e5ce] bg-[linear-gradient(135deg,#f4f9ef_0%,#ffffff_48%,#fff8e6_100%)] p-5 shadow-[0_16px_38px_rgba(88,133,72,0.12)] md:p-6">
             <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -440,18 +470,19 @@ export default function GamesLandingPage() {
             </div>
           </section>
 
+          }
           <div className="mt-10 mb-6 flex items-end justify-between gap-4">
             <div>
               <h3 className="text-xl font-semibold">Choose a game</h3>
-              <p className="mt-1 text-sm text-[var(--color-text-muted)]">Each game uses your lesson tray cards and opens in its own play space.</p>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">{topicsMode ? "Pick a game to browse the free topics." : "Each game uses your lesson tray cards and opens in its own play space."}</p>
             </div>
           </div>
 
           <div ref={gameGridRef} id="games-grid" className="scroll-mt-[180px] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {GAMES.map((g, index) => (
               (() => {
-                const isLocked = access ? !canAccessGame(g.id) : false;
-                const isFeaturedFree = featuredGameId === g.id;
+                const isLocked = !topicsMode && !trayTopic && access ? !canAccessGame(g.id) : false;
+                const isFeaturedFree = !topicsMode && featuredGameId === g.id;
                 const highlightFeatured = Boolean(access && !access.isPremium && isFeaturedFree);
                 return (
               <div
@@ -468,7 +499,7 @@ export default function GamesLandingPage() {
                 tabIndex={0}
                 onClick={() => enterGame(g.id)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
                     e.preventDefault();
                     enterGame(g.id);
                   }
@@ -501,6 +532,7 @@ export default function GamesLandingPage() {
                   </div>
 
                   {g.subtitle && <p className="text-sm text-[var(--color-text-muted)]">{g.subtitle}</p>}
+                  {topicsMode && ["yes-or-no", "choose-your-side"].includes(g.id) && <p className="text-xs text-[#8b6a3f]">Write your sentences before playing.</p>}
 
                   <div className={`aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center relative ${
                     highlightFeatured
@@ -535,7 +567,7 @@ export default function GamesLandingPage() {
                       }`}
                     >
                       <Play size={14} />
-                      {isLocked ? "Preview" : "Play"}
+                      {topicsMode ? "Choose topic" : isLocked ? "Use my vocabulary" : "Play"}
                     </button>
                     <button
                       onClick={(e) => {
@@ -557,10 +589,15 @@ export default function GamesLandingPage() {
         </div>
       </main>
 
+      {reuseGame && retainedTopic && !topicLaunch.confirmation && <GameFlowDialog title={GAME_NAMES[reuseGame]} onClose={() => setReuseGame(null)}>
+        <p className="text-[#65705f]">Keep playing with {retainedTopic.title}?</p>
+        <div className="mt-6 flex flex-wrap gap-3"><button className="btn btn-primary" disabled={topicLaunch.loading} onClick={() => topicLaunch.launch(retainedTopic)}>Play with {retainedTopic.title}</button><Link href={topicsUrl(reuseGame, retainedTopic.id)} className="btn btn-secondary">Choose another topic</Link></div>
+      </GameFlowDialog>}
+      {topicLaunch.confirmation}
       <GameHowToModal
         open={!!helpGame}
         game={helpGame as GameInfo | null}
-        lessonCards={lessonTray}
+        lessonCards={topicsMode ? [] : lessonTray}
         onClose={() => setHelpGame(null)}
       />
     </div>

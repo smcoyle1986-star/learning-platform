@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  ChartNoAxesCombined,
   BookOpenText,
   CreditCard,
   Images,
@@ -25,6 +26,7 @@ const primaryItems = [
   { label: "Creator", href: "/admin/creator", icon: Images, available: false },
   { label: "Content", href: "/admin/content", icon: Library, available: true },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3, available: true },
+  { label: "Free Analytics", href: "/admin/free-analytics", icon: ChartNoAxesCombined, available: true },
   { label: "Settings", href: "/admin/settings", icon: Settings, available: true },
 ] as const;
 

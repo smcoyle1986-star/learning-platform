@@ -1,5 +1,7 @@
 "use client";
 
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HelpCircle, RefreshCcw, Shield, Swords, X } from "lucide-react";
@@ -36,7 +38,6 @@ type TeamCount = 2 | 3 | 4;
 type AttackMode = "slots" | "manual";
 type ContestOutcome = "attacker" | "defender" | "draw";
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const BOARD_SIZE = 8;
 const BOMB_COUNT = 6;
 
@@ -313,7 +314,7 @@ export default function ConquerPage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (!raw) {
         sourceCardsRef.current = defaultCards();
         return;

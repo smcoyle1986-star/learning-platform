@@ -1,4 +1,7 @@
 "use client";
+import { useGameFlow } from "@/components/games/GameFlowContext";
+
+import { readGameTrayRaw, writeGameTrayRaw } from "@/lib/games/session";
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,7 +23,6 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const KABOOM_GRID_KEY = "kaboom-grid-count";
 const KABOOM_SELECTION_MODE_KEY = "kaboom-selection-mode";
 
@@ -55,6 +57,7 @@ function createFinalBonusTiles(baseTileCount: number, teamCount: number): BonusT
 }
 
 export default function KaBoomPage() {
+  const flow = useGameFlow();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<HTMLDivElement | null>(null);
@@ -150,7 +153,7 @@ export default function KaBoomPage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       originalTrayRawRef.current = raw;
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -180,7 +183,7 @@ export default function KaBoomPage() {
       try {
         const toWrite = gameTrayRef.current;
         if (Array.isArray(toWrite) && toWrite.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+          writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
         }
       } catch (e) {
         console.error("Failed to persist lesson tray on exit (KaBoom):", e);
@@ -192,7 +195,7 @@ export default function KaBoomPage() {
       try {
         const toWrite = gameTrayRef.current;
         if (Array.isArray(toWrite) && toWrite.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+          writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
         }
       } catch (e) {
         console.error("Failed to persist lesson tray on unmount (KaBoom):", e);
@@ -614,6 +617,7 @@ export default function KaBoomPage() {
 
   // Reset game function (restore tray, reset tiles & metadata but keep teams)
   function resetGame() {
+    setTeams((current) => current.map((team) => ({ ...team, score: 0 })));
     try {
       stopSelectionSequence();
       const raw = originalTrayRawRef.current;
@@ -851,7 +855,7 @@ export default function KaBoomPage() {
           try {
             const toWrite = gameTrayRef.current;
             if (Array.isArray(toWrite) && toWrite.length > 0) {
-              localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+              writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
             }
           } catch {}
           router.push("/games");
@@ -1284,6 +1288,7 @@ export default function KaBoomPage() {
       {/* Winner modal */}
       {winnerModalOpen && winnerTeam && (
         <GameWinnerModal
+          scoreTeams={teams}
           title={`${winnerTeam.name} wins!`}
           message={`Congratulations — ${winnerTeam.name} finished KaBoom with ${winnerTeam.score} points.`}
           onClose={() => setWinnerModalOpen(false)}

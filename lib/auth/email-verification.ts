@@ -1,3 +1,4 @@
+import { safeGameReturnPath } from "@/lib/games/return-path";
 import { getOptionalEnv } from "@/lib/server/env";
 import {
   claimAuthRateLimit,
@@ -20,6 +21,7 @@ export async function sendClassendoVerificationEmail(input: {
   email: string;
   request: Request;
   action: "signup" | "resend";
+  nextPath?: string;
 }) {
   const email = normalizeEmail(input.email);
   const allowed = await claimAuthRateLimit({
@@ -47,15 +49,16 @@ export async function sendClassendoVerificationEmail(input: {
   });
   if (tokenError) throw tokenError;
 
+  const nextPath = safeGameReturnPath(input.nextPath);
+  const verifyUrl = `${appUrl()}/verify-email?token=${encodeURIComponent(token)}${nextPath ? `&next=${encodeURIComponent(nextPath)}` : ""}`;
   const apiKey = getOptionalEnv("RESEND_API_KEY");
   const from = getOptionalEnv("RESEND_FROM_EMAIL");
   if (!apiKey || !from) {
     if (process.env.NODE_ENV === "production") throw new Error("Email verification is not configured yet.");
-    console.info(`Local email verification link: ${appUrl()}/verify-email?token=${token}`);
+    console.info(`Local email verification link: ${verifyUrl}`);
     return;
   }
 
-  const verifyUrl = `${appUrl()}/verify-email?token=${encodeURIComponent(token)}`;
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

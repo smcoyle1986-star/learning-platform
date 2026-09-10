@@ -7,7 +7,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
 
   // A game owns its whole page, including the top control bar. Rendering the
   // regular site header here would place it above the game's fixed controls.
-  if (pathname.startsWith("/games/")) return null;
+  if ((pathname.startsWith("/games/") && !["/games/topics", "/games/custom"].includes(pathname))) return null;
 
   return <>{children}</>;
 }

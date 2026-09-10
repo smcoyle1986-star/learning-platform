@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import BrandButton from "@/components/BrandButton";
 import { Maximize2, Minimize2, Settings2, LogOut, Home, Menu, X, RotateCw } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+import { useGameFlow } from "./GameFlowContext";
+import { topicsUrl } from "@/lib/games/topics";
 import Button from "@/components/ui/Button";
 
 type GameHeaderProps = {
@@ -41,6 +44,8 @@ export default function GameHeader({
   mobileScoreOpen = false,
   onToggleMobileScore,
 }: GameHeaderProps) {
+  const flow = useGameFlow();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -120,9 +125,12 @@ export default function GameHeader({
     onToggleSettings?.();
   };
 
-  const exitGame = () => {
+  const exitGame = async () => {
     setMobileMenuOpen(false);
-    onExit();
+    if (flow && !window.confirm("Leave this game? Your current scores and progress will reset.")) return;
+    if (flow && document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+    if (flow?.topic) router.push(`/games?source=topics&topic=${flow.topic.id}`);
+    else onExit();
   };
   const ExitIcon = exitLabel === "Back to home" ? Home : LogOut;
 
@@ -135,6 +143,7 @@ export default function GameHeader({
 
         <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 pointer-events-none">
           <h1 className="text-lg font-bold text-[var(--color-text-main)] sm:text-2xl">{title}</h1>
+          {flow?.topic && <button className="pointer-events-auto block text-xs font-semibold text-[#617857] sm:mx-auto" onClick={() => { if (window.confirm("Change topic? Your current scores and progress will reset.")) router.push(topicsUrl(flow.gameId, flow.topic?.id)); }}>{flow.topic.title} · {flow.topic.cards.length} cards · Change topic</button>}
         </div>
 
         <div className="hidden items-center gap-2 sm:flex">

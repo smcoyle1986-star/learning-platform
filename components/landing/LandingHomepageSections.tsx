@@ -75,14 +75,14 @@ export default function LandingHomepageSections() {
             <article className="rounded-3xl border border-[#dfe6d9] bg-white p-5 shadow-sm">
               <h3 className="text-xl font-semibold">Free</h3>
               <p className="mt-2 text-sm leading-6 text-[#5c665c]">Use core teaching tools at no cost. Creating an account lets you save up to six lessons.</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Flashcards, Classroom Mode, printables, and lesson plans</li><li>One rotating game and one rotating worksheet</li><li>Up to six saved lessons with a free account</li></ul>
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Flashcards, Classroom Mode, printables, and lesson plans</li><li>All games with ready-made topics; one weekly game with your own words</li><li>Up to six saved lessons with a free account</li></ul>
               <Link href="/flashcards" className="btn btn-secondary mt-5 w-full px-4 py-3 text-center">Explore Free</Link>
             </article>
             <article className="rounded-3xl border border-[#e7ca90] bg-[#fffaf0] p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9a681e]">Premium</p>
               <h3 className="mt-2 text-xl font-semibold">More ways to teach</h3>
               <p className="mt-2 text-sm leading-6 text-[#5c665c]">Monthly and yearly Premium plans with a 14-day welcome trial after email confirmation.</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Expanded games, worksheets, and tools</li><li>More saved and reusable resources</li><li>Premium image and classroom features</li></ul>
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Your own vocabulary in every game, plus expanded worksheets and tools</li><li>More saved and reusable resources</li><li>Premium image and classroom features</li></ul>
               <Link href="/upgrade" className="btn btn-primary mt-5 w-full px-4 py-3 text-center">View Premium pricing</Link>
             </article>
           </div>

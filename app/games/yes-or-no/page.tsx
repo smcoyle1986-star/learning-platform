@@ -1,7 +1,11 @@
 "use client";
 
+import { readGameTrayRaw, writeGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useGameFlow } from "@/components/games/GameFlowContext";
+import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
@@ -32,7 +36,6 @@ type Team = {
 
 type PlayMode = "team" | "classroom-sides";
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /*
   Yes or No (app/games/yes-or-no/page.tsx)
@@ -53,6 +56,8 @@ const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 export default function YesOrNoPage() {
   const router = useRouter();
+  const flow = useGameFlow();
+  const { access } = useBillingAccess();
   const isChooseYourSide = usePathname() === "/games/choose-your-side";
   const gameTitle = isChooseYourSide ? "Choose Your Side" : "Yes or No";
   const gameKey = isChooseYourSide ? "choose-your-side" : "yes-or-no";
@@ -86,7 +91,7 @@ export default function YesOrNoPage() {
   const [trayLoaded, setTrayLoaded] = useState(false);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (raw) {
         const parsed: unknown = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -163,6 +168,20 @@ export default function YesOrNoPage() {
 
   // Teacher-provided sentences modal
   const [sentencesMap, setSentencesMap] = useState<Record<string, { text: string; isYes: boolean }>>({});
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const draftKey = `classendo-game-draft:${access?.userId ?? "guest"}:${gameKey}:${flow?.topic?.id ?? "tray"}`;
+  useEffect(() => {
+    if (!flow?.topic) { setDraftLoaded(true); return; }
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(draftKey) ?? "null");
+      if (saved && typeof saved === "object") setSentencesMap(saved);
+    } catch {}
+    setDraftLoaded(true);
+  }, [draftKey, flow?.topic]);
+  useEffect(() => {
+    if (!draftLoaded || !flow?.topic) return;
+    try { sessionStorage.setItem(draftKey, JSON.stringify(sentencesMap)); } catch {}
+  }, [sentencesMap, draftKey, draftLoaded, flow?.topic]);
   const [sentencesModalOpen, setSentencesModalOpen] = useState(false);
   const [sentencesModalView, setSentencesModalView] = useState<"edit" | "saved">("edit");
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -260,7 +279,7 @@ export default function YesOrNoPage() {
     }
 
     setTray(nextTray);
-    localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(nextTray));
+    writeGameTrayRaw(JSON.stringify(nextTray), flow?.topic?.id);
     setPromptSetId(preserveSavedId ? set.id : null);
     setPromptSetName(set.name || "Activity Set");
     setPromptSetIsPublic(preserveSavedId ? set.isPublic : false);
@@ -308,12 +327,14 @@ export default function YesOrNoPage() {
   }, [sentencesModalOpen, sentencesModalView, savedPromptSetsScope]);
 
   function openSavePromptModal() {
+    if (!access?.isPremium) return;
     setSavePromptName(promptSetName || "Activity Set");
     setSavePromptNameError(null);
     setSavePromptModalOpen(true);
   }
 
   async function handleSavePromptSet() {
+    if (!access?.isPremium) return;
     const trimmedName = savePromptName.trim();
     if (!trimmedName) {
       setSavePromptNameError("Enter a name for this set.");
@@ -355,6 +376,7 @@ export default function YesOrNoPage() {
   }
 
   function handleLoadSavedPromptSet(set: YesNoPromptSetRecord) {
+    if (flow?.topic || !access?.isPremium) return;
     const nextCards = cardsFromPromptSet(set);
     const preserveSavedId = savedPromptSetsScope === "own";
     if (nextCards.length === 0) {
@@ -1204,10 +1226,10 @@ export default function YesOrNoPage() {
               <div>
                 <h3 className="text-2xl font-bold">Enter sentences for each card</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Write the sentence that will appear for each card, mark whether it is correct, and save sets for reuse.
+                  Write the sentence that will appear for each card and mark whether it is correct.
                 </p>
               </div>
-              <div className="flex rounded-full bg-gray-100 p-1">
+              {!flow?.topic && access?.isPremium && <div className="flex rounded-full bg-gray-100 p-1">
                 <button
                   onClick={() => setSentencesModalView("edit")}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition ${sentencesModalView === "edit" ? "bg-[var(--color-primary)] text-white shadow" : "text-gray-700 hover:bg-white"}`}
@@ -1223,7 +1245,7 @@ export default function YesOrNoPage() {
                 >
                   Saved Sets
                 </button>
-              </div>
+              </div>}
             </div>
 
             {sentencesModalView === "edit" ? (
@@ -1234,13 +1256,13 @@ export default function YesOrNoPage() {
                       <div className="text-sm font-semibold text-gray-800">{promptSetName}</div>
                       <div className="mt-0.5 text-xs text-gray-500">{tray.length} cards in this activity set</div>
                     </div>
-                    <button
+                    {access?.isPremium && <button
                       onClick={openSavePromptModal}
                       disabled={savingPromptSet || tray.length === 0}
                       className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,150,86,0.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
                     >
                       {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
-                    </button>
+                    </button>}
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
@@ -1291,13 +1313,13 @@ export default function YesOrNoPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 border-t border-[#eadfcb] bg-[#fffaf0] px-6 py-4">
-                  <button
+                  {access?.isPremium && <button
                     onClick={openSavePromptModal}
                     disabled={savingPromptSet || tray.length === 0}
                     className="rounded-full bg-[linear-gradient(180deg,#86b269,#6f9656)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(111,150,86,0.25)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
                   >
                     {savingPromptSet ? "Saving..." : promptSetId ? "Update set" : "Save set"}
-                  </button>
+                  </button>}
                   <button
                     onClick={() => setSentencesModalOpen(false)}
                     className="rounded-full border border-[#d8ccb6] bg-white px-5 py-2.5 text-sm font-semibold text-[#4d5b4d] shadow-sm transition-transform hover:-translate-y-0.5"
@@ -1661,6 +1683,7 @@ export default function YesOrNoPage() {
       {/* Winner modal */}
       {winnerOpen && winnerTeam && (
         <GameWinnerModal
+          scoreTeams={teams}
           title={`${winnerTeam.name} wins!`}
           message={`Congratulations — ${winnerTeam.name} finished with ${winnerTeam.score} points.`}
           onClose={() => setWinnerOpen(false)}

@@ -51,7 +51,7 @@ export function SiteFooter() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isOpen]);
 
-  if (isFullscreen || pathname.startsWith("/games/")) return null;
+  if (isFullscreen || (pathname.startsWith("/games/") && !["/games/topics", "/games/custom"].includes(pathname))) return null;
 
   return (
     <>

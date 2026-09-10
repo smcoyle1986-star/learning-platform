@@ -1,5 +1,7 @@
 "use client";
 
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,7 +37,6 @@ type Card = {
 };
 type Team = { id: string; name: string; score: number };
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js";
 
 export default function MemoryFlipPage() {
@@ -149,7 +150,7 @@ export default function MemoryFlipPage() {
   const [trayCards, setTrayCards] = useState<TrayCard[]>([]);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (!raw) {
         // If no saved lesson tray, treat as empty — user requested to show "no cards selected" message
         setTrayCards([]);
@@ -997,6 +998,7 @@ export default function MemoryFlipPage() {
 
           {winnerModalOpen && (
             <GameWinnerModal
+              scoreTeams={teams}
               title="Memory Flip complete!"
               message={`${teams.reduce((best, team) => team.score > best.score ? team : best, teams[0])?.name ?? "Your class"} matched the most pairs.`}
               onClose={() => setWinnerModalOpen(false)}

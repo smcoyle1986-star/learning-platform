@@ -1,5 +1,8 @@
 "use client";
 
+import { GameWinnerModal } from "@/components/games/GameWinnerModal";
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
@@ -104,7 +107,7 @@ export default function WhackAWordPage() {
   // load vocabulary from localStorage (Classendo lesson tray) or fallback sample
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("classendo-lesson-tray");
+      const raw = readGameTrayRaw();
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length) {
@@ -403,50 +406,8 @@ export default function WhackAWordPage() {
         </KaboomStyleDecisionModal>
       )}
 
-      {/* Summary modal */}
-      {gameState === "summary" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full text-center shadow-lg">
-            <h2 className="text-2xl font-bold mb-2">Round Summary</h2>
-            <div className="text-sm text-slate-600 mb-4">Nice work! Here are the results:</div>
-            <div className="flex gap-4 justify-center mb-4">
-              <div className="bg-[#FFFAF0] p-3 rounded">
-                <div className="text-xs text-slate-500">Score</div>
-                <div className="text-lg font-semibold">{score}</div>
-              </div>
-              <div className="bg-[#F0FFF4] p-3 rounded">
-                <div className="text-xs text-slate-500">Hits</div>
-                <div className="text-lg font-semibold">{roundHits}</div>
-              </div>
-              <div className="bg-[#FFF0F0] p-3 rounded">
-                <div className="text-xs text-slate-500">Misses</div>
-                <div className="text-lg font-semibold">{roundMisses}</div>
-              </div>
-            </div>
+      {gameState === "summary" && <GameWinnerModal title="Round complete!" message={`You scored ${score} points, with ${roundHits} hits and ${roundMisses} misses.`} onClose={() => setGameState("idle")} onPlayAgain={prepareRound} onReturnToGames={() => router.push("/games")} />}
 
-            <div className="flex gap-3 justify-center">
-              <button
-                className="px-4 py-2 bg-green-600 text-white rounded"
-                onClick={() => {
-                  // prepare new round
-                  prepareRound();
-                }}
-              >
-                New Round
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-200 rounded"
-                onClick={() => {
-                  // back to teacher config (idle)
-                  setGameState("idle");
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

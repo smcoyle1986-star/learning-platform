@@ -1,5 +1,7 @@
 "use client";
 
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
@@ -27,7 +29,6 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 /* Segments: question, act, sentence, read */
 const SEGMENTS: SpinSegment[] = [
@@ -76,7 +77,7 @@ export default function SpinAndSpeakPage() {
   const [tray, setTray] = useState<GameCard[]>([]);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -518,6 +519,7 @@ export default function SpinAndSpeakPage() {
 
       {winnerModalOpen && winnerTeam && (
         <GameWinnerModal
+          scoreTeams={teams}
           title={`${winnerTeam.name} wins!`}
           message={`Congratulations — ${winnerTeam.name} finished with ${winnerTeam.score} points.`}
           onClose={() => setWinnerModalOpen(false)}

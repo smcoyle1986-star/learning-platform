@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Presentation } from "lucide-react";
+import GameVocabularyReturn from "@/components/games/GameVocabularyReturn";
 import PageHeader from "@/components/navigation/PageHeader";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
 import { supabase } from "@/lib/supabase/client";
@@ -398,6 +399,7 @@ export default function FlashcardsPage() {
         } as React.CSSProperties & Record<`--${string}`, string>
       }
     >
+      <GameVocabularyReturn />
       <PageHeader
         title="Flashcards"
         description={<><span>{PAGE_CONTENT.flashcards.description}</span><span className="mt-1 block font-medium text-[#52684a]">Interactive Classroom lets you present cards full-screen, shuffle them, and draw as you teach.</span></>}

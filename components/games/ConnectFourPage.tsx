@@ -1,5 +1,7 @@
 "use client";
 
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -301,7 +303,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
       return;
     }
     try {
-      const raw = localStorage.getItem("classendo-lesson-tray");
+      const raw = readGameTrayRaw();
       if (!raw) { setTray([]); return; }
       const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {

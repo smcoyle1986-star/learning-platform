@@ -1,4 +1,7 @@
 "use client";
+import { useGameFlow } from "@/components/games/GameFlowContext";
+
+import { readGameTrayRaw, writeGameTrayRaw } from "@/lib/games/session";
 
 import React, { useEffect, useMemo, useState } from "react";
 import BrandButton from "@/components/BrandButton";
@@ -106,6 +109,7 @@ const GAMES: { title: string; id: string; subtitle?: string }[] = [
 const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 export default function GamePage() {
+  const flow = useGameFlow();
   const params = useParams();
   const router = useRouter();
   const gameId = params?.gameId ?? "";
@@ -114,7 +118,7 @@ export default function GamePage() {
   // centralized sync function used on mount, focus, visibilitychange and custom events
   const syncFromLocalStorage = () => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -166,7 +170,7 @@ export default function GamePage() {
       const next = prev.filter((c) => String(c.id) !== String(id));
       try {
         if (Array.isArray(next) && next.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(next));
+          writeGameTrayRaw(JSON.stringify(next), flow?.topic?.id);
           // notify other windows/pages
           try {
             window.dispatchEvent(new Event("lesson-tray-updated"));

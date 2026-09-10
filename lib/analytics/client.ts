@@ -19,7 +19,7 @@ type AnalyticsEvent = {
 
 const SESSION_KEY = "classendo-analytics-session";
 
-function analyticsSessionKey() {
+export function getAnalyticsSessionKey() {
   try {
     const existing = window.sessionStorage.getItem(SESSION_KEY);
     if (existing) return existing;
@@ -44,7 +44,7 @@ export async function trackAnalyticsEvent(event: AnalyticsEvent) {
           ? { Authorization: `Bearer ${data.session.access_token}` }
           : {}),
       },
-      body: JSON.stringify({ ...event, sessionKey: analyticsSessionKey() }),
+      body: JSON.stringify({ ...event, sessionKey: getAnalyticsSessionKey() }),
     });
   } catch {
     // Analytics must never interrupt a teaching workflow.

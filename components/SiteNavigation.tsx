@@ -8,7 +8,7 @@ import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 const primaryLinks = [
   { label: "Build a lesson", href: "/flashcards" },
   { label: "Classroom", href: "/flashcards/classroom" },
-  { label: "Games", href: "/games" },
+  { label: "Free Games", href: "/games" },
   { label: "My Lessons", href: "/dashboard" },
 ];
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { readGameTrayRaw } from "@/lib/games/session";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
@@ -31,7 +33,6 @@ type TrayCard = {
   image?: string | null;
 };
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 const CONFETTI_CDN = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js";
 
 export default function FourCornersPage() {
@@ -50,7 +51,7 @@ export default function FourCornersPage() {
   const [tray, setTray] = useState<TrayCard[]>([]);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {

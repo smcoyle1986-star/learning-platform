@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Comic_Neue, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -59,6 +60,20 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${comicNeue.variable}`}>
       <body>
+        {/* Base Google Ads tag; the root layout preserves it across navigation. */}
+        <Script id="google-ads-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18437580530');
+          `}
+        </Script>
+        <Script
+          id="google-ads-script"
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18437580530"
+          strategy="afterInteractive"
+        />
         <AuthProvider>
           <BillingAccessProvider>
             <AnalyticsEventTracker />

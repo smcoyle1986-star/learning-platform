@@ -1,58 +1,44 @@
 "use client";
-
-import { usePathname } from "next/navigation";
-
-import SignedInFeatureGate from "@/components/auth/SignedInFeatureGate";
-import TimedGamePreviewGate from "@/components/billing/TimedGamePreviewGate";
-import { PREMIUM_GAME_IDS } from "@/lib/billing/constants";
+import Link from "next/link";
+import { Suspense, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
-import { PAGE_CONTENT } from "@/lib/seo/page-content";
+import { GAME_NAMES, getGameTopic, topicsUrl, customGameUrl } from "@/lib/games/topics";
+import { GameFlowContext } from "./GameFlowContext";
+import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 
-export default function GamesAccessLayout({ children, publicFallback }: { children: React.ReactNode; publicFallback?: React.ReactNode }) {
-  const pathname = usePathname();
-
-  return (
-    <SignedInFeatureGate featureName="Games" nextPath="/games" description={PAGE_CONTENT.games.description} publicFallback={pathname === "/games" ? publicFallback : undefined}>
-      <SignedInGamesLayout>{children}</SignedInGamesLayout>
-    </SignedInFeatureGate>
-  );
+function FreeGameStartTracker({ gameId, topicId, topicLabel, topicCategory }: { gameId: string; topicId: string; topicLabel: string; topicCategory: string }) {
+  useEffect(() => {
+    void trackFreeGameEvent({ eventType: "game_started", gameKey: gameId, topicId, topicLabel, topicCategory, source: "public_topic" });
+  }, [gameId, topicCategory, topicId, topicLabel]);
+  return null;
 }
 
-function SignedInGamesLayout({ children }: { children: React.ReactNode }) {
+export default function GamesAccessLayout({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div className="min-h-[50vh]" />}><GamesAccess>{children}</GamesAccess></Suspense>;
+}
+function GamesAccess({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const params = useSearchParams();
+  const { user, loading } = useAuth();
   const { access, canAccessGame } = useBillingAccess();
-
-  if (pathname === "/games") {
-    return <>{children}</>;
-  }
-
   const gameId = pathname.split("/")[2] ?? "";
-  const isKnownPremiumGame = PREMIUM_GAME_IDS.includes(gameId as (typeof PREMIUM_GAME_IDS)[number]);
-
-  if (!isKnownPremiumGame) {
-    return <>{children}</>;
-  }
-
-  // `useBillingAccess` refreshes after Supabase auth events such as a token
-  // renewal. Keep an already-authorized game mounted during that background
-  // request; unmounting it would discard the in-memory board and scores.
-  // We still block the initial visit until an access snapshot exists.
-  if (!access) {
-    return <div className="min-h-[40vh] bg-[var(--color-bg-main)]" />;
-  }
-
-  if (!canAccessGame(gameId)) {
-    return (
-      <TimedGamePreviewGate
-        key={gameId}
-        gameId={gameId}
-        userId={access.userId}
-        featuredGameId={access.featuredGameId}
-      >
-        {children}
-      </TimedGamePreviewGate>
-    );
-  }
-
-  return <>{children}</>;
+  const topic = getGameTopic(params.get("topic"));
+  if (!gameId || ["topics", "custom"].includes(gameId)) return <>{children}</>;
+  if (!GAME_NAMES[gameId]) return <AccessMessage title="Choose a game from the hub" gameId="image-reveal" />;
+  if (params.has("topic") && !topic) return <AccessMessage title="Choose an available topic" gameId={gameId} />;
+  if (topic) return <GameFlowContext.Provider key={`${gameId}:${topic.id}`} value={{ gameId, topic }}><FreeGameStartTracker gameId={gameId} topicId={topic.id} topicLabel={topic.title} topicCategory={topic.category} />{children}</GameFlowContext.Provider>;
+  if (loading) return <div className="min-h-[50vh]" />;
+  if (!user) return <AccessMessage title="Choose a free topic to play" gameId={gameId} />;
+  if (!access || access.userId !== user.id) return <AccessMessage title="Checking your game access" gameId={gameId} />;
+  if (!canAccessGame(gameId)) return <AccessMessage title="Play free with a ready-made topic" gameId={gameId} custom />;
+  return <GameFlowContext.Provider key={`${gameId}:tray`} value={{ gameId }}>{children}</GameFlowContext.Provider>;
+}
+function AccessMessage({ title, gameId, custom = false }: { title: string; gameId: string; custom?: boolean }) {
+  return <main className="mx-auto max-w-xl px-6 py-20 text-center"><h1 className="text-3xl font-bold">{title}</h1>
+    <p className="mt-4 text-[var(--color-text-muted)]">Every game is free with public topics. Use your own vocabulary in the weekly free game, or in every game with Premium.</p>
+    <div className="mt-7 flex flex-wrap justify-center gap-3"><Link className="btn btn-primary" href={topicsUrl(gameId)}>Choose topic</Link>
+      {custom && <Link className="btn btn-secondary" href={customGameUrl(gameId)}>Use my vocabulary</Link>}
+      <Link className="btn btn-secondary" href="/games">Change game</Link></div></main>;
 }

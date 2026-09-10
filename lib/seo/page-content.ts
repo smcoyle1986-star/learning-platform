@@ -58,8 +58,8 @@ export const PAGE_CONTENT = {
     path: "/lessons",
   },
   games: {
-    title: "Interactive ESL Classroom Games & Vocabulary Activities",
-    description: "Turn a visual vocabulary set into interactive ESL classroom games. Classendo supports team challenges, movement activities, memory practice, and speaking tasks using the cards you choose.",
+    title: "Free ESL Classroom Games & Vocabulary Activities",
+    description: "Play free ESL classroom games with 24 ready-made vocabulary topics. No signup needed. Choose a game, preview a topic, and teach with team challenges, movement and memory activities.",
     path: "/games",
   },
   teacherTools: {

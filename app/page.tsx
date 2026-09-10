@@ -20,17 +20,12 @@ export default function HomePage() {
             {LANDING_HERO_DESCRIPTION}
           </p>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <Link href="/demo/animals" className="btn btn-primary px-8 py-4 text-base shadow-[0_16px_34px_rgba(88,133,72,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(88,133,72,0.34)]">
-              <Play size={19} fill="currentColor" /> Try the Animals Demo
+            <Link href="/games" className="btn btn-primary px-7 py-4 text-base shadow-[0_16px_34px_rgba(88,133,72,0.20)]">
+              <Play size={19} fill="currentColor" /> Play Free Games
             </Link>
-            <Link href="/flashcards" className="btn btn-secondary bg-white px-6 py-4">
-              Build a lesson
-            </Link>
-            <Link href="/login" className="text-sm font-medium underline underline-offset-4">
-              Sign in as a Teacher →
-            </Link>
+            <Link href="/demo/animals" className="btn btn-secondary bg-white px-6 py-4">Try the Classendo Demo</Link>
           </div>
-          <p className="mt-3 text-sm font-medium text-[#667663]">No account needed · See a lesson move from Classroom Mode to Connect Four and Bullseye.</p>
+          <p className="mt-3 text-sm font-medium text-[#667663]">Ready-made topics or a complete lesson demo. No account needed.</p>
         </div>
 
         <LandingCarousel />

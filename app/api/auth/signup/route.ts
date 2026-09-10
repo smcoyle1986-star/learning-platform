@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,12 +10,14 @@ import {
   requestIp,
 } from "@/lib/auth/server-verification";
 import { isValidUsername, normalizeUsername } from "@/lib/auth/username";
+import { newSignupConversionId, SIGNUP_ATTEMPT_KEY } from "@/lib/auth/signup-conversion";
 import { LEGAL_VERSION } from "@/lib/legal/constants";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
 type SignupBody = {
+  nextPath?: string;
   email?: unknown;
   password?: unknown;
   username?: unknown;
@@ -68,11 +71,13 @@ export async function POST(request: NextRequest) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !anonKey) throw new Error("Signup is temporarily unavailable.");
     const auth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const signupAttemptId = randomUUID();
     const { data, error } = await auth.auth.signUp({
       email,
       password,
       options: {
         data: {
+          [SIGNUP_ATTEMPT_KEY]: signupAttemptId,
           username,
           country_region: countryRegion,
           age_confirmed: true,
@@ -91,18 +96,20 @@ export async function POST(request: NextRequest) {
         : "We could not create your account just now. Please try again.";
       return NextResponse.json({ error: message }, { status: 400 });
     }
+    const signupConversionId = newSignupConversionId(data.user, signupAttemptId);
     if (!data.session) {
-      return NextResponse.json({ requiresLegacyConfirmation: true }, { status: 202 });
+      return NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
     }
 
     let verificationEmailSent = true;
     try {
-      await sendClassendoVerificationEmail({ userId: data.user.id, email, request, action: "signup" });
+      await sendClassendoVerificationEmail({ userId: data.user.id, email, request, action: "signup", nextPath: body.nextPath });
     } catch (mailError) {
       console.error("Verification email could not be sent after signup:", mailError);
       verificationEmailSent = false;
     }
     return NextResponse.json({
+      signupConversionId,
       session: {
         accessToken: data.session.access_token,
         refreshToken: data.session.refresh_token,

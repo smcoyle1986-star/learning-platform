@@ -1,0 +1,1864 @@
+[
+  {
+    "id": "animals",
+    "title": "Animals",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "13ae6973-3cc1-48c4-a10c-3d871716b215",
+        "word": "cat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cat/cat_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "bfb2264c-3e72-470a-9f77-8b54d153f89a",
+        "word": "dog",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/dog/dog_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "93d255ef-0ce8-4c8f-868b-37d4a71fd196",
+        "word": "bird",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/bird/bird_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "f35bdf1a-2e85-46dd-8017-340a1b594053",
+        "word": "fish",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/fish/fish_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "3b700e9c-08d1-4587-bb46-4b9e77ef0a93",
+        "word": "rabbit",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/rabbit/rabbit_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "7c8d5fca-3c39-440b-b691-6d2f1e08fefa",
+        "word": "horse",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/horse/horse_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "81f4f6f3-6b34-4626-b9d1-bdd5fcf25473",
+        "word": "cow",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cow/cow_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "fc42760c-cfc7-4c59-b9a3-f6fb05418716",
+        "word": "sheep",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/sheep/sheep_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "b2f0e90a-bdfa-4444-8a78-0ad7da819ddf",
+        "word": "lion",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/lion/lion_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "86e275a9-f240-413a-8219-15df9178236b",
+        "word": "tiger",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/tiger/tiger_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "1dda3b9f-8627-4dee-b519-8003dece2baf",
+        "word": "elephant",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/elephant/elephant_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "2a56fa6c-5ebd-48d6-9e0a-ba54ad04d075",
+        "word": "monkey",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/monkey/monkey_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "food-drinks",
+    "title": "Food & Drinks",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "4602822b-bde8-4c62-8167-6226afd351f7",
+        "word": "apple",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/apple/apple_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "901cb73f-ebe8-432c-b068-8e89b195395c",
+        "word": "banana",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/banana/banana_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "dc1838a6-a1d5-434a-bab7-7abc0976f8d0",
+        "word": "bread",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/bread/bread_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "62df7251-53bf-4b39-bd36-6a0fed1bc6c8",
+        "word": "cheese",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cheese/cheese_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "aa89664d-271e-4d08-ae46-be2c4f5d97b3",
+        "word": "egg",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/egg/egg_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "d654d89c-23e7-4349-ac93-019b8f2ebdd8",
+        "word": "rice",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/rice/rice_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "ca714725-767e-403b-8f5b-8a43cd6aab95",
+        "word": "pizza",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pizza/pizza_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "40c313b6-30e4-4155-8fd9-6242f8c7acd3",
+        "word": "sandwich",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/sandwich/sandwich_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "46d4905c-bf0d-489e-a642-d76e461252c4",
+        "word": "ice cream",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/ice_cream/ice_cream_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "dce2df6f-2091-4ae2-b498-753dcb58200f",
+        "word": "milk",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/milk/milk_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "e49305a7-1775-4f17-997b-833196402324",
+        "word": "water",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/water/water_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "3ab61fe8-b4ab-488d-9ce0-f829a87942ac",
+        "word": "juice",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/juice/juice_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "classroom-objects",
+    "title": "Classroom Objects",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "b7695675-aad2-44db-81ee-f3cc6d99ab6d",
+        "word": "pencil",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pencil/pencil_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "38de4262-fc21-4507-9c9f-e21c12ba90bc",
+        "word": "pen",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pen/pen_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "23fa7fe4-f272-499f-ba88-4a183235f7e2",
+        "word": "eraser",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/eraser/eraser_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "f3246551-a2d6-4647-9b9c-81060b441d71",
+        "word": "ruler",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/ruler/ruler_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "25c4c82d-fd2c-4532-8469-c71bf666582f",
+        "word": "notebook",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/notebook/notebook_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "172590e8-5186-4d7e-885a-b55121c978b9",
+        "word": "school bag",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/school_bag/school_bag_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "7e356692-280a-4c18-8a36-9ed45097c7e7",
+        "word": "pencil case",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pencil_case/pencil_case_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "8686b6ad-88d4-4434-bac7-889579c9ba82",
+        "word": "crayon",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/crayon/crayon_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "9976e36f-6df5-4332-aaf3-a845281d1cf6",
+        "word": "glue",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/glue/glue_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "bdd3aa4f-104b-4f26-97bb-143b895c489b",
+        "word": "scissors",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/scissors/scissors_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "249b03b4-f2b0-4795-bc83-b3a87f0c5695",
+        "word": "desk",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/desk/desk_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0fc94d66-67de-4fc6-a2e9-0d29957e78aa",
+        "word": "chair",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chair/chair_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "body-parts",
+    "title": "Body Parts",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "58be1dae-a2d2-408f-bced-e22f51dda069",
+        "word": "head",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/head/head_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "37abc970-ca8e-49cd-903e-1843557756a8",
+        "word": "face",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/face/face_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0d5b5f56-b20c-41e1-bdb5-f833a17455c3",
+        "word": "eyes",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/eyes/eyes_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "74b83d18-0485-4ff4-bf82-eaf22e4e9f4e",
+        "word": "ears",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/ears/ears_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "aa4e08ad-2a60-47bf-ab37-42ccef87ef07",
+        "word": "nose",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/nose/nose_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "9af4bfb0-3d19-433e-a2a7-eb223274ae28",
+        "word": "mouth",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/mouth/mouth_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "fff2b5e5-27b0-408c-b88c-7f4ba572deef",
+        "word": "hair",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/hair/hair_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "1e190e12-f426-4d85-b2c1-3e0c7b0cafa3",
+        "word": "arm",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/arm/arm_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "902225ee-29d8-44d7-8b15-45e7fb8d504f",
+        "word": "hand",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/hand/hand_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "4166e7db-b4b7-40ec-b839-5fa00e8196e0",
+        "word": "leg",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/leg/leg_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "96a70538-d2f2-4d9f-9b1f-27576d8c7db8",
+        "word": "foot",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/foot/foot_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "4ae3a7b8-36e2-4669-9531-960329553b7e",
+        "word": "teeth",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/teeth/teeth_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "clothes",
+    "title": "Clothes",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "91a2b8fa-fe82-44f5-a7f6-c2d1474ff5bd",
+        "word": "shirt",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/shirt/shirt_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0fb7d109-e3a0-4933-b27c-62dba1da4c7b",
+        "word": "t-shirt",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/t_shirt/t_shirt_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "74026f3f-2323-41ff-ae4c-bb62b3137865",
+        "word": "pants",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pants/pants_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0f563469-f9cc-4f88-b75a-06567719c4cd",
+        "word": "shorts",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/shorts/shorts_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "bdec7cb8-f763-48fb-98f7-3591d1e4151d",
+        "word": "skirt",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/skirt/skirt_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "c0823590-91b3-4abe-bc92-75b083a14056",
+        "word": "dress",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/dress/dress_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "8662c3d3-53fa-40bb-822b-e068ea37f535",
+        "word": "coat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/coat/coat_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "08fbc138-591b-4c63-9ba8-fe3edf8cdd65",
+        "word": "jacket",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/jacket/jacket_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "e790cffa-2ade-497e-9660-b5d43f799645",
+        "word": "shoes",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/shoes/shoes_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "5c701855-f6f5-42aa-b66e-d6f260faf3c1",
+        "word": "socks",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/socks/socks_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "b5f50646-2429-43a2-b25b-6f47e36b9668",
+        "word": "hat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/hat/hat_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "6c32f3ba-7395-45f9-8a79-dff997d721de",
+        "word": "sweater",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/sweater/sweater_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "family",
+    "title": "Family",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "183d7140-0e85-47e4-b012-af9220a9bb7e",
+        "word": "mother",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/mother/mother_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "11bdc94a-30db-4c02-8e6a-d176e4d050cf",
+        "word": "father",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/father/father_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "89aa6eac-c16d-42ec-8b69-747f61607914",
+        "word": "brother",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/brother/brother_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "d9087541-f06f-44e6-a1cf-99d6885b3535",
+        "word": "sister",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/sister/sister_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "3ed4a7d8-5db1-4e75-b5c2-9d2cfea8c815",
+        "word": "baby",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/baby/baby_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "9e5723c8-035b-4d81-99e6-d8bcfd7abd12",
+        "word": "grandmother",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/grandmother/grandmother_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0dce9082-4bc2-4ba3-9e3f-3c173b1cc62e",
+        "word": "grandfather",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/grandfather/grandfather_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "58e03994-449b-44fb-8184-d0bdfd2d5880",
+        "word": "aunt",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/aunt/aunt_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "44713a4c-823b-4df4-8680-a2440663d668",
+        "word": "uncle",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/uncle/uncle_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "1afada41-f2f2-4a9d-a880-1e653eca302f",
+        "word": "cousin",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/cousin/cousin_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "transportation",
+    "title": "Transportation",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "52207826-34c9-4142-a6f9-aa25e8844a18",
+        "word": "car",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/car/car_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "51fe7d20-d72f-4c2d-8f56-68069106c92c",
+        "word": "bus",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/bus/bus_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "12ef1a3d-ba8d-4b02-8315-d962cb36cd2c",
+        "word": "bike",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/bike/bike_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "33dba2e5-7df8-4fd7-8287-4e6d7043f87b",
+        "word": "train",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/train/train_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "8a6fae9d-e075-4a85-95e6-360199b52d36",
+        "word": "airplane",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/airplane/airplane_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "c1d5cf23-e355-48ca-ade5-3cc248102350",
+        "word": "boat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/boat/boat_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "f104cbaa-ee4d-4d40-8908-c0a84ac6d1b0",
+        "word": "taxi",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/taxi/taxi_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "6ed4d6ee-ddb0-448c-86d5-497191ce28dd",
+        "word": "truck",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/truck/truck_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "552da478-f1c8-4710-bae4-711dfbb7e099",
+        "word": "helicopter",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/helicopter/helicopter_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "1b97aaaf-bfcf-431f-a907-6881fe239d80",
+        "word": "scooter",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/scooter/scooter_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "jobs",
+    "title": "Jobs",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "70fefffb-7e16-4ef1-9961-ff62022d5a8a",
+        "word": "teacher",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/teacher/teacher_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "c21a1915-55a3-40ee-9dd1-405a1b317864",
+        "word": "doctor",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/doctor/doctor_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0f27082e-71c7-413c-a92d-c7aaa5d48777",
+        "word": "nurse",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/nurse/nurse_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "61f645dc-9e72-44ae-87ba-36fbd7fa9ac2",
+        "word": "police officer",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/police_officer/police_officer_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "204ceb4d-481f-4f58-a71f-d1e3bd3243a8",
+        "word": "firefighter",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/firefighter/firefighter_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "19513017-ea5b-4c31-854a-4011c484ce00",
+        "word": "chef",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/chef/chef_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "da0a7008-5e62-408a-97fd-1639a3d08ab0",
+        "word": "farmer",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/farmer/farmer_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "c5f3a996-87aa-4611-84d8-b4b51f3de4b2",
+        "word": "pilot",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pilot/pilot_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "72f0baa5-0a8f-47fc-8b90-43c7ca45a144",
+        "word": "dentist",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/dentist/dentist_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "c0699dac-5131-4ab3-aea4-175dd8c53c64",
+        "word": "vet",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/vet/vet_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "fruit",
+    "title": "Fruit",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "4602822b-bde8-4c62-8167-6226afd351f7",
+        "word": "apple",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/apple/apple_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "901cb73f-ebe8-432c-b068-8e89b195395c",
+        "word": "banana",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/banana/banana_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "eb9cd5e5-b993-4a63-8180-ab6b192fd6f1",
+        "word": "orange",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/orange/orange_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "69822436-bd64-48e4-b3b6-8f4b090201dd",
+        "word": "grapes",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/grapes/grapes_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "54821560-ba50-4d44-a2ae-9705ebbcecb4",
+        "word": "strawberry",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/strawberry/strawberry_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "0f26b3ec-2f55-4f7a-881f-d8af1bb6aecd",
+        "word": "watermelon",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/watermelon/watermelon_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "1af23b94-254a-46dc-874a-7fde98ff9fdf",
+        "word": "mango",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/mango/mango_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "55859085-138b-46e2-b897-432fd2c7e3f5",
+        "word": "pineapple",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pineapple/pineapple_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "00eb592c-17fa-4723-8a84-c592a102a4e8",
+        "word": "pear",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/pear/pear_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "eb2fae1c-2e16-4be6-bc53-10934ee10a65",
+        "word": "peach",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/peach/peach_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "toys",
+    "title": "Toys",
+    "category": "noun",
+    "cards": [
+      {
+        "id": "cae6c364-ad7f-41a6-b447-2ba446704b1a",
+        "word": "ball",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/ball/ball_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "72f3a6d9-31d5-4032-b0c9-ad3c9e3224b2",
+        "word": "block",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/block/block_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "275609b7-0053-428b-9d36-4f7339db9c89",
+        "word": "doll",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/doll/doll_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "69f96a7c-880d-41db-a277-d482b17ff3d4",
+        "word": "puppet",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/puppet/puppet_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "372d8df2-a442-46d0-be88-7c07d0c4e02b",
+        "word": "robot",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/robot/robot_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "fb67c800-491c-48bc-827f-25d2389d42ab",
+        "word": "teddy bear",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/teddy_bear/teddy_bear_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "96bf5e2b-10ba-4644-b9bd-4d0eafb443d9",
+        "word": "toy car",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/toy_car/toy_car_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      },
+      {
+        "id": "51dcc886-6024-43dc-bc4d-608b4b32685a",
+        "word": "top",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/nouns/top/top_1.png",
+        "type": "noun",
+        "partOfSpeech": "noun"
+      }
+    ]
+  },
+  {
+    "id": "everyday-actions",
+    "title": "Everyday Actions",
+    "category": "verb",
+    "cards": [
+      {
+        "id": "7f943693-c26f-407e-b6ec-deb89865a3f4",
+        "word": "run",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/run/run_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "bb453f77-1565-43d5-b091-6a97a48a7397",
+        "word": "walk",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/walk/walk_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "9c90f07b-1d85-49fa-ba54-81d0683514c4",
+        "word": "jump",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/jump/jump_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "d3280859-2c52-45fb-8431-98d2f3484a97",
+        "word": "swim",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/swim/swim_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "23fbd5d0-136a-42c7-b0bd-a0d4f558a1d6",
+        "word": "climb",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/climb/climb_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "c75de1c7-9a13-4754-a5f2-713ab632fb77",
+        "word": "dance",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/dance/dance_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "78025ead-6872-4e3b-9327-1289ecacfc50",
+        "word": "sing",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/sing/sing_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "cc3060b9-d35a-4629-9df6-6f4b89c16a2b",
+        "word": "clap",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/clap/clap_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "82a00c28-08c2-4e4c-91eb-511e441d2feb",
+        "word": "read",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/read/read_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "9fa78f0e-873b-440f-b3b4-9dca7a52c44e",
+        "word": "write",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/write/write_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "be717c9b-a728-4d51-be66-c084816fde86",
+        "word": "draw",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/draw/draw_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "48fb02dd-72bf-4217-950f-5b6c8a7dccb2",
+        "word": "sleep",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/sleep/sleep_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      }
+    ]
+  },
+  {
+    "id": "daily-routines",
+    "title": "Daily Routines",
+    "category": "verb",
+    "cards": [
+      {
+        "id": "9dadc73b-81ff-4575-9eea-94c1248702d8",
+        "word": "wake up",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/wake_up/wake_up_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "1b65c3b2-9022-4573-b17e-c603fd1f29e4",
+        "word": "wash your face",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/wash_your_face/wash_your_face_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "615ad0ce-7013-4aa9-aa33-a10ee857bd92",
+        "word": "brush your teeth",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/brush_your_teeth/brush_your_teeth_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "60120e69-2b57-41cd-aeae-70b757a72c36",
+        "word": "get dressed",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/get_dressed/get_dressed_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "d099adfb-5857-4040-94d3-344157ba8c18",
+        "word": "eat breakfast",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/eat_breakfast/eat_breakfast_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "b20c1c38-5616-46a5-87a4-2f87cd6e5267",
+        "word": "go to school",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/go_to_school/go_to_school_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "f54c4d11-a332-49e7-86c0-fc1c9f70271d",
+        "word": "eat lunch",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/eat_lunch/eat_lunch_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "c0a0a0dc-68b4-4d98-9082-4c11af8e9902",
+        "word": "come home",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/come_home/come_home_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "d73c1949-faa6-4317-b75e-ccb1971761ca",
+        "word": "do homework",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/do_homework/do_homework_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "bc5108a9-1dcd-454a-894e-b3dede30ff19",
+        "word": "eat dinner",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/eat_dinner/eat_dinner_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "b04d8bf8-4094-479d-a0ff-7d6bcf232cbe",
+        "word": "take a shower",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/take_a_shower/take_a_shower_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "7bab038b-6fbe-4d01-a645-014e2e44f5a8",
+        "word": "go to bed",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/go_to_bed/go_to_bed_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      }
+    ]
+  },
+  {
+    "id": "classroom-actions",
+    "title": "Classroom Actions",
+    "category": "verb",
+    "cards": [
+      {
+        "id": "735d6fe8-f842-460c-8c5f-0c82b48429a6",
+        "word": "sit down",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/sit_down/sit_down_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "ea459a55-bf3e-4e63-ba8e-ae28088a0388",
+        "word": "stand up",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/stand_up/stand_up_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "2abf23fa-db38-4c5f-b9e5-68e5a4ebb459",
+        "word": "listen",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/listen/listen_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "3f4daf2f-19fb-42dd-8e5b-7581b80a2a0a",
+        "word": "look",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/look/look_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "82a00c28-08c2-4e4c-91eb-511e441d2feb",
+        "word": "read",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/read/read_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "9fa78f0e-873b-440f-b3b4-9dca7a52c44e",
+        "word": "write",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/write/write_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "be717c9b-a728-4d51-be66-c084816fde86",
+        "word": "draw",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/draw/draw_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "a85d16eb-d36b-46d9-a3fe-66dd71e56d83",
+        "word": "raise your hand",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/raise_your_hand/raise_your_hand_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "92ef8cd4-9852-48eb-8330-4391ca147691",
+        "word": "open your book",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/open_your_book/open_your_book_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "3a63af9a-f807-4957-b295-33298ecbff71",
+        "word": "close your book",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/close_your_book/close_your_book_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      }
+    ]
+  },
+  {
+    "id": "playtime-actions",
+    "title": "Playtime Actions",
+    "category": "verb",
+    "cards": [
+      {
+        "id": "b2fde9e7-3eeb-4ca8-9338-2af6c3e6195e",
+        "word": "catch a ball",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/catch_a_ball/catch_a_ball_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "d029bbbf-b964-44a9-afde-ad3a1b4e014a",
+        "word": "throw a ball",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/throw_a_ball/throw_a_ball_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "bc4593db-ab35-454b-80b0-76560f1987f2",
+        "word": "kick a ball",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/kick_a_ball/kick_a_ball_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "ab60746d-490d-4146-88ac-6b14c876b7fc",
+        "word": "jump rope",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/jump_rope/jump_rope_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "9892030d-682a-4e76-bb3a-c754f76b39bd",
+        "word": "fly a kite",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/fly_a_kite/fly_a_kite_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "15331ada-761e-45e3-9b1a-b40de85099a3",
+        "word": "ride",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/ride/ride_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "866528be-f4f9-4354-a77f-fe8039583fab",
+        "word": "play hopscotch",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/play_hopscotch/play_hopscotch_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      },
+      {
+        "id": "5fd56a9a-5978-4c3a-9889-31f809c1e39e",
+        "word": "skateboard",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/verbs/skateboard/skateboard_1.png",
+        "type": "verb",
+        "partOfSpeech": "verb"
+      }
+    ]
+  },
+  {
+    "id": "opposites",
+    "title": "Opposites",
+    "category": "adjective",
+    "cards": [
+      {
+        "id": "c12795a4-b0ed-47d1-8790-77d42a4fa743",
+        "word": "big",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/big/big_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "0853882a-af45-4e42-936e-c47841882c7e",
+        "word": "small",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/small/small_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "bebbf432-1cfd-4997-8633-80851d39f25c",
+        "word": "hot",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/hot/hot_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "a446f480-e10b-456f-b9ac-62fd974eeb96",
+        "word": "cold",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/cold/cold_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "2c107414-79f7-4f0d-b844-3a3d194065dc",
+        "word": "happy",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/happy/happy_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "eba38472-26a3-4ddd-b615-c1ecdd7ae086",
+        "word": "sad",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/sad/sad_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "9e27c123-ff9c-4545-9099-38e23c3a6369",
+        "word": "fast",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/fast/fast_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "2be477b5-5f5f-4232-9dd5-39ce23214035",
+        "word": "slow",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/slow/slow_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "eabb5ab1-9d88-4e93-9fc3-2569b8a9d47c",
+        "word": "clean",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/clean/clean_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "c956cdd2-1312-4372-ac86-e0198af4dfbd",
+        "word": "dirty",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/dirty/dirty_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "8f4d887b-0e5c-4b02-be0e-4bcec4054d04",
+        "word": "open",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/open/open_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "4e185e75-f1c9-4e84-9a1b-f5e84f6f2b8b",
+        "word": "closed",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/closed/closed_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      }
+    ]
+  },
+  {
+    "id": "feelings",
+    "title": "How Do You Feel?",
+    "category": "adjective",
+    "cards": [
+      {
+        "id": "2c107414-79f7-4f0d-b844-3a3d194065dc",
+        "word": "happy",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/happy/happy_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "eba38472-26a3-4ddd-b615-c1ecdd7ae086",
+        "word": "sad",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/sad/sad_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "ab8957ce-df76-4c81-8fe4-bcea78785ef4",
+        "word": "angry",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/angry/angry_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "a64f97cf-45c6-4832-80e0-fe13c2eaee69",
+        "word": "scared",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/scared/scared_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "ebefb350-3b7b-4486-82be-73a1c7ab2af5",
+        "word": "excited",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/excited/excited_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "234d6982-2e57-4fa5-9a8c-5bae656bad9b",
+        "word": "bored",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/bored/bored_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "9f97d9e1-7188-48ac-be74-35cae37c9e79",
+        "word": "tired",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/tired/tired_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "e7be8089-6f71-4d5b-8c01-dfc3a7f421ec",
+        "word": "sleepy",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/sleepy/sleepy_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "748b8416-0e4e-4668-85ab-4af92f62783c",
+        "word": "hungry",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/hungry/hungry_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "6501fc22-ffee-4cbe-bdc9-61639f18349d",
+        "word": "thirsty",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/thirsty/thirsty_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      }
+    ]
+  },
+  {
+    "id": "colors",
+    "title": "Colors",
+    "category": "adjective",
+    "cards": [
+      {
+        "id": "8288f798-1c52-46bb-a109-89bd99ae8d21",
+        "word": "red",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/red/red_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "443a9495-1af0-46d8-a3bc-c335f0320c4c",
+        "word": "blue",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/blue/blue_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "401c86eb-41d3-441a-8c87-e915854a5df2",
+        "word": "yellow",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/yellow/yellow_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "7213e9bb-2847-438a-a34e-dd6917d6aa75",
+        "word": "green",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/green/green_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "8aedb41e-a148-41af-877a-bd9c77a59194",
+        "word": "orange",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/orange/orange_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "f154ce64-124b-416a-9b00-a88fe8105929",
+        "word": "purple",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/purple/purple_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "86efdaa1-ae3d-4ed7-8b12-d959e27b1d15",
+        "word": "pink",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/pink/pink_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "21184338-859c-4f99-babd-cb87b8193e15",
+        "word": "brown",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/brown/brown_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "e9f08570-eaba-4c9e-b22d-7c68b88a8724",
+        "word": "black",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/black/black_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      },
+      {
+        "id": "d995a2e3-9405-45a0-a1bd-9d1fb7768a43",
+        "word": "white",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/adjectives/white/white_1.png",
+        "type": "adjective",
+        "partOfSpeech": "adjective"
+      }
+    ]
+  },
+  {
+    "id": "short-a",
+    "title": "Short A Words",
+    "category": "phonics",
+    "cards": [
+      {
+        "id": "98d38d19-cb4f-41dd-aa0b-e59a2bbb74aa",
+        "word": "can",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/can/can_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "980c24dc-e66e-468a-a442-83c4ad08e88d",
+        "word": "cap",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/cap/cap_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "35479eb7-fb60-48d6-b498-732793d052f2",
+        "word": "ham",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/ham/ham_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "8d390f58-3381-4ae8-8605-794d9cc75a5f",
+        "word": "hat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/hat/hat_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "965f37f3-8b6c-4751-80bf-96e66d6df9f0",
+        "word": "jam",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/jam/jam_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "7b1c4cad-b89d-4eb7-9321-b7f5ad89b7e2",
+        "word": "mat",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/mat/mat_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "43ff5283-fd76-4197-b7d6-bd138b00f8bb",
+        "word": "pan",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/pan/pan_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "c99a2864-f9f5-4cb0-b61f-87e56a4ef420",
+        "word": "tap",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/tap/tap_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      }
+    ]
+  },
+  {
+    "id": "short-i-o",
+    "title": "Short I & Short O",
+    "category": "phonics",
+    "cards": [
+      {
+        "id": "c902b8ad-b9f7-40cc-9491-b3478b88067c",
+        "word": "pig",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/pig/pig_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "1357e7f9-f0d8-48b9-9b44-639aa0068d66",
+        "word": "fin",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/fin/fin_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "13c68d5d-6183-4531-8061-e8ced5ad08b4",
+        "word": "wig",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/wig/wig_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "5ba15598-fa4d-4f68-a6b6-62f127536987",
+        "word": "sit",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/sit/sit_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "6a4ba299-f1cc-4407-b629-e490f2f4617f",
+        "word": "hop",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/hop/hop_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "34b28792-625b-495d-969f-e8023ea7333c",
+        "word": "log",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/log/log_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "9fd4cb3e-fc3a-4db6-8d46-c84b9c248f0e",
+        "word": "mop",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/mop/mop_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "662922f7-32e1-4468-97f1-53c2afd2dfae",
+        "word": "pot",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/pot/pot_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      }
+    ]
+  },
+  {
+    "id": "magic-e",
+    "title": "Magic E: A, I & O",
+    "category": "phonics",
+    "cards": [
+      {
+        "id": "92dff251-8b6b-4043-9c96-74a853b6c72e",
+        "word": "cake",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/cake/cake_1.png?cacheNonce=c53482326cb90ec9",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "d3acfd1d-b0e0-4613-b43c-c9c17daec132",
+        "word": "game",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/game/game_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "4243245e-ff83-460c-954c-ca87ddb10e18",
+        "word": "gate",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/gate/gate_1.png?cacheNonce=e4d2286908aaeff4",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "b4fbfaf8-6a47-4463-b0a4-a39e307c4eb6",
+        "word": "kite",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/kite/kite_1.png?cacheNonce=8fa2e71f8e7ccccd",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "8988bf07-4824-4be3-afc9-0a98fbbd40e1",
+        "word": "nine",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/nine/nine_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "34919cff-3fb4-48ff-b5ae-2df34993ff9e",
+        "word": "nose",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/nose/nose_1.png?cacheNonce=debfe0aaa1d878ee",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "4079aab9-46f1-46a7-af37-bb04212fc5b2",
+        "word": "rose",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/rose/rose_1.png?cacheNonce=5ae6d5fbb2c21ebe",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "73a479de-21c7-4f85-8a02-14304d6d846e",
+        "word": "bone",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/bone/bone_1.png",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "b3910745-7593-4d13-8de3-fe73507ba84b",
+        "word": "rope",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/rope/rope_1.png?cacheNonce=6c8c20daebf575c6",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "dda04c67-67dc-4605-955f-177ffaf666e7",
+        "word": "note",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/note/note_1.png?cacheNonce=5c4b874aea47a444",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      }
+    ]
+  },
+  {
+    "id": "beginning-blends",
+    "title": "Beginning Blends",
+    "category": "phonics",
+    "cards": [
+      {
+        "id": "f0d4e266-588d-4e4c-b339-697ce6d0f706",
+        "word": "clap",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/clap/clap_1.png?cacheNonce=60a8b34136750b03",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "9c998a96-53c8-46a1-88c6-39e3dd951932",
+        "word": "flag",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/flag/flag_1.png?cacheNonce=9023d3d9a492880f",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "cfdba086-cb72-4ebd-b0e9-7b0048a2c2fd",
+        "word": "black",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/black/black_1.png?cacheNonce=5b9c6ef9ab5e1cba",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "9837780e-a775-4461-9b0b-6e021405a2a4",
+        "word": "block",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/block/block_1.png?cacheNonce=64b3e79abcbb8a42",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "bf952be2-3a00-4a12-8c20-2707a67d57a4",
+        "word": "drum",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/drum/drum_1.png?cacheNonce=f81917014c6d1d02",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "54ca1e63-a58a-4581-bbda-530194c583c0",
+        "word": "drop",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/drop/drop_1.png?cacheNonce=17621cbbe74fa4f6",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "8a214254-5345-4335-bddd-b5466ac48628",
+        "word": "trip",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/trip/trip_1.png?cacheNonce=832cb952c418bcb0",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      },
+      {
+        "id": "4e3dbe19-a80c-4df6-ba0a-4d9a92980167",
+        "word": "stop",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/phonics/stop/stop_1.png?cacheNonce=598ebd0eabb666fd",
+        "type": "phonics",
+        "partOfSpeech": "phonics"
+      }
+    ]
+  },
+  {
+    "id": "where-is-it",
+    "title": "Where Is It?",
+    "category": "preposition",
+    "cards": [
+      {
+        "id": "00306cb3-5964-4ac5-9d65-0c770f008303",
+        "word": "in",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/in/in_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "48143e48-4f17-4d1d-99e5-5b4491783ce4",
+        "word": "on",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/on/on_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "0a8b8c7c-a054-44b9-91c1-97538147d4c9",
+        "word": "under",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/under/under_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "ed4e9e79-9a57-4c57-94a9-4f5633d6234f",
+        "word": "next to",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/next_to/next_to_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "40994934-8d87-406e-ba4d-9544544a6533",
+        "word": "behind",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/behind/behind_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "67cc71fa-bae3-48a1-86d1-ec59e8fe88ae",
+        "word": "in front of",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/in_front_of/in_front_of_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "a96a1354-d4e2-4f6a-bc67-1e2ed711943e",
+        "word": "between",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/between/between_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "2b2215dc-8169-4205-be92-a3300d0b14b9",
+        "word": "near",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/near/near_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "38360ad3-df2e-46ca-b12f-c583042391e0",
+        "word": "above",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/above/above_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "2e37fc0d-3109-4a88-9a6e-1610fc2ac911",
+        "word": "below",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/below/below_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      }
+    ]
+  },
+  {
+    "id": "movement",
+    "title": "Movement",
+    "category": "preposition",
+    "cards": [
+      {
+        "id": "83f0967e-6798-4b14-abff-1e38dc4c323b",
+        "word": "into",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/into/into_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "47fba3c6-921a-4f55-8b4b-833b7e51f5c7",
+        "word": "onto",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/onto/onto_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "9e0c966e-476e-466b-8fe1-8f766abb7898",
+        "word": "across",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/across/across_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "a197ee4b-0341-4721-b4b5-a2950b382129",
+        "word": "through",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/through/through_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "ef3cfbc9-eff1-480c-be2d-8b54fb79f31b",
+        "word": "around",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/around/around_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "78625bde-6794-41c8-83c1-d3088d164dd2",
+        "word": "up",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/up/up_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "bd28a105-aa49-48db-94a1-42f2a5639122",
+        "word": "down",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/down/down_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "fee21870-23a1-4784-ade1-39425c9a1257",
+        "word": "toward",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/toward/toward_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      }
+    ]
+  },
+  {
+    "id": "directions",
+    "title": "Giving Directions",
+    "category": "preposition",
+    "cards": [
+      {
+        "id": "c78f29b5-df43-421e-aff0-37a45bb33a1c",
+        "word": "turn left",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/turn_left/turn_left_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "ed308ad4-d1c2-4d6c-81d9-e08d5f00fb46",
+        "word": "turn right",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/turn_right/turn_right_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "7895835b-fe27-4bff-b786-82f45f8edd17",
+        "word": "go straight",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/go_straight/go_straight_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "f674604f-d3d3-4435-840c-ee5c3f1a3a0f",
+        "word": "go past",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/go_past/go_past_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "c1ca2e17-4ab3-49d5-b57d-83c9f83967a6",
+        "word": "go through",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/go_through/go_through_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "fc153ff4-0b37-4f70-9c1f-af61eb621cb5",
+        "word": "go around",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/go_around/go_around_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "7a9852a3-77c9-40f5-9e13-58eadf060b44",
+        "word": "walk along",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/walk_along/walk_along_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      },
+      {
+        "id": "dc07c543-9f7a-4053-b8fc-99223eb4ad3d",
+        "word": "cross",
+        "image": "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/prepositions/cross/cross_1.png",
+        "type": "preposition",
+        "partOfSpeech": "preposition"
+      }
+    ]
+  }
+]

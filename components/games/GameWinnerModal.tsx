@@ -1,59 +1,39 @@
 "use client";
-
-import type { ReactNode } from "react";
-import { Trophy, X } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+import Link from "next/link";
+import { Trophy } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { useGameFlow } from "./GameFlowContext";
+import { GameFlowDialog } from "./GameFlowDialog";
+import { customGameUrl, topicsUrl } from "@/lib/games/topics";
+import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 
 type GameWinnerModalProps = {
-  title: string;
-  message: string;
-  onClose: () => void;
-  onPlayAgain: () => void;
-  onReturnToGames: () => void;
-  children?: ReactNode;
+  title: string; message: string; onClose: () => void; onPlayAgain: () => void;
+  onReturnToGames: () => void; children?: ReactNode; scoreTeams?: { name: string; score: number }[];
 };
-
-/** A shared completion modal. Closing it deliberately leaves the completed board unchanged. */
-export function GameWinnerModal({
-  title,
-  message,
-  onClose,
-  onPlayAgain,
-  onReturnToGames,
-  children,
-}: GameWinnerModalProps) {
-  return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-4" role="presentation">
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="game-winner-title"
-        className="relative w-full max-w-lg rounded-[2rem] border border-white/70 bg-white p-7 text-center shadow-[0_30px_90px_rgba(15,23,42,0.28)] sm:p-8"
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close winner message"
-          className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-[#dce5d8] bg-white text-[#536152] transition hover:bg-[#f1f6ed]"
-        >
-          <X size={20} />
-        </button>
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#edf6e8] text-[#5f8951]">
-          <Trophy size={28} aria-hidden="true" />
-        </div>
-        <h2 id="game-winner-title" className="mt-4 text-3xl font-extrabold tracking-tight text-[#2f3a2f]">
-          {title}
-        </h2>
-        <p className="mt-3 text-base leading-6 text-[#65705f]">{message}</p>
-        {children ? <div className="mt-5">{children}</div> : null}
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={onPlayAgain} className="btn btn-primary px-5 py-3 text-sm">
-            Play Again
-          </button>
-          <button type="button" onClick={onReturnToGames} className="btn btn-secondary px-5 py-3 text-sm">
-            Return to Games
-          </button>
-        </div>
-      </section>
+/** Dismissal leaves the finished board available; replay is always explicit. */
+export function GameWinnerModal({ title, message, onClose, onPlayAgain, onReturnToGames, children, scoreTeams }: GameWinnerModalProps) {
+  const flow = useGameFlow();
+  const { user } = useAuth();
+  const best = scoreTeams?.length ? Math.max(...scoreTeams.map((team) => team.score)) : null;
+  const leaders = scoreTeams?.filter((team) => team.score === best) ?? [];
+  const tied = leaders.length > 1;
+  const custom = flow ? customGameUrl(flow.gameId, flow.topic?.id) : "";
+  useEffect(() => {
+    if (flow?.topic) void trackFreeGameEvent({ eventType: "game_completed", gameKey: flow.gameId, topicId: flow.topic.id, topicLabel: flow.topic.title, topicCategory: flow.topic.category, source: "public_topic" });
+  }, [flow]);
+  const finishAction = (action: "play_again" | "change_topic" | "change_game" | "use_own_vocabulary") => {
+    if (flow?.topic) void trackFreeGameEvent({ eventType: "finish_action", gameKey: flow.gameId, topicId: flow.topic.id, topicLabel: flow.topic.title, topicCategory: flow.topic.category, source: "public_topic", action });
+  };
+  return <GameFlowDialog title={tied ? "It’s a tie!" : title} onClose={onClose}>
+    <div className="text-center"><Trophy size={42} className="mx-auto mb-4 text-[#73965e]" />
+      <p className="text-base leading-6 text-[#65705f]">{tied ? `${leaders.map((team) => team.name).join(" and ")} finished with ${best} points.` : message}</p>
+      {children && <div className="mt-5">{children}</div>}
+      <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { finishAction("play_again"); onPlayAgain(); }} className="btn btn-primary px-5 py-3 text-sm">Play Again</button>
+        {flow ? <><Link onClick={() => finishAction("change_topic")} className="btn btn-secondary px-5 py-3 text-sm" href={topicsUrl(flow.gameId, flow.topic?.id)}>Change Topic</Link><Link onClick={() => finishAction("change_game")} className="btn btn-secondary px-5 py-3 text-sm" href={`/games?source=${flow.topic ? "topics" : "tray"}${flow.topic ? `&topic=${flow.topic.id}` : ""}`}>Change Game</Link></> : <button onClick={onReturnToGames} className="btn btn-secondary px-5 py-3 text-sm">Return to Games</button>}
+      </div>
+      {flow && <div className="mt-6 border-t border-[#e3e9dd] pt-5"><p className="mb-3 text-sm text-[#718267]">Want to teach your own words?</p><Link onClick={() => finishAction("use_own_vocabulary")} className="font-semibold text-[#587d45] underline underline-offset-4" href={user ? custom : `/signup?next=${encodeURIComponent(custom)}`}>Use Your Own Vocabulary</Link></div>}
     </div>
-  );
+  </GameFlowDialog>;
 }

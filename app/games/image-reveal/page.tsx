@@ -1,4 +1,7 @@
 "use client";
+import { useGameFlow } from "@/components/games/GameFlowContext";
+
+import { readGameTrayRaw, writeGameTrayRaw } from "@/lib/games/session";
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +28,6 @@ type Team = {
   score: number;
 };
 
-const LESSON_TRAY_KEY = "classendo-lesson-tray";
 
 type RevealDifficulty = "easy" | "medium" | "hard";
 
@@ -48,6 +50,7 @@ function shuffleArray<T>(arr: T[]) {
    Component: Card Reveal (persistence fix)
    ---------------------- */
 export default function CardRevealPage() {
+  const flow = useGameFlow();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sceneApiRef = useRef<ImageRevealApi | null>(null);
@@ -90,7 +93,7 @@ export default function CardRevealPage() {
     try {
       const toWrite = gameTrayRef.current;
       if (Array.isArray(toWrite) && toWrite.length > 0) {
-        localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+        writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
       }
     } catch {}
   }
@@ -142,7 +145,7 @@ export default function CardRevealPage() {
   const [gameTray, setGameTray] = useState<GameCard[]>([]);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LESSON_TRAY_KEY);
+      const raw = readGameTrayRaw();
       originalTrayRawRef.current = raw;
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -173,7 +176,7 @@ export default function CardRevealPage() {
       try {
         const toWrite = gameTrayRef.current;
         if (Array.isArray(toWrite) && toWrite.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+          writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
         }
       } catch (e) {
         console.error("Failed to persist lesson tray on exit:", e);
@@ -186,7 +189,7 @@ export default function CardRevealPage() {
       try {
         const toWrite = gameTrayRef.current;
         if (Array.isArray(toWrite) && toWrite.length > 0) {
-          localStorage.setItem(LESSON_TRAY_KEY, JSON.stringify(toWrite));
+          writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
         }
       } catch (e) {
         console.error("Failed to persist lesson tray on component unmount:", e);
@@ -1098,6 +1101,7 @@ export default function CardRevealPage() {
 
       {showWinner && winner && (
         <GameWinnerModal
+          scoreTeams={teams}
           title={`${winner.name} wins!`}
           message={`${winner.name} finished Card Reveal with ${winner.score} points.`}
           onClose={() => setShowWinner(false)}

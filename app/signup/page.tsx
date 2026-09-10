@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import GameSignupContext from "@/components/games/GameSignupContext";
 import Script from "next/script";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/auth/username";
 import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
+import { trackGoogleAdsSignup } from "@/lib/analytics/google-ads";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
@@ -244,13 +246,17 @@ export default function SignupPage() {
           legalAccepted,
           attribution: signupAttribution,
           turnstileToken,
+          nextPath: requestedNext,
         }),
       });
       const payload = await signupResponse.json().catch(() => null) as {
         error?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
+        signupConversionId?: string;
         session?: { accessToken?: string; refreshToken?: string };
       } | null;
       if (!signupResponse.ok) { setMessage(String(payload?.error ?? "We could not create your account just now.")); return; }
+      // The server proves creation; session setup and email verification happen later.
+      trackGoogleAdsSignup(payload?.signupConversionId);
       if (payload?.requiresLegacyConfirmation || !payload?.session?.accessToken || !payload.session.refreshToken) {
         // Safe transitional fallback while Supabase Confirm Email remains on.
         // It can be removed only after the production setting is disabled.
@@ -272,6 +278,7 @@ export default function SignupPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f6f2] text-[#2f3a2f]">
+      <GameSignupContext />
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-14 lg:py-16">
         <aside className="order-2 rounded-[2rem] border border-[#dbe7d2] bg-[#edf4e9] p-6 shadow-[0_18px_40px_rgba(54,64,46,0.08)] sm:p-8 lg:order-1 lg:sticky lg:top-8">
           <div className="rounded-2xl border border-[#c9ddbd] bg-white/90 p-4 text-sm leading-6 text-[#536152]">
