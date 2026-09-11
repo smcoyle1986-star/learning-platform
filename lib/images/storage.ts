@@ -1,6 +1,6 @@
 const SUPABASE_PUBLIC_OBJECT_PATH = "/storage/v1/object/public/";
 const VOCABULARY_BUCKET = "vocab-images";
-const STATIC_VARIANT_ROOT = "derived/v1";
+export const VOCABULARY_STATIC_VARIANT_ROOT = "derived/v2";
 
 export const VOCABULARY_STATIC_VARIANT_WIDTHS = [160, 480, 1024] as const;
 export type VocabularyStaticVariantWidth = (typeof VOCABULARY_STATIC_VARIANT_WIDTHS)[number];
@@ -16,7 +16,7 @@ function parseVocabularyStorageUrl(value: string) {
     if (bucket !== VOCABULARY_BUCKET) return null;
 
     const sourcePath = objectPath.slice(`${VOCABULARY_BUCKET}/`.length);
-    if (!sourcePath || sourcePath.startsWith(`${STATIC_VARIANT_ROOT}/`)) return null;
+    if (!sourcePath || sourcePath.startsWith("derived/")) return null;
 
     return { url, sourcePath };
   } catch {
@@ -33,7 +33,7 @@ export function getVocabularyStaticVariantPath(
   const stem = extensionIndex > normalized.lastIndexOf("/")
     ? normalized.slice(0, extensionIndex)
     : normalized;
-  return `${STATIC_VARIANT_ROOT}/${stem}-${width}.webp`;
+  return `${VOCABULARY_STATIC_VARIANT_ROOT}/${stem}-${width}.webp`;
 }
 
 function nearestStaticVariantWidth(width: number): VocabularyStaticVariantWidth {

@@ -1,5 +1,7 @@
 import { chromium, type Locator, type Page } from "playwright";
 
+import { VOCABULARY_STATIC_VARIANT_ROOT } from "../lib/images/storage";
+
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://localhost:3000";
 const publicPrefix = "https://tsccyjrniiamnwgrtvpw.supabase.co/storage/v1/object/public/vocab-images/";
 
@@ -34,7 +36,7 @@ async function imageSnapshot(page: Page, alt: string, nth = -1, scope?: Locator)
 }
 
 function isStaticVariant(url: string, suffix: string) {
-  return url.startsWith(publicPrefix) && url.includes(`/derived/v1/${suffix}`);
+  return url.startsWith(publicPrefix) && url.includes(`/${VOCABULARY_STATIC_VARIANT_ROOT}/${suffix}`);
 }
 
 async function main() {
@@ -98,7 +100,7 @@ async function main() {
   await mobileContext.close();
 
   const transformResponses = imageResponses.filter(({ url }) => url.includes("/render/image/"));
-  const catStatic = imageResponses.find(({ url }) => url.includes("derived/v1/nouns/cat/cat_1-480.webp"));
+  const catStatic = imageResponses.find(({ url }) => url.includes(`${VOCABULARY_STATIC_VARIANT_ROOT}/nouns/cat/cat_1-480.webp`));
   const catOriginal = imageResponses.find(({ url }) => url.endsWith("/nouns/cat/cat_1.png"));
   const result = {
     starterApple,

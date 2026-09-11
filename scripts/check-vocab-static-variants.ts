@@ -71,8 +71,11 @@ async function main() {
       const index = cursor++;
       if (index >= sourceEntries.length) return;
       const [source, category] = sourceEntries[index];
-      const slash = source.lastIndexOf("/");
-      const derivedFolder = `derived/v1/${source.slice(0, slash)}`;
+      const firstVariantPath = getVocabularyStaticVariantPath(
+        source,
+        VOCABULARY_STATIC_VARIANT_WIDTHS[0],
+      );
+      const derivedFolder = firstVariantPath.slice(0, firstVariantPath.lastIndexOf("/"));
       const expected = new Map(
         VOCABULARY_STATIC_VARIANT_WIDTHS.map((width) => [
           getVocabularyStaticVariantPath(source, width).slice(derivedFolder.length + 1),
