@@ -1,6 +1,9 @@
+import { VOCABULARY_V3_VARIANT_SOURCES } from "./vocabulary-v3-variant-sources";
+
 const SUPABASE_PUBLIC_OBJECT_PATH = "/storage/v1/object/public/";
 const VOCABULARY_BUCKET = "vocab-images";
 export const VOCABULARY_STATIC_VARIANT_ROOT = "derived/v2";
+const REPAIRED_VOCABULARY_STATIC_VARIANT_ROOT = "derived/v3";
 
 export const VOCABULARY_STATIC_VARIANT_WIDTHS = [160, 480, 1024] as const;
 export type VocabularyStaticVariantWidth = (typeof VOCABULARY_STATIC_VARIANT_WIDTHS)[number];
@@ -33,7 +36,10 @@ export function getVocabularyStaticVariantPath(
   const stem = extensionIndex > normalized.lastIndexOf("/")
     ? normalized.slice(0, extensionIndex)
     : normalized;
-  return `${VOCABULARY_STATIC_VARIANT_ROOT}/${stem}-${width}.webp`;
+  const root = VOCABULARY_V3_VARIANT_SOURCES.has(normalized)
+    ? REPAIRED_VOCABULARY_STATIC_VARIANT_ROOT
+    : VOCABULARY_STATIC_VARIANT_ROOT;
+  return `${root}/${stem}-${width}.webp`;
 }
 
 function nearestStaticVariantWidth(width: number): VocabularyStaticVariantWidth {
