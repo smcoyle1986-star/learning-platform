@@ -25,7 +25,7 @@ export default function HomePage() {
             </Link>
             <Link href="/demo/animals" className="btn btn-secondary bg-white px-6 py-4">Try the Classendo Demo</Link>
           </div>
-          <p className="mt-3 text-sm font-medium text-[#667663]">Ready-made topics or a complete lesson demo. No account needed.</p>
+          <p className="mt-3 text-sm font-medium text-[#667663]">Play every game with ready-made topics. No signup needed.</p>
         </div>
 
         <LandingCarousel />

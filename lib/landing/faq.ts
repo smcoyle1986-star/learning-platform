@@ -7,7 +7,7 @@ export const LANDING_FAQ_PREVIEW: FaqItem[] = [
   {
     question: "Is Classendo free to use?",
     answer:
-      "Yes. The Free Plan includes flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.",
+      "Yes. Guests can play every classroom game with ready-made topics and no signup. A free account includes flashcards, Classroom Mode, lesson planning, printables, up to six saved lessons, and the weekly featured game with your own vocabulary. Premium expands how you can customise and reuse your own lesson content.",
   },
   {
     question: "What age groups is Classendo designed for?",
@@ -32,7 +32,7 @@ export const LANDING_FAQ_PREVIEW: FaqItem[] = [
   {
     question: "What extra features are included with Premium?",
     answer:
-      "Premium includes multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and future premium updates.",
+      "Premium includes your own vocabulary in every game, multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, all worksheet types and builder controls, printable options, Creator uploads, and Community access.",
   },
 ];
 
@@ -40,7 +40,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "Is Classendo free to use?",
     answer:
-      "Yes. The Free Plan includes flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.",
+      "Yes. Guests can play every classroom game with ready-made topics and no signup. A free account includes flashcards, Classroom Mode, lesson planning, printables, up to six saved lessons, and the weekly featured game with your own vocabulary. Premium expands how you can customise and reuse your own lesson content.",
   },
   {
     question: "What age groups is Classendo designed for?",
@@ -75,7 +75,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "How many games are included?",
     answer:
-      "Classendo currently includes multiple classroom games designed for vocabulary review and student engagement. Free users can access one featured game that rotates regularly. Premium users have access to the full game library.",
+      "Classendo currently includes 10 classroom games for vocabulary review and student engagement. Guests can play every game with ready-made topics. Free accounts can use their own vocabulary in the weekly featured game, while Premium accounts can use their own vocabulary in every game.",
   },
   {
     question: "How many worksheets are included?",
@@ -85,7 +85,7 @@ export const LANDING_FAQ_FULL: FaqItem[] = [
   {
     question: "What extra features are included with Premium?",
     answer:
-      "Premium members receive access to multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, unlimited games, unlimited worksheets, community sharing, teacher-created lesson sets, and additional classroom resources and tools.",
+      "Premium members can use their own vocabulary in every game and gain multiple image variations, flashcard editing tools, classroom annotation tools, unlimited My Lessons saves, all worksheet types and builder controls, printable options, Creator uploads, and Community access.",
   },
   {
     question: "What are image variations?",

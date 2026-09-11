@@ -37,7 +37,7 @@ function GamesAccess({ children }: { children: React.ReactNode }) {
 }
 function AccessMessage({ title, gameId, custom = false }: { title: string; gameId: string; custom?: boolean }) {
   return <main className="mx-auto max-w-xl px-6 py-20 text-center"><h1 className="text-3xl font-bold">{title}</h1>
-    <p className="mt-4 text-[var(--color-text-muted)]">Every game is free with public topics. Use your own vocabulary in the weekly free game, or in every game with Premium.</p>
+    <p className="mt-4 text-[var(--color-text-muted)]">Every game is free with ready-made topics. Use your own vocabulary in the weekly featured game with a free account, or in every game with Premium.</p>
     <div className="mt-7 flex flex-wrap justify-center gap-3"><Link className="btn btn-primary" href={topicsUrl(gameId)}>Choose topic</Link>
       {custom && <Link className="btn btn-secondary" href={customGameUrl(gameId)}>Use my vocabulary</Link>}
       <Link className="btn btn-secondary" href="/games">Change game</Link></div></main>;

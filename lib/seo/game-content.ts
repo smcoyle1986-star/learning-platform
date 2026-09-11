@@ -1,51 +1,63 @@
-import { createPrivateMetadata } from "@/lib/seo/page-content";
+import type { Metadata } from "next";
 
 export const GAME_CONTENT = {
   "image-reveal": {
-    title: "Image Reveal Classroom Game",
-    description: "Slowly reveal a hidden vocabulary image while students compete to identify it. Adjust the teams and reveal tiles at your own pace for whole-class review.",
+    title: "Free Image Reveal ESL Classroom Game",
+    description: "Play Image Reveal, a free interactive ESL classroom game. Choose a ready-made vocabulary topic with no signup, then reveal images for whole-class review.",
   },
   kaboom: {
-    title: "KaBoom Classroom Game",
-    description: "Students choose tiles, answer vocabulary questions, and collect points while trying to avoid hidden bombs. KaBoom turns a Classendo lesson set into a fast-paced team challenge.",
+    title: "Free KaBoom ESL Classroom Game",
+    description: "Play KaBoom, a free ESL classroom game for vocabulary review. Choose a ready-made topic with no signup, answer together, and avoid the hidden bombs.",
   },
   "spin-and-speak": {
-    title: "Spin and Speak Classroom Game",
-    description: "Spin the wheel to choose a vocabulary card or speaking prompt for the class. Use it for quick reviews, warm-ups, sentence practice, and spontaneous speaking activities.",
+    title: "Free Spin and Speak ESL Classroom Game",
+    description: "Play Spin and Speak, a free interactive ESL game for warm-ups, vocabulary review, and speaking practice. Choose a ready-made topic and start with no signup.",
   },
   "yes-or-no": {
-    title: "Yes or No Classroom Game",
-    description: "Present quick questions and ask students to choose between yes and no. Use teams and selected vocabulary to create a fast whole-class decision game.",
+    title: "Free Yes or No ESL Classroom Game",
+    description: "Play Yes or No, a free ESL classroom game for fast speaking and decision practice. Choose a ready-made topic with no signup, then add your own questions.",
   },
   "choose-your-side": {
-    title: "Choose Your Side Classroom Game",
-    description: "Show a prompt and have students move to the Yes or No side of the classroom. Choose Your Side turns saved vocabulary and teacher-written questions into an active whole-class decision game.",
+    title: "Free Choose Your Side ESL Classroom Game",
+    description: "Play Choose Your Side, a free ESL movement game for whole-class speaking practice. Choose a ready-made topic with no signup, then add teacher-written questions.",
   },
   "four-corners": {
-    title: "Four Corners Classroom Game",
-    description: "Assign answers or vocabulary choices to four areas of the classroom. Students move to the corner that matches their answer for an active whole-class review.",
+    title: "Free Four Corners ESL Classroom Game",
+    description: "Play Four Corners, a free interactive ESL classroom game for vocabulary review. Choose a ready-made topic with no signup and get learners moving.",
   },
   "memory-flip": {
-    title: "Memory Flip Classroom Game",
-    description: "Turn your lesson cards into a visual matching game for individuals or teams. Students remember card positions and collect matching pairs while reviewing vocabulary.",
+    title: "Free Memory Flip ESL Classroom Game",
+    description: "Play Memory Flip, a free ESL vocabulary matching game for teams or individuals. Choose a ready-made topic with no signup and practise visual recall.",
   },
   "connect-four": {
-    title: "Connect Four Classroom Game",
-    description: "Students answer vocabulary questions to place tokens on the board. Teams compete to connect four tokens in a row while practising the selected lesson content.",
+    title: "Free Connect Four ESL Classroom Game",
+    description: "Play Connect Four, a free ESL classroom game for vocabulary practice. Choose a ready-made topic with no signup and compete to connect four tokens.",
   },
   conquer: {
-    title: "Conquer Classroom Game",
-    description: "Teams answer questions to claim spaces and expand across the game board. Use any lesson tray to combine vocabulary practice with strategy and classroom competition.",
+    title: "Free Conquer ESL Classroom Game",
+    description: "Play Conquer, a free interactive ESL classroom game for vocabulary review and team strategy. Choose a ready-made topic with no signup and claim the board.",
   },
   "whack-a-word": {
-    title: "Whack-a-Word Classroom Game",
-    description: "Students identify the correct word or image before time runs out. This quick-response game develops vocabulary recognition, attention, and recall.",
+    title: "Free Whack-a-Word ESL Classroom Game",
+    description: "Play Whack-a-Word, a free ESL vocabulary game for quick recognition and recall. Choose a ready-made topic with no signup and race against the timer.",
   },
 } as const;
 
 export type GameContentKey = keyof typeof GAME_CONTENT;
 
-export function createGameMetadata(key: GameContentKey) {
+export function createGameMetadata(key: GameContentKey): Metadata {
   const game = GAME_CONTENT[key];
-  return createPrivateMetadata(game.title, game.description);
+  const path = `/games/${key}`;
+  return {
+    title: game.title,
+    description: game.description,
+    alternates: { canonical: path },
+    openGraph: {
+      title: game.title,
+      description: game.description,
+      type: "website",
+      url: path,
+      siteName: "Classendo",
+    },
+  };
 }

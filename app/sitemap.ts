@@ -5,6 +5,19 @@ import { PUBLISHED_TWELVE_CARD_LESSON_PACKS } from "@/lib/twelve-card-lesson-pac
 
 const siteUrl = "https://classendo.com";
 
+const GAME_PATHS = [
+  "/games/image-reveal",
+  "/games/kaboom",
+  "/games/spin-and-speak",
+  "/games/yes-or-no",
+  "/games/choose-your-side",
+  "/games/four-corners",
+  "/games/memory-flip",
+  "/games/connect-four",
+  "/games/whack-a-word",
+  "/games/conquer",
+] as const;
+
 const FREE_RESOURCE_SLUGS = [
   "after-school-verbs-beginner-esl",
   "animals-vocabulary-beginner-esl",
@@ -60,6 +73,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const publicPaths = ["/", "/flashcards", "/flashcards/classroom", "/games", "/worksheets", "/printables", "/lessons", "/teacher/community", "/creator", "/faq", "/upgrade", "/legal", "/topics", "/free-resources"];
   return [
     ...publicPaths.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "weekly" as const, priority: path === "/" ? 1 : 0.7 })),
+    ...GAME_PATHS.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "monthly" as const, priority: 0.8 })),
     ...LEGAL_DOCUMENTS.map((document) => ({ url: `${siteUrl}/legal/${document.slug}`, changeFrequency: "yearly" as const, priority: 0.3 })),
     ...TOPICS.map((topic) => ({ url: `${siteUrl}/topics/${topic.slug}`, changeFrequency: "monthly" as const, priority: 0.8 })),
     ...FREE_RESOURCE_SLUGS.map((slug) => ({ url: `${siteUrl}/free-resources/${slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),

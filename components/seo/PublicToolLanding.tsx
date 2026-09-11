@@ -24,7 +24,7 @@ const toolContent = {
   games: {
     eyebrow: "Classendo for ESL teachers",
     title: "Interactive ESL classroom games and vocabulary activities",
-    description: "Turn a small set of visual vocabulary cards into an interactive, teacher-led classroom game. Build a free lesson set first, then choose an activity that suits your class.",
+    description: "Play every interactive, teacher-led classroom game free with a ready-made vocabulary topic — no signup needed. Create an account when you are ready to use your own lesson cards.",
     benefits: [
       ["Image Reveal", "Reveal a picture gradually while learners guess the word."],
       ["Memory Flip", "Match visual vocabulary cards for a focused review activity."],

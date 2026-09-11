@@ -69,20 +69,20 @@ export default function LandingHomepageSections() {
           <SectionEyebrow>Plans for growing classrooms</SectionEyebrow>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Start free. Upgrade when you need more.</h2>
           <p className="mt-5 text-base leading-8 text-[#5c665c]">
-            The Free plan includes visual flashcards, Classroom Mode, lesson planning, printables, one rotating game, one rotating worksheet, and up to six saved lessons. Premium unlocks the full library and unlimited saving.
+            Guests can play every classroom game with ready-made topics, with no signup needed. A free account adds the core Classendo lesson workflow; Premium gives you more ways to reuse and customise your own content.
           </p>
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             <article className="rounded-3xl border border-[#dfe6d9] bg-white p-5 shadow-sm">
               <h3 className="text-xl font-semibold">Free</h3>
-              <p className="mt-2 text-sm leading-6 text-[#5c665c]">Use core teaching tools at no cost. Creating an account lets you save up to six lessons.</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Flashcards, Classroom Mode, printables, and lesson plans</li><li>All games with ready-made topics; one weekly game with your own words</li><li>Up to six saved lessons with a free account</li></ul>
+              <p className="mt-2 text-sm leading-6 text-[#5c665c]">Play prepared topics as a guest, then create an account to save and build lessons.</p>
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Every game with ready-made topics — no signup</li><li>Flashcards, Classroom Mode, printables, and lesson plans</li><li>Up to six saved lessons and one weekly game with your own words</li></ul>
               <Link href="/flashcards" className="btn btn-secondary mt-5 w-full px-4 py-3 text-center">Explore Free</Link>
             </article>
             <article className="rounded-3xl border border-[#e7ca90] bg-[#fffaf0] p-5 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9a681e]">Premium</p>
               <h3 className="mt-2 text-xl font-semibold">More ways to teach</h3>
               <p className="mt-2 text-sm leading-6 text-[#5c665c]">Monthly and yearly Premium plans with a 14-day welcome trial after email confirmation.</p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Your own vocabulary in every game, plus expanded worksheets and tools</li><li>More saved and reusable resources</li><li>Premium image and classroom features</li></ul>
+              <ul className="mt-4 space-y-2 text-sm leading-6 text-[#566056]"><li>Use your own vocabulary in every game</li><li>Unlimited My Lessons saves, worksheets, and printable options</li><li>Premium images, classroom tools, Creator uploads, and Community</li></ul>
               <Link href="/upgrade" className="btn btn-primary mt-5 w-full px-4 py-3 text-center">View Premium pricing</Link>
             </article>
           </div>

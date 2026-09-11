@@ -128,12 +128,12 @@ export default function TimedGamePreviewGate({
 
   const featuredGameLabel = featuredGameId.replaceAll("-", " ");
   const introDescription =
-    `Free teachers can fully play ${featuredGameLabel} this week. ` +
-    "Upgrade to Premium to unlock every classroom game anytime. " +
+    `Free teachers can fully play ${featuredGameLabel} with their own vocabulary this week. ` +
+    "Premium lets you use your own vocabulary in every classroom game. " +
     "Click outside this message to start a two-minute preview.";
   const expiredDescription =
     "Your two-minute preview has ended. Upgrade to Premium to continue, " +
-    `or return to Games and play ${featuredGameLabel}, this week’s free game.`;
+    "or return to Free Games and choose a ready-made topic.";
 
   return (
     <>
@@ -178,7 +178,7 @@ export default function TimedGamePreviewGate({
               id="game-preview-title"
               className="mt-3 text-3xl font-bold tracking-tight text-[#2f3a2f]"
             >
-              This game is locked on the Free plan
+              Try this game with your own vocabulary
             </h2>
             <p
               id="game-preview-description"

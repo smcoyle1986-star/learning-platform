@@ -309,7 +309,7 @@ export default function LessonsPage() {
           <section className="col-span-12 rounded-2xl border border-[#d7e3d0] bg-[#f2f7ee] px-5 py-4 shadow-sm">
             <p className="text-sm font-semibold text-[#40533b]">Guest Lesson Plan — no sign-up needed</p>
             <p className="mt-1 text-xs leading-5 text-[#63705f]">
-              Build and export a lesson plan from up to 6 free Image 1 flashcards. Your cards and draft are temporary for this browser session. Classroom Mode and basic Printables are also available without an account; saving, Community, games, worksheets, and premium images require an account.
+              Build and export a lesson plan from up to 6 free Image 1 flashcards. Your cards and draft are temporary for this browser session. Classroom Mode and basic Printables are also available without an account; play every game with a ready-made topic from Free Games. Saving, Community, worksheets, premium images, and games with your own lesson cards require an account.
             </p>
           </section>
         ) : null}
