@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { trackAnalyticsEvent } from "@/lib/analytics/client";
-import { captureSignupAttribution } from "@/lib/analytics/attribution";
+import {
+  captureCurrentAttribution,
+  captureSignupAttribution,
+  rememberSignupAttribution,
+  type SignupAttribution,
+} from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
 import { clearLessonTray } from "@/lib/lessons/tray";
+import { COOKIE_CONSENT_EVENT, type CookieConsent } from "@/lib/privacy/consent";
 
 const WORKSHEET_KEYS: Record<string, string> = {
   Crossword: "crossword",
@@ -44,10 +50,25 @@ function trackVocabularySearch() {
 
 export function AnalyticsEventTracker() {
   const pathname = usePathname();
+  const firstTouchAttribution = useRef<SignupAttribution | null>(null);
 
   useEffect(() => {
+    // Keep first-touch values in React memory until consent is granted. This
+    // retains a landing UTM through client-side navigation without writing an
+    // analytics identifier before the visitor has opted in.
+    firstTouchAttribution.current ??= captureCurrentAttribution();
     captureSignupAttribution();
 
+    function onConsentChange(event: Event) {
+      const consent = (event as CustomEvent<CookieConsent>).detail;
+      if (consent?.analytics) rememberSignupAttribution(firstTouchAttribution.current);
+    }
+
+    window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
+  }, []);
+
+  useEffect(() => {
     if (pathname === "/flashcards") {
       trackConversion("lesson_opened", { format: "flashcards" });
       void trackAnalyticsEvent({

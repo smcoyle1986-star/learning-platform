@@ -8,6 +8,7 @@ import {
   readCookieConsent,
   saveCookieConsent,
 } from "@/lib/privacy/consent";
+import { clearSignupAttribution } from "@/lib/analytics/attribution";
 
 export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
@@ -45,7 +46,10 @@ export function CookieConsentBanner() {
 
   const choose = (analytics: boolean) => {
     saveCookieConsent(analytics);
-    if (!analytics) window.sessionStorage.removeItem("classendo-analytics-session");
+    if (!analytics) {
+      window.sessionStorage.removeItem("classendo-analytics-session");
+      clearSignupAttribution();
+    }
     setVisible(false);
   };
 

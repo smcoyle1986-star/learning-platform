@@ -20,7 +20,8 @@ import {
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { getFeaturedWeeklyGameId } from "@/lib/billing/featured";
 import { useAuth } from "@/components/AuthProvider";
-import { trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { freeGamesSignupUrl, trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { COOKIE_CONSENT_EVENT, type CookieConsent } from "@/lib/privacy/consent";
 
 /**
  * Games Landing Page
@@ -160,7 +161,23 @@ export default function GamesLandingPage() {
   const topicsMode = !user || source === "topics";
 
   useEffect(() => {
-    void trackFreeGameEvent({ eventType: "hub_viewed", source: topicsMode ? "public_topic" : "lesson_tray" });
+    const trackHubView = () => {
+      void trackFreeGameEvent({
+        eventType: "hub_viewed",
+        source: topicsMode ? "public_topic" : "lesson_tray",
+      });
+    };
+
+    trackHubView();
+
+    // A visitor may accept analytics after this page has already mounted. Retry
+    // then so the first funnel step is retained; session de-duplication keeps it
+    // to one hub view per source.
+    const onConsentChange = (event: Event) => {
+      if ((event as CustomEvent<CookieConsent>).detail?.analytics) trackHubView();
+    };
+    window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
+    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
   }, [topicsMode]);
   const trayTopic = findTopicForCards(lessonTray);
   function changeSource(next: "topics" | "tray") {
@@ -449,7 +466,7 @@ export default function GamesLandingPage() {
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   {!user ? (
-                    <Link href="/signup?next=%2Fflashcards" className="btn btn-primary px-5 py-3 text-sm">
+                    <Link href={freeGamesSignupUrl("/flashcards", { gameKey: featuredGame.id })} className="btn btn-primary px-5 py-3 text-sm">
                       Create a free account
                     </Link>
                   ) : lessonTray.length === 0 ? (

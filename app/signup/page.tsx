@@ -16,11 +16,24 @@ import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
 import { trackGoogleAdsSignup } from "@/lib/analytics/google-ads";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
+import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
+import { getAnalyticsSessionKey } from "@/lib/analytics/client";
+import { trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
+type FreeGamesSignupContext = { gameKey: string; topic: GameTopic | null };
+
+function readFreeGamesSignupContext(params: URLSearchParams): FreeGamesSignupContext | null {
+  if (params.get("from") !== "free-games") return null;
+  const gameKey = params.get("game") ?? "";
+  if (!Object.hasOwn(GAME_NAMES, gameKey)) return null;
+  return { gameKey, topic: getGameTopic(params.get("topic")) ?? null };
 }
 
 const FALLBACK_COUNTRIES = [
@@ -101,6 +114,7 @@ export default function SignupPage() {
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [freeGamesSignupContext, setFreeGamesSignupContext] = useState<FreeGamesSignupContext | null>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
@@ -188,6 +202,23 @@ export default function SignupPage() {
     return () => { delete target.onClassendoTurnstile; };
   }, []);
 
+  useEffect(() => {
+    setFreeGamesSignupContext(readFreeGamesSignupContext(new URLSearchParams(window.location.search)));
+  }, []);
+
+  useEffect(() => {
+    if (!freeGamesSignupContext) return;
+    void trackFreeGameEvent({
+      eventType: "signup_started",
+      gameKey: freeGamesSignupContext.gameKey,
+      topicId: freeGamesSignupContext.topic?.id,
+      topicLabel: freeGamesSignupContext.topic?.title,
+      topicCategory: freeGamesSignupContext.topic?.category,
+      source: "free_games",
+      action: "create_account",
+    });
+  }, [freeGamesSignupContext]);
+
   const applySuggestion = (value: string) => {
     setUsernameTouched(true);
     setUsername(value);
@@ -232,6 +263,13 @@ export default function SignupPage() {
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
       const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
       const signupAttribution = readSignupAttribution();
+      const freeGamesContext = freeGamesSignupContext && hasAnalyticsConsent()
+        ? {
+            gameKey: freeGamesSignupContext.gameKey,
+            topicId: freeGamesSignupContext.topic?.id,
+            sessionKey: getAnalyticsSessionKey(),
+          }
+        : null;
       trackConversion("signup_submitted", {
         destination: requestedNext === "/upgrade" ? "upgrade" : "flashcards",
       });
@@ -245,6 +283,7 @@ export default function SignupPage() {
           countryRegion: cleanCountry,
           legalAccepted,
           attribution: signupAttribution,
+          freeGamesContext,
           turnstileToken,
           nextPath: requestedNext,
         }),

@@ -13,16 +13,6 @@ export type SignupAttribution = {
   landingPath: string | null;
 };
 
-const EMPTY_ATTRIBUTION: SignupAttribution = {
-  utmSource: null,
-  utmMedium: null,
-  utmCampaign: null,
-  utmContent: null,
-  utmTerm: null,
-  referrerHost: null,
-  landingPath: null,
-};
-
 function clean(value: string | null) {
   const normalized = value?.trim().replace(/[^a-z0-9 _.-]/gi, "") ?? "";
   return normalized ? normalized.slice(0, MAX_VALUE_LENGTH) : null;
@@ -38,7 +28,7 @@ function externalReferrerHost() {
   }
 }
 
-function currentAttribution(): SignupAttribution {
+export function captureCurrentAttribution(): SignupAttribution {
   const params = new URLSearchParams(window.location.search);
   return {
     utmSource: clean(params.get("utm_source")),
@@ -55,18 +45,30 @@ function hasAttribution(value: SignupAttribution) {
   return Object.values(value).some(Boolean);
 }
 
-export function captureSignupAttribution() {
-  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
+export function rememberSignupAttribution(attribution: SignupAttribution | null) {
+  if (typeof window === "undefined" || !hasAnalyticsConsent() || !attribution || !hasAttribution(attribution)) return;
 
   try {
-    if (window.sessionStorage.getItem(STORAGE_KEY)) return;
-    const attribution = currentAttribution();
-    if (hasAttribution(attribution)) {
+    if (!window.sessionStorage.getItem(STORAGE_KEY)) {
       window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(attribution));
     }
   } catch {
     // Attribution is optional and must never affect the teaching experience.
   }
+}
+
+export function clearSignupAttribution() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts.
+  }
+}
+
+export function captureSignupAttribution() {
+  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
+  rememberSignupAttribution(captureCurrentAttribution());
 }
 
 export function readSignupAttribution(): SignupAttribution | null {
