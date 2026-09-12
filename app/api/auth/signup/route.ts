@@ -168,6 +168,17 @@ export async function POST(request: NextRequest) {
     }
     const signupConversionId = newSignupConversionId(data.user, signupAttemptId);
     if (signupConversionId) {
+      const { error: conversionReceiptError } = await getSupabaseAdmin()
+        .from("classendo_email_verifications")
+        .upsert({
+          user_id: data.user.id,
+          normalized_email: email,
+          signup_conversion_id: signupConversionId,
+        }, { onConflict: "user_id" });
+      if (conversionReceiptError) {
+        // Conversion measurement must never prevent a teacher from creating an account.
+        console.error("Could not prepare Google Ads signup conversion receipt:", conversionReceiptError);
+      }
       await recordFreeGamesSignupCompletion({
         context: freeGamesContext,
         userId: data.user.id,

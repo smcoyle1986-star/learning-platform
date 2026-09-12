@@ -14,7 +14,6 @@ import {
 } from "@/lib/auth/username";
 import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
-import { trackGoogleAdsSignup } from "@/lib/analytics/google-ads";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
 import { getAnalyticsSessionKey } from "@/lib/analytics/client";
@@ -290,12 +289,9 @@ export default function SignupPage() {
       });
       const payload = await signupResponse.json().catch(() => null) as {
         error?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
-        signupConversionId?: string;
         session?: { accessToken?: string; refreshToken?: string };
       } | null;
       if (!signupResponse.ok) { setMessage(String(payload?.error ?? "We could not create your account just now.")); return; }
-      // The server proves creation; session setup and email verification happen later.
-      trackGoogleAdsSignup(payload?.signupConversionId);
       if (payload?.requiresLegacyConfirmation || !payload?.session?.accessToken || !payload.session.refreshToken) {
         // Safe transitional fallback while Supabase Confirm Email remains on.
         // It can be removed only after the production setting is disabled.

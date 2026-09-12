@@ -14,7 +14,11 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
     const result = Array.isArray(data) ? data[0] : data;
     if (!result?.verified) return NextResponse.json({ error: "This verification link has expired or was already used. Sign in to request a new one." }, { status: 400 });
-    return NextResponse.json({ verified: true, trialStarted: result.trial_started === true });
+    return NextResponse.json({
+      verified: true,
+      trialStarted: result.trial_started === true,
+      signupConversionId: typeof result.signup_conversion_id === "string" ? result.signup_conversion_id : undefined,
+    });
   } catch (error: unknown) {
     console.error("Email verification failed:", error);
     return NextResponse.json({ error: "We could not verify this email. Please request a new link." }, { status: 500 });

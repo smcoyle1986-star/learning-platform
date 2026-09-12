@@ -3,7 +3,7 @@
 const attempted = new Set<string>();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/** Only call with the creation receipt returned by a successful signup POST. */
+/** Only call with the one-time receipt returned after first email verification. */
 export function trackGoogleAdsSignup(conversionId: unknown): void {
   try {
     if (typeof window === "undefined" || typeof conversionId !== "string" || !UUID.test(conversionId)) return;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { safeGameReturnPath } from "@/lib/games/return-path";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
+import { trackGoogleAdsSignup } from "@/lib/analytics/google-ads";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -18,6 +19,7 @@ function VerifyEmailContent() {
     const response = await fetch("/api/auth/verification/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
     const result = await response.json().catch(() => null);
     if (!response.ok) { setState("error"); setMessage(String(result?.error ?? "This verification link could not be used.")); return; }
+    trackGoogleAdsSignup(result?.signupConversionId);
     await refresh();
     setState("verified"); setMessage(result?.trialStarted ? "Your email is verified and your 14-day Premium trial is now active." : "Your email is verified.");
   }
