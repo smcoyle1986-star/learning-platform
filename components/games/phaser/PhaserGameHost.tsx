@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, type CSSProperties } from "react";
 import type PhaserNamespace from "phaser";
 
 type PhaserFactoryContext<TApi, TEvent> = {
@@ -14,10 +14,12 @@ type PhaserFactoryContext<TApi, TEvent> = {
 
 type PhaserFactoryResult = {
   game: PhaserNamespace.Game;
+  pixelRatio?: number;
 };
 
 type PhaserGameHostProps<TApi, TEvent> = {
   className?: string;
+  style?: CSSProperties;
   createGame: (
     context: PhaserFactoryContext<TApi, TEvent>
   ) => Promise<PhaserFactoryResult> | PhaserFactoryResult;
@@ -27,6 +29,7 @@ type PhaserGameHostProps<TApi, TEvent> = {
 
 export default function PhaserGameHost<TApi, TEvent>({
   className,
+  style,
   createGame,
   onEvent,
   onApiReady,
@@ -50,6 +53,7 @@ export default function PhaserGameHost<TApi, TEvent>({
     let resizePending: { width: number; height: number } | null = null;
     let detachFullscreenListener: (() => void) | null = null;
     let fullscreenResizeGuardUntil = 0;
+    let pixelRatio = 1;
 
     const destroyGameSafely = (game: PhaserNamespace.Game | null) => {
       if (!game) return;
@@ -73,7 +77,7 @@ export default function PhaserGameHost<TApi, TEvent>({
         resizePending = null;
         if (!pending || disposed || !gameRef.current) return;
         try {
-          gameRef.current.scale.resize(pending.width, pending.height);
+          gameRef.current.scale.resize(pending.width * pixelRatio, pending.height * pixelRatio);
         } catch {
           // ignore transient WebGL resize errors during fullscreen transitions
         }
@@ -126,6 +130,7 @@ export default function PhaserGameHost<TApi, TEvent>({
       }
 
       gameRef.current = result.game;
+      pixelRatio = result.pixelRatio ?? 1;
 
       resizeObserver = new ResizeObserver((entries) => {
         const entry = entries[0];
@@ -157,7 +162,7 @@ export default function PhaserGameHost<TApi, TEvent>({
     <div
       ref={mountRef}
       className={className ?? "w-full h-full"}
-      style={{ touchAction: "manipulation" }}
+      style={{ touchAction: "manipulation", ...style }}
     />
   );
 }

@@ -121,7 +121,7 @@ const GAMES: { title: string; id: string; subtitle?: string; image?: string }[] 
   { title: "Four Corners", id: "four-corners", subtitle: "Move to different corners", image: "/games/four-corners-art.png" },
   { title: "Memory Flip", id: "memory-flip", subtitle: "Match pairs", image: "/games/memory-flip-art.png" },
   { title: "Connect Four", id: "connect-four", subtitle: "Connect four tokens in a line to win", image: "/games/connect-four-art.png" },
-  { title: "Whack-a-Word", id: "whack-a-word", subtitle: "Spot the right word before it disappears", image: "/games/whack-a-word.svg" },
+  { title: "Whack-a-Word", id: "whack-a-word", subtitle: "Spot the right word before it disappears", image: "/games/whack-a-word-art.png" },
   { title: "Conquer", id: "conquer", subtitle: "Claim territory on a giant board", image: "/games/conquer-art.png" },
 ];
 

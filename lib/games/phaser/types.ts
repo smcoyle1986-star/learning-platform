@@ -2,6 +2,7 @@ export type PhaserVocabCard = {
   id: string;
   word: string;
   image?: string | null;
+  imageFallback?: string | null;
 };
 
 export function makeTextureKey(prefix: string, value: string) {
