@@ -65,33 +65,66 @@ function MiniLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ImageRevealVisual({ game, cards }: { game: GameInfo; cards: LessonCard[] }) {
-  const card = cards[0];
+function previewLessonCards(cards: LessonCard[], count: number, fallbackLabel: string) {
+  const suitableCards = cards.filter((card) => cleanWord(card.word) || card.image);
+  return ensureCards(suitableCards, count, fallbackLabel).slice(0, count);
+}
+
+function LessonPreview({ card, className }: { card?: LessonCard; className: string }) {
+  const word = cleanWord(card?.word) || "Vocabulary";
+  const imageSource = card?.image ? resolveLessonImageUrl(card.image) : null;
+  const [failedSource, setFailedSource] = React.useState<string | null>(null);
+
+  return (
+    <div className={`flex items-center justify-center overflow-hidden bg-white ${className}`}>
+      {imageSource && failedSource !== imageSource ? (
+        <img
+          src={imageSource}
+          alt={word}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedSource(imageSource)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="px-2 text-center text-sm font-black text-[var(--color-text-main)]">{word}</span>
+      )}
+    </div>
+  );
+}
+
+function ImageRevealVisual({ cards }: { cards: LessonCard[] }) {
+  const card = previewLessonCards(cards, 1, "Picture")[0];
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(127,163,106,0.12))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <MiniLabel>Remove tile</MiniLabel>
-        <MiniLabel>Get points / Lose points</MiniLabel>
+        <MiniLabel>Choose a square</MiniLabel>
+        <MiniLabel>Random Select</MiniLabel>
       </div>
       <div className="mt-4 rounded-[1.6rem] border border-black/8 bg-white p-4 shadow-inner">
         <div className="relative aspect-[4/3] overflow-hidden rounded-[1.25rem] border border-black/5 bg-[var(--color-bg-main)]">
-          <img src={resolveLessonImageUrl(card?.image ?? game.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || game.title} className="h-full w-full object-cover" />
+          <LessonPreview card={card} className="absolute inset-0 h-full w-full" />
           <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-2 p-3">
             {Array.from({ length: 12 }, (_, index) => (
-              <div key={index} className="rounded-lg border border-white/70 bg-white/78 backdrop-blur-[1px]" />
+              <div
+                key={index}
+                className={`rounded-lg border border-white/70 backdrop-blur-[1px] ${
+                  [1, 5, 7, 10].includes(index) ? "bg-transparent" : "bg-white/90"
+                }`}
+              />
             ))}
           </div>
         </div>
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        One tile opens at a time, then the score spinner awards or removes points.
+        Choose a square or use Random Select to uncover part of the picture.
       </p>
     </div>
   );
 }
 
 function KaboomVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const card = previewLessonCards(cards, 1, "Picture")[0];
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(127,163,106,0.10))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -99,28 +132,39 @@ function KaboomVisual({ cards }: { cards: LessonCard[] }) {
         <MiniLabel>4x4 / 5x5 / 6x6</MiniLabel>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 rounded-[1.5rem] border border-black/8 bg-white p-3">
-        {Array.from({ length: 16 }, (_, index) => (
-          <div
-            key={index}
-            className={`aspect-square rounded-2xl border border-black/5 ${
-              index === 5 || index === 7 || index === 9 ? "bg-[rgba(127,163,106,0.24)]" : "bg-[var(--color-bg-main)]"
-            }`}
-          >
-            {index === 6 ? (
-                <img src={resolveLessonImageUrl(card?.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || "Lesson card"} className="h-full w-full rounded-2xl object-cover" />
-            ) : null}
-          </div>
-        ))}
+        {Array.from({ length: 16 }, (_, index) => {
+          const isPicture = index === 5;
+          const isPoint = index === 6;
+          const isKaboom = index === 9;
+
+          return (
+            <div
+              key={index}
+              className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl border border-black/5 ${
+                isPoint
+                  ? "bg-emerald-300 text-emerald-950"
+                  : isKaboom
+                    ? "bg-rose-500 text-white"
+                    : "bg-[var(--color-bg-main)]"
+              }`}
+            >
+              {isPicture ? <LessonPreview card={card} className="absolute inset-0 h-full w-full" /> : null}
+              {isPoint ? <span className="text-[10px] font-black sm:text-xs">+5 pts</span> : null}
+              {isKaboom ? <span className="text-[8px] font-black uppercase sm:text-[10px]">Kaboom!</span> : null}
+            </div>
+          );
+        })}
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        The selected square becomes the challenge. Answer correctly to score, or avoid the bomb.
+        Students make a sentence using the picture. If they&apos;re correct, reveal the square.
       </p>
     </div>
   );
 }
 
 function SpinSpeakVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const previewCards = previewLessonCards(cards, 4, "Prompt");
+  const selectedCard = previewCards[1];
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(30,64,175,0.10))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -128,25 +172,43 @@ function SpinSpeakVisual({ cards }: { cards: LessonCard[] }) {
         <MiniLabel>Ask / act / make / read</MiniLabel>
       </div>
       <div className="mt-4 flex items-center justify-center">
-        <div className="relative flex h-52 w-52 items-center justify-center rounded-full bg-[conic-gradient(from_0deg,rgba(127,163,106,0.88),rgba(30,64,175,0.88),rgba(244,155,185,0.88),rgba(250,211,126,0.88),rgba(127,163,106,0.88))] shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
-          <div className="absolute inset-[13%] rounded-full bg-white/95" />
+        <div className="relative flex h-52 w-52 items-center justify-center rounded-full bg-[conic-gradient(from_0deg,rgba(127,163,106,0.92)_0deg_90deg,rgba(30,64,175,0.88)_90deg_180deg,rgba(244,155,185,0.9)_180deg_270deg,rgba(250,211,126,0.95)_270deg_360deg)] shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
+          <div className="absolute inset-[13%] rounded-full bg-white/10" />
           <div className="absolute inset-[34%] rounded-full border border-black/10 bg-[var(--color-bg-main)]" />
           <div className="absolute left-1/2 top-[10px] h-0 w-0 -translate-x-1/2 border-l-[18px] border-r-[18px] border-t-[30px] border-l-transparent border-r-transparent border-t-red-500" />
+          {previewCards.map((item, index) => (
+            <div
+              key={item.id}
+              className={`absolute z-10 max-w-[3.5rem] truncate rounded-full border px-2 py-1 text-[10px] font-black shadow-sm ${
+                index === 1 ? "border-white bg-white text-blue-800 ring-2 ring-blue-300" : "border-white/70 bg-white/85 text-[var(--color-text-main)]"
+              } ${
+                index === 0 ? "left-[5%] top-[43%]" : index === 1 ? "right-[5%] top-[43%]" : index === 2 ? "left-1/2 top-[8%] -translate-x-1/2" : "bottom-[8%] left-1/2 -translate-x-1/2"
+              }`}
+            >
+              {cleanWord(item.word)}
+            </div>
+          ))}
           <div className="relative z-10 rounded-full border border-black/8 bg-white px-4 py-2 text-center text-sm font-black uppercase tracking-[0.28em] text-[var(--color-text-main)] shadow-sm">
             Spin
           </div>
         </div>
       </div>
       <div className="mt-3 rounded-2xl border border-black/8 bg-white p-3">
-        <div className="text-sm font-semibold text-[var(--color-text-main)]">{cleanWord(card?.word) || "Lesson card"}</div>
-        <div className="mt-1 text-xs text-[var(--color-text-muted)]">The wheel lands on a segment, then the prompt tells the class what to do.</div>
+        <div className="flex items-center gap-3">
+          <LessonPreview card={selectedCard} className="h-12 w-12 shrink-0 rounded-xl border border-black/8" />
+          <div>
+            <div className="text-sm font-semibold text-[var(--color-text-main)]">Speaking prompt: {cleanWord(selectedCard.word)}</div>
+            <div className="mt-1 text-xs text-[var(--color-text-muted)]">Describe it or use it in a sentence.</div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function YesNoVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const card = previewLessonCards(cards, 1, "apple")[0];
+  const word = cleanWord(card.word) || "apple";
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(108,144,255,0.08))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -155,23 +217,25 @@ function YesNoVisual({ cards }: { cards: LessonCard[] }) {
       </div>
       <div className="mt-4 rounded-[1.5rem] border border-black/8 bg-white p-4 shadow-sm">
         <div className="rounded-[1.25rem] border border-black/10 bg-[var(--color-bg-main)] p-4 text-center">
-          <img src={card?.image ?? "/placeholder.png"} alt={cleanWord(card?.word) || "Lesson card"} className="mx-auto h-40 w-full max-w-[18rem] object-contain" />
-          <div className="mt-3 text-xl font-black tracking-tight text-[var(--color-text-main)]">{cleanWord(card?.word) || "Lesson sentence"}</div>
+          <LessonPreview card={card} className="mx-auto h-32 w-full max-w-[18rem] rounded-xl" />
+          <div className="mt-3 text-xl font-black tracking-tight text-[var(--color-text-main)]">The word is “{word}”.</div>
+          <div className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">Correct sentence</div>
         </div>
         <div className="mt-4 flex justify-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400 text-lg font-black text-white">YES</div>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-400 text-lg font-black text-white">NO</div>
+          <div className="flex h-16 min-w-24 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 text-lg font-black text-white ring-4 ring-emerald-200">YES <span aria-hidden="true">✓</span></div>
+          <div className="flex h-16 min-w-24 items-center justify-center rounded-2xl bg-rose-100 px-5 text-lg font-black text-rose-700">NO</div>
         </div>
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        Start the round, then the class answers before the timer runs out.
+        Reveal the answer, then move on to the next one.
       </p>
     </div>
   );
 }
 
 function ChooseYourSideVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const card = previewLessonCards(cards, 1, "apple")[0];
+  const word = cleanWord(card.word) || "apple";
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(127,163,106,0.12))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -180,8 +244,8 @@ function ChooseYourSideVisual({ cards }: { cards: LessonCard[] }) {
       </div>
       <div className="mt-4 rounded-[1.5rem] border border-black/8 bg-white p-4 shadow-sm">
         <div className="rounded-[1.25rem] border border-black/10 bg-[var(--color-bg-main)] p-3 text-center">
-          <img src={resolveLessonImageUrl(card?.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || "Lesson card"} className="mx-auto h-28 w-full object-contain" />
-          <div className="mt-2 text-lg font-black text-[var(--color-text-main)]">{cleanWord(card?.word) || "Read the prompt"}</div>
+          <LessonPreview card={card} className="mx-auto h-28 w-full rounded-xl" />
+          <div className="mt-2 text-lg font-black text-[var(--color-text-main)]">The word is “{word}”.</div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 text-center text-white">
           <div className="rounded-2xl bg-emerald-500 px-3 py-5 text-lg font-black">← YES</div>
@@ -189,14 +253,14 @@ function ChooseYourSideVisual({ cards }: { cards: LessonCard[] }) {
         </div>
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        Students choose a side, then the board reveals the correct answer when the timer ends.
+        They can point, vote, answer aloud, or physically move to that side of the classroom.
       </p>
     </div>
   );
 }
 
 function FourCornersVisual({ cards }: { cards: LessonCard[] }) {
-  const previewCards = ensureCards(cards, 4, "Corner");
+  const previewCards = previewLessonCards(cards, 4, "Corner");
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,155,185,0.08))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -204,53 +268,81 @@ function FourCornersVisual({ cards }: { cards: LessonCard[] }) {
         <MiniLabel>4 choices</MiniLabel>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        {previewCards.slice(0, 4).map((card, index) => (
+        {previewCards.map((card, index) => (
           <div key={card.id} className="relative overflow-hidden rounded-[1.35rem] border border-black/8 bg-white p-2 shadow-sm">
-            <div className="absolute left-2 top-2 rounded-full bg-white/92 px-2 py-1 text-[11px] font-black">{index + 1}</div>
-            <img src={resolveLessonImageUrl(card.image ?? "/placeholder.png")} alt={cleanWord(card.word)} className="h-32 w-full rounded-[1rem] object-cover" />
-            <div className="mt-2 text-center text-sm font-black text-[var(--color-text-main)]">{cleanWord(card.word)}</div>
+            <div className="relative">
+              <LessonPreview card={card} className="h-24 w-full rounded-[1rem] sm:h-28" />
+              <div className="absolute left-2 top-2 z-10 rounded-full bg-white/95 px-2 py-1 text-[11px] font-black">Corner {index + 1}</div>
+              {index === 1 ? (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[1rem] bg-slate-950/85 text-center text-xs font-black uppercase tracking-wider text-white">Safe</div>
+              ) : null}
+              {index === 2 ? (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[1rem] bg-rose-600/80 text-center text-lg font-black uppercase tracking-wider text-white">Bomb!</div>
+              ) : null}
+              {index === 3 ? (
+                <div className="absolute bottom-2 right-2 rounded-full bg-emerald-500 px-2 py-1 text-xs font-black text-white">✓ Action</div>
+              ) : null}
+            </div>
+            <div className="mt-2 truncate text-center text-sm font-black text-[var(--color-text-main)]">{cleanWord(card.word)}</div>
           </div>
         ))}
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        The active corner is the one the class moves to. Blacked out squares are safe, and bombs can crater a square.
+        Students choose a corner. Each corner has its own action when selected.
       </p>
     </div>
   );
 }
 
 function MemoryFlipVisual({ cards }: { cards: LessonCard[] }) {
-  const previewCards = ensureCards(cards, 2, "Card");
+  const [matchingCard] = previewLessonCards(cards, 1, "Match");
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(127,163,106,0.10))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <MiniLabel>Flip</MiniLabel>
         <MiniLabel>Match pairs</MiniLabel>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {previewCards.slice(0, 2).map((card, index) => (
-          <div key={card.id} className="rounded-[1.35rem] border border-black/8 bg-[var(--color-bg-main)] p-2 shadow-sm">
-            <div className="relative overflow-hidden rounded-[1rem] border border-black/8 bg-white">
-              {index === 0 ? (
-                <img src={resolveLessonImageUrl(card.image ?? "/placeholder.png")} alt={cleanWord(card.word)} className="h-36 w-full object-cover" />
-              ) : (
-                <div className="flex h-36 w-full items-center justify-center px-4 text-center text-xl font-black tracking-tight text-[var(--color-text-main)]">
-                  {cleanWord(card.word)}
-                </div>
-              )}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {Array.from({ length: 6 }, (_, index) => {
+          const isFlipped = index === 0 || index === 1;
+
+          return (
+            <div key={index} className="rounded-[1rem] border border-black/8 bg-[var(--color-bg-main)] p-1.5 shadow-sm">
+              <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-[0.8rem] border border-black/8 bg-white sm:h-28">
+                {isFlipped ? (
+                  index === 0 && matchingCard.image ? (
+                    <LessonPreview card={matchingCard} className="absolute inset-0 h-full w-full" />
+                  ) : (
+                    <span className="px-2 text-center text-sm font-black text-[var(--color-text-main)]">{cleanWord(matchingCard.word)}</span>
+                  )
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(127,163,106,0.9),rgba(30,64,175,0.86))] text-2xl font-black text-white">?</div>
+                )}
+              </div>
+              {isFlipped ? <div className="pt-1 text-center text-[9px] font-black uppercase text-emerald-700">Match</div> : null}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        Image, word, or image pairs can be matched. Correct matches lead into the score spinner.
+        If they match, the student or team keeps the pair.
       </p>
     </div>
   );
 }
 
 function ConnectFourVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const card = previewLessonCards(cards, 1, "Vocabulary")[0];
+  const tokens: Record<number, "red" | "blue"> = {
+    25: "blue",
+    26: "red",
+    32: "blue",
+    34: "red",
+    37: "red",
+    38: "red",
+    39: "red",
+    40: "red",
+  };
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(108,144,255,0.08))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -261,23 +353,28 @@ function ConnectFourVisual({ cards }: { cards: LessonCard[] }) {
         <div className="rounded-[1.2rem] border border-black/8 bg-[var(--color-bg-main)] p-3">
           <div className="grid grid-cols-7 gap-2">
             {Array.from({ length: 42 }, (_, index) => (
-              <div key={index} className="aspect-square rounded-full border border-black/5 bg-white" />
+              <div key={index} className="flex aspect-square items-center justify-center rounded-full border border-black/5 bg-white">
+                {tokens[index] ? <div className={`h-4/5 w-4/5 rounded-full shadow-inner ${tokens[index] === "red" ? "bg-rose-500" : "bg-blue-500"}`} /> : null}
+              </div>
             ))}
           </div>
         </div>
-        <div className="mt-3 rounded-[1rem] border border-black/8 bg-white p-2">
-          <img src={resolveLessonImageUrl(card?.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || "Lesson card"} className="h-24 w-full rounded-[0.75rem] object-cover" />
+        <div className="mt-3 flex items-center gap-3 rounded-[1rem] border border-black/8 bg-white p-2">
+          <LessonPreview card={card} className="h-16 w-20 shrink-0 rounded-[0.75rem]" />
+          <div className="text-sm font-black text-rose-700">Red connects four!</div>
         </div>
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        Choose a column, drop the token, and try to connect four before the other player does.
+        Teams take turns choosing a number at the top of the board to drop their token.
       </p>
     </div>
   );
 }
 
 function ConquerVisual({ cards }: { cards: LessonCard[] }) {
-  const card = cards[0];
+  const card = previewLessonCards(cards, 1, "Vocabulary")[0];
+  const redTerritory = new Set([0, 1, 4, 5, 6, 10]);
+  const blueTerritory = new Set([2, 3, 7, 9, 11, 14]);
   return (
     <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,211,126,0.10))] p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -286,30 +383,74 @@ function ConquerVisual({ cards }: { cards: LessonCard[] }) {
       </div>
       <div className="mt-4 rounded-[1.4rem] border border-black/8 bg-[var(--color-bg-main)] p-3 shadow-sm">
         <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 16 }, (_, index) => (
-            <div
-              key={index}
-              className={`aspect-square rounded-xl border border-black/5 ${
-                index === 5 ? "bg-[rgba(127,163,106,0.34)]" : index === 10 ? "bg-[rgba(108,144,255,0.26)]" : "bg-white"
-              }`}
-            />
-          ))}
+          {Array.from({ length: 16 }, (_, index) => {
+            const isBattle = index === 6;
+            const territoryColor = redTerritory.has(index)
+              ? "bg-rose-400"
+              : blueTerritory.has(index)
+                ? "bg-blue-400"
+                : "bg-white";
+
+            return (
+              <div
+                key={index}
+                className={`relative flex aspect-square items-center justify-center rounded-xl border border-black/5 ${territoryColor} ${
+                  isBattle ? "ring-2 ring-amber-400 ring-offset-1" : ""
+                }`}
+              >
+                {isBattle ? <span className="rounded-md bg-white px-1 py-0.5 text-[8px] font-black uppercase text-amber-800 shadow-sm">⚔ Battle</span> : null}
+              </div>
+            );
+          })}
         </div>
-        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <div className="rounded-[1rem] border border-black/8 bg-white p-2">
-            <img src={resolveLessonImageUrl(card?.image ?? "/placeholder.png")} alt={cleanWord(card?.word) || "Lesson card"} className="h-20 w-full rounded-[0.75rem] object-cover" />
-          </div>
-          <div className="rounded-full border border-black/8 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.24em] text-[var(--color-text-main)] shadow-sm">
-            Attack!
-          </div>
-          <div className="rounded-[1rem] border border-black/8 bg-white p-2 text-center text-[11px] font-semibold text-[var(--color-text-muted)]">
-            Bombs create craters and the board keeps going.
+        <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-3">
+          <LessonPreview card={card} className="h-16 w-20 rounded-[0.75rem] border border-black/8" />
+          <div>
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wide text-[var(--color-text-main)]">
+              <span className="rounded-full bg-rose-200 px-2 py-1">Team 1</span>
+              <span className="rounded-full bg-blue-200 px-2 py-1">Team 2</span>
+            </div>
+            <div className="mt-1 text-xs font-semibold text-[var(--color-text-muted)]">Territories meet at the battle square.</div>
           </div>
         </div>
       </div>
       <p className="mt-3 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
-        Build territory, contest borders, and use the active team color to track who’s in control.
+        Keep playing as teams build and defend their territory.
       </p>
+    </div>
+  );
+}
+
+function WhackWordVisual({ cards }: { cards: LessonCard[] }) {
+  const previewCards = previewLessonCards(cards, 6, "Word");
+  const target = previewCards[0];
+
+  return (
+    <div className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,155,185,0.12))] p-4 shadow-sm">
+      <div className="flex items-center gap-3 rounded-2xl border border-black/8 bg-white p-3">
+        <LessonPreview card={target} className="h-14 w-14 shrink-0 rounded-xl" />
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--color-text-muted)]">Target</div>
+          <div className="text-base font-black text-[var(--color-text-main)]">{cleanWord(target.word)}</div>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {previewCards.map((card, index) => {
+          const isTarget = index === 4;
+
+          return (
+            <div key={card.id} className="relative flex flex-col items-center pt-2">
+              {isTarget ? <div className="absolute -top-1 z-10 rounded-full bg-emerald-500 px-2 py-1 text-[9px] font-black uppercase text-white">✓ Match</div> : null}
+              <div className={`flex h-16 w-16 items-center justify-center rounded-full bg-slate-800 p-1 shadow-inner sm:h-20 sm:w-20 ${isTarget ? "ring-4 ring-emerald-300" : ""}`}>
+                <LessonPreview card={isTarget ? target : card} className="h-full w-full rounded-full border-2 border-white/80" />
+              </div>
+              <div className="mt-1 max-w-full truncate text-center text-[10px] font-bold text-[var(--color-text-main)]">
+                {cleanWord(isTarget ? target.word : card.word)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -318,234 +459,257 @@ function gameGuide(game: GameInfo, lessonCards: LessonCard[]) {
   switch (game.id) {
     case "image-reveal":
       return {
-        intro: "Reveal the picture one tile at a time, then use the score spinner to award points.",
+        intro: <>Choose a square or use <strong>Random Select</strong> to uncover part of the picture.</>,
         cards: [
           {
             title: "Board",
-            body: "A grid of tiles covers one large lesson image. Each tile hides a small piece of the picture until the class reveals it.",
+            body: <>Students try to guess the word before the whole picture is revealed.</>,
           },
           {
             title: "Buttons",
-            body: "Remove tile opens one square, and the score generator can award or remove points after the answer.",
+            body: <>Keep uncovering squares until someone gets it right.</>,
           },
           {
             title: "Round flow",
-            body: "Teachers reveal a little, ask the question, then keep the image hidden until the right moment.",
+            body: <>Move on to the next picture and play again. Use <strong>Settings</strong> to change the difficulty.</>,
           },
           {
             title: "Tip",
-            body: "Use the image as the clue and keep the reveal pace steady so the class can guess together.",
+            body: <>Encourage students to answer in a full sentence when appropriate.</>,
           },
         ],
-        visual: <ImageRevealVisual game={game} cards={lessonCards} />,
+        visual: <ImageRevealVisual cards={lessonCards} />,
       };
     case "kaboom":
       return {
-        intro: "Randomly select a square, answer the challenge, then score points while avoiding the bomb.",
+        intro: "Split the class into two teams.",
         cards: [
           {
             title: "Board",
-            body: "The board is a grid of squares. The teacher can set the size so the game stays classroom-friendly.",
+            body: <>Choose a square or use <strong>Random Select</strong>.</>,
           },
           {
             title: "Button",
-            body: "Random Select chooses the next square and disappears while the game is thinking.",
+            body: <>Students make a sentence using the picture. If they&apos;re correct, reveal the square.</>,
           },
           {
             title: "Round flow",
-            body: "Students answer the prompt, then the score generator awards points or shows the bomb outcome.",
+            body: <>Squares can give points or reveal <strong>Kaboom!</strong>, which takes away 5 points. Keep playing until the board is finished. The team with the most points wins. Use <strong>Settings</strong> to change the game and adjust how often Kaboom appears.</>,
           },
           {
             title: "Tip",
-            body: "Use a smaller grid for younger learners and a bigger one when you want more variety.",
+            body: <>Let students discuss their answer with their team before answering.</>,
           },
         ],
         visual: <KaboomVisual cards={lessonCards} />,
       };
     case "spin-and-speak":
       return {
-        intro: "Spin the wheel, land on a task, then use the class prompt that appears in the center.",
+        intro: "Spin the wheel.",
         cards: [
           {
             title: "Wheel",
-            body: "The wheel is split into classroom activity segments. The arrow shows the landed task.",
+            body: <>Use the word or picture it lands on as the speaking prompt.</>,
           },
           {
             title: "Button",
-            body: "Spin launches the wheel. The button pulses when the wheel is ready, so it’s easy to spot from the front of the room.",
+            body: <>Follow the action shown on the wheel to score points.</>,
           },
           {
             title: "Round flow",
-            body: "The landed segment opens the prompt, and the score generator appears after a correct answer.",
+            body: <>Spin again for the next student or team.</>,
           },
           {
             title: "Tip",
-            body: "The wheel is best used as a quick whole-class warm up because it keeps the pace moving.",
+            body: <>Adapt the speaking task to suit the level of your class.</>,
           },
         ],
         visual: <SpinSpeakVisual cards={lessonCards} />,
       };
     case "yes-or-no":
       return {
-        intro: "Show a prompt, start the timer, and let the class vote yes or no before the round ends.",
+        intro: "Before starting, prepare correct and incorrect sentences for the vocabulary.",
         cards: [
           {
             title: "Board",
-            body: "A single prompt card sits in the center of the game with the answer buttons below it and the timer floating above.",
+            body: <>Show the picture and sentence to the class.</>,
           },
           {
             title: "Modes",
-            body: "Sentence uses teacher-written prompts, Vocabulary checks image and word matches, and Mix combines both.",
+            body: <>Students decide whether the sentence is correct: <strong>Yes or No?</strong></>,
           },
           {
             title: "Buttons",
-            body: "Start begins the round, then the Yes and No buttons become the class response. Saved sets can be loaded from the modal.",
+            body: <>Reveal the answer, then move on to the next one.</>,
           },
           {
             title: "Tip",
-            body: "Use a bold prompt and large image so the whole class can read it together from the screen.",
+            body: <>Ask students to explain why an incorrect sentence is wrong or correct it themselves.</>,
           },
         ],
         visual: <YesNoVisual cards={lessonCards} />,
       };
     case "choose-your-side":
       return {
-        intro: "Show a prompt, start the timer, and have students move to the Yes or No side of the classroom.",
+        intro: "Before starting, prepare correct and incorrect sentences for the vocabulary.",
         cards: [
           {
             title: "Board",
-            body: "The image and prompt stay centred, with a green YES side on the left and a red NO side on the right.",
+            body: <>Show the sentence to the class.</>,
           },
           {
             title: "Move",
-            body: "Students decide, then move to the matching side while the timer counts down.",
+            body: <>Students choose which side they think is correct. They can point, vote, answer aloud, or physically move to that side of the classroom.</>,
           },
           {
             title: "Reveal",
-            body: "The answer reveals automatically when time ends. Saved sets keep the cards, prompts, and correct answers together.",
+            body: <>Reveal the answer and start the next round.</>,
           },
           {
             title: "Tip",
-            body: "Leave a safe route to both sides of the classroom and use a short timer to keep the movement energetic.",
+            body: <>Get students moving by assigning each answer to a side of the classroom.</>,
           },
         ],
         visual: <ChooseYourSideVisual cards={lessonCards} />,
       };
     case "four-corners":
       return {
-        intro: "Show four choices, let the class move to a corner, and keep the active corner clear and readable.",
+        intro: <>Before starting, assign <strong>Corners 1–4</strong> to four areas of your classroom.</>,
         cards: [
           {
             title: "Board",
-            body: "The four corners are the answer choices. The active corner pulses while the timer is running.",
+            body: <>Students choose a corner. Each corner has its own action when selected.</>,
           },
           {
             title: "Squares",
-            body: "Blackout squares are safe. Bomb settings can turn a square into a crater and clear nearby spaces.",
+            body: <>Blacked-out corners are safe. If a bomb appears, students in that corner lose a life or are out.</>,
           },
           {
             title: "Buttons",
-            body: "The start and settings controls live outside the board so the play space stays open and easy to see.",
+            body: <>Students who successfully complete their corner&apos;s action keep their life. Use <strong>Settings</strong> to change how often bombs appear.</>,
           },
           {
             title: "Tip",
-            body: "Use the lesson cards as the four choices so the class can compare the images before moving.",
+            body: <>Students don&apos;t have to move — they can call out their corner or write the number on a mini whiteboard.</>,
           },
         ],
         visual: <FourCornersVisual cards={lessonCards} />,
       };
     case "memory-flip":
       return {
-        intro: "Flip cards, find matches, and use the classroom settings to choose the style of the pairs.",
+        intro: "Students take turns choosing two cards.",
         cards: [
           {
             title: "Board",
-            body: "The board is a grid of card frames. Cards can be image-image, image-word, or text-only depending on the mode.",
+            body: <>Flip the cards to see what&apos;s underneath.</>,
           },
           {
             title: "Buttons",
-            body: "Flip cards to reveal them, then the score spinner awards points after a correct match.",
+            body: <>If they match, the student or team keeps the pair.</>,
           },
           {
             title: "Modes",
-            body: "Image + image, Image + text, and Text only all use the same board, but each pair behaves differently.",
+            body: <>If they don&apos;t match, turn them back over. Continue until all the pairs have been found.</>,
           },
           {
             title: "Tip",
-            body: "The round advances after each turn, whether the match succeeds or not, so the class keeps moving.",
+            body: <>Ask students to say the word each time they turn over a card.</>,
           },
         ],
         visual: <MemoryFlipVisual cards={lessonCards} />,
       };
     case "connect-four":
       return {
-        intro: "Drop tokens into a column and try to connect four before the other player or AI does.",
+        intro: "Split the class into two teams.",
         cards: [
           {
             title: "Board",
-            body: "The grid is wide and readable, with each column acting as a move choice.",
+            body: <>Teams take turns choosing a number at the top of the board to drop their token.</>,
           },
           {
             title: "Buttons",
-            body: "Settings controls the opponent, board size, and music. The board itself stays focused on the play grid.",
+            body: <>Give the team a question or vocabulary challenge for their turn.</>,
           },
           {
             title: "Round flow",
-            body: "Choose a column, let the disc fall, and watch for a winning line of four tokens.",
+            body: <>The first team to connect four tokens in a row wins. Use <strong>Settings</strong> to play against another team or the AI.</>,
           },
           {
             title: "Tip",
-            body: "The game is strongest when the class can see the full board and the winning line lights up clearly.",
+            body: <>Four tokens can connect horizontally, vertically, or diagonally.</>,
           },
         ],
         visual: <ConnectFourVisual cards={lessonCards} />,
       };
     case "conquer":
       return {
-        intro: "Build territory, defend borders, and fight for the board with bombs and attacks.",
+        intro: <>Create <strong>2–4 teams</strong>.</>,
         cards: [
           {
             title: "Board",
-            body: "The big grid is your map. Teams color squares and try to control the most territory by the end.",
+            body: <>Teams take turns choosing a square. If they make a correct sentence, they claim that square.</>,
           },
           {
             title: "Attacks",
-            body: "When three sides of a square are pressured, the attack contest opens automatically.",
+            body: <>When a team gets three squares touching an opponent&apos;s square, a battle starts automatically.</>,
           },
           {
             title: "Bombs",
-            body: "Danger squares explode into craters, clear nearby spaces, and then stay out of play.",
+            body: <>If the attacking team wins, they conquer the square. If the defending team wins, their square becomes safe. Keep playing as teams build and defend their territory.</>,
           },
           {
             title: "Tip",
-            body: "Use the active team color, the score panel, and the attack popup to keep the class following the action.",
+            body: <>Conquer works well as a full lesson review and can take up to 30 minutes to complete.</>,
           },
         ],
         visual: <ConquerVisual cards={lessonCards} />,
       };
+    case "whack-a-word":
+      return {
+        intro: "Look at the target word or picture.",
+        cards: [
+          {
+            title: "Board",
+            body: <>Different vocabulary items will pop up on the board.</>,
+          },
+          {
+            title: "Play",
+            body: <>Hit the item that matches the target.</>,
+          },
+          {
+            title: "Scoring",
+            body: <>Correct hits score points. Wrong hits don&apos;t. Use <strong>Settings</strong> to change the difficulty and number of teams.</>,
+          },
+          {
+            title: "Tip",
+            body: <>Start slowly with younger students, then increase the difficulty when they&apos;re ready.</>,
+          },
+        ],
+        visual: <WhackWordVisual cards={lessonCards} />,
+      };
   }
 
   return {
-    intro: "Reveal the picture one tile at a time, then use the score spinner to award points.",
+    intro: "Choose a square or use Random Select to uncover part of the picture.",
     cards: [
       {
         title: "Board",
-        body: "A grid of tiles covers one large lesson image. Each tile hides a small piece of the picture until the class reveals it.",
+        body: "Students try to guess the word before the whole picture is revealed.",
       },
       {
         title: "Buttons",
-        body: "Remove tile opens one square, and the score generator can award or remove points after the answer.",
+        body: "Keep uncovering squares until someone gets it right.",
       },
       {
         title: "Round flow",
-        body: "Teachers reveal a little, ask the question, then keep the image hidden until the right moment.",
+        body: "Move on to the next picture and play again. Use Settings to change the difficulty.",
       },
       {
         title: "Tip",
-        body: "Use the image as the clue and keep the reveal pace steady so the class can guess together.",
+        body: "Encourage students to answer in a full sentence when appropriate.",
       },
     ],
-    visual: <ImageRevealVisual game={game} cards={lessonCards} />,
+    visual: <ImageRevealVisual cards={lessonCards} />,
   };
 }
 
