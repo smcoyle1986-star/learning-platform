@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, Gamepad2, HelpCircle, Play, Sparkles, X } from "lucide-react";
 import { GameHowToModal } from "@/components/games/GameHowToModal";
 import PageHeader from "@/components/navigation/PageHeader";
 import { GAME_NAMES, getGameTopic, findTopicForCards, topicsUrl, gameUrl } from "@/lib/games/topics";
-import { getGameSource, setGameSource, subscribeGameSource } from "@/lib/games/session";
 import { GameFlowDialog } from "@/components/games/GameFlowDialog";
 import { useTopicLaunch } from "@/components/games/useTopicLaunch";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
@@ -147,20 +146,30 @@ const rankingFrames = [
 export default function GamesLandingPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const savedSource = useSyncExternalStore(subscribeGameSource, getGameSource, () => "topics");
-  const source = params.get("source") ?? savedSource;
   const [reuseGame, setReuseGame] = useState<string | null>(null);
   const retainedTopic = getGameTopic(params.get("topic"));
   const topicLaunch = useTopicLaunch(reuseGame ?? "image-reveal");
   const [lessonTray, setLessonTray] = useState<GameCard[]>([]);
+  const [lessonTrayReady, setLessonTrayReady] = useState(false);
   const [helpGame, setHelpGame] = useState<GameInfo | null>(null);
   const [popularity, setPopularity] = useState<GamePopularityPayload | null>(null);
   const gameGridRef = useRef<HTMLDivElement | null>(null);
   const { access, canAccessGame } = useBillingAccess();
-  const { user } = useAuth();
-  const topicsMode = !user || source === "topics";
+  const { user, loading: authLoading } = useAuth();
+  const requestedSource = params.get("source");
+  // Signed-in teachers should arrive at the vocabulary they have already prepared.
+  // An explicit toggle choice remains respected for the current URL; Topics is the
+  // default only when there are no lesson-tray cards to use.
+  const source = !user
+    ? "topics"
+    : requestedSource === "topics" || requestedSource === "tray"
+      ? requestedSource
+      : !lessonTrayReady || lessonTray.length === 0 ? "topics" : "tray";
+  const topicsMode = source === "topics";
 
   useEffect(() => {
+    if (authLoading || (user && !lessonTrayReady)) return;
+
     const trackHubView = () => {
       void trackFreeGameEvent({
         eventType: "hub_viewed",
@@ -178,10 +187,9 @@ export default function GamesLandingPage() {
     };
     window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
     return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
-  }, [topicsMode]);
+  }, [authLoading, lessonTrayReady, topicsMode, user]);
   const trayTopic = findTopicForCards(lessonTray);
   function changeSource(next: "topics" | "tray") {
-    setGameSource(next);
     router.replace(`/games?source=${next}`, { scroll: false });
   }
   const featuredGameId = access?.featuredGameId ?? getFeaturedWeeklyGameId();
@@ -194,6 +202,7 @@ export default function GamesLandingPage() {
   useEffect(() => {
     return subscribeToLessonTray((cards) => {
       setLessonTray(cards as GameCard[]);
+      setLessonTrayReady(true);
     });
   }, []);
 

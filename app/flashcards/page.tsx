@@ -526,7 +526,7 @@ export default function FlashcardsPage() {
         onClearTray={clearLessonTray}
       />
 
-      {lessonTrayReady && lessonTray.length === 0 && !isMyCards && results.length === 0 ? (
+      {isGuest && lessonTrayReady && lessonTray.length === 0 && !isMyCards && results.length === 0 ? (
         <StarterLessonTopics onUseStarter={useStarterLesson} />
       ) : null}
 
