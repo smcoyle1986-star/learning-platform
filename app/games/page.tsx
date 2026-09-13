@@ -19,7 +19,7 @@ import {
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import { getFeaturedWeeklyGameId } from "@/lib/billing/featured";
 import { useAuth } from "@/components/AuthProvider";
-import { freeGamesSignupUrl, trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { freeGamesSignupUrl, trackFreeGameEvent, trackUseOwnVocabularyClick } from "@/lib/games/free-analytics";
 import { COOKIE_CONSENT_EVENT, type CookieConsent } from "@/lib/privacy/consent";
 
 /**
@@ -237,6 +237,9 @@ export default function GamesLandingPage() {
 
   const enterGame = (gameId: string) => {
     if (topicsMode && retainedTopic) { setReuseGame(gameId); return; }
+    if (!topicsMode && access && !canAccessGame(gameId)) {
+      void trackUseOwnVocabularyClick({ gameKey: gameId, topicId: trayTopic?.id, topicLabel: trayTopic?.title, topicCategory: trayTopic?.category, source: "free_games", action: "use_own_vocabulary" });
+    }
     router.push(topicsMode ? topicsUrl(gameId) : gameUrl(gameId, trayTopic?.id));
   };
 
@@ -475,7 +478,7 @@ export default function GamesLandingPage() {
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   {!user ? (
-                    <Link href={freeGamesSignupUrl("/flashcards", { gameKey: featuredGame.id })} className="btn btn-primary px-5 py-3 text-sm">
+                    <Link onClick={() => void trackUseOwnVocabularyClick({ gameKey: featuredGame.id, source: "free_games", action: "create_account" })} href={freeGamesSignupUrl("/flashcards", { gameKey: featuredGame.id })} className="btn btn-primary px-5 py-3 text-sm">
                       Create a free account
                     </Link>
                   ) : lessonTray.length === 0 ? (

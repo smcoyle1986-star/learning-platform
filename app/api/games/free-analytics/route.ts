@@ -7,11 +7,11 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
-const EVENT_TYPES = new Set(["hub_viewed", "game_selected", "topic_previewed", "topic_selected", "game_started", "game_completed", "finish_action", "signup_started", "signup_completed"]);
+const EVENT_TYPES = new Set(["hub_viewed", "game_selected", "topic_previewed", "topic_selected", "game_started", "meaningful_interaction", "game_completed", "another_game_selected", "another_topic_selected", "use_own_vocabulary_clicked", "finish_action", "signup_started", "signup_completed"]);
 const SOURCES = new Set(["public_topic", "lesson_tray", "custom_vocabulary", "free_games"]);
 const ACTIONS = new Set(["play_again", "change_topic", "change_game", "use_own_vocabulary", "create_account"]);
 const KEY = /^[a-z0-9-]{1,80}$/;
-const SINGLETON_EVENTS = new Set(["hub_viewed", "game_selected", "topic_selected", "game_started", "game_completed", "signup_started", "signup_completed"]);
+const SINGLETON_EVENTS = new Set(["hub_viewed", "game_selected", "topic_selected", "game_started", "meaningful_interaction", "game_completed", "another_game_selected", "another_topic_selected", "use_own_vocabulary_clicked", "signup_started", "signup_completed"]);
 const COUNTRY_CODE = /^[A-Z]{2}$/;
 
 function text(value: unknown, length: number) {
@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
     const sessionKey = text(body.sessionKey, 80);
     const attribution = attributionValue(body.attribution);
     const countryCode = text(request.headers.get("x-vercel-ip-country"), 2).toUpperCase();
+    const userAgent = request.headers.get("user-agent") ?? "";
+    const deviceType = /ipad|tablet|playbook|silk/i.test(userAgent) ? "tablet" : /mobile|iphone|ipod|android/i.test(userAgent) ? "mobile" : userAgent ? "desktop" : "unknown";
     if (!EVENT_TYPES.has(eventType) || (gameKey && !Object.hasOwn(GAME_NAMES, gameKey)) || (topicId && !getGameTopic(topicId)) || (source && !SOURCES.has(source)) || (action && !ACTIONS.has(action)) || (sessionKey && !KEY.test(sessionKey))) {
       return NextResponse.json({ error: "Invalid Free Games analytics event." }, { status: 400 });
     }
@@ -83,7 +85,6 @@ export async function POST(request: NextRequest) {
       account_tier: accountTier,
       source: source || null,
       action: action || null,
-      user_id: user?.id ?? null,
       session_key: sessionKey || null,
       event_key: dedupeKey,
       utm_source: attributionText(attribution.utmSource),
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
       referrer_host: attributionText(attribution.referrerHost),
       landing_path: attributionText(attribution.landingPath),
       country_code: COUNTRY_CODE.test(countryCode) ? countryCode : null,
+      device_type: deviceType,
     });
     if (error?.code === "23505" && dedupeKey) return NextResponse.json({ ok: true, duplicate: true });
     if (error && /free_game_events|relation/i.test(error.message)) return NextResponse.json({ ok: true, skipped: true });

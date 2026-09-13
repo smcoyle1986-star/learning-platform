@@ -55,13 +55,11 @@ function readFreeGamesSignupContext(value: unknown): FreeGamesSignupContext | nu
 
 async function recordFreeGamesSignupCompletion({
   context,
-  userId,
   signupAttemptId,
   attribution,
   request,
 }: {
   context: FreeGamesSignupContext | null;
-  userId: string;
   signupAttemptId: string;
   attribution: unknown;
   request: NextRequest;
@@ -70,6 +68,8 @@ async function recordFreeGamesSignupCompletion({
   const topic = getGameTopic(context.topicId);
   const values = typeof attribution === "object" && attribution !== null ? attribution as Record<string, unknown> : {};
   const countryCode = text(request.headers.get("x-vercel-ip-country"), 2).toUpperCase();
+  const userAgent = request.headers.get("user-agent") ?? "";
+  const deviceType = /ipad|tablet|playbook|silk/i.test(userAgent) ? "tablet" : /mobile|iphone|ipod|android/i.test(userAgent) ? "mobile" : userAgent ? "desktop" : "unknown";
   const { error } = await getSupabaseAdmin().from("free_game_events").insert({
     event_type: "signup_completed",
     game_key: context.gameKey,
@@ -79,7 +79,6 @@ async function recordFreeGamesSignupCompletion({
     account_tier: "free_unconfirmed",
     source: "free_games",
     action: "create_account",
-    user_id: userId,
     session_key: context.sessionKey,
     event_key: `v1:signup-completed:${signupAttemptId}`,
     utm_source: attributionText(values.utmSource),
@@ -90,6 +89,7 @@ async function recordFreeGamesSignupCompletion({
     referrer_host: attributionText(values.referrerHost),
     landing_path: attributionText(values.landingPath),
     country_code: COUNTRY_CODE.test(countryCode) ? countryCode : null,
+    device_type: deviceType,
   });
   if (error && !/free_game_events|relation/i.test(error.message)) {
     console.error("Free Games signup analytics failed:", error);
@@ -181,7 +181,6 @@ export async function POST(request: NextRequest) {
       }
       await recordFreeGamesSignupCompletion({
         context: freeGamesContext,
-        userId: data.user.id,
         signupAttemptId,
         attribution: body.attribution,
         request,

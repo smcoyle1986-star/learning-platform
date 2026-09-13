@@ -4,7 +4,9 @@ create table if not exists public.free_game_events (
   id uuid primary key default gen_random_uuid(),
   event_type text not null check (event_type in (
     'hub_viewed', 'game_selected', 'topic_previewed', 'topic_selected',
-    'game_started', 'game_completed', 'finish_action', 'signup_started',
+    'game_started', 'meaningful_interaction', 'game_completed',
+    'another_game_selected', 'another_topic_selected', 'use_own_vocabulary_clicked',
+    'finish_action', 'signup_started',
     'signup_completed'
   )),
   game_key text,
@@ -48,10 +50,15 @@ create index if not exists free_game_events_topic_created_idx on public.free_gam
 create index if not exists free_game_events_tier_created_idx on public.free_game_events (account_tier, created_at desc);
 
 alter table public.free_game_events add column if not exists event_key text;
+alter table public.free_game_events add column if not exists device_type text;
+alter table public.free_game_events drop constraint if exists free_game_events_device_type_check;
+alter table public.free_game_events add constraint free_game_events_device_type_check check (device_type is null or device_type in ('mobile', 'tablet', 'desktop', 'unknown'));
 alter table public.free_game_events drop constraint if exists free_game_events_event_type_check;
 alter table public.free_game_events add constraint free_game_events_event_type_check check (event_type in (
   'hub_viewed', 'game_selected', 'topic_previewed', 'topic_selected',
-  'game_started', 'game_completed', 'finish_action', 'signup_started',
+  'game_started', 'meaningful_interaction', 'game_completed',
+  'another_game_selected', 'another_topic_selected', 'use_own_vocabulary_clicked',
+  'finish_action', 'signup_started',
   'signup_completed'
 ));
 alter table public.free_game_events drop constraint if exists free_game_events_source_check;
