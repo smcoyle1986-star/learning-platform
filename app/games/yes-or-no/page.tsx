@@ -23,10 +23,17 @@ import {
 } from "@/lib/games/yes-or-no/repository";
 
 type GameCard = {
+  /** Unique identity for this prepared prompt. */
   id: string;
+  /** The vocabulary item shared by prompts made with Duplicate. */
+  vocabularyId: string;
   word: string;
   image?: string | null;
 };
+
+function createPromptId() {
+  return `prompt-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+}
 
 type Team = {
   id: string;
@@ -97,11 +104,13 @@ export default function YesOrNoPage() {
         if (Array.isArray(parsed)) {
           const normalized = parsed.map((rawCard): GameCard => {
             const card = (rawCard ?? {}) as Record<string, unknown>;
+            const id = String(card.id ?? card.word ?? Math.random().toString(36).slice(2));
             const rawImage = [card.image, card.image_id, card.img].find(
               (value): value is string => typeof value === "string"
             );
             return {
-              id: String(card.id ?? card.word ?? Math.random().toString(36).slice(2)),
+              id,
+              vocabularyId: String(card.vocabularyId ?? card.vocabulary_id ?? id),
               word: String(card.word ?? card.text ?? ""),
               image: resolveLessonImageUrl(rawImage),
             };
@@ -245,6 +254,7 @@ export default function YesOrNoPage() {
       const current = sentencesMap[card.id];
       return {
         cardId: card.id,
+        vocabularyId: card.vocabularyId,
         text: current?.text ?? "",
         isYes: current?.isYes ?? true,
         word: card.word,
@@ -254,17 +264,52 @@ export default function YesOrNoPage() {
   }
 
   function cardsFromPromptSet(set: YesNoPromptSetRecord) {
-    const seen = new Set<string>();
-    return set.rows.reduce<GameCard[]>((cards, row) => {
-      if (!row.cardId || seen.has(row.cardId)) return cards;
-      seen.add(row.cardId);
-      cards.push({
-        id: row.cardId,
-        word: row.word,
-        image: resolveLessonImageUrl(row.image),
-      });
-      return cards;
-    }, []);
+    return set.rows.filter((row) => row.cardId).map((row) => ({
+      id: row.cardId,
+      vocabularyId: row.vocabularyId || row.cardId,
+      word: row.word,
+      image: resolveLessonImageUrl(row.image),
+    }));
+  }
+
+  function duplicatePromptCard(promptId: string) {
+    const sourceIndex = tray.findIndex((card) => card.id === promptId);
+    if (sourceIndex < 0) return;
+    const source = tray[sourceIndex];
+    const vocabularyId = source.vocabularyId || source.id;
+    let insertAt = sourceIndex + 1;
+    while (tray[insertAt]?.vocabularyId === vocabularyId) insertAt += 1;
+    const duplicate: GameCard = { ...source, id: createPromptId(), vocabularyId };
+
+    setTray((cards) => [...cards.slice(0, insertAt), duplicate, ...cards.slice(insertAt)]);
+    setSentencesMap((current) => ({ ...current, [duplicate.id]: { text: "", isYes: true } }));
+    setUsedIndices((indices) => indices.map((index) => index >= insertAt ? index + 1 : index));
+    setCurrentCardIndex((index) => index !== null && index >= insertAt ? index + 1 : index);
+    setCardModeMap((modes) => Object.fromEntries(Object.entries(modes).map(([key, mode]) => {
+      const index = Number(key);
+      return [index >= insertAt ? index + 1 : index, mode];
+    })));
+  }
+
+  function removeDuplicatePromptCard(promptId: string) {
+    const removeAt = tray.findIndex((card) => card.id === promptId);
+    if (removeAt < 0) return;
+    const card = tray[removeAt];
+    if ((card.vocabularyId || card.id) === card.id) return;
+
+    setTray((cards) => cards.filter((_, index) => index !== removeAt));
+    setSentencesMap((current) => {
+      const next = { ...current };
+      delete next[promptId];
+      return next;
+    });
+    setUsedIndices((indices) => indices.filter((index) => index !== removeAt).map((index) => index > removeAt ? index - 1 : index));
+    setCurrentCardIndex((index) => index === removeAt ? null : index !== null && index > removeAt ? index - 1 : index);
+    setCardModeMap((modes) => Object.fromEntries(Object.entries(modes).flatMap(([key, mode]) => {
+      const index = Number(key);
+      if (index === removeAt) return [];
+      return [[index > removeAt ? index - 1 : index, mode]];
+    })));
   }
 
   function hasDifferentCards(nextCards: GameCard[]) {
@@ -279,11 +324,14 @@ export default function YesOrNoPage() {
     }
 
     setTray(nextTray);
-    writeGameTrayRaw(JSON.stringify(nextTray), flow?.topic?.id);
+    const lessonTray = nextTray.filter((card, index) =>
+      nextTray.findIndex((candidate) => candidate.vocabularyId === card.vocabularyId) === index
+    ).map((card) => ({ ...card, id: card.vocabularyId }));
+    writeGameTrayRaw(JSON.stringify(lessonTray), flow?.topic?.id);
     setPromptSetId(preserveSavedId ? set.id : null);
     setPromptSetName(set.name || "Activity Set");
     setPromptSetIsPublic(preserveSavedId ? set.isPublic : false);
-    setSentencesMap(Object.fromEntries(set.rows.map((row) => [row.cardId, {
+    setSentencesMap(Object.fromEntries(set.rows.filter((row) => row.cardId).map((row) => [row.cardId, {
       text: row.text,
       isYes: row.isYes,
     }])));
@@ -1277,7 +1325,27 @@ export default function YesOrNoPage() {
                         </div>
 
                         <div className="flex-1">
-                          <div className="text-sm font-semibold mb-1">{c.word}</div>
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold">{c.word}</div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => duplicatePromptCard(c.id)}
+                                aria-label={`Duplicate ${c.word}`}
+                                className="rounded border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                              >
+                                Duplicate
+                              </button>
+                              {c.vocabularyId !== c.id && <button
+                                type="button"
+                                onClick={() => removeDuplicatePromptCard(c.id)}
+                                aria-label={`Remove duplicate ${c.word}`}
+                                className="rounded border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-500 hover:bg-red-50 hover:text-red-600"
+                              >
+                                Remove
+                              </button>}
+                            </div>
+                          </div>
                           <textarea
                             value={sentencesMap[c.id]?.text ?? ""}
                             onChange={(e) => {

@@ -4,7 +4,10 @@ const GAME_KEY = "yes-or-no";
 export type YesNoPromptSetScope = "own" | "others";
 
 export type YesNoPromptRow = {
+  /** Unique identity of this sentence prompt, even when vocabularyId repeats. */
   cardId: string;
+  /** Shared vocabulary item identity for duplicated sentence prompts. */
+  vocabularyId?: string;
   text: string;
   isYes: boolean;
   word: string;
@@ -34,6 +37,7 @@ function normalizePromptRow(raw: unknown): YesNoPromptRow {
   const source = (raw ?? {}) as Record<string, unknown>;
   return {
     cardId: String(source.cardId ?? source.card_id ?? source.id ?? ""),
+    vocabularyId: String(source.vocabularyId ?? source.vocabulary_id ?? source.cardId ?? source.card_id ?? source.id ?? ""),
     text: String(source.text ?? ""),
     isYes: Boolean(source.isYes ?? source.is_yes ?? true),
     word: String(source.word ?? ""),
