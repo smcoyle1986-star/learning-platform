@@ -35,7 +35,9 @@ function MeaningfulInteractionTracker({ gameId, topicId, topicLabel, topicCatego
       try {
         const count = Number(window.sessionStorage.getItem(contextKey) ?? "0") + 1;
         window.sessionStorage.setItem(contextKey, String(count));
-        if (count === 3) {
+        // Retry after the threshold until the event write succeeds. The client
+        // and server both deduplicate successful writes for this session.
+        if (count >= 3) {
           void trackFreeGameEvent({ eventType: "meaningful_interaction", gameKey: gameId, topicId, topicLabel, topicCategory, source: "public_topic" });
         }
       } catch {

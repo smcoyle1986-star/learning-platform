@@ -188,12 +188,11 @@ export async function getFreeAnalyticsSnapshot(periodDays: number | null): Promi
   const signupCompletions = conversionFunnel.find((stage) => stage.key === "signup-completed")?.sessions ?? 0;
   const hubSessions = funnel[0]?.sessions ?? 0;
 
-  const contextId = (row: EventRow) => `${sessionId(row)}:${row.game_key ?? ""}:${row.topic_id ?? ""}`;
-  const startedContexts = new Set(rowsFor("game_started").map(contextId));
-  const interactionContexts = new Set(rowsFor("meaningful_interaction").map(contextId));
-  const completedContexts = new Set(rowsFor("game_completed").map(contextId));
-  const startedWithoutInteraction = [...startedContexts].filter((id) => !interactionContexts.has(id)).length;
-  const interactedWithoutCompletion = [...interactionContexts].filter((id) => !completedContexts.has(id)).length;
+  const startedSessions = new Set(rowsFor("game_started").map(sessionId));
+  const interactionSessions = new Set(rowsFor("meaningful_interaction").map(sessionId));
+  const completedSessions = new Set(rowsFor("game_completed").map(sessionId));
+  const startedWithoutInteraction = [...startedSessions].filter((id) => !interactionSessions.has(id)).length;
+  const interactedWithoutCompletion = [...interactionSessions].filter((id) => !completedSessions.has(id)).length;
 
   const buckets = new Map<string, { date: string; starts: Set<string>; interactions: Set<string>; completions: Set<string>; signups: Set<string> }>();
   for (const row of rows) {

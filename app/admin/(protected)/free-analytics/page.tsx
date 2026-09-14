@@ -51,7 +51,7 @@ export default async function FreeAnalyticsPage({ searchParams }: { searchParams
     { label: "Games started", value: analytics.summary.starts, helper: `${analytics.summary.startRate}% of hub sessions`, icon: Gamepad2 },
     { label: "Meaningfully interacted", value: analytics.summary.meaningfulInteractions, helper: "3 player actions in a game", icon: MousePointerClick },
     { label: "Games completed", value: analytics.summary.completions, helper: `${analytics.summary.completionRate}% of meaningful interactions`, icon: Trophy },
-    { label: "Started, no interaction", value: analytics.summary.startedWithoutInteraction, helper: "Game sessions without 3 actions", icon: Activity },
+    { label: "Started, no interaction", value: analytics.summary.startedWithoutInteraction, helper: "Started sessions without 3 actions", icon: Activity },
     { label: "Interacted, not completed", value: analytics.summary.interactedWithoutCompletion, helper: "Meaningful sessions without a completion event", icon: Activity },
     { label: "Own vocabulary clicks", value: analytics.summary.ownVocabularyClicks, helper: "Unique sessions clicking a custom-vocabulary CTA", icon: MousePointerClick },
     { label: "Signups started", value: analytics.summary.signupStarts, helper: "From Free Games routes", icon: MousePointerClick },
