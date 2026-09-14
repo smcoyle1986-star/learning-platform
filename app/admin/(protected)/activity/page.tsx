@@ -86,7 +86,7 @@ export default async function AdminActivityPage({
       {activity.truncated && <p className="mt-4 rounded-xl border border-[#eadfc7] bg-[#fbf7ed] px-4 py-3 text-xs leading-5 text-[#7b6b4c]">Showing the latest 1,000 events from each source for {periodLabel}. Choose a shorter period to narrow the activity.</p>}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(19rem,0.8fr)_minmax(0,1.2fr)]">
-        <article className="overflow-hidden rounded-2xl border border-[#dfe4dc] bg-white">
+        <article className={`overflow-hidden rounded-2xl border border-[#dfe4dc] bg-white ${selected ? "order-last xl:order-none" : ""}`}>
           <div className="border-b border-[#e8ece5] p-5">
             <h2 className="flex items-center gap-2 font-semibold text-[#394439]"><Users aria-hidden="true" className="h-4 w-4 text-[#78906d]" />Recent sessions</h2>
             <p className="mt-1 text-xs text-[#7a8379]">{periodLabel} · most recently active first</p>
@@ -97,7 +97,7 @@ export default async function AdminActivityPage({
                 const selectedSession = selectedKey === session.key;
                 return (
                   <li key={session.key}>
-                    <Link href={`/admin/activity?period=${period}&session=${encodeURIComponent(session.key)}`} aria-current={selectedSession ? "true" : undefined} className={`block px-5 py-4 transition hover:bg-[#f7f9f5] ${selectedSession ? "bg-[#f0f5ec]" : ""}`}>
+                    <Link href={`/admin/activity?period=${period}&session=${encodeURIComponent(session.key)}#session-timeline`} aria-current={selectedSession ? "true" : undefined} className={`block px-5 py-4 transition hover:bg-[#f7f9f5] ${selectedSession ? "bg-[#f0f5ec]" : ""}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-mono text-xs font-semibold text-[#475647]">{session.userIds.length ? `Account ${shortId(session.userIds[0])}` : `Guest session ${shortId(session.key)}`}</p>
@@ -115,7 +115,7 @@ export default async function AdminActivityPage({
           {activity.sessions.length > recentSessions.length && <p className="border-t border-[#edf0ea] px-5 py-3 text-xs text-[#879085]">Showing the latest 100 sessions.</p>}
         </article>
 
-        <article className="rounded-2xl border border-[#dfe4dc] bg-white p-5 sm:p-6">
+        <article id="session-timeline" className={`rounded-2xl border border-[#dfe4dc] bg-white p-5 sm:p-6 ${selected ? "order-first xl:order-none" : ""}`}>
           {selected ? (
             <>
               <div className="flex flex-col justify-between gap-3 border-b border-[#e8ece5] pb-4 sm:flex-row sm:items-start">
