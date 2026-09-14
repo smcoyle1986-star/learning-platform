@@ -20,6 +20,7 @@ function date(value: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "Asia/Seoul",
     timeZoneName: "short",
   });
 }
@@ -66,7 +67,7 @@ export default async function AdminActivityPage({
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#718d63]">Consented first-party events</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#2f3a2f] sm:text-4xl">Activity Explorer</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6e786d]">Follow tracked actions within a browser session across platform tools and Free Games. Session IDs are pseudonymous; account IDs are shortened.</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6e786d]">Follow tracked actions within a browser session across platform tools and Free Games. Times are shown in Korea Standard Time (KST). Session IDs are pseudonymous; account IDs are shortened.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="inline-flex items-center gap-1.5 rounded-xl border border-[#dfe4dc] bg-white px-3 py-2 text-[#687268]"><MousePointerClick aria-hidden="true" className="h-3.5 w-3.5" />{activity.events.toLocaleString()} events</span>
