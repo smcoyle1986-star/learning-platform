@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
     const dedupeKey = eventKey({ eventType, gameKey, topicId: topic?.id ?? "", source, action, sessionKey });
     const { error } = await admin.from("free_game_events").insert({
       event_type: eventType,
+      user_id: user?.id ?? null,
       game_key: gameKey || null,
       topic_id: topic?.id ?? null,
       topic_label: topic?.title ?? null,
