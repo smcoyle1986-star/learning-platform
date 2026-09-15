@@ -116,18 +116,22 @@ export async function getEmailDeliveryHealth(): Promise<EmailDeliveryHealth> {
   }
 
   try {
-    const [resendEmails, usersResult] = await Promise.all([
+    const [resendEmails, pendingVerificationResult] = await Promise.all([
       listRecentResendEmails(apiKey),
-      getSupabaseAdmin().auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      getSupabaseAdmin()
+        .from("classendo_email_verifications")
+        .select("normalized_email")
+        .is("verified_at", null),
     ]);
-    if (usersResult.error) throw usersResult.error;
+    if (pendingVerificationResult.error) throw pendingVerificationResult.error;
 
     const now = Date.now();
     const lookback = now - LOOKBACK_HOURS * 60 * 60 * 1_000;
     const recentlyUnconfirmed = new Map(
-      usersResult.data.users
-        .filter((user) => !user.email_confirmed_at && user.email && user.confirmation_sent_at)
-        .map((user) => [user.email!.toLowerCase(), user]),
+      (pendingVerificationResult.data ?? [])
+        .map((row) => String(row.normalized_email ?? "").trim().toLowerCase())
+        .filter(Boolean)
+        .map((email) => [email, email]),
     );
     const confirmations = resendEmails.filter((email) => {
       const createdAt = Date.parse(asString(email.created_at));

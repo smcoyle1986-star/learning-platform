@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getBillingAccessForUser } from "@/lib/billing/access";
 import { GAME_NAMES, getGameTopic } from "@/lib/games/topics";
+import { getClassendoVerification } from "@/lib/auth/server-verification";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
@@ -72,8 +73,21 @@ export async function POST(request: NextRequest) {
 
     const user = await getRequestUser(request).catch(() => null);
     const admin = getSupabaseAdmin();
-    const access = user?.id ? await getBillingAccessForUser(admin, user.id) : null;
-    const accountTier = !user ? "guest" : !user.email_confirmed_at ? "free_unconfirmed" : access?.accountPlan === "welcome_trial" ? "trial" : access?.isPremium ? "premium" : "free";
+    const [access, verification] = user?.id
+      ? await Promise.all([
+          getBillingAccessForUser(admin, user.id),
+          getClassendoVerification(user.id),
+        ])
+      : [null, null];
+    const accountTier = !user
+      ? "guest"
+      : !verification?.verified
+        ? "free_unconfirmed"
+        : access?.accountPlan === "welcome_trial"
+          ? "trial"
+          : access?.isPremium
+            ? "premium"
+            : "free";
     const topic = getGameTopic(topicId);
     const dedupeKey = eventKey({ eventType, gameKey, topicId: topic?.id ?? "", source, action, sessionKey });
     const { error } = await admin.from("free_game_events").insert({
