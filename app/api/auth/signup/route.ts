@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { track } from "@vercel/analytics/server";
 import { NextRequest, NextResponse } from "next/server";
 
 import { sendClassendoVerificationEmail } from "@/lib/auth/email-verification";
@@ -187,6 +188,15 @@ export async function POST(request: NextRequest) {
       });
     }
     if (!data.session) {
+      try {
+        await track("signup_account_created", {
+          email_confirmation_required: true,
+          destination: body.nextPath === "/upgrade" ? "upgrade" : "flashcards",
+        });
+      } catch (analyticsError) {
+        // Analytics must never prevent a teacher from completing signup.
+        console.error("Could not record pending signup conversion:", analyticsError);
+      }
       return NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
     }
 

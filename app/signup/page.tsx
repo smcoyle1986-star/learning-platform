@@ -486,7 +486,7 @@ export default function SignupPage() {
                 <p id="signup-password-help" className="mt-2 text-sm leading-6 text-[#6b756b]">Use at least 6 characters. Choose a password you can keep for Classendo.</p>
               </div>
 
-              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] p-4 text-sm leading-6 text-[#566056]">
+              <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-[#566056]">
                 <input
                   type="checkbox"
                   checked={legalAccepted}
@@ -495,16 +495,14 @@ export default function SignupPage() {
                   className="mt-1 h-4 w-4 shrink-0 accent-[#6c8f58]"
                 />
                 <span>
-                  I confirm that I am at least 18 and agree to the{" "}
+                  I confirm I&apos;m 18+ and agree to the{" "}
                   <Link href="/legal/terms" target="_blank" className="font-semibold underline underline-offset-4">Terms of Service</Link>
                   {" "}and{" "}
                   <Link href="/legal/refunds" target="_blank" className="font-semibold underline underline-offset-4">Cancellation and Refund Policy</Link>.
-                  I acknowledge the{" "}
-                  <Link href="/legal/privacy" target="_blank" className="font-semibold underline underline-offset-4">Privacy Notice</Link>.
                 </span>
               </label>
 
-              <p className="text-sm leading-6 text-[#6b756b]">Classendo accounts are for adult teachers. We use your email for your account, security, and essential Classendo messages. Do not upload identifiable or sensitive pupil information.</p>
+              <p className="text-sm leading-6 text-[#6b756b]">Classendo accounts are for adult teachers. By creating an account, you acknowledge the{" "}<Link href="/legal/privacy" target="_blank" className="font-semibold underline underline-offset-4">Privacy Notice</Link>. We use your email for your account, security, and essential Classendo messages. Do not upload identifiable or sensitive pupil information.</p>
 
               {turnstileSiteKey ? <>
                 <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
