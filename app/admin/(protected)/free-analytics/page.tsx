@@ -49,7 +49,7 @@ export default async function FreeAnalyticsPage({ searchParams }: { searchParams
   const cards = [
     { label: "Hub sessions", value: analytics.summary.hubSessions, helper: "Unique consented sessions", icon: Activity },
     { label: "Games started", value: analytics.summary.starts, helper: `${analytics.summary.startRate}% of hub sessions`, icon: Gamepad2 },
-    { label: "Meaningfully interacted", value: analytics.summary.meaningfulInteractions, helper: "3 player actions in a game", icon: MousePointerClick },
+    { label: "Meaningfully interacted", value: analytics.summary.meaningfulInteractions, helper: "3 player actions in a game · tracked since Sep 14", icon: MousePointerClick },
     { label: "Games completed", value: analytics.summary.completions, helper: `${analytics.summary.completionRate}% of meaningful interactions`, icon: Trophy },
     { label: "Started, no interaction", value: analytics.summary.startedWithoutInteraction, helper: "Started sessions without 3 actions", icon: Activity },
     { label: "Interacted, not completed", value: analytics.summary.interactedWithoutCompletion, helper: "Meaningful sessions without a completion event", icon: Activity },
@@ -85,7 +85,7 @@ export default async function FreeAnalyticsPage({ searchParams }: { searchParams
       </div>
 
       <article className="mt-5 rounded-2xl border border-[#dfe4dc] bg-white p-5">
-        <div><h2 className="font-semibold text-[#394439]">Gameplay funnel</h2><p className="mt-1 text-xs leading-5 text-[#7a8379]">Counts are unique sessions; each rate compares with the previous stage. Completion is contextualized against meaningful interaction, so an engaged game remains visible even when it is not finished.</p></div>
+        <div><h2 className="font-semibold text-[#394439]">Gameplay funnel</h2><p className="mt-1 text-xs leading-5 text-[#7a8379]">Counts are unique sessions; each rate compares with the previous stage. Meaningful interaction tracking began Sep 14, so earlier starts and completions are historical context rather than directly comparable stages.</p></div>
         <ol className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {analytics.funnel.map((stage, index) => (
             <li key={stage.key} className="relative rounded-xl border border-[#e2e7df] bg-[#fbfcfa] p-4">

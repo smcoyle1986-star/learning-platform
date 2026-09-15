@@ -22,12 +22,12 @@ function MeaningfulInteractionTracker({ gameId, topicId, topicLabel, topicCatego
     const sessionKey = getAnalyticsSessionKey();
     const contextKey = `classendo-free-game-actions:${sessionKey}:${gameId}:${topicId ?? "tray"}`;
     const ignored = /^(help|how to play|settings|pause|resume|exit|close|back|change game|change topic|fullscreen|sound|mute|restart|play again|start|start game|start round|begin|finish|done)(\b|$)/i;
-    const onClick = (event: MouseEvent) => {
+    const onPointerUp = (event: PointerEvent) => {
       if (!hasAnalyticsConsent()) return;
       const target = event.target;
       if (!(target instanceof Element)) return;
       const action = target.closest("button, canvas");
-      if (!action || !action.closest("main") || action.closest("[role=dialog]")) return;
+      if (!action || !action.closest("main, [data-game-stage]") || action.closest("[role=dialog]")) return;
       if (action.matches("button")) {
         const label = (action.getAttribute("aria-label") || action.textContent || "").trim().replace(/\s+/g, " ");
         if (!label || ignored.test(label)) return;
@@ -44,8 +44,8 @@ function MeaningfulInteractionTracker({ gameId, topicId, topicLabel, topicCatego
         // Analytics storage is optional; do not interrupt gameplay.
       }
     };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    document.addEventListener("pointerup", onPointerUp, true);
+    return () => document.removeEventListener("pointerup", onPointerUp, true);
   }, [gameId, topicCategory, topicId, topicLabel]);
   return null;
 }
