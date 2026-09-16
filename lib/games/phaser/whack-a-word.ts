@@ -283,6 +283,9 @@ export async function createWhackWordGame({
       hole.isHittable = false;
       hole.clearTimer?.remove(false);
       hole.clearTimer = null;
+      // Notify the React game immediately on the pointer hit. The visual
+      // feedback and hole cleanup can finish on their own timer.
+      emit({ type: "hit", cardId, isTarget });
 
       const feedback = this.add
         .text(0, -112, isTarget ? "✓\n+1" : "✕", {
@@ -322,7 +325,6 @@ export async function createWhackWordGame({
         feedback.destroy();
         hole.frontRim.setFillStyle(0xf1c99b);
         this.clearHole(hole);
-        emit({ type: "hit", cardId, isTarget });
       });
     }
 

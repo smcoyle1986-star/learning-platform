@@ -7,9 +7,11 @@ import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import {
   createSpinWheelGame,
   type SpinSegment,
@@ -270,14 +272,14 @@ export default function SpinAndSpeakPage() {
   function handleSpinSceneEvent(event: SpinWheelEvent) {
     if (event.type === "spin-start") {
       setSpinning(true);
-      playTone(780, 0.06, "triangle", 0.06);
+      gameAudio.playEffect("ui-click");
       return;
     }
 
     if (event.type === "spin-landed") {
       setSpinning(false);
       setLandedSegment(event.segment);
-      playTone(520, 0.18, "sine", 0.08);
+      gameAudio.playEffect("reveal");
       setShowPopup(true);
       window.setTimeout(() => {
         setShowPopup(false);
@@ -295,7 +297,7 @@ export default function SpinAndSpeakPage() {
   // Turn resolution
   function onCorrect() {
     if (showPointsPrompt || showPointsSpinner) return;
-    playTone(980, 0.12, "sine", 0.09);
+    gameAudio.playEffect("correct");
     clearTimer();
     setTimerSeconds(null);
     setShowPointsPrompt(true);
@@ -409,6 +411,7 @@ export default function SpinAndSpeakPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="spin-and-speak"
+        audioMode={timerActive && timerSeconds !== null && timerSeconds <= 3 ? "countdown" : timerActive ? "playing" : "idle"}
         mobileScoreOpen={mobileScoreOpen}
         onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
@@ -557,6 +560,7 @@ export default function SpinAndSpeakPage() {
       {settingsOpen && (
         <div className="fixed top-[72px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[340px]">
+            <GameAudioSettings />
             <div className="mb-4">
               <div className="mb-2 font-semibold">Teams</div>
               <div className="flex flex-wrap gap-2">
@@ -587,13 +591,6 @@ export default function SpinAndSpeakPage() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="mb-2 font-semibold">Music</div>
-              <button onClick={toggleMusic} className={`btn btn-secondary w-full px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
-                {musicOn ? "Music: On" : "Music: Off"}
-              </button>
             </div>
 
             <div className="text-right">

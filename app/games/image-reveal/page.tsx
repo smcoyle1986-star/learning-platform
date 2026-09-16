@@ -8,9 +8,11 @@ import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import {
   createImageRevealGame,
   type ImageRevealApi,
@@ -350,14 +352,10 @@ export default function CardRevealPage() {
   }
 
   function playHighlightTone() {
-    // bright short ping
-    playTone(1200, 0.06, "sine", 0.06);
+    gameAudio.playEffect("ui-click");
   }
   function playFinalTone() {
-    // deeper short chord-like hit
-    playTone(420, 0.18, "sine", 0.09);
-    // small higher accent
-    setTimeout(() => playTone(980, 0.12, "triangle", 0.06), 60);
+    gameAudio.playEffect("reveal");
   }
 
   function clearPointsSpinnerTimers() {
@@ -479,7 +477,7 @@ export default function CardRevealPage() {
               : t,
           ),
         );
-        playTone(780, 0.16, "triangle", 0.08);
+        gameAudio.playEffect("correct");
 
         window.setTimeout(() => {
           const nextIndex = currentIndex + 1;
@@ -723,6 +721,7 @@ export default function CardRevealPage() {
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           trackGameKey="image-reveal"
+          audioMode="idle"
         />
 
         <main className="pt-[72px] max-w-4xl mx-auto px-4 py-12">
@@ -754,6 +753,7 @@ export default function CardRevealPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="image-reveal"
+        audioMode={urgent ? "countdown" : showWinner ? "success" : "playing"}
         mobileScoreOpen={mobileScoreOpen}
         onToggleMobileScore={() => setMobileScoreOpen((open) => !open)}
       />
@@ -761,6 +761,7 @@ export default function CardRevealPage() {
       {settingsOpen && (
         <div className="fixed top-[84px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[340px]">
+            <GameAudioSettings />
             <div className="mb-4">
               <div className="text-sm font-semibold mb-2">Difficulty</div>
               <div className="grid grid-cols-3 gap-2">
@@ -834,13 +835,6 @@ export default function CardRevealPage() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-sm font-semibold mb-2">Music</div>
-              <button onClick={toggleRevealMusic} className="btn btn-secondary w-full px-3 py-2 text-sm">
-                {musicOn ? "Music: On" : "Music: Off"}
-              </button>
             </div>
 
             <div className="text-right">

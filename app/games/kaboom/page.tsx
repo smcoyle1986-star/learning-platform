@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -561,6 +563,7 @@ export default function KaBoomPage() {
         setBonusTiles((prev) => prev.map((tile, index) => (index === bonusIndex ? { ...tile, bomb: true, removed: true } : tile)));
         setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: Math.max(0, t.score - 5) } : t)));
         setCenterReveal({ kind: "bomb" });
+        gameAudio.playEffect("bomb");
         playKaboom();
       } else {
         const points = Math.floor(Math.random() * 5) + 1;
@@ -574,6 +577,7 @@ export default function KaBoomPage() {
       setTilesRemoved((prev) => prev.map((v, i) => (i === idx ? true : v)));
       setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: Math.max(0, t.score - 5) } : t)));
       setCenterReveal({ kind: "bomb" });
+      gameAudio.playEffect("bomb");
       playKaboom();
     } else if (idx !== null) {
       const points = Math.floor(Math.random() * 5) + 1;
@@ -872,6 +876,7 @@ export default function KaBoomPage() {
       {settingsOpen && (
         <div className="fixed top-[72px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[340px]">
+            <GameAudioSettings />
             <div className="mb-4">
               <div className="mb-2 font-semibold">Teams</div>
               <div className="flex flex-wrap gap-2">
@@ -956,22 +961,6 @@ export default function KaBoomPage() {
               </div>
               <div className="text-xs text-[var(--color-text-muted)] mt-2">
                 Random picks a tile for the active team. Manual lets the teacher choose a tile directly.
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="mb-2 font-semibold">Music</div>
-              <button onClick={toggleThemeMusic} className={`btn btn-secondary w-full px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
-                {musicOn ? "Music: On" : "Music: Off"}
-              </button>
-              <div className="mt-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*"
-                  onChange={(e) => handleMusicFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-xs text-[var(--color-text-muted)]"
-                />
               </div>
             </div>
 

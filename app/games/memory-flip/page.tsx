@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
@@ -356,6 +358,7 @@ export default function MemoryFlipPage() {
 
       if (isBomb) {
         setShowBomb(true);
+        gameAudio.playEffect("bomb");
         // animate -5 on current team
         const idx = activeTeamIndexRef.current;
         const prev = teams[idx].score;
@@ -704,14 +707,9 @@ export default function MemoryFlipPage() {
           {settingsOpen && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} style={{ position: "fixed", top: 76, right: 16, zIndex: 900 }}>
               <GameSettingsDropdown className="w-[420px]">
+                  <GameAudioSettings />
                   <div style={{ fontWeight: 700 }}>Game controls</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                    <button
-                      onClick={toggleMusic}
-                      className={`btn px-2 py-2 ${musicOn ? "btn-primary" : "btn-secondary"}`}
-                    >
-                      {musicOn ? "Music On" : "Music Off"}
-                    </button>
                     <button onClick={resetGame} className="btn btn-secondary px-2 py-2">
                       Reset game
                     </button>

@@ -6,6 +6,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/games/GameHeader";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
@@ -559,6 +561,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
       if (b[r][col] === 0) { dropRow = r; break; }
     }
     if (dropRow < 0) return;
+    gameAudio.playEffect("falling");
     setFalling({ col, row: -1, player: currentPlayer });
     const baseDuration = 0.28;
     const perRow = 0.08;
@@ -1014,12 +1017,10 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
 
                     <div className="mt-3">
                       <div className="text-sm font-medium mb-2">Game controls</div>
+                      <GameAudioSettings />
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => restartMatch()} className={CBUTTON}>
                           Restart Match
-                        </button>
-                        <button onClick={() => toggleMusic()} className={CBUTTON}>
-                          {musicOn ? "Music On" : "Music Off"}
                         </button>
                       </div>
                     </div>

@@ -9,10 +9,12 @@ import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import GameHeader from "@/components/games/GameHeader";
 import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { supabase } from "@/lib/supabase/client";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import {
   deleteYesNoPromptSet,
   loadYesNoPromptSets,
@@ -599,10 +601,10 @@ export default function YesOrNoPage() {
       o.stop(now + i * 0.06 + duration + 0.02);
     });
   }
-  function playYesJingle() { playJingle([880, 1100], 0.12, "sine", 0.09); }
-  function playNoJingle() { playJingle([440], 0.12, "triangle", 0.07); }
-  function playCorrectSound() { playJingle([1040, 880, 660], 0.16, "sine", 0.09); }
-  function playIncorrectSound() { playJingle([220, 160], 0.14, "triangle", 0.08); }
+  function playYesJingle() { gameAudio.playEffect("ui-click"); }
+  function playNoJingle() { gameAudio.playEffect("ui-click"); }
+  function playCorrectSound() { gameAudio.playEffect("correct"); }
+  function playIncorrectSound() { gameAudio.playEffect("incorrect"); }
 
   const [musicOn, setMusicOn] = useState(false);
   const musicIntervalRef = useRef<number | null>(null);
@@ -708,10 +710,8 @@ export default function YesOrNoPage() {
   const runPrepThenStart = async (idx: number | null) => {
     if (idx === null) return;
     setRoundPhase("prepping");
-    const tick = window.setInterval(() => playTone(1400, 0.02, "square", 0.03), 160);
     await new Promise((r) => setTimeout(r, 900));
     await new Promise((r) => setTimeout(r, 600));
-    clearInterval(tick);
     setRoundPhase("timing");
     startTimer();
   };
@@ -935,6 +935,7 @@ export default function YesOrNoPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey={gameKey}
+        audioMode={roundPhase === "timing" && timerSeconds !== null && timerSeconds <= 3 ? "countdown" : roundPhase === "timing" ? "playing" : roundPhase === "feedback" ? "success" : "idle"}
         mobileScoreOpen={mobileScoreOpen}
         onToggleMobileScore={playMode === "team" ? () => setMobileScoreOpen((open) => !open) : undefined}
       />
@@ -1131,6 +1132,7 @@ export default function YesOrNoPage() {
       {settingsOpen && (
         <div className="fixed top-[72px] right-4 z-[70]">
           <GameSettingsDropdown className="w-[420px]">
+            <GameAudioSettings />
             <div className="mb-5">
               <div className="mb-2 font-semibold">Game Modes</div>
               <p className="text-sm text-[var(--color-text-muted)] mb-3">
@@ -1214,13 +1216,6 @@ export default function YesOrNoPage() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="mb-5">
-              <div className="mb-2 font-semibold">Music</div>
-              <button onClick={toggleMusic} className={`btn btn-secondary w-full px-3 py-2 text-sm ${musicOn ? "ring-2 ring-yellow-300" : ""}`}>
-                {musicOn ? "Music: On" : "Music: Off"}
-              </button>
             </div>
 
             <div className="text-right">

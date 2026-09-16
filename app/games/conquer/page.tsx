@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { HelpCircle, RefreshCcw, Shield, Swords, X } from "lucide-react";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown, GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { supabase } from "@/lib/supabase/client";
@@ -683,6 +685,7 @@ export default function ConquerPage() {
   }
 
   function triggerBomb(index: number) {
+    gameAudio.playEffect("bomb");
     clearAllTimers();
     setRoundLocked(true);
     setPromptOpen(false);
@@ -989,6 +992,7 @@ export default function ConquerPage() {
       {settingsOpen && (
         <div className="fixed right-4 top-[76px] z-[70]">
           <GameSettingsDropdown className="w-[min(92vw,32rem)]">
+            <GameAudioSettings />
             <div className="space-y-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.26em] text-[var(--color-text-muted)]">Game modes</div>

@@ -6,9 +6,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 import { resolveLessonImageUrl } from "@/lib/lessons/image";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 import {
   createWhackWordGame,
   type WhackDifficulty,
@@ -39,7 +41,6 @@ export default function WhackAWordPage() {
   const [difficulty, setDifficulty] = useState<WhackDifficulty>("medium");
   const [roundSeconds, setRoundSeconds] = useState(DEFAULT_ROUND_SECONDS);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [musicEnabled, setMusicEnabled] = useState(true);
   const [teams, setTeams] = useState<Team[]>([
     { id: "team-1", name: "Team 1", score: 0 },
     { id: "team-2", name: "Team 2", score: 0 },
@@ -57,8 +58,6 @@ export default function WhackAWordPage() {
   const timerIntervalRef = useRef<number | null>(null);
   const sceneApiRef = useRef<WhackSceneApi | null>(null);
   const targetDeckRef = useRef<Card[]>([]);
-  const musicTimerRef = useRef<number | null>(null);
-  const musicStepRef = useRef(0);
   const activeTeam = teams[activeTeamIndex] ?? teams[0];
   const rankedTeams = [...teams].sort((left, right) => right.score - left.score || left.name.localeCompare(right.name));
 
@@ -73,56 +72,6 @@ export default function WhackAWordPage() {
   function toggleFullscreen() {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     else document.documentElement.requestFullscreen().catch(() => {});
-  }
-
-  // sounds - small web audio helper
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  function getAudioCtx() {
-    if (!audioCtxRef.current) {
-      try {
-        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
-        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
-        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
-      } catch {
-        audioCtxRef.current = null;
-      }
-    }
-    return audioCtxRef.current;
-  }
-  function playTone(freq = 440, dur = 0.08, type: OscillatorType = "sine", gain = 0.02) {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    if (ctx.state === "suspended") void ctx.resume();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.value = gain;
-    o.connect(g);
-    g.connect(ctx.destination);
-    const now = ctx.currentTime;
-    o.start(now);
-    g.gain.setValueAtTime(gain, now);
-    g.gain.linearRampToValueAtTime(0.0001, now + dur);
-    o.stop(now + dur + 0.02);
-  }
-
-  function stopWhackMusic() {
-    if (musicTimerRef.current) window.clearInterval(musicTimerRef.current);
-    musicTimerRef.current = null;
-  }
-
-  function startWhackMusic() {
-    if (!musicEnabled || musicTimerRef.current) return;
-    const melody = [523, 659, 784, 659, 587, 698, 880, 698];
-    const playBeat = () => {
-      const step = musicStepRef.current % melody.length;
-      playTone(melody[step], 0.12, "triangle", 0.012);
-      if (step % 4 === 0) playTone(131, 0.08, "sine", 0.018);
-      musicStepRef.current += 1;
-    };
-    playBeat();
-    musicTimerRef.current = window.setInterval(playBeat, 260) as unknown as number;
   }
 
   function shuffledCards(sourceCards: Card[]) {
@@ -257,23 +206,8 @@ export default function WhackAWordPage() {
   useEffect(() => {
     return () => {
       if (timerIntervalRef.current) window.clearInterval(timerIntervalRef.current);
-      stopWhackMusic();
     };
   }, []);
-
-  useEffect(() => {
-    if (gameState !== "playing" || !musicEnabled) {
-      stopWhackMusic();
-      return;
-    }
-
-    // Browsers require a student/teacher gesture before audio may play.
-    const unlockMusic = () => startWhackMusic();
-    window.addEventListener("pointerdown", unlockMusic, { once: true });
-    return () => window.removeEventListener("pointerdown", unlockMusic);
-  // Music is deliberately unlocked by the next student/teacher pointer gesture.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, musicEnabled]);
 
   useEffect(() => {
     sceneApiRef.current?.sync({
@@ -289,13 +223,13 @@ export default function WhackAWordPage() {
 
   function handleSceneEvent(event: WhackSceneEvent) {
     if (event.type !== "hit" || gameState !== "playing") return;
+    gameAudio.playEffect("ui-click");
     if (event.isTarget) {
       setTeams((currentTeams) => currentTeams.map((team, index) => (
         index === activeTeamIndex ? { ...team, score: team.score + 1 } : team
       )));
       setRoundHits((h) => h + 1);
       vibrate([18, 28, 46]);
-      playTone(900, 0.08, "sine", 0.03);
       const followingTarget = nextTarget(cards);
       if (followingTarget) setTargetCard(followingTarget);
       return;
@@ -303,7 +237,6 @@ export default function WhackAWordPage() {
 
     setRoundMisses((m) => m + 1);
     vibrate([55, 35, 55]);
-    playTone(300, 0.12, "sine", 0.02);
   }
 
   // UI components & markup
@@ -317,6 +250,8 @@ export default function WhackAWordPage() {
           onToggleFullscreen={toggleFullscreen}
           settingsOpen={settingsOpen}
           onToggleSettings={() => setSettingsOpen((open) => !open)}
+          trackGameKey="whack-a-word"
+          audioMode={gameState === "playing" && timeLeft > 0 && timeLeft <= 3 ? "countdown" : gameState === "playing" ? "playing" : "idle"}
         />
 
         {gameState === "playing" && settingsOpen && <div className="fixed right-4 top-[72px] z-[70]" aria-label="Game settings">
@@ -357,13 +292,10 @@ export default function WhackAWordPage() {
               </div>
             </div>
             <label className="inline-flex items-center gap-2 pb-2 text-sm font-semibold text-slate-700">
-              <input type="checkbox" checked={musicEnabled} onChange={(e) => setMusicEnabled(e.target.checked)} />
-              Music
-            </label>
-            <label className="inline-flex items-center gap-2 pb-2 text-sm font-semibold text-slate-700">
               <input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
               Reduce motion
             </label>
+            <GameAudioSettings />
             <div className="flex justify-end gap-2">
               <button className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600" onClick={() => setSettingsOpen(false)}>Close</button>
               <button className="rounded-lg bg-[#8cbf73] px-4 py-2 text-sm font-bold text-white shadow-sm" onClick={() => prepareRound()}>New round</button>
@@ -488,7 +420,6 @@ export default function WhackAWordPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-end gap-4 pb-1 text-sm font-bold text-slate-700">
-              <label className="inline-flex items-center gap-2"><input type="checkbox" checked={musicEnabled} onChange={(e) => setMusicEnabled(e.target.checked)} />Music</label>
               <label className="inline-flex items-center gap-2"><input type="checkbox" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />Reduce motion</label>
             </div>
           </div>}
@@ -497,7 +428,7 @@ export default function WhackAWordPage() {
             <button className="rounded-xl border border-[#b6cfa8] bg-white px-4 py-3 font-bold text-[#45663a]" onClick={() => setSettingsOpen((open) => !open)}>
               {settingsOpen ? "Hide settings" : "Settings"}
             </button>
-            <button className="rounded-xl bg-[#79a961] px-6 py-3 text-lg font-black text-white shadow-[0_8px_0_#5a833f] transition hover:-translate-y-0.5" onClick={() => { startRound(); startWhackMusic(); }}>
+            <button className="rounded-xl bg-[#79a961] px-6 py-3 text-lg font-black text-white shadow-[0_8px_0_#5a833f] transition hover:-translate-y-0.5" onClick={() => { startRound(); gameAudio.playEffect("game-start"); }}>
               Start game
             </button>
           </div>

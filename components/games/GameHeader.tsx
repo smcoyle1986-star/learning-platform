@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useGameFlow } from "./GameFlowContext";
 import { topicsUrl } from "@/lib/games/topics";
 import Button from "@/components/ui/Button";
+import { gameAudio, type GameAudioKey, type GameAudioMode } from "@/lib/games/audio/game-audio";
 
 type GameHeaderProps = {
   title: string;
@@ -18,7 +19,8 @@ type GameHeaderProps = {
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
   extraActions?: React.ReactNode;
-  trackGameKey?: string;
+  trackGameKey?: GameAudioKey;
+  audioMode?: GameAudioMode;
   exitLabel?: string;
   hideBrand?: boolean;
   mobileScoreOpen?: boolean;
@@ -38,7 +40,8 @@ export default function GameHeader({
   settingsOpen,
   onToggleSettings,
   extraActions,
-  trackGameKey: _trackGameKey,
+  trackGameKey,
+  audioMode = "playing",
   exitLabel = "Exit",
   hideBrand = false,
   mobileScoreOpen = false,
@@ -47,6 +50,23 @@ export default function GameHeader({
   const flow = useGameFlow();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!trackGameKey) return;
+    gameAudio.setGame(trackGameKey);
+    gameAudio.setMode("playing");
+    const unlockAudio = () => gameAudio.unlock();
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      gameAudio.dispose();
+    };
+  }, [trackGameKey]);
+
+  useEffect(() => {
+    if (trackGameKey) gameAudio.setMode(audioMode);
+  }, [audioMode, trackGameKey]);
+
 
   useEffect(() => {
     document.body.classList.add("classendo-game-page");

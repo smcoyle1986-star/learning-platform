@@ -5,9 +5,11 @@ import { readGameTrayRaw } from "@/lib/games/session";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameHeader from "@/components/games/GameHeader";
-import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
+import { GameSettingsDropdown } from "@/components/games/GameSettingsSurface";
+import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { gameAudio } from "@/lib/games/audio/game-audio";
 
 /*
   Four Corners — blackout selection with optional bomb animation (v-update)
@@ -85,73 +87,12 @@ export default function FourCornersPage() {
     return s;
   }, [tray]);
 
-  /* ---------- Audio / SFX ---------- */
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const musicIntervalRef = useRef<number | null>(null);
-  const [musicOn, setMusicOn] = useState(false);
-
-  function getAudioCtx() {
-    if (!audioCtxRef.current) {
-      try {
-        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
-        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
-        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
-      } catch {
-        audioCtxRef.current = null;
-      }
-    }
-    return audioCtxRef.current;
-  }
-
-  function playTone(freq = 440, dur = 0.12, type: OscillatorType = "sine", gain = 0.03) {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.value = gain;
-    o.connect(g);
-    g.connect(ctx.destination);
-    const now = ctx.currentTime;
-    o.start(now);
-    g.gain.setValueAtTime(gain, now);
-    g.gain.linearRampToValueAtTime(0.0001, now + dur);
-    o.stop(now + dur + 0.02);
-  }
-
   const audio = {
-    musicOn,
-    toggleMusic: () => {
-      const will = !musicOn;
-      setMusicOn(will);
-      const ctx = getAudioCtx();
-      if (!ctx) return;
-      if (will) {
-        ctx.resume().catch(() => {});
-        if (musicIntervalRef.current) return;
-        const melody = [330, 392, 494, 523];
-        let step = 0;
-        musicIntervalRef.current = window.setInterval(() => {
-          playTone(melody[step % melody.length], 0.12, "sine", 0.02);
-          step++;
-        }, 360);
-      } else {
-        if (musicIntervalRef.current) { clearInterval(musicIntervalRef.current); musicIntervalRef.current = null; }
-        ctx.suspend().catch(() => {});
-      }
-    },
-    stopMusic: () => {
-      if (musicIntervalRef.current) { clearInterval(musicIntervalRef.current); musicIntervalRef.current = null; }
-      const ctx = getAudioCtx();
-      if (ctx) ctx.suspend().catch(() => {});
-      setMusicOn(false);
-    },
-    playStart: () => { playTone(660, 0.08, "sine", 0.04); setTimeout(() => playTone(880, 0.06, "sine", 0.03), 90); },
-    playTick: () => { playTone(880, 0.02, "sine", 0.02); },
-    playGong: () => { playTone(160, 0.5, "sine", 0.12); setTimeout(()=>playTone(90,0.4,"sine",0.08),120); },
-    playSuccess: () => { playTone(880, 0.08, "sine", 0.06); setTimeout(()=>playTone(1100,0.06,"sine",0.05),90); },
-    playBomb: () => { playTone(120,0.28,"sawtooth",0.12); setTimeout(()=>playTone(80,0.36,"sawtooth",0.10),80); }
+    playStart: () => gameAudio.playEffect("game-start"),
+    playTick: () => {},
+    playGong: () => gameAudio.playEffect("reveal"),
+    playSuccess: () => gameAudio.playEffect("correct"),
+    playBomb: () => gameAudio.playEffect("bomb"),
   };
 
   /* ---------- Game state ---------- */
@@ -357,7 +298,6 @@ export default function FourCornersPage() {
     setCurrentFlashcardIndex(null);
     setPhase("idle");
     setCount(COUNT_START);
-    audio.stopMusic();
   }
 
   /* ---------- confetti loader via CDN ---------- */
@@ -387,7 +327,6 @@ export default function FourCornersPage() {
       if (countdownIntervalRef.current) window.clearInterval(countdownIntervalRef.current);
       if (spotlightIntervalRef.current) window.clearInterval(spotlightIntervalRef.current);
       blackoutTimeoutsRef.current.forEach(t => clearTimeout(t));
-      if (musicIntervalRef.current) clearInterval(musicIntervalRef.current);
     };
   }, []);
 
@@ -424,6 +363,7 @@ export default function FourCornersPage() {
         settingsOpen={settingsOpen}
         onToggleSettings={() => setSettingsOpen((s) => !s)}
         trackGameKey="four-corners"
+        audioMode={phase === "countdown" && count <= 3 ? "countdown" : phase === "countdown" ? "playing" : phase === "bomb" ? "failure" : phase === "showcard" ? "success" : phase === "idle" ? "idle" : "playing"}
       />
 
       {trayIsEmpty ? (
@@ -479,7 +419,9 @@ export default function FourCornersPage() {
                         <div className={`absolute inset-0 transition-opacity duration-500 ${wasSpotlight ? "opacity-100" : "opacity-0"}`}>
                           <div className="absolute inset-0 ring-4 ring-white/60" />
                         </div>
-                        <div className={`absolute inset-0 bg-black transition-opacity duration-300 ${isBlack ? "opacity-[0.96]" : "opacity-0"}`} />
+                        <div className={`absolute inset-0 z-20 flex items-center justify-center bg-black text-center transition-opacity duration-300 ${isBlack ? "opacity-[0.96]" : "opacity-0"}`}>
+                          <span className="text-4xl font-black uppercase tracking-[0.2em] text-white md:text-6xl">SAFE</span>
+                        </div>
                         <div className={`absolute inset-0 ring-4 ring-yellow-200/0 transition-opacity duration-300 ${isSpotlight ? "ring-yellow-200/90" : ""}`} />
                       </div>
                     );
@@ -524,6 +466,7 @@ export default function FourCornersPage() {
                         <div className="w-56 h-56 md:w-64 md:h-64 rounded-full bg-[linear-gradient(180deg,#fb923c,#ef4444)] border-[10px] border-white shadow-2xl flex items-center justify-center text-white text-5xl md:text-6xl font-extrabold">
                           BOOM!
                         </div>
+                        <div className="-mt-2 text-center text-xl font-extrabold text-red-600 md:text-2xl">Lose a life or sit down</div>
                         <button
                           onClick={handleNextClick}
                           className="w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
@@ -580,19 +523,15 @@ export default function FourCornersPage() {
 
       {/* Settings modal */}
       {settingsOpen && (
-        <GameSettingsModal className="max-w-md">
+        <div className="fixed right-4 top-[72px] z-[70] w-[min(92vw,28rem)]">
+          <GameSettingsDropdown className="static w-full max-w-none">
             <h3 className="text-lg font-bold mb-2">Settings</h3>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">
               Adjust how often the bomb animation appears.
             </p>
+            <GameAudioSettings />
             <div className="mb-4 flex flex-wrap gap-2">
               <button onClick={resetAll} className="btn btn-secondary px-3 py-2 text-sm">Reset game</button>
-              <button
-                onClick={() => audio.toggleMusic()}
-                className={`btn px-3 py-2 text-sm ${audio.musicOn ? "btn-primary" : "btn-secondary"}`}
-              >
-                {audio.musicOn ? "Music On" : "Music Off"}
-              </button>
             </div>
             <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm mb-4">
               <label className="block text-sm font-semibold text-[var(--color-text-main)]">
@@ -613,7 +552,8 @@ export default function FourCornersPage() {
             <div className="flex justify-end gap-2">
               <button onClick={() => setSettingsOpen(false)} className="btn btn-secondary px-3 py-1">Close</button>
             </div>
-        </GameSettingsModal>
+          </GameSettingsDropdown>
+        </div>
       )}
 
       {/* Finished modal */}
