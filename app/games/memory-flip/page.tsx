@@ -408,6 +408,7 @@ export default function MemoryFlipPage() {
       setGeneratorSpinning(false);
       setGeneratorValue(final);
       setGeneratorShowingFinal(true);
+      window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
 
       generatorAwardTimeoutRef.current = window.setTimeout(async () => {
         await loadConfetti();

@@ -879,6 +879,7 @@ export default function YesOrNoPage() {
       const finalPoints = 1 + Math.floor(Math.random() * 10);
       setSpinningPoints(finalPoints);
       setAwardedPoints(finalPoints);
+      window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
       pointsAwardTimeoutRef.current = window.setTimeout(() => {
         adjustScore(teams[scoringTeamIndex].id, finalPoints);
         playTone(780, 0.16, "triangle", 0.08);

@@ -469,6 +469,7 @@ export default function CardRevealPage() {
       const finalPoints = 1 + Math.floor(Math.random() * 10);
       setSpinningPoints(finalPoints);
       setAwardedPoints(finalPoints);
+      if (mode === "gain") window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
       pointsAwardTimeoutRef.current = window.setTimeout(() => {
         setTeams((prev) =>
           prev.map((t, idx) =>
@@ -477,8 +478,6 @@ export default function CardRevealPage() {
               : t,
           ),
         );
-        gameAudio.playEffect("correct");
-
         window.setTimeout(() => {
           const nextIndex = currentIndex + 1;
           setActiveTeamIndex((i) => (i + 1) % teams.length);

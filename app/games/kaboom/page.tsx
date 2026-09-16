@@ -570,6 +570,7 @@ export default function KaBoomPage() {
         setBonusTiles((prev) => prev.map((tile, index) => (index === bonusIndex ? { ...tile, points, removed: true } : tile)));
         setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: t.score + points } : t)));
         setCenterReveal({ kind: "points", value: points });
+        window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
         playReveal();
       }
     } else if (isBomb && idx !== null) {
@@ -585,6 +586,7 @@ export default function KaBoomPage() {
       setTilesRemoved((prev) => prev.map((v, i) => (i === idx ? true : v)));
       setTeams((prev) => prev.map((t, i) => (i === activeTeamIndex ? { ...t, score: t.score + points } : t)));
       setCenterReveal({ kind: "points", value: points });
+      window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
       playReveal();
     }
 

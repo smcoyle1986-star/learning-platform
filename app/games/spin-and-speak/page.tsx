@@ -352,9 +352,9 @@ export default function SpinAndSpeakPage() {
       const finalPoints = 1 + Math.floor(Math.random() * 10);
       setSpinningPoints(finalPoints);
       setAwardedPoints(finalPoints);
+      window.requestAnimationFrame(() => gameAudio.playEffect("winner"));
       pointsAwardTimeoutRef.current = window.setTimeout(() => {
         setTeams((prev) => prev.map((t, idx) => (idx === scoringTeamIndex ? { ...t, score: t.score + finalPoints } : t)));
-        gameAudio.playEffect("winner");
 
         window.setTimeout(() => {
           setShowPointsSpinner(false);
