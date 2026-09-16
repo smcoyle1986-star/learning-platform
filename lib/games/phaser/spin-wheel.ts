@@ -88,7 +88,6 @@ export async function createSpinWheelGame({
         ease: "Sine.easeOut",
       });
 
-      const segAngle = 360 / segments.length;
       let chosen = Phaser.Math.Between(0, segments.length - 1);
       if (segments.length > 1 && chosen === this.lastLandedIndex) {
         chosen = (chosen + Phaser.Math.Between(1, segments.length - 1)) % segments.length;
@@ -174,22 +173,14 @@ export async function createSpinWheelGame({
 
         const icon = this.add.graphics();
         icon.setPosition(0, 0);
-        if (segments[i].id === "question") {
-          this.drawQuestionIcon(icon);
-          iconGroup.add(
-            this.add.text(0, 0, "?", {
-              fontFamily: PHASER_UI_FONT,
-              fontSize: "22px",
-              fontStyle: "bold",
-              color: "#2563eb",
-            }).setOrigin(0.5).setPosition(0, 1)
-          );
-        } else if (segments[i].id === "act") {
+        if (segments[i].id === "act") {
           this.drawActIcon(icon);
-        } else if (segments[i].id === "sentence") {
-          this.drawPencilIcon(icon);
-        } else {
+        } else if (segments[i].id === "read") {
           this.drawReadIcon(icon);
+        } else if (segments[i].id === "spell") {
+          this.drawSpellIcon(icon);
+        } else {
+          this.drawScrambleIcon(icon);
         }
         iconGroup.add(icon);
         this.wheelContainer.add(iconGroup);
@@ -306,20 +297,38 @@ export async function createSpinWheelGame({
       g.strokePath();
     }
 
-    private drawPencilIcon(g: Phaser.GameObjects.Graphics) {
+    private drawSpellIcon(g: Phaser.GameObjects.Graphics) {
       g.fillStyle(0xfacc15, 1);
       g.lineStyle(3, 0xd97706, 1);
-      g.fillRoundedRect(-14, -6, 28, 12, 4);
-      g.strokeRoundedRect(-14, -6, 28, 12, 4);
-      g.fillStyle(0xfca5a5, 1);
-      g.fillRect(-18, -6, 6, 12);
-      g.fillStyle(0xf8fafc, 1);
-      g.fillTriangle(14, -6, 22, 0, 14, 6);
-      g.lineStyle(2, 0x6b7280, 1);
+      g.fillRoundedRect(-16, -13, 32, 26, 6);
+      g.strokeRoundedRect(-16, -13, 32, 26, 6);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(-10, -7, 20, 4);
+      g.fillRect(-10, 1, 14, 4);
+    }
+
+    private drawScrambleIcon(g: Phaser.GameObjects.Graphics) {
+      g.lineStyle(3, 0x7c3aed, 1);
+      g.fillStyle(0xc4b5fd, 1);
+      g.fillRoundedRect(-18, -12, 14, 14, 3);
+      g.fillRoundedRect(4, -2, 14, 14, 3);
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(-11, -5, 2);
+      g.fillCircle(11, 5, 2);
+      g.lineStyle(3, 0x7c3aed, 1);
       g.beginPath();
-      g.moveTo(14, -6);
-      g.lineTo(22, 0);
-      g.lineTo(14, 6);
+      g.moveTo(-1, -8);
+      g.lineTo(7, -8);
+      g.lineTo(4, -12);
+      g.moveTo(7, -8);
+      g.lineTo(4, -4);
+      g.strokePath();
+      g.beginPath();
+      g.moveTo(1, 8);
+      g.lineTo(-7, 8);
+      g.lineTo(-4, 4);
+      g.moveTo(-7, 8);
+      g.lineTo(-4, 12);
       g.strokePath();
     }
 

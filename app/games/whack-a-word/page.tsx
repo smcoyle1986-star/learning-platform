@@ -428,6 +428,9 @@ export default function WhackAWordPage() {
             <button className="rounded-xl border border-[#b6cfa8] bg-white px-4 py-3 font-bold text-[#45663a]" onClick={() => setSettingsOpen((open) => !open)}>
               {settingsOpen ? "Hide settings" : "Settings"}
             </button>
+            <button className="rounded-xl border border-[#b6cfa8] bg-white px-4 py-3 font-bold text-[#45663a]" onClick={toggleFullscreen}>
+              {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            </button>
             <button className="rounded-xl bg-[#79a961] px-6 py-3 text-lg font-black text-white shadow-[0_8px_0_#5a833f] transition hover:-translate-y-0.5" onClick={() => { startRound(); gameAudio.playEffect("game-start"); }}>
               Start game
             </button>

@@ -24,6 +24,8 @@ export type GameAudioEffect =
   | "falling";
 
 const SFX_VOLUME_KEY = "classendo-game-sfx-volume";
+const DEFAULT_MUSIC_VOLUME = 0.3;
+const DEFAULT_SFX_VOLUME = 0.4;
 const SFX_ENABLED_KEY = "classendo-game-sfx-enabled";
 
 const effectFiles: Record<GameAudioEffect, string> = {
@@ -55,14 +57,14 @@ class GameAudioEngine {
   private readonly effects = new Map<GameAudioEffect, HTMLAudioElement>();
   private game?: GameAudioKey;
   private mode: GameAudioMode = "idle";
-  private musicVolume = 0.4;
-  private sfxVolume = 0.4;
+  private musicVolume = DEFAULT_MUSIC_VOLUME;
+  private sfxVolume = DEFAULT_SFX_VOLUME;
   private musicEnabled = true;
   private sfxEnabled = true;
 
   constructor() {
-    this.musicVolume = 0.4;
-    this.sfxVolume = readNumber(SFX_VOLUME_KEY, 0.4);
+    this.musicVolume = DEFAULT_MUSIC_VOLUME;
+    this.sfxVolume = readNumber(SFX_VOLUME_KEY, DEFAULT_SFX_VOLUME);
     this.sfxEnabled = readBoolean(SFX_ENABLED_KEY, true);
     if (typeof window !== "undefined") {
       (Object.keys(effectFiles) as GameAudioEffect[]).forEach((effect) => {
@@ -86,7 +88,7 @@ class GameAudioEngine {
     if (this.game === game && this.music) return;
     this.stopMusic();
     this.game = game;
-    this.musicVolume = 0.4;
+    this.musicVolume = DEFAULT_MUSIC_VOLUME;
     this.musicEnabled = true;
     this.music = new Audio(`/audio/${game}.mp3`);
     this.music.loop = true;

@@ -32,12 +32,17 @@ type Team = {
 };
 
 
-/* Segments: question, act, sentence, read */
+type ScrambleTile = {
+  id: string;
+  letter: string;
+};
+
+/* Keep Act and Read, replacing the other actions with spelling and scrambling. */
 const SEGMENTS: SpinSegment[] = [
-  { id: "question", label: "Question" },
   { id: "act", label: "Act" },
-  { id: "sentence", label: "Make" },
   { id: "read", label: "Read" },
+  { id: "spell", label: "Spell" },
+  { id: "scramble", label: "Scramble" },
 ];
 
 export default function SpinAndSpeakPage() {
@@ -143,74 +148,16 @@ export default function SpinAndSpeakPage() {
     setCurrentCardIndex(pick);
   }
 
-  // Audio helpers
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  function getAudioCtx() {
-    if (!audioCtxRef.current) {
-      try {
-        const audioWindow = window as typeof window & { webkitAudioContext?: typeof AudioContext };
-        const AudioContextConstructor = window.AudioContext || audioWindow.webkitAudioContext;
-        audioCtxRef.current = AudioContextConstructor ? new AudioContextConstructor() : null;
-      } catch {
-        audioCtxRef.current = null;
-      }
-    }
-    return audioCtxRef.current;
-  }
-  function playTone(freq = 880, dur = 0.06, type: OscillatorType = "sine", gain = 0.06) {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.value = gain;
-    o.connect(g);
-    g.connect(ctx.destination);
-    const now = ctx.currentTime;
-    o.start(now);
-    g.gain.setValueAtTime(gain, now);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    o.stop(now + dur + 0.02);
-  }
-
-  // Music control (resume/suspend)
-  const [musicOn, setMusicOn] = useState(false);
-  const musicIntervalRef = useRef<number | null>(null);
-  const musicStepRef = useRef(0);
-  function startMusicLoop() {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    ctx.resume().catch(() => {});
-    if (musicIntervalRef.current) return;
-    const melody = [330, 392, 523, 440, 392, 330];
-    musicStepRef.current = 0;
-    musicIntervalRef.current = window.setInterval(() => {
-      const f = melody[musicStepRef.current % melody.length];
-      playTone(f, 0.22, "sawtooth", 0.03);
-      musicStepRef.current++;
-    }, 420);
-  }
-  function stopMusicLoop() {
-    if (musicIntervalRef.current) {
-      window.clearInterval(musicIntervalRef.current);
-      musicIntervalRef.current = null;
-    }
-    const ctx = getAudioCtx();
-    if (ctx) {
-      ctx.suspend().catch(() => {});
-    }
-  }
-  function toggleMusic() {
-    const willOn = !musicOn;
-    setMusicOn(willOn);
-    if (willOn) startMusicLoop();
-    else stopMusicLoop();
-  }
-
   const [spinning, setSpinning] = useState(false);
   const [landedSegment, setLandedSegment] = useState<SpinSegment | null>(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [showSpellHint, setShowSpellHint] = useState(false);
+  const spellHintShownRef = useRef(false);
+  const [spellRevealed, setSpellRevealed] = useState<boolean[]>([]);
+  const [scrambleBank, setScrambleBank] = useState<ScrambleTile[]>([]);
+  const [scrambleSlots, setScrambleSlots] = useState<Array<ScrambleTile | null>>([]);
+  const [scrambleAnswerRevealed, setScrambleAnswerRevealed] = useState(false);
+  const draggedTileRef = useRef<string | null>(null);
   const [showCardWord, setShowCardWord] = useState(true);
   const [showPointsPrompt, setShowPointsPrompt] = useState(false);
   const [showPointsSpinner, setShowPointsSpinner] = useState(false);
@@ -219,6 +166,70 @@ export default function SpinAndSpeakPage() {
   const pointsSpinIntervalRef = useRef<number | null>(null);
   const pointsSpinTimeoutRef = useRef<number | null>(null);
   const pointsAwardTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!showSpellHint) return;
+    const dismissHint = () => setShowSpellHint(false);
+    window.addEventListener("pointerdown", dismissHint);
+    return () => window.removeEventListener("pointerdown", dismissHint);
+  }, [showSpellHint]);
+
+  function setupAction(segment: SpinSegment, card: GameCard | null) {
+    const letters = Array.from(card?.word ?? "");
+    if (segment.id === "spell") {
+      setSpellRevealed(letters.map(() => false));
+      if (!spellHintShownRef.current) {
+        spellHintShownRef.current = true;
+        setShowSpellHint(true);
+      }
+    }
+    if (segment.id === "scramble") {
+      const shuffled = [...letters]
+        .map((letter, index) => ({ id: `scramble-${index}`, letter }))
+        .sort(() => Math.random() - 0.5);
+      setScrambleBank(shuffled);
+      setScrambleSlots(letters.map(() => null));
+      setScrambleAnswerRevealed(false);
+    }
+  }
+
+  function revealSpellLetter(index: number) {
+    setSpellRevealed((current) => current.map((revealed, itemIndex) => itemIndex === index ? true : revealed));
+    gameAudio.playEffect("ui-click");
+  }
+
+  function revealAllSpellLetters() {
+    setSpellRevealed((current) => current.map(() => true));
+    gameAudio.playEffect("reveal");
+  }
+
+  function placeScrambleTile(tileId: string, targetIndex: number) {
+    const sourceIndex = scrambleSlots.findIndex((tile) => tile?.id === tileId);
+    const bankIndex = scrambleBank.findIndex((tile) => tile.id === tileId);
+    const movingTile = sourceIndex >= 0 ? scrambleSlots[sourceIndex] : scrambleBank[bankIndex];
+    if (!movingTile) return;
+    const replacedTile = scrambleSlots[targetIndex];
+    setScrambleSlots((current) => {
+      const next = [...current];
+      if (sourceIndex >= 0) next[sourceIndex] = replacedTile;
+      next[targetIndex] = movingTile;
+      return next;
+    });
+    setScrambleBank((current) => {
+      if (bankIndex >= 0) return current.filter((tile) => tile.id !== tileId);
+      return replacedTile ? [...current, replacedTile] : current;
+    });
+    gameAudio.playEffect("ui-click");
+  }
+
+  function returnScrambleTileToBank(tileId: string) {
+    const sourceIndex = scrambleSlots.findIndex((tile) => tile?.id === tileId);
+    if (sourceIndex < 0) return;
+    const tile = scrambleSlots[sourceIndex];
+    if (!tile) return;
+    setScrambleSlots((current) => current.map((item, index) => index === sourceIndex ? null : item));
+    setScrambleBank((current) => [...current, tile]);
+  }
 
   // Timer
   const TIMER_OPTIONS = [10, 15, 20, 30] as const;
@@ -279,6 +290,7 @@ export default function SpinAndSpeakPage() {
     if (event.type === "spin-landed") {
       setSpinning(false);
       setLandedSegment(event.segment);
+      setupAction(event.segment, currentCard);
       gameAudio.playEffect("reveal");
       setShowPopup(true);
       window.setTimeout(() => {
@@ -342,7 +354,7 @@ export default function SpinAndSpeakPage() {
       setAwardedPoints(finalPoints);
       pointsAwardTimeoutRef.current = window.setTimeout(() => {
         setTeams((prev) => prev.map((t, idx) => (idx === scoringTeamIndex ? { ...t, score: t.score + finalPoints } : t)));
-        playTone(780, 0.16, "triangle", 0.08);
+        gameAudio.playEffect("winner");
 
         window.setTimeout(() => {
           setShowPointsSpinner(false);
@@ -362,8 +374,7 @@ export default function SpinAndSpeakPage() {
       const winner = teams.reduce((best, t) => (t.score > best.score ? t : best), teams[0]);
       setWinnerTeam(winner);
       setWinnerModalOpen(true);
-      playTone(720, 0.12, "sine", 0.08);
-      setTimeout(() => playTone(900, 0.12, "triangle", 0.09), 140);
+      gameAudio.playEffect("winner");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allUsed]);
@@ -378,6 +389,12 @@ export default function SpinAndSpeakPage() {
     setUsedIndices([]);
     setLandedSegment(null);
     setShowPopup(false);
+    setShowSpellHint(false);
+    setSpellRevealed([]);
+    setScrambleBank([]);
+    setScrambleSlots([]);
+    setScrambleAnswerRevealed(false);
+    spellHintShownRef.current = false;
     setShowCardWord(false);
     setSpinning(false);
     setShowPointsPrompt(false);
@@ -499,9 +516,91 @@ export default function SpinAndSpeakPage() {
               )}
 
               <div className="spin-speak-turnbar">
-                <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="spin-speak-prompt font-bold text-[var(--color-text-main)]">
-                  {showCardWord && currentCard ? currentCard.word : "Ready to spin"}
-                </div>
+                {landedSegment?.id === "spell" && currentCard ? (
+                  <div className="grid justify-items-center gap-3">
+                    <div className="text-sm font-semibold text-[var(--color-text-muted)]">Click a box to reveal each letter</div>
+                    <div className="flex flex-wrap justify-center gap-2" aria-label="Spelling boxes">
+                      {Array.from(currentCard.word).map((letter, index) => (
+                        <button
+                          key={`${currentCard.id}-spell-${index}`}
+                          type="button"
+                          onClick={() => revealSpellLetter(index)}
+                          className="flex h-14 w-12 items-center justify-center rounded-xl border-2 border-[var(--color-accent)] bg-white text-3xl font-black uppercase shadow-sm transition hover:-translate-y-0.5"
+                          aria-label={spellRevealed[index] ? `Letter ${index + 1}: ${letter}` : `Reveal letter ${index + 1}`}
+                        >
+                          {spellRevealed[index] ? letter : "_"}
+                        </button>
+                      ))}
+                    </div>
+                    <button type="button" onClick={revealAllSpellLetters} className="btn btn-secondary px-4 py-2 font-bold">
+                      Reveal
+                    </button>
+                  </div>
+                ) : landedSegment?.id === "scramble" && currentCard ? (
+                  <div className="grid gap-3">
+                    <div className="text-center text-sm font-semibold text-[var(--color-text-muted)]">Drag the letters into the correct order</div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] md:items-start">
+                      <div
+                        className="flex min-h-16 flex-wrap content-start justify-center gap-2 rounded-2xl bg-[#f3f7ee] p-3 md:justify-start"
+                        aria-label="Scrambled letters"
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={() => {
+                          if (draggedTileRef.current) returnScrambleTileToBank(draggedTileRef.current);
+                        }}
+                      >
+                        {scrambleBank.map((tile) => (
+                          <button
+                            key={tile.id}
+                            type="button"
+                            draggable
+                            onDragStart={() => { draggedTileRef.current = tile.id; }}
+                            onDragEnd={() => { draggedTileRef.current = null; }}
+                            className="h-12 w-11 cursor-grab rounded-xl border-2 border-violet-300 bg-violet-100 text-2xl font-black uppercase text-violet-900 shadow-sm active:cursor-grabbing"
+                            aria-label={`Drag letter ${tile.letter}`}
+                          >
+                            {tile.letter}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="grid gap-3">
+                        <div className="flex flex-wrap justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-accent)] bg-white p-3" aria-label="Answer slots">
+                          {scrambleSlots.map((tile, index) => (
+                            <div
+                              key={`${currentCard.id}-slot-${index}`}
+                              onDragOver={(event) => event.preventDefault()}
+                              onDrop={() => {
+                                if (draggedTileRef.current) placeScrambleTile(draggedTileRef.current, index);
+                                draggedTileRef.current = null;
+                              }}
+                              className="flex h-12 w-11 items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-50 text-2xl font-black uppercase text-slate-800"
+                            >
+                              {tile ? (
+                                <button
+                                  type="button"
+                                  draggable
+                                  onDragStart={() => { draggedTileRef.current = tile.id; }}
+                                  onDragEnd={() => { draggedTileRef.current = null; }}
+                                  className="h-full w-full cursor-grab rounded-lg active:cursor-grabbing"
+                                  aria-label={`Move letter ${tile.letter}`}
+                                >
+                                  {tile.letter}
+                                </button>
+                              ) : ""}
+                            </div>
+                          ))}
+                        </div>
+                        <button type="button" onClick={() => { setScrambleSlots(Array.from(currentCard.word).map((letter, index) => ({ id: `answer-${index}`, letter }))); setScrambleBank([]); setScrambleAnswerRevealed(true); gameAudio.playEffect("reveal"); }} className="btn btn-secondary justify-self-center px-4 py-2 font-bold">
+                          Reveal answer
+                        </button>
+                      </div>
+                    </div>
+                    {scrambleAnswerRevealed && <div className="text-center text-sm font-bold text-[var(--color-accent)]">Answer: {currentCard.word}</div>}
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="spin-speak-prompt font-bold text-[var(--color-text-main)]">
+                    {showCardWord && currentCard ? currentCard.word : "Ready to spin"}
+                  </div>
+                )}
                 <div className="spin-speak-turn-controls flex flex-wrap items-center justify-center gap-2">
                   <div className={`px-4 py-2 rounded-2xl font-bold text-xl ${timerActive && timerSeconds !== null && timerSeconds <= 3 ? "bg-red-500 text-white animate-pulse-fast" : "bg-[#f3f7ee] text-[var(--color-text-main)]"}`}>
                     {timerActive && timerSeconds !== null ? `${timerSeconds}s` : "Ready"}
@@ -529,6 +628,22 @@ export default function SpinAndSpeakPage() {
           onPlayAgain={() => resetGame(true)}
           onReturnToGames={() => router.push("/games")}
         />
+      )}
+
+      {showSpellHint && (
+        <div className="fixed inset-0 z-[80] flex items-start justify-center p-6 pt-28 pointer-events-none">
+          <div
+            className="pointer-events-auto flex max-w-sm items-start gap-4 rounded-2xl border border-indigo-200 bg-white px-5 py-4 text-left shadow-2xl"
+            role="status"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <div>
+              <div className="font-extrabold text-indigo-900">Spell the word</div>
+              <div className="mt-1 text-sm text-slate-600">Click a box to reveal that letter. Click anywhere to dismiss.</div>
+            </div>
+            <button type="button" onClick={() => setShowSpellHint(false)} className="rounded-lg px-2 py-1 text-lg font-black text-slate-500 hover:bg-slate-100" aria-label="Close spelling hint">×</button>
+          </div>
+        </div>
       )}
 
       {(showPointsPrompt || showPointsSpinner) && (
