@@ -4,6 +4,7 @@ import { readGameTrayRaw } from "@/lib/games/session";
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { HelpCircle, RefreshCcw, Shield, Swords, X } from "lucide-react";
 import GameHeader from "@/components/games/GameHeader";
 import { GameSettingsDropdown, GameSettingsModal } from "@/components/games/GameSettingsSurface";
@@ -39,6 +40,12 @@ type RpsChoice = "rock" | "paper" | "scissors";
 type TeamCount = 2 | 3 | 4;
 type AttackMode = "slots" | "manual";
 type ContestOutcome = "attacker" | "defender" | "draw";
+
+const RPS_ICON_PATHS: Record<RpsChoice, string> = {
+  rock: "/games/conquer/rps/rock.png",
+  paper: "/games/conquer/rps/paper.png",
+  scissors: "/games/conquer/rps/scissors.png",
+};
 
 const BOARD_SIZE = 8;
 const BOMB_COUNT = 6;
@@ -429,11 +436,14 @@ export default function ConquerPage() {
       clearTimeout(bombResolveTimeoutRef.current);
       bombResolveTimeoutRef.current = null;
     }
+    gameAudio.stopLoop("points-spin");
     setBombAnimation(null);
   }
 
   function resolveAttackResult(result: ContestOutcome, attackerTeamId: string, defenderTeamId: string, index: number) {
     clearAllTimers();
+    if (result === "attacker") gameAudio.playEffect("winner");
+    if (result === "defender") gameAudio.playEffect("incorrect");
     attackOutcomeRef.current = { result, index, attackerTeamId, defenderTeamId };
     const attackerName = teamsById[attackerTeamId]?.name ?? "Attacker";
     const defenderName = teamsById[defenderTeamId]?.name ?? "Defender";
@@ -847,6 +857,7 @@ export default function ConquerPage() {
       return;
     trackGameStart("conquer");
     clearAllTimers();
+    gameAudio.playLoop("points-spin");
     setContestResultPopup(null);
     setAttackFlickerOn(false);
     setPendingAttackResolution(null);
@@ -1541,8 +1552,15 @@ export default function ConquerPage() {
                         : "none",
                     }}
                   >
-                    {slotAttackerFace}
+                    <Image
+                      src={RPS_ICON_PATHS[slotAttackerFace]}
+                      alt={slotAttackerFace}
+                      width={160}
+                      height={160}
+                      className="h-28 w-28 object-contain sm:h-32 sm:w-32"
+                    />
                   </div>
+                  <div className="mt-2 text-lg font-black capitalize text-[var(--color-text-main)]">{slotAttackerFace}</div>
                   <div className="mt-2 text-xs font-semibold text-[var(--color-text-muted)]">
                     {slotAttackerLocked ? "Locked in" : "Spinning..."}
                   </div>
@@ -1577,8 +1595,15 @@ export default function ConquerPage() {
                         : "none",
                     }}
                   >
-                    {slotDefenderFace}
+                    <Image
+                      src={RPS_ICON_PATHS[slotDefenderFace]}
+                      alt={slotDefenderFace}
+                      width={160}
+                      height={160}
+                      className="h-28 w-28 object-contain sm:h-32 sm:w-32"
+                    />
                   </div>
+                  <div className="mt-2 text-lg font-black capitalize text-[var(--color-text-main)]">{slotDefenderFace}</div>
                   <div className="mt-2 text-xs font-semibold text-[var(--color-text-muted)]">
                     {slotDefenderLocked ? "Locked in" : "Spinning..."}
                   </div>

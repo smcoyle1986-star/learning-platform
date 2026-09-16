@@ -537,6 +537,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
         if (res.winner && res.winner !== 0) {
           setWinnerLine(res.line ?? null);
           setMatchWins((m) => ({ ...m, [res.winner!]: (m[res.winner!] ?? 0) + 1 }));
+          gameAudio.playEffect("winner");
         } else if (res.draw) {
           setWinnerLine(null);
           setGameOverDraw(true);
@@ -575,6 +576,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
       if (res.winner && res.winner !== 0) {
         setWinnerLine(res.line ?? null);
         setMatchWins((m) => ({ ...m, [res.winner!]: (m[res.winner!] ?? 0) + 1 }));
+        gameAudio.playEffect("winner");
       } else if (res.draw) {
         setWinnerLine(null);
         setGameOverDraw(true);
