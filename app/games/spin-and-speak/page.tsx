@@ -266,6 +266,7 @@ export default function SpinAndSpeakPage() {
   }
 
   function clearPointsSpinnerTimers() {
+    gameAudio.stopLoop("points-spin");
     if (pointsSpinIntervalRef.current) {
       window.clearInterval(pointsSpinIntervalRef.current);
       pointsSpinIntervalRef.current = null;
@@ -284,11 +285,13 @@ export default function SpinAndSpeakPage() {
     if (event.type === "spin-start") {
       setSpinning(true);
       gameAudio.playEffect("ui-click");
+      gameAudio.playLoop("spinning");
       return;
     }
 
     if (event.type === "spin-landed") {
       setSpinning(false);
+      gameAudio.stopLoop("spinning");
       setLandedSegment(event.segment);
       setupAction(event.segment, currentCard);
       gameAudio.playEffect("reveal");
@@ -342,6 +345,7 @@ export default function SpinAndSpeakPage() {
     setShowPointsSpinner(true);
     setAwardedPoints(null);
     clearPointsSpinnerTimers();
+    gameAudio.playLoop("points-spin");
 
     pointsSpinIntervalRef.current = window.setInterval(() => {
       setSpinningPoints(1 + Math.floor(Math.random() * 10));

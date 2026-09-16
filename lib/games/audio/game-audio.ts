@@ -21,7 +21,9 @@ export type GameAudioEffect =
   | "incorrect"
   | "bomb"
   | "winner"
-  | "falling";
+  | "falling"
+  | "spinning"
+  | "points-spin";
 
 const SFX_VOLUME_KEY = "classendo-game-sfx-volume";
 const DEFAULT_MUSIC_VOLUME = 0.3;
@@ -38,6 +40,8 @@ const effectFiles: Record<GameAudioEffect, string> = {
   bomb: "bomb.mp3",
   winner: "winner.mp3",
   falling: "falling.mp3",
+  spinning: "spinning.mp3",
+  "points-spin": "points-spin.mp3",
 };
 
 function readNumber(key: string, fallback: number) {
@@ -55,6 +59,7 @@ function readBoolean(key: string, fallback: boolean) {
 class GameAudioEngine {
   private music?: HTMLAudioElement;
   private readonly effects = new Map<GameAudioEffect, HTMLAudioElement>();
+  private readonly loopingEffects = new Map<GameAudioEffect, HTMLAudioElement>();
   private game?: GameAudioKey;
   private mode: GameAudioMode = "idle";
   private musicVolume = DEFAULT_MUSIC_VOLUME;
@@ -117,6 +122,9 @@ class GameAudioEngine {
 
   setSfxEnabled(enabled: boolean) {
     this.sfxEnabled = enabled;
+    if (!enabled) {
+      for (const effect of this.loopingEffects.keys()) this.stopLoop(effect);
+    }
     window.localStorage.setItem(SFX_ENABLED_KEY, String(enabled));
   }
 
@@ -127,6 +135,7 @@ class GameAudioEngine {
 
   setSfxVolume(volume: number) {
     this.sfxVolume = Math.min(1, Math.max(0, volume));
+    for (const audio of this.loopingEffects.values()) audio.volume = this.sfxVolume;
     window.localStorage.setItem(SFX_VOLUME_KEY, String(this.sfxVolume));
   }
 
@@ -137,6 +146,25 @@ class GameAudioEngine {
     audio.volume = this.sfxVolume;
     audio.currentTime = 0;
     void audio.play().catch(() => {});
+  }
+
+  playLoop(effect: GameAudioEffect) {
+    if (!this.sfxEnabled || this.loopingEffects.has(effect)) return;
+    const template = this.effects.get(effect);
+    const audio = template ? template.cloneNode(true) as HTMLAudioElement : new Audio(`/audio/${effectFiles[effect]}`);
+    audio.loop = true;
+    audio.volume = this.sfxVolume;
+    audio.currentTime = 0;
+    this.loopingEffects.set(effect, audio);
+    void audio.play().catch(() => {});
+  }
+
+  stopLoop(effect: GameAudioEffect) {
+    const audio = this.loopingEffects.get(effect);
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    this.loopingEffects.delete(effect);
   }
 
   stopMusic() {
@@ -151,6 +179,7 @@ class GameAudioEngine {
 
   dispose() {
     this.stopMusic();
+    for (const effect of this.loopingEffects.keys()) this.stopLoop(effect);
     this.music = undefined;
   }
 

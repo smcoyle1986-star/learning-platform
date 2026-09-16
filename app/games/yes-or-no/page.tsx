@@ -726,6 +726,7 @@ export default function YesOrNoPage() {
   const pointsSpinTimeoutRef = useRef<number | null>(null);
   const pointsAwardTimeoutRef = useRef<number | null>(null);
   function clearPointsSpinnerTimers() {
+    gameAudio.stopLoop("points-spin");
     if (pointsSpinIntervalRef.current) {
       clearInterval(pointsSpinIntervalRef.current);
       pointsSpinIntervalRef.current = null;
@@ -869,6 +870,7 @@ export default function YesOrNoPage() {
     setShowPointsSpinner(true);
     setAwardedPoints(null);
     clearPointsSpinnerTimers();
+    gameAudio.playLoop("points-spin");
 
     pointsSpinIntervalRef.current = window.setInterval(() => {
       setSpinningPoints(1 + Math.floor(Math.random() * 10));

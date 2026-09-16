@@ -359,6 +359,7 @@ export default function CardRevealPage() {
   }
 
   function clearPointsSpinnerTimers() {
+    gameAudio.stopLoop("points-spin");
     if (pointsSpinIntervalRef.current) {
       clearInterval(pointsSpinIntervalRef.current);
       pointsSpinIntervalRef.current = null;
@@ -459,6 +460,7 @@ export default function CardRevealPage() {
     setShowPointsSpinner(true);
     setAwardedPoints(null);
     clearPointsSpinnerTimers();
+    gameAudio.playLoop("points-spin");
 
     pointsSpinIntervalRef.current = window.setInterval(() => {
       setSpinningPoints(1 + Math.floor(Math.random() * 10));

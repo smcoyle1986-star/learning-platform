@@ -384,6 +384,7 @@ export default function MemoryFlipPage() {
     setGeneratorSpinning(true);
     setGeneratorShowingFinal(false);
     setGeneratorValue(null);
+    gameAudio.playLoop("points-spin");
 
     generatorIntervalRef.current = window.setInterval(() => {
       setGeneratorValue(1 + Math.floor(Math.random() * 10));
@@ -394,6 +395,7 @@ export default function MemoryFlipPage() {
         clearInterval(generatorIntervalRef.current);
         generatorIntervalRef.current = null;
       }
+      gameAudio.stopLoop("points-spin");
       const weights = [8, 12, 12, 12, 8, 6, 4, 3, 2, 1]; // 1..10 weights
       const total = weights.reduce((s, w) => s + w, 0);
       let r = Math.floor(Math.random() * total);
@@ -439,6 +441,7 @@ export default function MemoryFlipPage() {
 
   // Close generator modal and clear timers
   function closeGenerator() {
+    gameAudio.stopLoop("points-spin");
     if (generatorIntervalRef.current) {
       clearInterval(generatorIntervalRef.current);
       generatorIntervalRef.current = null;
