@@ -279,8 +279,8 @@ export default function GamesLandingPage() {
 
       {/* Header */}
       <PageHeader
-        title="Free Classroom Games"
-        description="Every game. 24 ready-made topics. No signup needed."
+        title="Free ESL Classroom Games for Teachers"
+        description="Teacher-led games to play together with your class. Put Classendo on your classroom screen, choose a game and ready-made topic, and play together. No student accounts. No signup required."
         primaryItems={user ? [{ label: "Classroom", href: "/flashcards/classroom", tone: "classroom" }] : []}
         secondaryItems={user ? [
           { label: "Flashcards", href: "/flashcards" },
@@ -380,6 +380,9 @@ export default function GamesLandingPage() {
                   <p className="max-w-2xl text-base text-[var(--color-text-muted)]">
                     {topicsMode ? "Choose a game, then explore 24 ready-made vocabulary topics." : "Fun learning activities automatically created from the cards you select."}
                   </p>
+                  <p className="max-w-2xl text-sm font-semibold leading-6 text-[#6d8160]">
+                    Teacher controls the game <span aria-hidden="true">•</span> Students play together <span aria-hidden="true">•</span> Projector / TV / interactive whiteboard
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -388,7 +391,7 @@ export default function GamesLandingPage() {
                     className="btn btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm shadow-sm"
                   >
                     <Play size={15} />
-                    {topicsMode ? "Choose a game" : "Add cards in Flashcards"}
+                    {topicsMode ? "Choose a Classroom Game" : "Add cards in Flashcards"}
                   </button>
                   {!topicsMode && <button
                     onClick={scrollToGames}
