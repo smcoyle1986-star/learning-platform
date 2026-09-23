@@ -7,6 +7,7 @@ import { GAME_NAMES, GAME_TOPICS, TOPIC_FILTERS, TOPICS_PAGE_SIZE, type GameTopi
 import { GameFlowDialog } from "@/components/games/GameFlowDialog";
 import { useTopicLaunch } from "@/components/games/useTopicLaunch";
 import { trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 export default function GameTopicsPage() {
   const params = useSearchParams();
@@ -38,7 +39,7 @@ export default function GameTopicsPage() {
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-label="Vocabulary topics">
       {topics.slice((page - 1) * TOPICS_PAGE_SIZE, page * TOPICS_PAGE_SIZE).map((topic) => <article key={topic.id} className={`flex flex-col rounded-xl border bg-white p-3 shadow-sm transition hover:shadow-md ${selected === topic.id ? "border-[#73965e] ring-2 ring-[#dcebd4]" : "border-[#dce5d8]"}`}>
           <button onClick={() => { void trackFreeGameEvent({ eventType: "topic_previewed", gameKey: gameId, topicId: topic.id, topicLabel: topic.title, topicCategory: topic.category, source: "public_topic" }); setPreview(topic); }} aria-label={`Preview ${topic.title}`} className="group relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-lg border border-[#edf0e9] bg-white">
-          <img src={topic.cards[0].image ?? ""} alt={topic.cards[0].word} className="h-full w-full object-contain p-3 transition-transform group-hover:scale-105" />
+          <img src={resolveLessonImageUrl(topic.cards[0].image, 480) ?? ""} alt={topic.cards[0].word} className="h-full w-full object-contain p-3 transition-transform group-hover:scale-105" />
           <span className="absolute bottom-2 right-2 rounded-full bg-white/95 p-2 text-[#617857] shadow-sm"><Eye size={16} /></span>
         </button>
         <div className="py-3"><h2 className="text-base font-bold">{topic.title}</h2><p className="mt-1 text-xs text-[#718267]">{TOPIC_FILTERS.find((item) => item.id === topic.category)?.label} · {topic.cards.length} cards{selected === topic.id ? " · Current topic" : ""}</p></div>
@@ -49,7 +50,7 @@ export default function GameTopicsPage() {
       {Array.from({ length: pages }, (_, i) => i + 1).map((number) => <button key={number} aria-label={`Page ${number}`} aria-current={number === page ? "page" : undefined} onClick={() => update("page", String(number))} className={`btn h-10 w-10 ${number === page ? "btn-primary" : "btn-secondary"}`}>{number}</button>)}
       <button className="btn btn-secondary p-2.5" disabled={page === pages} aria-label="Next page" onClick={() => update("page", String(page + 1))}><ChevronRight size={18} /></button></nav>
     <p className="mt-3 text-center text-xs text-[#718267]" aria-live="polite">Page {page} of {pages} · Showing {(page - 1) * TOPICS_PAGE_SIZE + 1}–{Math.min(page * TOPICS_PAGE_SIZE, topics.length)} of {topics.length}</p>
-    {preview && <GameFlowDialog title={preview.title} onClose={() => setPreview(null)}><p className="mb-4 text-sm text-[#718267]">{preview.cards.length} cards · Previewing does not change your lesson tray.</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{preview.cards.map((card) => <div key={card.id} className="rounded-xl border border-[#e2e8dc] p-2 text-center"><img src={card.image ?? ""} alt={card.word} className="aspect-square w-full object-contain" /><p className="mt-2 text-sm font-semibold">{card.word}</p></div>)}</div><div className="mt-6 flex justify-end"><button className="btn btn-primary" disabled={loading} onClick={() => { setPreview(null); launch(preview); }}>Start Game</button></div></GameFlowDialog>}
+    {preview && <GameFlowDialog title={preview.title} onClose={() => setPreview(null)}><p className="mb-4 text-sm text-[#718267]">{preview.cards.length} cards · Previewing does not change your lesson tray.</p><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{preview.cards.map((card) => <div key={card.id} className="rounded-xl border border-[#e2e8dc] p-2 text-center"><img src={resolveLessonImageUrl(card.image, 480) ?? ""} alt={card.word} className="aspect-square w-full object-contain" /><p className="mt-2 text-sm font-semibold">{card.word}</p></div>)}</div><div className="mt-6 flex justify-end"><button className="btn btn-primary" disabled={loading} onClick={() => { setPreview(null); launch(preview); }}>Start Game</button></div></GameFlowDialog>}
     {confirmation}
   </main>;
 }

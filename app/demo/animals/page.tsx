@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Presentation, Trophy, Target } from "lucide-react";
 import { ANIMALS_DEMO_CARDS } from "@/lib/demo/animals";
+import { getResponsiveImageUrl } from "@/lib/images/storage";
 
 export default function AnimalsDemoPage() {
   return (
@@ -22,7 +23,7 @@ export default function AnimalsDemoPage() {
             <div className="mt-4 grid grid-cols-4 gap-3">
               {ANIMALS_DEMO_CARDS.map((card) => (
                 <div key={card.id} className="overflow-hidden rounded-2xl border border-white bg-white p-2 text-center shadow-sm">
-                  <img src={card.image ?? ""} alt="" className="h-16 w-full object-contain sm:h-20" />
+                  <img src={getResponsiveImageUrl(card.image ?? "", 160) ?? ""} alt="" className="h-16 w-full object-contain sm:h-20" />
                   <p className="mt-1 truncate text-xs font-bold capitalize">{card.word}</p>
                 </div>
               ))}

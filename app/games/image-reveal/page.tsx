@@ -2,6 +2,7 @@
 import { useGameFlow } from "@/components/games/GameFlowContext";
 
 import { readGameTrayRaw, writeGameTrayRaw } from "@/lib/games/session";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -155,9 +156,9 @@ export default function CardRevealPage() {
           ? parsed.map((c: Record<string, unknown>) => ({
               id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
               word: String(c.word ?? c.text ?? ""),
-              image: typeof c.image === "string" ? c.image
+              image: resolveLessonImageUrl(typeof c.image === "string" ? c.image
                 : typeof c.image_id === "string" ? c.image_id
-                  : typeof c.img === "string" ? c.img : null,
+                  : typeof c.img === "string" ? c.img : null, 1024),
             }))
           : [];
         const shuffled = shuffleArray(normalized);
@@ -570,9 +571,9 @@ export default function CardRevealPage() {
         ? parsed.map((c: Record<string, unknown>) => ({
             id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
             word: String(c.word ?? c.text ?? ""),
-            image: typeof c.image === "string" ? c.image
+            image: resolveLessonImageUrl(typeof c.image === "string" ? c.image
               : typeof c.image_id === "string" ? c.image_id
-                : typeof c.img === "string" ? c.img : null,
+                : typeof c.img === "string" ? c.img : null, 1024),
           }))
         : [];
       const shuffled = shuffleArray(normalized);

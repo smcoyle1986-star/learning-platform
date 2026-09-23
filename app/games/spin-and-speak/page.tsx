@@ -12,6 +12,7 @@ import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import PhaserGameHost from "@/components/games/phaser/PhaserGameHost";
 import { trackGameStart } from "@/lib/games/track-game-start";
 import { gameAudio } from "@/lib/games/audio/game-audio";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import {
   createSpinWheelGame,
   type SpinSegment,
@@ -91,7 +92,10 @@ export default function SpinAndSpeakPage() {
         const normalized = parsed.map((c: Record<string, unknown>) => ({
           id: String(c.id ?? c.word ?? Math.random().toString(36).slice(2)),
           word: String(c.word ?? c.text ?? ""),
-          image: c.image ?? c.image_id ?? c.img ?? null,
+          image: resolveLessonImageUrl(
+            typeof c.image === "string" ? c.image : typeof c.image_id === "string" ? c.image_id : typeof c.img === "string" ? c.img : null,
+            1024,
+          ),
         })) as GameCard[];
         setTray(normalized);
       }

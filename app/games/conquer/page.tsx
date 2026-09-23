@@ -12,7 +12,7 @@ import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { gameAudio } from "@/lib/games/audio/game-audio";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
-import { supabase } from "@/lib/supabase/client";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { trackGameStart } from "@/lib/games/track-game-start";
 
 type GameCard = {
@@ -80,13 +80,6 @@ const TEAM_THEMES: TeamTheme[] = [
     glow: "rgba(250, 211, 126, 0.26)",
   },
 ];
-
-function resolveImageUrl(value?: string | null) {
-  const raw = (value ?? "").toString().trim();
-  if (!raw) return null;
-  if (raw.startsWith("http")) return raw;
-  return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
-}
 
 function shuffleArray<T>(items: T[]) {
   const copy = [...items];
@@ -337,10 +330,10 @@ export default function ConquerPage() {
         .map((c: Record<string, unknown>, i: number) => {
           const word = String(c.word ?? c.text ?? c.label ?? c.name ?? c.title ?? "");
           const id = String(c.id ?? word ?? `conquer-${i}`);
-          const image = resolveImageUrl(
+          const image = resolveLessonImageUrl(
             typeof c.image === "string" ? c.image
               : typeof c.image_id === "string" ? c.image_id
-                : typeof c.img === "string" ? c.img : null,
+              : typeof c.img === "string" ? c.img : null, 1024,
           );
           return { id, word, image };
         })

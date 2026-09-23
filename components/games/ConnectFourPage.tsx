@@ -12,7 +12,7 @@ import { MobileScorePanel } from "@/components/games/MobileScorePanel";
 import { GameSettingsModal } from "@/components/games/GameSettingsSurface";
 import KaboomStyleDecisionModal from "@/components/games/KaboomStyleDecisionModal";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
-import { supabase } from "@/lib/supabase/client";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 import { trackGameStart } from "@/lib/games/track-game-start";
 import { DemoNextStep, DemoTutorial } from "@/components/demo/DemoTutorial";
 import { ANIMALS_DEMO_CARDS, isAnimalsDemoSearch } from "@/lib/demo/animals";
@@ -52,13 +52,6 @@ const ACTIVE_BOARD_THEME: Record<Player, { shell: string; border: string; glow: 
     inner: "linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 251, 236, 0.82) 100%)",
   },
 };
-
-function resolveImageUrl(value?: string | null) {
-  const raw = (value ?? "").toString().trim();
-  if (!raw) return null;
-  if (raw.startsWith("http")) return raw;
-  return supabase.storage.from("vocab-images").getPublicUrl(raw).data.publicUrl;
-}
 
 function createEmptyBoard(rows: number, cols: number): Cell[][] {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell));
@@ -290,7 +283,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
   const [tray, setTray] = useState<TrayCard[]>(() => demo ? ANIMALS_DEMO_CARDS.map((card) => ({
     id: card.id,
     word: card.word,
-    image: card.image ?? null,
+    image: resolveLessonImageUrl(card.image, 1024),
   })) : []);
   useEffect(() => {
     const demoActive = demo || isAnimalsDemoSearch(window.location.search);
@@ -299,7 +292,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
       setTray(ANIMALS_DEMO_CARDS.map((card) => ({
         id: card.id,
         word: card.word,
-        image: card.image ?? null,
+        image: resolveLessonImageUrl(card.image, 1024),
       })));
       setShowSettings(false);
       return;
@@ -312,10 +305,10 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
           const normalized = parsed.map((c: Record<string, unknown>, i: number) => ({
             id: String(c.id ?? c.word ?? `t-${i}`),
             word: String(c.word ?? c.text ?? c.label ?? ""),
-            image: resolveImageUrl(
+            image: resolveLessonImageUrl(
               typeof c.image === "string" ? c.image
                 : typeof c.image_id === "string" ? c.image_id
-                  : typeof c.img === "string" ? c.img : null,
+              : typeof c.img === "string" ? c.img : null, 1024,
             ),
             audio: typeof c.audio === "string" ? c.audio : null,
           })).filter((x) => x.word);

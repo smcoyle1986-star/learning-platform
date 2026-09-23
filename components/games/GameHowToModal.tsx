@@ -72,7 +72,7 @@ function previewLessonCards(cards: LessonCard[], count: number, fallbackLabel: s
 
 function LessonPreview({ card, className }: { card?: LessonCard; className: string }) {
   const word = cleanWord(card?.word) || "Vocabulary";
-  const imageSource = card?.image ? resolveLessonImageUrl(card.image) : null;
+  const imageSource = card?.image ? resolveLessonImageUrl(card.image, 480) : null;
   const [failedSource, setFailedSource] = React.useState<string | null>(null);
 
   return (

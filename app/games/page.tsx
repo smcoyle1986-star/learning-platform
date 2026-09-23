@@ -93,7 +93,7 @@ function GameEngine({ cards, onExit }: GameEngineProps) {
         {cards.map((c) => (
           <div key={c.id} className="rounded-lg border p-3 flex flex-col items-center gap-2">
             <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 mb-1">
-              <img src={c.image ?? "/placeholder.png"} alt={c.word} className="w-full h-full object-cover" />
+              <img src={resolveLessonImageUrl(c.image ?? "/placeholder.png", 480) ?? "/placeholder.png"} alt={c.word} className="w-full h-full object-cover" />
             </div>
             <div className="text-sm font-medium text-center">{c.word.replaceAll("_", " ")}</div>
           </div>
@@ -339,7 +339,7 @@ export default function GamesLandingPage() {
               >
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center ring-1 ring-black/5">
                   <img
-                    src={resolveLessonImageUrl(card.image ?? "/placeholder.png")}
+                    src={resolveLessonImageUrl(card.image ?? "/placeholder.png", 160)}
                     alt={card.word}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />

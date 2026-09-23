@@ -10,6 +10,7 @@ import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
 import { gameAudio } from "@/lib/games/audio/game-audio";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 /*
   Four Corners — blackout selection with optional bomb animation (v-update)
@@ -71,7 +72,7 @@ export default function FourCornersPage() {
             partOfSpeech: finalPos,
             countability: c.countability,
             prepositionType: c.prepositionType,
-            image: c.image ?? null,
+            image: resolveLessonImageUrl(typeof c.image === "string" ? c.image : null, 1024),
           } as TrayCard;
         });
         setTray(normalized);

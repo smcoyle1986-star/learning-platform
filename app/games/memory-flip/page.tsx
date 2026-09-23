@@ -12,6 +12,7 @@ import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { gameAudio } from "@/lib/games/audio/game-audio";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { resolveLessonImageUrl } from "@/lib/lessons/image";
 
 /*
   Memory Flip — final small change:
@@ -168,7 +169,10 @@ export default function MemoryFlipPage() {
         .map((c: Record<string, unknown>, i: number) => {
           const word = String(c.word ?? c.text ?? c.label ?? c.name ?? c.title ?? "");
           const id = String(c.id ?? word ?? `tray-${i}`);
-          const image = typeof c.image === "string" ? c.image : typeof c.img === "string" ? c.img : null;
+          const image = resolveLessonImageUrl(
+            typeof c.image === "string" ? c.image : typeof c.img === "string" ? c.img : null,
+            480,
+          );
           return { id, word, image };
         })
         .filter((x) => x.word);

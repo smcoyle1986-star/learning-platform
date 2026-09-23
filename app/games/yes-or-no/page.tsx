@@ -114,7 +114,7 @@ export default function YesOrNoPage() {
               id,
               vocabularyId: String(card.vocabularyId ?? card.vocabulary_id ?? id),
               word: String(card.word ?? card.text ?? ""),
-              image: resolveLessonImageUrl(rawImage),
+              image: resolveLessonImageUrl(rawImage, 1024),
             };
           });
           setTray(normalized);
@@ -270,7 +270,7 @@ export default function YesOrNoPage() {
       id: row.cardId,
       vocabularyId: row.vocabularyId || row.cardId,
       word: row.word,
-      image: resolveLessonImageUrl(row.image),
+      image: resolveLessonImageUrl(row.image, 1024),
     }));
   }
 
@@ -1315,8 +1315,8 @@ export default function YesOrNoPage() {
                     {tray.map((c) => (
                       <div key={c.id} data-card-id={c.id} className="flex gap-3 items-start p-3 border rounded">
                         <div className="w-28 h-24 bg-gray-100 flex items-center justify-center rounded overflow-hidden">
-                          {resolveLessonImageUrl(c.image) ? (
-                            <img src={resolveLessonImageUrl(c.image)} alt={c.word} className="object-cover w-full h-full" />
+                          {resolveLessonImageUrl(c.image, 480) ? (
+                            <img src={resolveLessonImageUrl(c.image, 480)} alt={c.word} className="object-cover w-full h-full" />
                           ) : (
                             <div className="text-sm text-gray-400">No image</div>
                           )}
@@ -1686,7 +1686,7 @@ export default function YesOrNoPage() {
                     <div className="flex items-start gap-4">
                       <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white">
                         {row.image ? (
-                          <img src={row.image} alt={row.word} className="h-full w-full object-cover" />
+                          <img src={resolveLessonImageUrl(row.image, 480) ?? ""} alt={row.word} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
                             No image
