@@ -162,7 +162,7 @@ export default function SignupPage() {
 
     const timeout = window.setTimeout(async () => {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id")
         .eq("username", clean)
         .maybeSingle();

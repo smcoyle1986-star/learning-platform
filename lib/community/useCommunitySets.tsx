@@ -231,7 +231,7 @@ export function useCommunitySets() {
       if (userIds.length > 0) {
         try {
           const { data: profiles, error: profilesError } = await supabase
-            .from("profiles")
+            .from("public_profiles")
             .select("id, display_name, username")
             .in("id", userIds);
 
