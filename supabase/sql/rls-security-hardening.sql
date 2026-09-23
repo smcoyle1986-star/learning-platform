@@ -7,8 +7,20 @@ begin;
 alter table public.profiles enable row level security;
 revoke all on table public.profiles from public, anon, authenticated;
 grant select, insert, update on table public.profiles to authenticated;
-drop policy if exists "profiles_select_public" on public.profiles;
-drop policy if exists "profiles_select_own" on public.profiles;
+-- Remove every legacy policy that can directly SELECT profiles, regardless
+-- of policy name. Public identity reads must use public_profiles instead.
+do $$
+declare p record;
+begin
+  for p in
+    select policyname from pg_policies
+    where schemaname = 'public' and tablename = 'profiles'
+      and cmd in ('SELECT', 'ALL')
+  loop
+    execute format('drop policy %I on public.profiles', p.policyname);
+  end loop;
+end
+$$;
 create policy "profiles_select_own" on public.profiles for select to authenticated using (id = auth.uid());
 drop policy if exists "profiles_insert_own" on public.profiles;
 create policy "profiles_insert_own" on public.profiles for insert to authenticated with check (id = auth.uid());
