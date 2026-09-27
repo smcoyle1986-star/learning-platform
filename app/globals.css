@@ -671,6 +671,34 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   }
 }
 
+@media (max-width: 900px) {
+  body.classendo-game-page [data-game-settings-surface] {
+    box-sizing: border-box;
+    max-height: calc(100dvh - 6rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  body.classendo-game-page [data-game-settings-surface] > :first-child:is(h1, h2, h3) {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding-block: 0.35rem;
+    background: white;
+  }
+
+  body.classendo-game-page [data-game-settings-surface] > :last-child:has(> button) {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding-block: 0.5rem;
+    background: white;
+  }
+}
+
 /* The landscape fallback above is for legacy game pages. Opted-in mobile
    pages already have a measured flex stage, so do not add a second viewport
    height beneath their fixed header. */
