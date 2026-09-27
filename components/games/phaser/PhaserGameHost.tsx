@@ -52,7 +52,6 @@ export default function PhaserGameHost<TApi, TEvent>({
     let resizeFrame: number | null = null;
     let resizePending: { width: number; height: number } | null = null;
     let detachFullscreenListener: (() => void) | null = null;
-    let fullscreenResizeGuardUntil = 0;
     let pixelRatio = 1;
 
     const destroyGameSafely = (game: PhaserNamespace.Game | null) => {
@@ -68,7 +67,6 @@ export default function PhaserGameHost<TApi, TEvent>({
 
     const scheduleResize = (width: number, height: number) => {
       if (width <= 0 || height <= 0) return;
-      if (Date.now() < fullscreenResizeGuardUntil) return;
       resizePending = { width, height };
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       resizeFrame = window.requestAnimationFrame(() => {
@@ -77,7 +75,12 @@ export default function PhaserGameHost<TApi, TEvent>({
         resizePending = null;
         if (!pending || disposed || !gameRef.current) return;
         try {
-          gameRef.current.scale.resize(pending.width * pixelRatio, pending.height * pixelRatio);
+          const game = gameRef.current;
+          game.scale.resize(pending.width * pixelRatio, pending.height * pixelRatio);
+          game.scale.refresh();
+          game.scene.getScenes(true).forEach((scene) => {
+            scene.cameras?.resize(pending.width * pixelRatio, pending.height * pixelRatio);
+          });
         } catch {
           // ignore transient WebGL resize errors during fullscreen transitions
         }
@@ -86,21 +89,18 @@ export default function PhaserGameHost<TApi, TEvent>({
 
     const onFullChange = () => {
       if (disposed || !gameRef.current || !mountRef.current) return;
-      fullscreenResizeGuardUntil = Date.now() + 300;
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
+      const measure = () => {
+        if (disposed || !mountRef.current) return;
+        const box = mountRef.current.getBoundingClientRect();
+        scheduleResize(Math.floor(box.width), Math.floor(box.height));
+      };
       resizeFrame = window.requestAnimationFrame(() => {
         resizeFrame = window.requestAnimationFrame(() => {
           resizeFrame = null;
-          if (disposed || !gameRef.current || !mountRef.current) return;
-          const box = mountRef.current.getBoundingClientRect();
-          window.setTimeout(() => {
-            if (disposed || !gameRef.current || !mountRef.current) return;
-            const settledBox = mountRef.current.getBoundingClientRect();
-            scheduleResize(
-              Math.max(320, Math.floor(settledBox.width || box.width)),
-              Math.max(320, Math.floor(settledBox.height || box.height))
-            );
-          }, 220);
+          measure();
+          window.setTimeout(measure, 180);
+          window.setTimeout(measure, 420);
         });
       });
     };
@@ -113,8 +113,8 @@ export default function PhaserGameHost<TApi, TEvent>({
       const Phaser = (PhaserModule.default ?? PhaserModule) as typeof PhaserNamespace;
       if (disposed) return;
 
-      const width = Math.max(320, Math.floor(parent.clientWidth || 960));
-      const height = Math.max(320, Math.floor(parent.clientHeight || 540));
+      const width = Math.max(1, Math.floor(parent.clientWidth || 960));
+      const height = Math.max(1, Math.floor(parent.clientHeight || 540));
 
       const result = await createGameRef.current({
         Phaser,
@@ -136,11 +136,24 @@ export default function PhaserGameHost<TApi, TEvent>({
         const entry = entries[0];
         const box = entry?.contentRect;
         if (!box || !gameRef.current) return;
-        scheduleResize(Math.max(320, Math.floor(box.width)), Math.max(320, Math.floor(box.height)));
+        scheduleResize(Math.floor(box.width), Math.floor(box.height));
       });
       resizeObserver.observe(parent);
       document.addEventListener("fullscreenchange", onFullChange);
+      window.addEventListener("resize", onFullChange);
+      window.addEventListener("orientationchange", onFullChange);
+      window.visualViewport?.addEventListener("resize", onFullChange);
       detachFullscreenListener = () => document.removeEventListener("fullscreenchange", onFullChange);
+      const removeViewportListeners = () => {
+        window.removeEventListener("resize", onFullChange);
+        window.removeEventListener("orientationchange", onFullChange);
+        window.visualViewport?.removeEventListener("resize", onFullChange);
+      };
+      const removeFullscreenListener = detachFullscreenListener;
+      detachFullscreenListener = () => {
+        removeFullscreenListener?.();
+        removeViewportListeners();
+      };
     }
 
     mount();
