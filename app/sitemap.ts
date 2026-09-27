@@ -70,8 +70,8 @@ const FREE_RESOURCE_SLUGS = [
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const publicPaths = ["/", "/flashcards", "/flashcards/classroom", "/games", "/worksheets", "/printables", "/lessons", "/teacher/community", "/creator", "/faq", "/upgrade", "/legal", "/topics", "/free-resources"];
-  return [
+  const publicPaths = ["/", "/flashcards", "/flashcards/classroom", "/games", "/worksheets", "/printables", "/lessons", "/faq", "/upgrade", "/legal", "/topics", "/free-resources"];
+  const urls = [
     ...publicPaths.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "weekly" as const, priority: path === "/" ? 1 : 0.7 })),
     ...GAME_PATHS.map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "monthly" as const, priority: 0.8 })),
     ...LEGAL_DOCUMENTS.map((document) => ({ url: `${siteUrl}/legal/${document.slug}`, changeFrequency: "yearly" as const, priority: 0.3 })),
@@ -79,4 +79,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...FREE_RESOURCE_SLUGS.map((slug) => ({ url: `${siteUrl}/free-resources/${slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),
     ...PUBLISHED_TWELVE_CARD_LESSON_PACKS.map((pack) => ({ url: `${siteUrl}/free-resources/${pack.slug}`, changeFrequency: "monthly" as const, priority: 0.9 })),
   ];
+
+  return Array.from(new Map(urls.map((entry) => [entry.url, entry])).values());
 }
