@@ -27,6 +27,7 @@ type TurnstileApi = {
   render: (container: HTMLElement, options: {
     sitekey: string;
     callback: (token: string) => void;
+    "refresh-expired": "manual";
     "expired-callback": () => void;
     "error-callback": () => void;
   }) => string;
@@ -219,6 +220,7 @@ export default function SignupPage() {
       setTurnstileState("ready");
       turnstileWidgetId.current = window.turnstile.render(turnstileContainer.current, {
         sitekey: turnstileSiteKey,
+        "refresh-expired": "manual",
         callback: (token) => {
           setTurnstileToken(token);
           setTurnstileState("verified");
