@@ -15,6 +15,7 @@ import { newSignupConversionId, SIGNUP_ATTEMPT_KEY } from "@/lib/auth/signup-con
 import { LEGAL_VERSION } from "@/lib/legal/constants";
 import { GAME_NAMES, getGameTopic } from "@/lib/games/topics";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { TurnstileVerificationError, verifyTurnstileToken } from "@/lib/auth/turnstile";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,14 @@ type FreeGamesSignupContext = { gameKey: string; topicId: string | null; session
 
 const SESSION_KEY = /^[a-z0-9-]{1,80}$/;
 const COUNTRY_CODE = /^[A-Z]{2}$/;
+
+async function trackSignupEvent(event: "signup_succeeded" | "signup_failed", properties: Record<string, string | boolean>) {
+  try {
+    await track(event, properties);
+  } catch (error) {
+    console.error(`Could not record ${event}:`, error);
+  }
+}
 
 function text(value: unknown, length: number) {
   return typeof value === "string" ? value.trim().slice(0, length) : "";
@@ -98,21 +107,19 @@ async function recordFreeGamesSignupCompletion({
 }
 
 async function verifyTurnstile(token: string, request: NextRequest) {
-  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
-  if (!secret) {
-    if (process.env.NODE_ENV !== "production") return;
-    throw new Error("Signup protection is not configured yet. Please try again later.");
-  }
-  if (!token) throw new Error("Please complete the security check and try again.");
-  const form = new URLSearchParams({ secret, response: token, remoteip: requestIp(request) });
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form,
+  await verifyTurnstileToken({
+    token,
+    secret: process.env.TURNSTILE_SECRET_KEY?.trim(),
+    remoteIp: requestIp(request),
+    allowUnconfigured: process.env.NODE_ENV !== "production",
   });
-  const result = await response.json().catch(() => null) as { success?: boolean } | null;
-  if (!response.ok || !result?.success) throw new Error("Security check failed. Please try again.");
 }
 
 export async function POST(request: NextRequest) {
+  const fail = async (reason: string, status: number, error: string) => {
+    await trackSignupEvent("signup_failed", { reason });
+    return NextResponse.json({ error, reason }, { status });
+  };
   try {
     const body = (await request.json()) as SignupBody;
     const email = normalizeEmail(body.email);
@@ -121,9 +128,14 @@ export async function POST(request: NextRequest) {
     const password = String(body.password ?? "");
     const freeGamesContext = readFreeGamesSignupContext(body.freeGamesContext);
     if (!isValidEmail(email) || !isValidUsername(username) || !countryRegion || password.length < 6 || body.legalAccepted !== true) {
-      return NextResponse.json({ error: "Please complete every required field." }, { status: 400 });
+      return await fail("validation", 400, "Please complete every required field.");
     }
-    await verifyTurnstile(String(body.turnstileToken ?? ""), request);
+    try {
+      await verifyTurnstile(String(body.turnstileToken ?? ""), request);
+    } catch (error) {
+      if (error instanceof TurnstileVerificationError) return await fail("turnstile", error.status, error.message);
+      throw error;
+    }
 
     const rateAllowed = await claimAuthRateLimit({
       action: "signup",
@@ -131,12 +143,12 @@ export async function POST(request: NextRequest) {
       maxRequests: 5,
       windowSeconds: 60 * 60,
     });
-    if (!rateAllowed) return NextResponse.json({ error: "Please wait before creating another account." }, { status: 429 });
+    if (!rateAllowed) return await fail("rate_limited", 429, "Please wait before creating another account.");
 
     const domain = email.split("@")[1] ?? "";
     const { data: disposable } = await getSupabaseAdmin()
       .from("disposable_email_domains").select("domain").eq("domain", domain).maybeSingle();
-    if (disposable) return NextResponse.json({ error: "Please use a permanent email address. Temporary email providers are not supported." }, { status: 400 });
+    if (disposable) return await fail("disposable_domain", 400, "Please use a permanent email address. Temporary email providers are not supported.");
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -162,41 +174,49 @@ export async function POST(request: NextRequest) {
     });
     if (error || !data.user) {
       const text = String(error?.message ?? "").toLowerCase();
-      const message = /already registered|already exists|user already|email.*taken|duplicate/.test(text)
-        ? "An account already exists with this email address. Please sign in instead."
-        : "We could not create your account just now. Please try again.";
-      return NextResponse.json({ error: message }, { status: 400 });
+      const existingAccount = /already registered|already exists|user already|email.*taken|duplicate/.test(text);
+      return await fail(
+        existingAccount ? "existing_account" : "auth_error",
+        existingAccount ? 409 : 400,
+        existingAccount ? "An account already exists with this email address. Please sign in instead." : "We could not create your account just now. Please try again.",
+      );
     }
     const signupConversionId = newSignupConversionId(data.user, signupAttemptId);
-    if (signupConversionId) {
-      const { error: conversionReceiptError } = await getSupabaseAdmin()
-        .from("classendo_email_verifications")
-        .upsert({
-          user_id: data.user.id,
-          normalized_email: email,
-          signup_conversion_id: signupConversionId,
-        }, { onConflict: "user_id" });
-      if (conversionReceiptError) {
-        // Conversion measurement must never prevent a teacher from creating an account.
+    if (!signupConversionId) {
+      return await fail("existing_account", 409, "An account already exists with this email address. Please sign in instead.");
+    }
+    await trackSignupEvent("signup_succeeded", {
+      email_confirmation_required: !data.session,
+      destination: body.nextPath === "/upgrade" ? "upgrade" : "flashcards",
+    });
+    {
+      try {
+        const { error: conversionReceiptError } = await getSupabaseAdmin()
+          .from("classendo_email_verifications")
+          .upsert({
+            user_id: data.user.id,
+            normalized_email: email,
+            signup_conversion_id: signupConversionId,
+          }, { onConflict: "user_id" });
+        if (conversionReceiptError) {
+          console.error("Could not prepare Google Ads signup conversion receipt:", conversionReceiptError);
+        }
+      } catch (conversionReceiptError) {
+        // Conversion measurement must never prevent a teacher from completing signup.
         console.error("Could not prepare Google Ads signup conversion receipt:", conversionReceiptError);
       }
-      await recordFreeGamesSignupCompletion({
-        context: freeGamesContext,
-        signupAttemptId,
-        attribution: body.attribution,
-        request,
-      });
-    }
-    if (!data.session) {
       try {
-        await track("signup_account_created", {
-          email_confirmation_required: true,
-          destination: body.nextPath === "/upgrade" ? "upgrade" : "flashcards",
+        await recordFreeGamesSignupCompletion({
+          context: freeGamesContext,
+          signupAttemptId,
+          attribution: body.attribution,
+          request,
         });
       } catch (analyticsError) {
-        // Analytics must never prevent a teacher from completing signup.
-        console.error("Could not record pending signup conversion:", analyticsError);
+        console.error("Free Games signup analytics failed:", analyticsError);
       }
+    }
+    if (!data.session) {
       return NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
     }
 
@@ -217,6 +237,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Signup failed:", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Signup failed." }, { status: 500 });
+    if (error instanceof TurnstileVerificationError) return await fail("turnstile", error.status, error.message);
+    return await fail("auth_error", 500, "We could not create your account just now. Please try again.");
   }
 }
