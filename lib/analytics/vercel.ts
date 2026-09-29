@@ -6,7 +6,8 @@ import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
 type ConversionEvent =
   | "signup_submitted"
-  | "signup_account_created"
+  | "signup_succeeded"
+  | "signup_failed"
   | "welcome_trial_started"
   | "lesson_opened";
 

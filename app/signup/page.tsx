@@ -3,7 +3,7 @@
 import Link from "next/link";
 import GameSignupContext from "@/components/games/GameSignupContext";
 import Script from "next/script";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -21,6 +21,21 @@ import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
+type TurnstileState = "loading" | "ready" | "verified" | "expired" | "error";
+
+type TurnstileApi = {
+  render: (container: HTMLElement, options: {
+    sitekey: string;
+    callback: (token: string) => void;
+    "expired-callback": () => void;
+    "error-callback": () => void;
+  }) => string;
+  reset: (widgetId?: string) => void;
+};
+
+declare global {
+  interface Window { turnstile?: TurnstileApi }
+}
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -113,6 +128,9 @@ export default function SignupPage() {
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileState, setTurnstileState] = useState<TurnstileState>("loading");
+  const turnstileContainer = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
   const [freeGamesSignupContext, setFreeGamesSignupContext] = useState<FreeGamesSignupContext | null>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -195,11 +213,56 @@ export default function SignupPage() {
     };
   }, [username]);
 
+  const initializeTurnstile = () => {
+    if (!turnstileSiteKey || !turnstileContainer.current || !window.turnstile || turnstileWidgetId.current) return;
+    try {
+      setTurnstileState("ready");
+      turnstileWidgetId.current = window.turnstile.render(turnstileContainer.current, {
+        sitekey: turnstileSiteKey,
+        callback: (token) => {
+          setTurnstileToken(token);
+          setTurnstileState("verified");
+          setMessage("");
+        },
+        "expired-callback": () => {
+          setTurnstileToken("");
+          setTurnstileState("expired");
+          setMessage("The security check expired. Please retry it before creating your account.");
+        },
+        "error-callback": () => {
+          setTurnstileToken("");
+          setTurnstileState("error");
+          setMessage("The security check could not load. Please retry it before creating your account.");
+        },
+      });
+    } catch {
+      setTurnstileToken("");
+      setTurnstileState("error");
+      setMessage("The security check could not load. Please retry it before creating your account.");
+    }
+  };
+
+  const retryTurnstile = () => {
+    setTurnstileToken("");
+    if (!window.turnstile || !turnstileWidgetId.current) {
+      setTurnstileState("error");
+      setMessage("The security check is unavailable. Please refresh the page and try again.");
+      return;
+    }
+    setTurnstileState("ready");
+    setMessage("");
+    window.turnstile.reset(turnstileWidgetId.current);
+  };
+
   useEffect(() => {
-    const target = window as typeof window & { onClassendoTurnstile?: (token: string) => void };
-    target.onClassendoTurnstile = setTurnstileToken;
-    return () => { delete target.onClassendoTurnstile; };
-  }, []);
+    if (!turnstileSiteKey || turnstileState === "verified" || turnstileState === "error" || turnstileState === "expired") return;
+    const timeout = window.setTimeout(() => {
+      setTurnstileToken("");
+      setTurnstileState("error");
+      setMessage("The security check is taking too long to load. Please retry it or refresh the page.");
+    }, 30_000);
+    return () => window.clearTimeout(timeout);
+  }, [turnstileSiteKey, turnstileState]);
 
   useEffect(() => {
     setFreeGamesSignupContext(readFreeGamesSignupContext(new URLSearchParams(window.location.search)));
@@ -257,6 +320,11 @@ export default function SignupPage() {
       return;
     }
 
+    if (!turnstileToken || turnstileState !== "verified") {
+      setMessage("Please complete the security check before creating your account.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
@@ -288,10 +356,18 @@ export default function SignupPage() {
         }),
       });
       const payload = await signupResponse.json().catch(() => null) as {
-        error?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
+        error?: string; reason?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
         session?: { accessToken?: string; refreshToken?: string };
       } | null;
-      if (!signupResponse.ok) { setMessage(String(payload?.error ?? "We could not create your account just now.")); return; }
+      if (!signupResponse.ok) {
+        setMessage(String(payload?.error ?? "We could not create your account just now."));
+        if (payload?.reason === "turnstile") {
+          setTurnstileToken("");
+          setTurnstileState("expired");
+          window.turnstile?.reset(turnstileWidgetId.current ?? undefined);
+        }
+        return;
+      }
       if (payload?.requiresLegacyConfirmation || !payload?.session?.accessToken || !payload.session.refreshToken) {
         // Safe transitional fallback while Supabase Confirm Email remains on.
         // It can be removed only after the production setting is disabled.
@@ -301,11 +377,13 @@ export default function SignupPage() {
       }
       const { error } = await supabase.auth.setSession({ access_token: payload.session.accessToken, refresh_token: payload.session.refreshToken });
       if (error) { setMessage("Your account was created, but we could not start your session. Please sign in."); return; }
-      trackConversion("signup_account_created", { email_confirmation_required: false });
       if (!payload.verificationEmailSent) {
         sessionStorage.setItem("classendo-verification-email-pending", "1");
       }
       router.replace(welcomeDestination);
+    } catch {
+      trackConversion("signup_failed", { reason: "network_error" });
+      setMessage("We could not reach signup protection or the account service. Please retry the security check and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -505,9 +583,15 @@ export default function SignupPage() {
               <p className="text-sm leading-6 text-[#6b756b]">Classendo accounts are for adult teachers. By creating an account, you acknowledge the{" "}<Link href="/legal/privacy" target="_blank" className="font-semibold underline underline-offset-4">Privacy Notice</Link>. We use your email for your account, security, and essential Classendo messages. Do not upload identifiable or sensitive pupil information.</p>
 
               {turnstileSiteKey ? <>
-                <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
-                <div className="cf-turnstile" data-sitekey={turnstileSiteKey} data-callback="onClassendoTurnstile" />
-              </> : process.env.NODE_ENV === "production" ? <p className="text-sm text-[#a45d49]">Signup protection is temporarily unavailable.</p> : null}
+                <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onReady={initializeTurnstile} onError={() => {
+                  setTurnstileToken("");
+                  setTurnstileState("error");
+                  setMessage("The security check could not load. Please refresh the page and try again.");
+                }} />
+                <div ref={turnstileContainer} aria-live="polite" />
+                {turnstileState === "error" || turnstileState === "expired" ? <button type="button" onClick={retryTurnstile} className="text-sm font-semibold text-[#6c8f58] underline">Retry security check</button> : null}
+                <p className="text-sm text-[#6b756b]" role="status">{turnstileState === "verified" ? "Security check complete." : turnstileState === "error" ? "Security check unavailable." : turnstileState === "expired" ? "Security check expired." : turnstileState === "ready" ? "Complete the security check to continue." : "Loading security check…"}</p>
+              </> : <p className="text-sm text-[#a45d49]" role="alert">Signup protection is temporarily unavailable. Please refresh and try again later.</p>}
 
               {message && (
                 <p role="status" aria-live="polite" className="rounded-2xl border border-[#dbe3d1] bg-[#f7faf4] px-4 py-3 text-sm leading-6 text-[#4c5f49]">
@@ -517,7 +601,7 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || turnstileState !== "verified" || !turnstileToken}
                 className="btn btn-primary w-full px-6 py-4 text-base disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Creating account..." : "Create free account"}
