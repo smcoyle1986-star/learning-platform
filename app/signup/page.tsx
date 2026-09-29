@@ -16,7 +16,7 @@ import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
-import { getAnalyticsSessionKey, trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
+import { getAnalyticsSessionKey } from "@/lib/analytics/client";
 import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
@@ -351,7 +351,6 @@ export default function SignupPage() {
           legalAccepted,
           attribution: signupAttribution,
           freeGamesContext,
-          analyticsSessionKey: hasAnalyticsConsent() ? getAnalyticsSessionKey() : null,
           turnstileToken,
           nextPath: requestedNext,
         }),
@@ -378,7 +377,6 @@ export default function SignupPage() {
       }
       const { error } = await supabase.auth.setSession({ access_token: payload.session.accessToken, refresh_token: payload.session.refreshToken });
       if (error) { setMessage("Your account was created, but we could not start your session. Please sign in."); return; }
-      await trackAuthenticatedAnalyticsSession("signup");
       if (!payload.verificationEmailSent) {
         sessionStorage.setItem("classendo-verification-email-pending", "1");
       }
