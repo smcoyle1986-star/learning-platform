@@ -1083,6 +1083,11 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
 
         {matchWinner && matchWinnerModalOpen && !isDemo && (
           <GameWinnerModal
+            scoreTeams={[
+              { name: "Player 1", score: matchWins[1] ?? 0 },
+              { name: aiLevel === "none" ? "Player 2" : `Player ${aiPlaysAs === 2 ? "AI" : "2"}`, score: matchWins[2] ?? 0 },
+            ]}
+            scoreUnit="wins"
             title={aiLevel !== "none" && matchWinner === aiPlaysAs ? "Better luck next time!" : `Congratulations, Player ${matchWinner}!`}
             message={aiLevel !== "none" && matchWinner === aiPlaysAs
               ? `The AI reached ${firstToWins} wins first. Try another match!`

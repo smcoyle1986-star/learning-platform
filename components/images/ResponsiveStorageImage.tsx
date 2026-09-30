@@ -1,7 +1,33 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties, type ReactEventHandler, type TransitionEventHandler } from "react";
+import { useMemo, useState, type CSSProperties, type ReactEventHandler, type SyntheticEvent, type TransitionEventHandler } from "react";
 import { getResponsiveImageUrl } from "@/lib/images/storage";
+
+function retryImageSource(event: SyntheticEvent<HTMLImageElement>, originalSrc: string) {
+  const image = event.currentTarget;
+  if (image.dataset.originalAttempted !== "true") {
+    image.dataset.originalAttempted = "true";
+  }
+
+  let source: URL;
+  try {
+    source = new URL(originalSrc, window.location.href);
+  } catch {
+    return;
+  }
+  const match = source.pathname.match(/\.(png|jpe?g|webp)$/i);
+  if (!match) return;
+  const formats = ["webp", "png", "jpg", "jpeg"];
+  const tried = new Set((image.dataset.triedFormats ?? "").split(",").filter(Boolean));
+  tried.add(match[1].toLowerCase());
+  const next = formats.find((format) => !tried.has(format));
+  if (!next) return;
+  tried.add(next);
+  image.dataset.triedFormats = Array.from(tried).join(",");
+  source.pathname = source.pathname.replace(/\.(png|jpe?g|webp)$/i, `.${next}`);
+  image.src = source.toString();
+  image.srcset = "";
+}
 
 type ResponsiveStorageImageProps = {
   src: string;
@@ -61,6 +87,7 @@ export function ResponsiveStorageImage({
         fetchPriority={fetchPriority}
         decoding="async"
         style={style}
+        onError={(event) => retryImageSource(event, src)}
         onLoad={onLoad}
         onTransitionEnd={onTransitionEnd}
       />
