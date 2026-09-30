@@ -1693,6 +1693,8 @@ export default function ConquerPage() {
 
       {winnerModalOpen && (
         <GameWinnerModal
+          scoreTeams={teams.map((team) => ({ name: team.name, score: totalOwned[team.id] ?? 0 }))}
+          scoreUnit="squares"
           title={winningTeams.length > 1 ? "It's a tie!" : `${winningTeams[0]?.name ?? "Team 1"} wins!`}
           message={winningTeams.length > 1
             ? `${winningTeams.map((team) => team.name).join(" and ")} finished level on territory.`

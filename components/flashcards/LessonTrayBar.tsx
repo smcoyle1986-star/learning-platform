@@ -109,7 +109,7 @@ export default function LessonTrayBar({
                   alt={formatWord(card.word)}
                   className="w-8 h-8 rounded-md object-cover border border-black/10 bg-white shrink-0"
                   sizes="32px"
-                  widths={[160]}
+                  widths={[480]}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-md border border-dashed border-black/10 bg-white/70 shrink-0" />

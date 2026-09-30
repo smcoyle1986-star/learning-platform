@@ -9,7 +9,7 @@ export function GameSettingsDropdown({ children, className = "" }: GameSettingsS
   return (
     <div
       data-game-settings-surface
-      className={`absolute right-0 mt-2 w-72 rounded-2xl border border-black/8 bg-white p-4 shadow-[0_18px_48px_rgba(15,23,42,0.16)] z-[70] text-sm ${className}`}
+      className={`absolute right-0 mt-2 max-h-[calc(100dvh-6rem)] max-w-[calc(100vw-2rem)] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-black/8 bg-white p-4 shadow-[0_18px_48px_rgba(15,23,42,0.16)] z-[70] text-sm ${className}`}
     >
       {children}
     </div>

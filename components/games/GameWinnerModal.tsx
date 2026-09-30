@@ -10,15 +10,18 @@ import { freeGamesSignupUrl, trackFreeGameEvent, trackUseOwnVocabularyClick } fr
 
 type GameWinnerModalProps = {
   title: string; message: string; onClose: () => void; onPlayAgain: () => void;
-  onReturnToGames: () => void; children?: ReactNode; scoreTeams?: { name: string; score: number }[];
+  onReturnToGames: () => void; children?: ReactNode; scoreTeams?: { name: string; score: number }[]; scoreUnit?: string;
 };
 /** Dismissal leaves the finished board available; replay is always explicit. */
-export function GameWinnerModal({ title, message, onClose, onPlayAgain, onReturnToGames, children, scoreTeams }: GameWinnerModalProps) {
+export function GameWinnerModal({ title, message, onClose, onPlayAgain, onReturnToGames, children, scoreTeams, scoreUnit = "pts" }: GameWinnerModalProps) {
   const flow = useGameFlow();
   const { user } = useAuth();
   const best = scoreTeams?.length ? Math.max(...scoreTeams.map((team) => team.score)) : null;
   const leaders = scoreTeams?.filter((team) => team.score === best) ?? [];
   const tied = leaders.length > 1;
+  const rankedTeams = scoreTeams?.length
+    ? [...scoreTeams].sort((left, right) => right.score - left.score)
+    : [];
   const custom = flow ? customGameUrl(flow.gameId, flow.topic?.id) : "";
   useEffect(() => {
     if (flow?.topic) void trackFreeGameEvent({ eventType: "game_completed", gameKey: flow.gameId, topicId: flow.topic.id, topicLabel: flow.topic.title, topicCategory: flow.topic.category, source: "public_topic" });
@@ -27,8 +30,31 @@ export function GameWinnerModal({ title, message, onClose, onPlayAgain, onReturn
     if (flow?.topic) void trackFreeGameEvent({ eventType: "finish_action", gameKey: flow.gameId, topicId: flow.topic.id, topicLabel: flow.topic.title, topicCategory: flow.topic.category, source: "public_topic", action });
   };
   return <GameFlowDialog title={tied ? "It’s a tie!" : title} onClose={onClose}>
-    <div className="text-center"><Trophy size={42} className="mx-auto mb-4 text-[#73965e]" />
-      <p className="text-base leading-6 text-[#65705f]">{tied ? `${leaders.map((team) => team.name).join(" and ")} finished with ${best} points.` : message}</p>
+    <div className="text-center">
+      {rankedTeams.length > 0 && (
+        <ol aria-label="Final team scores" className="mb-6 space-y-2 text-left">
+          {rankedTeams.map((team, index) => {
+            const isLeader = team.score === best;
+            return (
+              <li
+                key={`${team.name}-${index}`}
+                className={isLeader
+                  ? "flex items-center justify-between gap-4 rounded-2xl bg-[#edf5e9] px-5 py-4 text-[#2f3a2f]"
+                  : "flex items-center justify-between gap-4 rounded-xl bg-[#f7f8f5] px-4 py-2.5 text-[#65705f]"}
+              >
+                <span className={isLeader ? "text-xl font-extrabold sm:text-2xl" : "text-sm font-semibold"}>
+                  {team.name}{isLeader ? (tied ? " — Tied" : " — Winner") : ""}
+                </span>
+                <span className={isLeader ? "shrink-0 text-4xl font-black tabular-nums sm:text-5xl" : "shrink-0 text-lg font-bold tabular-nums"}>
+                  {team.score}<span className={isLeader ? "ml-2 text-sm font-semibold" : "ml-1 text-xs font-medium"}>{scoreUnit}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+      <Trophy size={42} className="mx-auto mb-4 text-[#73965e]" />
+      <p className="text-base leading-6 text-[#65705f]">{tied ? `${leaders.map((team) => team.name).join(" and ")} finished with ${best} ${scoreUnit}.` : message}</p>
       {children && <div className="mt-5">{children}</div>}
       <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => { finishAction("play_again"); onPlayAgain(); }} className="btn btn-primary px-5 py-3 text-sm">Play Again</button>
         {flow ? <><Link onClick={() => finishAction("change_topic")} className="btn btn-secondary px-5 py-3 text-sm" href={topicsUrl(flow.gameId, flow.topic?.id)}>Change Topic</Link><Link onClick={() => finishAction("change_game")} className="btn btn-secondary px-5 py-3 text-sm" href={`/games?source=${flow.topic ? "topics" : "tray"}${flow.topic ? `&topic=${flow.topic.id}` : ""}`}>Change Game</Link></> : <button onClick={onReturnToGames} className="btn btn-secondary px-5 py-3 text-sm">Return to Games</button>}
