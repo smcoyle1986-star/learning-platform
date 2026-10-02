@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { decideUnverifiedAccountCleanup, type CleanupDecisionInput } from "@/lib/auth/unverified-cleanup-policy";
 
 const MIN_ACCOUNT_AGE_DAYS = 30;
 const SOURCE = "daily_unverified_cleanup";
@@ -13,6 +14,10 @@ function isoOrNull(value: unknown) {
 function latestDate(values: unknown[]) {
   const dates = values.map(isoOrNull).filter((value): value is string => Boolean(value));
   return dates.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+}
+
+function getActivityStatus(lastKnownActivity: string | null, threshold: number): CleanupDecisionInput["activityStatus"] {
+  return lastKnownActivity && Date.parse(lastKnownActivity) > threshold ? "active" : "unknown";
 }
 
 function errorText(error: unknown) {
@@ -79,7 +84,7 @@ export async function runUnverifiedAccountCleanup() {
         ]);
         // Existing session and analytics events are consent-gated. Their absence
         // cannot prove inactivity, so zero rows is explicitly treated as unknown.
-        const activityStatus = lastKnownActivity && Date.parse(lastKnownActivity) > threshold ? "active" : "unknown";
+        const activityStatus = getActivityStatus(lastKnownActivity, threshold);
         const decision = decideUnverifiedAccountCleanup({
           createdAt,
           now,
