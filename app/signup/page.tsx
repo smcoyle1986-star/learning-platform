@@ -16,7 +16,7 @@ import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
-import { getAnalyticsSessionKey } from "@/lib/analytics/client";
+import { getAnalyticsAnonymousId, getAnalyticsSessionKey, trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
 import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 
@@ -119,6 +119,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [countryRegion, setCountryRegion] = useState("");
+  const [userType, setUserType] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -133,6 +134,7 @@ export default function SignupPage() {
   const turnstileContainer = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
   const [freeGamesSignupContext, setFreeGamesSignupContext] = useState<FreeGamesSignupContext | null>(null);
+  const signupInteractionTracked = useRef(false);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
@@ -270,26 +272,22 @@ export default function SignupPage() {
     setFreeGamesSignupContext(readFreeGamesSignupContext(new URLSearchParams(window.location.search)));
   }, []);
 
-  useEffect(() => {
-    if (!freeGamesSignupContext) return;
-    void trackFreeGameEvent({
-      eventType: "signup_started",
-      gameKey: freeGamesSignupContext.gameKey,
-      topicId: freeGamesSignupContext.topic?.id,
-      topicLabel: freeGamesSignupContext.topic?.title,
-      topicCategory: freeGamesSignupContext.topic?.category,
-      source: "free_games",
-      action: "create_account",
-    });
-  }, [freeGamesSignupContext]);
-
   const applySuggestion = (value: string) => {
     setUsernameTouched(true);
     setUsername(value);
   };
 
+  const trackSignupInteraction = () => {
+    if (!freeGamesSignupContext || signupInteractionTracked.current || !hasAnalyticsConsent()) return;
+    signupInteractionTracked.current = true;
+    void trackFreeGameEvent({ eventType: "signup_started", gameKey: freeGamesSignupContext.gameKey,
+      topicId: freeGamesSignupContext.topic?.id, topicLabel: freeGamesSignupContext.topic?.title,
+      topicCategory: freeGamesSignupContext.topic?.category, source: "free_games", action: "create_account" });
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    trackSignupInteraction();
     setMessage("");
 
     const cleanEmail = email.trim().toLowerCase();
@@ -303,6 +301,11 @@ export default function SignupPage() {
 
     if (!cleanCountry) {
       setMessage("Please enter your country or region.");
+      return;
+    }
+
+    if (!["Teacher", "Online tutor", "Student", "Parent", "Other"].includes(userType)) {
+      setMessage("Please select the option that describes you.");
       return;
     }
 
@@ -350,9 +353,12 @@ export default function SignupPage() {
           password,
           username: cleanUsername,
           countryRegion: cleanCountry,
+          userType,
           legalAccepted,
           attribution: signupAttribution,
           freeGamesContext,
+          analyticsSessionKey: hasAnalyticsConsent() ? getAnalyticsSessionKey() : null,
+          analyticsAnonymousId: hasAnalyticsConsent() ? getAnalyticsAnonymousId() : null,
           turnstileToken,
           nextPath: requestedNext,
         }),
@@ -379,6 +385,7 @@ export default function SignupPage() {
       }
       const { error } = await supabase.auth.setSession({ access_token: payload.session.accessToken, refresh_token: payload.session.refreshToken });
       if (error) { setMessage("Your account was created, but we could not start your session. Please sign in."); return; }
+      await trackAuthenticatedAnalyticsSession("signup");
       if (!payload.verificationEmailSent) {
         sessionStorage.setItem("classendo-verification-email-pending", "1");
       }
@@ -434,7 +441,7 @@ export default function SignupPage() {
               Start teaching straight away. Verify your email afterwards to activate your 14-day Premium welcome trial.
             </p>
 
-            <form onSubmit={handleSignup} className="mt-8 space-y-5">
+            <form onSubmit={handleSignup} onFocusCapture={trackSignupInteraction} className="mt-8 space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#2f3a2f]" htmlFor="signup-email">
                   Email address
@@ -542,6 +549,15 @@ export default function SignupPage() {
                 <p className="mt-2 text-sm leading-6 text-[#6b756b]">
                   This helps Classendo recommend vocabulary, spelling, and classroom content that better fits your students.
                 </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#2f3a2f]" htmlFor="signup-user-type">I am a...</label>
+                <select id="signup-user-type" value={userType} onChange={(e) => setUserType(e.target.value)} required
+                  className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]">
+                  <option value="">Choose one</option>
+                  {["Teacher", "Online tutor", "Student", "Parent", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
               </div>
 
               <div>

@@ -1,38 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { getRequestUser } from "@/lib/server/request-auth";
+import { observeAnalyticsSession, observedCountry, validAnalyticsAnonymousId, validAnalyticsSessionKey } from "@/lib/analytics/server";
+import { GAME_NAMES } from "@/lib/games/topics";
 
 export const runtime = "nodejs";
 
 type TrackPlayBody = {
   gameKey?: string;
   sessionKey?: string | null;
+  anonymousId?: string | null;
 };
 
 export async function POST(request: NextRequest) {
   try {
+    if (request.headers.get("origin") !== request.nextUrl.origin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
     const body = (await request.json()) as TrackPlayBody;
     const gameKey = String(body.gameKey ?? "").trim();
+    const sessionKey = validAnalyticsSessionKey(body.sessionKey);
 
-    if (!gameKey) {
-      return NextResponse.json({ error: "gameKey is required." }, { status: 400 });
+    if (!Object.hasOwn(GAME_NAMES, gameKey) || !sessionKey) {
+      return NextResponse.json({ error: "Invalid game analytics event." }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
-    const authHeader = request.headers.get("authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-
-    let userId: string | null = null;
-    if (token) {
-      const { data } = await supabase.auth.getUser(token);
-      userId = data.user?.id ?? null;
-    }
+    let user;
+    try { user = await getRequestUser(request); }
+    catch { return NextResponse.json({ error: "Authentication could not be verified." }, { status: 401 }); }
+    const country = observedCountry(request);
+    await observeAnalyticsSession({ sessionKey, anonymousId: user ? null : body.anonymousId, userId: user?.id, country });
 
     const { error } = await supabase.from("game_play_events").insert({
       game_key: gameKey,
-      user_id: userId,
-      session_key: body.sessionKey ?? null,
+      user_id: user?.id ?? null,
+      session_key: sessionKey,
+      anonymous_id: user ? null : validAnalyticsAnonymousId(body.anonymousId),
+      country_code: country,
+      event_key: `game-play:${sessionKey}:${gameKey}:${Math.floor(Date.now() / 5000)}`,
     });
+
+    if (error?.code === "23505") return NextResponse.json({ ok: true, duplicate: true });
 
     if (error && /game_play_events|relation/i.test(String(error.message ?? ""))) {
       return NextResponse.json({ ok: true, skipped: true });

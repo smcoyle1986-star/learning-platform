@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
+import { trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function LoginPage() {
         return;
       }
 
+      await trackAuthenticatedAnalyticsSession("sign_in");
       const requestedPath = new URLSearchParams(window.location.search).get("next");
       const safePath =
         requestedPath?.startsWith("/") && !requestedPath.startsWith("//")

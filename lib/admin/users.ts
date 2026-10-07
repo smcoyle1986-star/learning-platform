@@ -8,6 +8,7 @@ export type AdminUserListItem = {
   id: string;
   email: string | null;
   username: string | null;
+  userType: string | null;
   displayName: string | null;
   avatarUrl: string | null;
   role: "owner" | "admin" | "moderator" | "user";
@@ -118,6 +119,7 @@ function listItem(value: unknown): AdminUserListItem {
     id: text(item.id),
     email: nullableText(item.email),
     username: nullableText(item.username),
+    userType: nullableText(item.user_type),
     displayName: nullableText(item.display_name),
     avatarUrl: nullableText(item.avatar_url),
     role: role(item.role),
@@ -157,8 +159,16 @@ export async function getAdminUsers(params: {
   }
 
   const root = record(data);
+  const users = array(root.users).map(listItem);
+  if (users.length) {
+    const { data: profiles, error: profileError } = await getSupabaseAdmin().from("profiles")
+      .select("id,user_type").in("id", users.map((user) => user.id));
+    if (profileError) throw new Error(`Could not load user types: ${profileError.message}`);
+    const types = new Map((profiles ?? []).map((profile: { id: string; user_type: string | null }) => [profile.id, profile.user_type]));
+    for (const user of users) user.userType = types.get(user.id) ?? null;
+  }
   return {
-    users: array(root.users).map(listItem),
+    users,
     total: number(root.total),
     limit: number(root.limit) || ADMIN_USERS_PAGE_SIZE,
     offset: number(root.offset),
@@ -181,8 +191,12 @@ export async function getAdminUserDetail(
   }
 
   const root = record(data);
+  const { data: profile, error: profileError } = await getSupabaseAdmin().from("profiles")
+    .select("user_type").eq("id", userId).maybeSingle();
+  if (profileError) throw new Error(`Could not load user type: ${profileError.message}`);
   const base = listItem({
     ...root,
+    user_type: profile?.user_type,
     tier: root.effective_premium === true ? "premium" : "free",
     status:
       root.banned_until && new Date(String(root.banned_until)).getTime() > Date.now()

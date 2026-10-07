@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { clearPendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { supabase } from "@/lib/supabase/client";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 
 type OnboardingStage = "welcome" | "guide" | null;
 
@@ -72,6 +73,12 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
       stageTimer = window.setTimeout(() => {
         setEmailJustVerified(didVerifyEmail);
         setStage("welcome");
+        void trackAnalyticsEvent({
+          eventType: "onboarding_started",
+          itemKey: "flashcards-tour",
+          itemLabel: "Flashcards onboarding",
+          category: "onboarding",
+        });
       }, 0);
       return () => {
         if (stageTimer !== null) window.clearTimeout(stageTimer);
@@ -94,6 +101,12 @@ export default function NewUserOnboarding({ user, authLoading, daysRemaining }: 
 
   const closeGuideForSession = () => {
     if (sessionKey) window.sessionStorage.setItem(sessionKey, "1");
+    void trackAnalyticsEvent({
+      eventType: "onboarding_completed",
+      itemKey: "flashcards-tour",
+      itemLabel: "Flashcards onboarding",
+      category: "onboarding",
+    });
     setStage(null);
   };
 

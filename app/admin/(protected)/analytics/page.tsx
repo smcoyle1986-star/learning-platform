@@ -17,6 +17,7 @@ import {
   type AdminAnalyticsRankedItem,
 } from "@/lib/admin/analytics";
 import { AdminAnalyticsAutoRefresh } from "@/components/admin/AdminAnalyticsAutoRefresh";
+import { getAdminIdentitySummary } from "@/lib/admin/identity-summary";
 
 const GAME_LABELS: Record<string, string> = {
   "connect-four": "Connect Four",
@@ -130,12 +131,12 @@ export default async function AdminAnalyticsPage({
   const period = first(raw.period) || "30";
   const periodDays = periodValue(period);
   await requireAdmin();
-  const analytics = await getAdminAnalyticsSnapshot(periodDays);
+  const [analytics, identity] = await Promise.all([getAdminAnalyticsSnapshot(periodDays), getAdminIdentitySummary(periodDays)]);
   const periodLabel = periodDays ? `Last ${periodDays} days` : "All time";
   const summaryCards = [
     { label: "Vocabulary searches", value: analytics.summary.vocabularySearches, icon: Search },
     { label: "Flashcard views", value: analytics.summary.flashcardViews, icon: Eye },
-    { label: "Game plays", value: analytics.summary.gamePlays, icon: Gamepad2 },
+    { label: "Recorded game starts", value: analytics.summary.gamePlays, icon: Gamepad2 },
     { label: "Worksheet activity", value: analytics.summary.worksheetGenerations + analytics.summary.worksheetSaves, icon: FileText },
     { label: "Premium upgrades", value: analytics.summary.premiumUpgrades, icon: Crown },
     { label: "New users", value: analytics.summary.newUsers, icon: UserPlus },
@@ -168,6 +169,9 @@ export default async function AdminAnalyticsPage({
           <strong className="text-[#354035]">{analytics.summary.trackedEvents.toLocaleString()}</strong>
           first-party events · updates every 30 seconds
         </div>
+        <Link href="/admin/analytics/users" className="btn btn-secondary inline-flex items-center gap-2 px-4 py-2.5 text-sm">
+          <UserPlus aria-hidden="true" className="h-4 w-4" />Authenticated Users
+        </Link>
       </div>
 
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Analytics period">
@@ -177,6 +181,37 @@ export default async function AdminAnalyticsPage({
           </Link>
         ))}
       </nav>
+
+      <div className="mt-7 grid gap-5 xl:grid-cols-2">
+        <section className="rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-labelledby="registered-heading">
+          <div className="flex items-center justify-between"><h2 id="registered-heading" className="text-lg font-semibold">Registered Users</h2><Link href="/admin/analytics/users" className="text-sm font-semibold text-[#58754c] hover:underline">Open user journeys →</Link></div>
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{[
+            ["Total accounts", identity.totalAccounts], ["Verified", identity.verified], ["Unverified", identity.unverified],
+            ["Teachers", identity.teachers], ["Tutors", identity.tutors], ["Students", identity.students],
+            ["Parents", identity.parents], ["Other", identity.other], ["Not set", identity.unclassified],
+            ["Active users", identity.activeUsers], ["New users", identity.newUsers],
+          ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{Number(value).toLocaleString()}</dd></div>)}</dl>
+          <p className="mt-3 text-xs text-[#778075]">Total and verification use account records. Active and new users use {periodLabel.toLowerCase()}.</p>
+        </section>
+        <section className="rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-labelledby="guests-heading">
+          <div className="flex items-center justify-between"><h2 id="guests-heading" className="text-lg font-semibold">Guests</h2><Link href="/admin/analytics/guests" className="text-sm font-semibold text-[#58754c] hover:underline">Open guest journeys →</Link></div>
+          <dl className="mt-4 grid grid-cols-2 gap-3">{[
+            ["Unique guests", identity.uniqueGuests], ["Returning guests", identity.returningGuests],
+            ["Sessions", identity.guestSessions], ["Meaningful users", identity.meaningfulGuests],
+          ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{value.toLocaleString()}</dd></div>)}</dl>
+          <p className="mt-3 text-xs text-[#778075]">Consented browser IDs active in {periodLabel.toLowerCase()}; linked guests count with their account. Browser resets and declined consent limit person counts.</p>
+        </section>
+      </div>
+      <section className="mt-5 rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-labelledby="conversion-heading">
+        <h2 id="conversion-heading" className="text-lg font-semibold">Conversion</h2>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-5">{[
+          ["Guest → signup", identity.guestSignups], ["New accounts", identity.newUsers],
+          ["New accounts verified", identity.cohortVerified], ["New accounts with trial", identity.cohortTrialStarted],
+          ["Paid Premium accounts", identity.premium],
+        ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{value.toLocaleString()}</dd></div>)}</dl>
+        <p className="mt-3 text-xs text-[#778075]">The middle three figures use accounts created in {periodLabel.toLowerCase()}; paid Premium is current across all accounts. Guest → signup includes only consented identities safely linked at signup.</p>
+      </section>
+      <section className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-label="User Activity"><h2 className="mr-3 text-lg font-semibold">User Activity</h2><Link href="/admin/analytics/users" className="btn btn-secondary px-3 py-2 text-sm">Registered-user journeys</Link><Link href="/admin/analytics/guests" className="btn btn-secondary px-3 py-2 text-sm">Guest journeys</Link></section>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {summaryCards.map(({ label, value, icon: Icon }) => (
@@ -190,6 +225,7 @@ export default async function AdminAnalyticsPage({
           </article>
         ))}
       </div>
+      <p className="mt-3 text-xs text-[#778075]">Content counters include preserved historical events. Older rows may have no browser or account identity and are excluded from person-level guest counts.</p>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
         <RankedList title="Most searched vocabulary" description="Explicit flashcard search terms; short-term repeat submissions are deduplicated." items={analytics.searchTerms} kind="searches" empty="No vocabulary searches recorded for this period." />

@@ -87,6 +87,16 @@ export async function POST(request: NextRequest) {
       cards: cards as LessonCard[],
     });
 
+    // Saving is a durable product action. Store no lesson name or card content.
+    const { error: analyticsError } = await supabase.from("analytics_events").insert({
+      event_type: body.lessonId ? "lesson_set_saved" : "lesson_set_created",
+      user_id: user.id,
+      item_key: savedLesson.id,
+      item_label: "Lesson set",
+      category: "lesson",
+    });
+    if (analyticsError) console.error("Lesson save analytics failed:", analyticsError);
+
     return NextResponse.json(savedLesson);
   } catch (error: unknown) {
     if (error instanceof CreatorApiError) {

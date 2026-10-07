@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
-import { trackAnalyticsEvent } from "@/lib/analytics/client";
+import { clearAnalyticsIdentity, trackAnalyticsEvent } from "@/lib/analytics/client";
+import { supabase } from "@/lib/supabase/client";
 import {
   captureCurrentAttribution,
   captureSignupAttribution,
@@ -53,6 +54,13 @@ export function AnalyticsEventTracker() {
   const firstTouchAttribution = useRef<SignupAttribution | null>(null);
 
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") clearAnalyticsIdentity();
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
     // Keep first-touch values in React memory until consent is granted. This
     // retains a landing UTM through client-side navigation without writing an
     // analytics identifier before the visitor has opted in.
@@ -61,7 +69,10 @@ export function AnalyticsEventTracker() {
 
     function onConsentChange(event: Event) {
       const consent = (event as CustomEvent<CookieConsent>).detail;
-      if (consent?.analytics) rememberSignupAttribution(firstTouchAttribution.current);
+      if (consent?.analytics) {
+        rememberSignupAttribution(firstTouchAttribution.current);
+        trackPageVisit(window.location.pathname);
+      }
     }
 
     window.addEventListener(COOKIE_CONSENT_EVENT, onConsentChange);
@@ -69,6 +80,17 @@ export function AnalyticsEventTracker() {
   }, []);
 
   useEffect(() => {
+    trackPageVisit(pathname);
+    if (pathname === "/dashboard") {
+      void trackAnalyticsEvent({
+        eventType: "dashboard_opened",
+        itemKey: "dashboard",
+        itemLabel: "Dashboard",
+        category: "tool",
+      });
+      return;
+    }
+
     if (pathname === "/flashcards") {
       trackConversion("lesson_opened", { format: "flashcards" });
       void trackAnalyticsEvent({
@@ -201,4 +223,14 @@ export function AnalyticsEventTracker() {
   }, []);
 
   return null;
+}
+
+function trackPageVisit(pathname: string) {
+  const parts = pathname.split("/").filter(Boolean);
+  const family = parts[0] ?? "home";
+  if (!["home", "games", "flashcards", "worksheets", "creator", "demo", "free-resources", "dashboard", "signup", "login", "topics", "printables", "teacher-tools", "lessons", "profile", "upgrade", "faq", "landing", "teacher"].includes(family)) return;
+  const detail = ["games", "free-resources", "topics"].includes(family) && /^[a-z0-9-]{1,60}$/.test(parts[1] ?? "") ? parts[1] : family === "flashcards" && parts[1] === "classroom" ? "classroom" : null;
+  const key = `/${family === "home" ? "" : family}${detail ? `/${detail}` : ""}`;
+  const label = family === "home" ? "Home" : [family, detail].filter(Boolean).join(" ").replaceAll("-", " ");
+  void trackAnalyticsEvent({ eventType: "page_view", itemKey: key, itemLabel: label, category: "page" });
 }

@@ -10,17 +10,8 @@ import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
 import { getAnalyticsSessionKey } from "@/lib/analytics/client";
 
-function FreeGameStartTracker({ gameId, topicId, topicLabel, topicCategory }: { gameId: string; topicId: string; topicLabel: string; topicCategory: string }) {
-  useEffect(() => {
-    void trackFreeGameEvent({ eventType: "game_started", gameKey: gameId, topicId, topicLabel, topicCategory, source: "public_topic" });
-  }, [gameId, topicCategory, topicId, topicLabel]);
-  return null;
-}
-
 function MeaningfulInteractionTracker({ gameId, topicId, topicLabel, topicCategory }: { gameId: string; topicId?: string; topicLabel?: string; topicCategory?: string }) {
   useEffect(() => {
-    const sessionKey = getAnalyticsSessionKey();
-    const contextKey = `classendo-free-game-actions:${sessionKey}:${gameId}:${topicId ?? "tray"}`;
     const ignored = /^(help|how to play|settings|pause|resume|exit|close|back|change game|change topic|fullscreen|sound|mute|restart|play again|start|start game|start round|begin|finish|done)(\b|$)/i;
     const onPointerUp = (event: PointerEvent) => {
       if (!hasAnalyticsConsent()) return;
@@ -33,8 +24,13 @@ function MeaningfulInteractionTracker({ gameId, topicId, topicLabel, topicCatego
         if (!label || ignored.test(label)) return;
       }
       try {
+        const contextKey = `classendo-free-game-actions:${getAnalyticsSessionKey()}:${gameId}:${topicId ?? "tray"}`;
         const count = Number(window.sessionStorage.getItem(contextKey) ?? "0") + 1;
         window.sessionStorage.setItem(contextKey, String(count));
+        if (!window.sessionStorage.getItem(`${contextKey}:started`)) {
+          void trackFreeGameEvent({ eventType: "game_started", gameKey: gameId, topicId, topicLabel, topicCategory, source: "public_topic" })
+            .then((saved) => { if (saved) window.sessionStorage.setItem(`${contextKey}:started`, "1"); });
+        }
         // Retry after the threshold until the event write succeeds. The client
         // and server both deduplicate successful writes for this session.
         if (count >= 3) {
@@ -63,7 +59,7 @@ function GamesAccess({ children }: { children: React.ReactNode }) {
   if (!gameId || ["topics", "custom"].includes(gameId)) return <>{children}</>;
   if (!GAME_NAMES[gameId]) return <AccessMessage title="Choose a game from the hub" gameId="image-reveal" />;
   if (params.has("topic") && !topic) return <AccessMessage title="Choose an available topic" gameId={gameId} />;
-  if (topic) return <GameFlowContext.Provider key={`${gameId}:${topic.id}`} value={{ gameId, topic }}><FreeGameStartTracker gameId={gameId} topicId={topic.id} topicLabel={topic.title} topicCategory={topic.category} /><MeaningfulInteractionTracker gameId={gameId} topicId={topic.id} topicLabel={topic.title} topicCategory={topic.category} />{children}</GameFlowContext.Provider>;
+  if (topic) return <GameFlowContext.Provider key={`${gameId}:${topic.id}`} value={{ gameId, topic }}><MeaningfulInteractionTracker gameId={gameId} topicId={topic.id} topicLabel={topic.title} topicCategory={topic.category} />{children}</GameFlowContext.Provider>;
   if (loading) return <div className="min-h-[50vh]" />;
   if (!user) return <AccessMessage title="Choose a free topic to play" gameId={gameId} />;
   if (!access || access.userId !== user.id) return <AccessMessage title="Checking your game access" gameId={gameId} />;

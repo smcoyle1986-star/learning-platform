@@ -190,6 +190,7 @@ export default async function AdminUsersPage({
                 <tr>
                   <th className="px-5 py-3.5">User</th>
                   <th className="px-4 py-3.5">Role</th>
+                  <th className="px-4 py-3.5">User type</th>
                   <th className="px-4 py-3.5">Tier</th>
                   <th className="px-4 py-3.5">Status</th>
                   <th className="px-4 py-3.5">Joined</th>
@@ -220,6 +221,7 @@ export default async function AdminUsersPage({
                         {user.role}
                       </span>
                     </td>
+                    <td className="px-4 py-4 text-sm text-[#667066]">{user.userType ?? "Not set"}</td>
                     <td className="px-4 py-4">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${badgeClass(user.tier)}`}>
                         {user.tier}

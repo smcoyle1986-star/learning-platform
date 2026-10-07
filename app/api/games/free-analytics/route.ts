@@ -5,6 +5,7 @@ import { GAME_NAMES, getGameTopic } from "@/lib/games/topics";
 import { getClassendoVerification } from "@/lib/auth/server-verification";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { observeAnalyticsSession, observedCountry, validAnalyticsAnonymousId } from "@/lib/analytics/server";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,6 @@ const SOURCES = new Set(["public_topic", "lesson_tray", "custom_vocabulary", "fr
 const ACTIONS = new Set(["play_again", "change_topic", "change_game", "use_own_vocabulary", "create_account"]);
 const KEY = /^[a-z0-9-]{1,80}$/;
 const SINGLETON_EVENTS = new Set(["hub_viewed", "game_selected", "topic_selected", "game_started", "meaningful_interaction", "game_completed", "another_game_selected", "another_topic_selected", "use_own_vocabulary_clicked", "signup_started", "signup_completed"]);
-const COUNTRY_CODE = /^[A-Z]{2}$/;
 
 function text(value: unknown, length: number) {
   return typeof value === "string" ? value.trim().slice(0, length) : "";
@@ -64,14 +64,16 @@ export async function POST(request: NextRequest) {
     const action = text(body.action, 40);
     const sessionKey = text(body.sessionKey, 80);
     const attribution = attributionValue(body.attribution);
-    const countryCode = text(request.headers.get("x-vercel-ip-country"), 2).toUpperCase();
+    const countryCode = observedCountry(request);
     const userAgent = request.headers.get("user-agent") ?? "";
     const deviceType = /ipad|tablet|playbook|silk/i.test(userAgent) ? "tablet" : /mobile|iphone|ipod|android/i.test(userAgent) ? "mobile" : userAgent ? "desktop" : "unknown";
     if (!EVENT_TYPES.has(eventType) || (gameKey && !Object.hasOwn(GAME_NAMES, gameKey)) || (topicId && !getGameTopic(topicId)) || (source && !SOURCES.has(source)) || (action && !ACTIONS.has(action)) || (sessionKey && !KEY.test(sessionKey))) {
       return NextResponse.json({ error: "Invalid Free Games analytics event." }, { status: 400 });
     }
 
-    const user = await getRequestUser(request).catch(() => null);
+    let user;
+    try { user = await getRequestUser(request); }
+    catch { return NextResponse.json({ error: "Authentication could not be verified." }, { status: 401 }); }
     const admin = getSupabaseAdmin();
     const [access, verification] = user?.id
       ? await Promise.all([
@@ -89,6 +91,7 @@ export async function POST(request: NextRequest) {
             ? "premium"
             : "free";
     const topic = getGameTopic(topicId);
+    await observeAnalyticsSession({ sessionKey, anonymousId: user ? null : body.anonymousId, userId: user?.id, country: countryCode });
     const dedupeKey = eventKey({ eventType, gameKey, topicId: topic?.id ?? "", source, action, sessionKey });
     const { error } = await admin.from("free_game_events").insert({
       event_type: eventType,
@@ -101,6 +104,7 @@ export async function POST(request: NextRequest) {
       source: source || null,
       action: action || null,
       session_key: sessionKey || null,
+      anonymous_id: user ? null : validAnalyticsAnonymousId(body.anonymousId),
       event_key: dedupeKey,
       utm_source: attributionText(attribution.utmSource),
       utm_medium: attributionText(attribution.utmMedium),
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
       utm_term: attributionText(attribution.utmTerm),
       referrer_host: attributionText(attribution.referrerHost),
       landing_path: attributionText(attribution.landingPath),
-      country_code: COUNTRY_CODE.test(countryCode) ? countryCode : null,
+      country_code: countryCode,
       device_type: deviceType,
     });
     if (error?.code === "23505" && dedupeKey) return NextResponse.json({ ok: true, duplicate: true });
