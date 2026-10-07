@@ -60,6 +60,17 @@ export async function POST(request: NextRequest) {
       draft: (body.draft ?? {}) as WorksheetDraft,
     });
 
+    // Saving is durable; metadata intentionally excludes the worksheet name
+    // and teacher-entered content.
+    const { error: analyticsError } = await supabase.from("analytics_events").insert({
+      event_type: "worksheet_saved",
+      user_id: user.id,
+      item_key: savedWorksheet.id,
+      item_label: "Worksheet",
+      category: "worksheet",
+    });
+    if (analyticsError) console.error("Worksheet save analytics failed:", analyticsError);
+
     return NextResponse.json(savedWorksheet);
   } catch (error: unknown) {
     console.error("Failed to save worksheet via API:", error);

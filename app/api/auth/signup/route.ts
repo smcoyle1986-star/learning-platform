@@ -15,6 +15,7 @@ import { newSignupConversionId, SIGNUP_ATTEMPT_KEY } from "@/lib/auth/signup-con
 import { LEGAL_VERSION } from "@/lib/legal/constants";
 import { GAME_NAMES, getGameTopic } from "@/lib/games/topics";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { linkAnalyticsAnonymousIdToAccount, linkAnalyticsSessionToAccount, observeAnalyticsSession, observedCountry, validAnalyticsSessionKey } from "@/lib/analytics/server";
 import { TurnstileVerificationError, verifyTurnstileToken } from "@/lib/auth/turnstile";
 
 export const runtime = "nodejs";
@@ -25,16 +26,18 @@ type SignupBody = {
   password?: unknown;
   username?: unknown;
   countryRegion?: unknown;
+  userType?: unknown;
   legalAccepted?: unknown;
   attribution?: unknown;
   freeGamesContext?: unknown;
   turnstileToken?: unknown;
+  analyticsSessionKey?: unknown;
+  analyticsAnonymousId?: unknown;
 };
 
 type FreeGamesSignupContext = { gameKey: string; topicId: string | null; sessionKey: string };
 
 const SESSION_KEY = /^[a-z0-9-]{1,80}$/;
-const COUNTRY_CODE = /^[A-Z]{2}$/;
 
 async function trackSignupEvent(event: "signup_succeeded" | "signup_failed", properties: Record<string, string | boolean>) {
   try {
@@ -66,18 +69,20 @@ function readFreeGamesSignupContext(value: unknown): FreeGamesSignupContext | nu
 async function recordFreeGamesSignupCompletion({
   context,
   signupAttemptId,
+  userId,
   attribution,
   request,
 }: {
   context: FreeGamesSignupContext | null;
   signupAttemptId: string;
+  userId: string;
   attribution: unknown;
   request: NextRequest;
 }) {
   if (!context) return;
   const topic = getGameTopic(context.topicId);
   const values = typeof attribution === "object" && attribution !== null ? attribution as Record<string, unknown> : {};
-  const countryCode = text(request.headers.get("x-vercel-ip-country"), 2).toUpperCase();
+  const countryCode = observedCountry(request);
   const userAgent = request.headers.get("user-agent") ?? "";
   const deviceType = /ipad|tablet|playbook|silk/i.test(userAgent) ? "tablet" : /mobile|iphone|ipod|android/i.test(userAgent) ? "mobile" : userAgent ? "desktop" : "unknown";
   const { error } = await getSupabaseAdmin().from("free_game_events").insert({
@@ -87,6 +92,7 @@ async function recordFreeGamesSignupCompletion({
     topic_label: topic?.title ?? null,
     topic_category: topic?.category ?? null,
     account_tier: "free_unconfirmed",
+    user_id: userId,
     source: "free_games",
     action: "create_account",
     session_key: context.sessionKey,
@@ -98,7 +104,7 @@ async function recordFreeGamesSignupCompletion({
     utm_term: attributionText(values.utmTerm),
     referrer_host: attributionText(values.referrerHost),
     landing_path: attributionText(values.landingPath),
-    country_code: COUNTRY_CODE.test(countryCode) ? countryCode : null,
+    country_code: countryCode,
     device_type: deviceType,
   });
   if (error && !/free_game_events|relation/i.test(error.message)) {
@@ -125,9 +131,10 @@ export async function POST(request: NextRequest) {
     const email = normalizeEmail(body.email);
     const username = normalizeUsername(String(body.username ?? ""));
     const countryRegion = String(body.countryRegion ?? "").trim();
+    const userType = String(body.userType ?? "");
     const password = String(body.password ?? "");
     const freeGamesContext = readFreeGamesSignupContext(body.freeGamesContext);
-    if (!isValidEmail(email) || !isValidUsername(username) || !countryRegion || password.length < 6 || body.legalAccepted !== true) {
+    if (!isValidEmail(email) || !isValidUsername(username) || !countryRegion || !["Teacher", "Online tutor", "Student", "Parent", "Other"].includes(userType) || password.length < 6 || body.legalAccepted !== true) {
       return await fail("validation", 400, "Please complete every required field.");
     }
     try {
@@ -163,6 +170,7 @@ export async function POST(request: NextRequest) {
           [SIGNUP_ATTEMPT_KEY]: signupAttemptId,
           username,
           country_region: countryRegion,
+          user_type: userType,
           age_confirmed: true,
           terms_accepted_at: new Date().toISOString(),
           terms_version: LEGAL_VERSION,
@@ -185,10 +193,31 @@ export async function POST(request: NextRequest) {
     if (!signupConversionId) {
       return await fail("existing_account", 409, "An account already exists with this email address. Please sign in instead.");
     }
+    const observed = observedCountry(request);
+    if (observed) {
+      const { error: countryError } = await getSupabaseAdmin().from("analytics_account_countries").insert({
+        user_id: data.user.id,
+        signup_country_observed: observed,
+        last_country_observed: observed,
+        last_observed_at: new Date().toISOString(),
+      });
+      if (countryError) console.error("Could not record signup country observation:", countryError);
+    }
     await trackSignupEvent("signup_succeeded", {
       email_confirmation_required: !data.session,
       destination: body.nextPath === "/upgrade" ? "upgrade" : "flashcards",
     });
+    // The auth.users trigger creates the authoritative account lifecycle
+    // record. Only link a browser session that was available after consent.
+    if (validAnalyticsSessionKey(body.analyticsSessionKey)) {
+      try {
+        await linkAnalyticsAnonymousIdToAccount({ userId: data.user.id, anonymousId: body.analyticsAnonymousId, reason: "signup" });
+        await linkAnalyticsSessionToAccount({ userId: data.user.id, sessionKey: body.analyticsSessionKey, anonymousId: body.analyticsAnonymousId, reason: "signup" });
+        await observeAnalyticsSession({ sessionKey: body.analyticsSessionKey, userId: data.user.id, country: observed });
+      } catch (analyticsError) {
+        console.error("Could not link signup analytics session:", analyticsError);
+      }
+    }
     {
       try {
         const { error: conversionReceiptError } = await getSupabaseAdmin()
@@ -209,6 +238,7 @@ export async function POST(request: NextRequest) {
         await recordFreeGamesSignupCompletion({
           context: freeGamesContext,
           signupAttemptId,
+          userId: data.user.id,
           attribution: body.attribution,
           request,
         });
