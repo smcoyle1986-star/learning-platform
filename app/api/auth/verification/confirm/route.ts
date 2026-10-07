@@ -17,9 +17,13 @@ export async function POST(request: NextRequest) {
     if (!result?.verified) return NextResponse.json({ error: "This verification link has expired or was already used. Sign in to request a new one." }, { status: 400 });
     const userId = typeof result.user_id === "string" ? result.user_id : null;
     if (userId) {
-      await recordAnalyticsLifecycleEvent({ userId, eventType: "email_verified", eventKey: `email-verified:${userId}` });
-      if (result.trial_started === true) {
-        await recordAnalyticsLifecycleEvent({ userId, eventType: "premium_trial_activated", eventKey: `premium-trial-activated:${userId}` });
+      try {
+        await recordAnalyticsLifecycleEvent({ userId, eventType: "email_verified", eventKey: `email-verified:${userId}` });
+        if (result.trial_started === true) {
+          await recordAnalyticsLifecycleEvent({ userId, eventType: "premium_trial_activated", eventKey: `premium-trial-activated:${userId}` });
+        }
+      } catch (analyticsError) {
+        console.error("Could not record email verification analytics:", analyticsError);
       }
     }
     return NextResponse.json({
