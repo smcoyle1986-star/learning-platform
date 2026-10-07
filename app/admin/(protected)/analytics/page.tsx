@@ -261,9 +261,9 @@ export default async function AdminAnalyticsPage({
       </div>
 
       <div className="mt-5 rounded-2xl border border-[#dfe4dc] bg-[#f9faf7] p-4 text-xs leading-5 text-[#747e73]">
-        Analytics intentionally stores only event type, short vocabulary/resource labels,
-        broad category, pseudonymous session key, optional account ID, and timestamp.
-        Guest starts are events with no signed-in account. Browser Do Not Track is respected. Community counters are all-time because the
+        With consent, analytics records event types, short labels, pseudonymous browser and session IDs, optional account IDs,
+        timestamps, and approximate observed country where available. The country supplied at signup stays separate.
+        Older guest events may lack a browser ID. Browser Do Not Track is respected. Community counters are all-time because the
         existing schema stores totals rather than individual copy events.
       </div>
     </section>
