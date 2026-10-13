@@ -14,6 +14,7 @@ import {
 } from "@/lib/auth/username";
 import { readSignupAttribution } from "@/lib/analytics/attribution";
 import { trackConversion } from "@/lib/analytics/vercel";
+import { trackGoogleAdsSignup } from "@/lib/analytics/google-ads";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
 import { getAnalyticsAnonymousId, getAnalyticsSessionKey, trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
@@ -365,6 +366,7 @@ export default function SignupPage() {
       });
       const payload = await signupResponse.json().catch(() => null) as {
         error?: string; reason?: string; requiresLegacyConfirmation?: boolean; verificationEmailSent?: boolean;
+        signupConversionId?: string;
         session?: { accessToken?: string; refreshToken?: string };
       } | null;
       if (!signupResponse.ok) {
@@ -376,6 +378,9 @@ export default function SignupPage() {
         }
         return;
       }
+      // Supabase Auth has confirmed a fresh account. Verification and the
+      // Premium trial are separate later outcomes.
+      trackGoogleAdsSignup(payload?.signupConversionId);
       if (payload?.requiresLegacyConfirmation || !payload?.session?.accessToken || !payload.session.refreshToken) {
         // Safe transitional fallback while Supabase Confirm Email remains on.
         // It can be removed only after the production setting is disabled.

@@ -222,6 +222,7 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
         title: "3. Optional analytics",
         paragraphs: [
           "With permission, Classendo records limited product events such as page visits, vocabulary searches, flashcard interactions, games and worksheet selections. A random browser identifier is stored in local storage as `classendo-analytics-anonymous-id` to recognise return visits, and a session identifier is stored in session storage as `classendo-analytics-session`. If you create an account, prior consented activity from that browser may be linked to it. We use this information to understand and improve the service, not for behavioural advertising.",
+          "After you accept analytics, the existing Google Ads tag may measure a successfully created account with a random one-time transaction identifier. We do not send your email address, username or profile details to Google for this measurement. Email verification and Premium trial activation are measured separately in Classendo's first-party records.",
           "Where available, we record a country code estimated from the request location supplied by our deployment provider. This can reflect a VPN or proxy and is not an exact location. We keep the country you supply at signup separate from the observed signup and later activity countries. We do not store your raw IP address in analytics records.",
           "Optional analytics does not run until you select Accept analytics. Rejecting it does not affect core Classendo features.",
         ],

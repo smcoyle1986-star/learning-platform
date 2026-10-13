@@ -65,7 +65,7 @@ export function CookieConsentBanner() {
         <div className="max-w-xl">
           <h2 className="text-base font-semibold">Your privacy choices</h2>
           <p className="mt-1 text-xs leading-5 text-[#5c665c]">
-            Necessary storage keeps Classendo working. Optional analytics helps us improve it; we do not use behavioural advertising.
+            Necessary storage keeps Classendo working. Optional analytics measures product use and signups from our ads; we do not use behavioural advertising.
           </p>
           <p className="mt-1 text-xs">
             <Link className="font-semibold underline underline-offset-4" href="/legal/cookies">Cookie policy</Link>

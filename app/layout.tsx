@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Comic_Neue, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -13,6 +12,7 @@ import SiteChrome from "@/components/SiteChrome";
 import BrandPageTheme from "@/components/BrandPageTheme";
 import { FeedbackLauncher } from "@/components/feedback/FeedbackLauncher";
 import { AnalyticsEventTracker } from "@/components/analytics/AnalyticsEventTracker";
+import { GoogleAdsTag } from "@/components/analytics/GoogleAdsTag";
 import PremiumTrialExperience from "@/components/billing/PremiumTrialExperience";
 import { BillingAccessProvider } from "@/lib/billing/useBillingAccess";
 import { PAGE_CONTENT } from "@/lib/seo/page-content";
@@ -60,20 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${comicNeue.variable}`}>
       <body>
-        {/* Base Google Ads tag; the root layout preserves it across navigation. */}
-        <Script id="google-ads-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'AW-18437580530');
-          `}
-        </Script>
-        <Script
-          id="google-ads-script"
-          src="https://www.googletagmanager.com/gtag/js?id=AW-18437580530"
-          strategy="afterInteractive"
-        />
+        <GoogleAdsTag />
         <AuthProvider>
           <BillingAccessProvider>
             <AnalyticsEventTracker />

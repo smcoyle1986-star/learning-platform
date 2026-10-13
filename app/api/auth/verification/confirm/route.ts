@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       verified: true,
       trialStarted: result.trial_started === true,
-      signupConversionId: typeof result.signup_conversion_id === "string" ? result.signup_conversion_id : undefined,
     });
   } catch (error: unknown) {
     console.error("Email verification failed:", error);
