@@ -76,38 +76,60 @@ function publicImageUrl(supabase: SupabaseClient, imagePath: string) {
     : supabase.storage.from("vocab-images").getPublicUrl(imagePath).data.publicUrl;
 }
 
-async function loadOwnedSetsAndImages(supabase: SupabaseClient, userId: string) {
-  const [{ data: sets, error: setsError }, { data: images, error: imagesError }] = await Promise.all([
-    supabase
-      .from("lesson_sets")
-      .select("id,name,created_at,last_used,is_public,use_count,basic_active,basic_locked_at,is_favorite,archived_at")
-      .eq("user_id", userId)
-      .order("last_used", { ascending: false }),
-    supabase
-      .from("vocab_images")
-      .select("noun_id,lemma,category,image_path,is_default,is_premium"),
-  ]);
+async function loadOwnedSetsAndImages(supabase: SupabaseClient, userId: string, requestedLessonIds?: string[]) {
+  let setsQuery = supabase
+    .from("lesson_sets")
+    .select("id,name,created_at,last_used,is_public,use_count,basic_active,basic_locked_at,is_favorite,archived_at")
+    .eq("user_id", userId);
+  if (requestedLessonIds) setsQuery = setsQuery.in("id", requestedLessonIds);
+  const { data: sets, error: setsError } = await setsQuery.order("last_used", { ascending: false });
   if (setsError) throw setsError;
-  if (imagesError) throw imagesError;
 
   const lessonIds = (sets ?? []).map((row) => String(row.id));
-  if (!lessonIds.length) return { sets: [], cards: [] as RawCard[], images: (images ?? []) as VocabImageRow[] };
-
+  if (!lessonIds.length) return { sets: [], cards: [] as RawCard[], images: [] as VocabImageRow[] };
   const cards = await loadAllOwnedCards(supabase, lessonIds);
-
-  return {
-    sets: sets ?? [],
-    cards,
-    images: (images ?? []) as VocabImageRow[],
-  };
+  let images: VocabImageRow[] = [];
+  if (!requestedLessonIds) {
+    const result = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium");
+    if (result.error) throw result.error;
+    images = (result.data ?? []) as VocabImageRow[];
+  } else {
+    // A dashboard page only needs image variants referenced by its visible sets.
+    const paths = Array.from(new Set(cards.flatMap((card) => {
+      if (!card.back) return [];
+      const raw = String(card.back).split("?")[0];
+      let pathname = raw;
+      try { pathname = new URL(raw).pathname; } catch { /* Stored paths are not absolute URLs. */ }
+      return [raw.replace(/^\/+/, ""), decodeURIComponent(pathname).replace(/^\/+/, "")];
+    })));
+    if (paths.length) {
+      const referenced = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("image_path", paths);
+      if (referenced.error) throw referenced.error;
+      images = (referenced.data ?? []) as VocabImageRow[];
+      const nounIds = Array.from(new Set(images.map((image) => image.noun_id).filter((id): id is string => Boolean(id))));
+      if (nounIds.length) {
+        const variants = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("noun_id", nounIds);
+        if (variants.error) throw variants.error;
+        const seen = new Set(images.map((image) => image.image_path));
+        images.push(...((variants.data ?? []) as VocabImageRow[]).filter((image) => image.image_path && !seen.has(image.image_path)));
+      }
+      if (images.some((image) => image.is_premium && !image.noun_id)) {
+        const fallback = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium");
+        if (fallback.error) throw fallback.error;
+        images = (fallback.data ?? []) as VocabImageRow[];
+      }
+    }
+  }
+  return { sets: sets ?? [], cards, images };
 }
 
 export async function loadLessonSetsWithAccess(
   supabase: SupabaseClient,
   userId: string,
   access: BillingAccessSnapshot,
+  lessonIds?: string[],
 ): Promise<LessonRecord[]> {
-  const loaded = await loadOwnedSetsAndImages(supabase, userId);
+  const loaded = await loadOwnedSetsAndImages(supabase, userId, lessonIds);
   const cardsBySet = new Map<string, RawCard[]>();
   for (const card of loaded.cards) {
     const key = String(card.lesson_set_id);

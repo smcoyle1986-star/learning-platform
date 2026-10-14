@@ -112,7 +112,7 @@ export default function DashboardLessonCard({
             </button>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)]">
-            <span>{lesson.cards?.length ?? 0} cards</span>
+            <span>{lesson.cardCount ?? lesson.cards?.length ?? 0} cards</span>
             <span>{lesson.useCount ?? 0} uses</span>
             <span>{lesson.isPublic ? "Public" : "Private"}</span>
             {setLimitLocked ? <span className="font-semibold text-amber-800">Locked · Basic set limit</span> : null}
@@ -169,7 +169,7 @@ export default function DashboardLessonCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)]">
-        <span>{lesson.cards?.length ?? 0} cards</span>
+        <span>{lesson.cardCount ?? lesson.cards?.length ?? 0} cards</span>
         <span>{lesson.useCount ?? 0} uses</span>
         <span>{lesson.isPublic ? "Public" : "Private"}</span>
       </div>

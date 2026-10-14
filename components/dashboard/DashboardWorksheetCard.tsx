@@ -63,7 +63,7 @@ export default function DashboardWorksheetCard({
           <div className="min-w-0">
             <h3 className="truncate font-semibold">{worksheet.name}</h3>
             <p className="mt-1 text-xs capitalize text-[var(--color-text-muted)]">
-              {typeLabel} · {worksheet.cards.length} cards · {worksheet.useCount ?? 0} uses · {worksheet.isPublic ? "Public" : "Private"}
+              {typeLabel} · {worksheet.cardCount ?? worksheet.cards.length} cards · {worksheet.useCount ?? 0} uses · {worksheet.isPublic ? "Public" : "Private"}
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function DashboardWorksheetCard({
           </button>
         </div>
         <p className="text-xs capitalize text-[var(--color-text-muted)]">
-          {typeLabel} · {worksheet.cards.length} cards · {worksheet.useCount ?? 0} uses
+          {typeLabel} · {worksheet.cardCount ?? worksheet.cards.length} cards · {worksheet.useCount ?? 0} uses
         </p>
       </div>
 

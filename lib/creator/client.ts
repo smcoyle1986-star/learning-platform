@@ -128,17 +128,22 @@ export async function hydrateCreatorLessonCards<T extends LessonCard>(cards: T[]
     )
   );
   if (imageIds.length === 0) return cards;
-
+  const { data } = await supabase.auth.getSession();
   const resolved = new Map<string, CreatorImageDto>();
-  await Promise.all(
-    imageIds.map(async (imageId) => {
-      try {
-        resolved.set(imageId, await getCreatorImage(imageId));
-      } catch (error) {
-        console.warn(`Could not refresh creator image ${imageId}:`, error);
-      }
-    })
-  );
+  for (let offset = 0; offset < imageIds.length; offset += 300) {
+    const response = await fetch("/api/creator/images/batch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
+      },
+      body: JSON.stringify({ ids: imageIds.slice(offset, offset + 300) }),
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(String(payload?.error ?? "Could not load creator images."));
+    for (const [id, image] of Object.entries((payload?.images ?? {}) as Record<string, CreatorImageDto>)) resolved.set(id, image);
+  }
 
   return cards.map((card) => {
     const imageId = card.creator_image_id;
