@@ -181,9 +181,18 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
     const timer = window.setTimeout(() => {
-      Promise.all([refreshLessons(), refreshWorksheets()]).catch((error) => {
-        console.error("Unexpected error loading dashboard library:", error);
-        if (mounted) { setLessons([]); setWorksheets([]); }
+      void Promise.allSettled([refreshLessons(), refreshWorksheets()]).then(([lessonsResult, worksheetsResult]) => {
+        if (!mounted) return;
+        if (lessonsResult.status === "rejected") {
+          console.error("Unexpected error loading dashboard lessons:", lessonsResult.reason);
+          setLessons([]);
+          setLessonTotal(0);
+        }
+        if (worksheetsResult.status === "rejected") {
+          console.error("Unexpected error loading dashboard worksheets:", worksheetsResult.reason);
+          setWorksheets([]);
+          setWorksheetTotal(0);
+        }
       });
     }, searchQuery || worksheetSearchQuery ? 250 : 0);
     if (!user?.id) { setLessons([]); setWorksheets([]); setRecentLessons([]); setLessonTotal(0); setWorksheetTotal(0); }

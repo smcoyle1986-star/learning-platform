@@ -25,6 +25,7 @@ type RawCard = {
 };
 
 const CARD_QUERY_PAGE_SIZE = 1000;
+const IMAGE_LOOKUP_BATCH_SIZE = 100;
 
 async function loadAllOwnedCards(
   supabase: SupabaseClient,
@@ -103,20 +104,24 @@ async function loadOwnedSetsAndImages(supabase: SupabaseClient, userId: string, 
       return [raw.replace(/^\/+/, ""), decodeURIComponent(pathname).replace(/^\/+/, "")];
     })));
     if (paths.length) {
-      const referenced = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("image_path", paths);
-      if (referenced.error) throw referenced.error;
-      images = (referenced.data ?? []) as VocabImageRow[];
-      const nounIds = Array.from(new Set(images.map((image) => image.noun_id).filter((id): id is string => Boolean(id))));
-      if (nounIds.length) {
-        const variants = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("noun_id", nounIds);
-        if (variants.error) throw variants.error;
-        const seen = new Set(images.map((image) => image.image_path));
-        images.push(...((variants.data ?? []) as VocabImageRow[]).filter((image) => image.image_path && !seen.has(image.image_path)));
+      for (let start = 0; start < paths.length; start += IMAGE_LOOKUP_BATCH_SIZE) {
+        const referenced = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("image_path", paths.slice(start, start + IMAGE_LOOKUP_BATCH_SIZE));
+        if (referenced.error) throw referenced.error;
+        images.push(...((referenced.data ?? []) as VocabImageRow[]));
       }
-      if (images.some((image) => image.is_premium && !image.noun_id)) {
-        const fallback = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium");
+      const nounIds = Array.from(new Set(images.map((image) => image.noun_id).filter((id): id is string => Boolean(id))));
+      for (let start = 0; start < nounIds.length; start += IMAGE_LOOKUP_BATCH_SIZE) {
+        const variants = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").in("noun_id", nounIds.slice(start, start + IMAGE_LOOKUP_BATCH_SIZE));
+        if (variants.error) throw variants.error;
+        images.push(...((variants.data ?? []) as VocabImageRow[]));
+      }
+      const fallbackKeys = Array.from(new Map(images
+        .filter((image) => image.is_premium && !image.noun_id && image.category && image.lemma)
+        .map((image) => [`${image.category}\u0000${image.lemma}`, { category: image.category!, lemma: image.lemma! }])).values());
+      for (const key of fallbackKeys) {
+        const fallback = await supabase.from("vocab_images").select("noun_id,lemma,category,image_path,is_default,is_premium").eq("category", key.category).eq("lemma", key.lemma);
         if (fallback.error) throw fallback.error;
-        images = (fallback.data ?? []) as VocabImageRow[];
+        images.push(...((fallback.data ?? []) as VocabImageRow[]));
       }
     }
   }
