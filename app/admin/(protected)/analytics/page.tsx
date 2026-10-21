@@ -18,6 +18,7 @@ import {
 } from "@/lib/admin/analytics";
 import { AdminAnalyticsAutoRefresh } from "@/components/admin/AdminAnalyticsAutoRefresh";
 import { getAdminIdentitySummary } from "@/lib/admin/identity-summary";
+import { getAdminConversionFunnels } from "@/lib/admin/conversion-funnels";
 
 const GAME_LABELS: Record<string, string> = {
   "connect-four": "Connect Four",
@@ -131,7 +132,7 @@ export default async function AdminAnalyticsPage({
   const period = first(raw.period) || "30";
   const periodDays = periodValue(period);
   await requireAdmin();
-  const [analytics, identity] = await Promise.all([getAdminAnalyticsSnapshot(periodDays), getAdminIdentitySummary(periodDays)]);
+  const [analytics, identity, funnels] = await Promise.all([getAdminAnalyticsSnapshot(periodDays), getAdminIdentitySummary(periodDays), getAdminConversionFunnels(periodDays)]);
   const periodLabel = periodDays ? `Last ${periodDays} days` : "All time";
   const summaryCards = [
     { label: "Vocabulary searches", value: analytics.summary.vocabularySearches, icon: Search },
@@ -211,6 +212,37 @@ export default async function AdminAnalyticsPage({
         ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{value.toLocaleString()}</dd></div>)}</dl>
         <p className="mt-3 text-xs text-[#778075]">The middle three figures use accounts created in {periodLabel.toLowerCase()}; paid Premium is current across all accounts. Guest → signup includes only consented identities safely linked at signup.</p>
       </section>
+      <div className="mt-5 grid gap-5 xl:grid-cols-2">
+        <section className="rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-labelledby="verification-funnel-heading">
+          <h2 id="verification-funnel-heading" className="text-lg font-semibold">Email Verification Funnel</h2>
+          <p className="mt-1 text-xs text-[#778075]">Modal events in {periodLabel.toLowerCase()}; verification uses current account email and authoritative verification time.</p>
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{[
+            ["Modal views · events", funnels.verification.modalViews],
+            ["Exposed · unique users", funnels.verification.uniqueExposed],
+            ["Resend clicks · events", funnels.verification.resendClicks],
+            ["Successful resends · events", funnels.verification.successfulResends],
+            ["Remind me later · events", funnels.verification.remindLaterClicks],
+            ["Later verified · unique exposed users", funnels.verification.subsequentlyVerified],
+            ["Verified without observed modal · users", funnels.verification.verifiedWithoutObservedModal],
+          ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{Number(value).toLocaleString()}</dd></div>)}</dl>
+          <p className="mt-3 text-xs text-[#778075]">“Later verified” means verification followed an observed modal view, possibly after this period; it does not establish that the modal caused it. The separate verification count has no earlier tracked modal view, so its actual exposure is unknown.</p>
+        </section>
+        <section className="rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-labelledby="guest-funnel-heading">
+          <h2 id="guest-funnel-heading" className="text-lg font-semibold">Guest Signup Conversion Funnel</h2>
+          <p className="mt-1 text-xs text-[#778075]">Guest Exit events in {periodLabel.toLowerCase()}; subsequent signups and verifications may occur later. Signups require a server-issued click receipt and a new account record.</p>
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{[
+            ["Modal views · events", funnels.guest.modalViews],
+            ["Exposed · unique guests", funnels.guest.uniqueExposed],
+            ["Signup clicks · events", funnels.guest.signupClicks],
+            ["Signup page arrivals · receipts", funnels.guest.signupArrivals],
+            ["Attributed signups · accounts", funnels.guest.attributedSignups],
+            ["Later verified · accounts", funnels.guest.attributedVerified],
+          ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f7f9f5] p-3"><dt className="text-xs text-[#778075]">{label}</dt><dd className="mt-1 text-xl font-semibold">{Number(value).toLocaleString()}</dd></div>)}</dl>
+          <p className="mt-3 text-xs text-[#778075]">Signup conversion: {funnels.guest.uniqueExposed ? `${(100 * funnels.guest.convertedGuests / funnels.guest.uniqueExposed).toFixed(1)}%` : "—"} of unique exposed guests (unique guests with an attributed account ÷ unique exposed guests). Verification: {funnels.guest.attributedSignups ? `${(100 * funnels.guest.attributedVerified / funnels.guest.attributedSignups).toFixed(1)}%` : "—"} of attributed accounts (verified accounts ÷ attributed accounts).</p>
+          <h3 className="mt-4 text-sm font-semibold">Attributed signups by originating game</h3>
+          {funnels.guest.byGame.length ? <ul className="mt-2 flex flex-wrap gap-2 text-xs">{funnels.guest.byGame.map((item) => <li key={item.gameKey} className="rounded-lg bg-[#f7f9f5] px-3 py-2">{GAME_LABELS[item.gameKey] ?? item.gameKey}: {item.signups.toLocaleString()}</li>)}</ul> : <p className="mt-2 text-xs text-[#778075]">No attributed signups yet. Earlier clicks without a receipt remain unknown.</p>}
+        </section>
+      </div>
       <section className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#dfe4dc] bg-white p-5" aria-label="User Activity"><h2 className="mr-3 text-lg font-semibold">User Activity</h2><Link href="/admin/analytics/users" className="btn btn-secondary px-3 py-2 text-sm">Registered-user journeys</Link><Link href="/admin/analytics/guests" className="btn btn-secondary px-3 py-2 text-sm">Guest journeys</Link></section>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
