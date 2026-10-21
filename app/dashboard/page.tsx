@@ -15,7 +15,6 @@ import DeleteLessonModal from "@/components/dashboard/DeleteLessonModal";
 import LessonTrayScroller from "@/components/shared/LessonTrayScroller";
 import {
   deleteLesson,
-  loadLessonsWithAccessFromServer,
   normalizeLesson,
   recordLessonUsage,
   updateLessonLibraryStateFromServer,
@@ -28,11 +27,11 @@ import {
 import { LessonRecord } from "@/lib/lessons/types";
 import {
   deleteWorksheet,
-  loadWorksheetsForUser,
+  normalizeWorksheet,
   recordWorksheetUsage,
   updateWorksheetLibraryStateFromServer,
 } from "@/lib/worksheets/repository";
-import { SavedWorksheetRecord } from "@/lib/worksheets/types";
+import { DEFAULT_WORKSHEET_DRAFT, SavedWorksheetRecord } from "@/lib/worksheets/types";
 import { hydrateCreatorLessonCards } from "@/lib/creator/client";
 import { useBillingAccess } from "@/lib/billing/useBillingAccess";
 import WelcomeTrialNotice from "@/components/billing/WelcomeTrialNotice";
@@ -49,18 +48,17 @@ type WorksheetFilter = "all" | "favorites" | "public" | "private" | "archive";
 type WorksheetSort = "recent" | "newest" | "oldest" | "name" | "popular" | "cards";
 type WorksheetView = "grid" | "list";
 
-function lessonTimestamp(value: number | string | null | undefined) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (typeof value === "string") return Date.parse(value) || 0;
-  return 0;
-}
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const { access } = useBillingAccess();
 
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
+  const [recentLessons, setRecentLessons] = useState<LessonRecord[]>([]);
+  const [lessonTotal, setLessonTotal] = useState(0);
+  const [filterCounts, setFilterCounts] = useState<Record<LessonFilter, number>>({ all: 0, favorites: 0, public: 0, private: 0, locked: 0, archive: 0 });
   const [worksheets, setWorksheets] = useState<SavedWorksheetRecord[]>([]);
+  const [worksheetTotal, setWorksheetTotal] = useState(0);
+  const [worksheetFilterCounts, setWorksheetFilterCounts] = useState<Record<WorksheetFilter, number>>({ all: 0, favorites: 0, public: 0, private: 0, archive: 0 });
   const [previewWorksheet, setPreviewWorksheet] = useState<SavedWorksheetRecord | null>(null);
   const [previewLesson, setPreviewLesson] = useState<LessonRecord | null>(null);
   const [conversionMessage, setConversionMessage] = useState("");
@@ -84,6 +82,10 @@ export default function DashboardPage() {
   const [worksheetLibraryMessage, setWorksheetLibraryMessage] = useState("");
   const [worksheetLibraryPendingIds, setWorksheetLibraryPendingIds] = useState<Set<string>>(new Set());
   const openedWorksheetFromQueryRef = useRef(false);
+  const lessonDetails = useRef(new Map<string, LessonRecord>());
+  const worksheetDetails = useRef(new Map<string, SavedWorksheetRecord>());
+  const lessonRequestVersion = useRef(0);
+  const worksheetRequestVersion = useRef(0);
   
 
   // Delete modal state (new)
@@ -102,163 +104,99 @@ export default function DashboardPage() {
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   }, []);
 
+  const dashboardFetch = useCallback(async (path: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const response = await fetch(path, {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(String(payload?.error ?? "Could not load dashboard data."));
+    return payload;
+  }, []);
+
   const refreshLessons = useCallback(async () => {
-    if (!user?.id) {
-      setLessons([]);
-      return;
+    if (!user?.id) { setLessons([]); setLessonTotal(0); return; }
+    const requestVersion = ++lessonRequestVersion.current;
+    const params = new URLSearchParams({ page: String(currentPage), pageSize: String(pageSize), search: searchQuery, filter: lessonFilter, sort: lessonSort });
+    const payload = await dashboardFetch(`/api/dashboard/lessons?${params}`);
+    if (requestVersion !== lessonRequestVersion.current) return;
+    setLessons(payload.items ?? []);
+    if (currentPage === 1 && pageSize === 12 && lessonFilter === "all" && !searchQuery && lessonSort === "recent") {
+      setRecentLessons(payload.items ?? []);
     }
-    const data = await loadLessonsWithAccessFromServer();
-    const hydrated = await Promise.all(
-      data.map(async (lesson) => ({
-        ...lesson,
-        cards: await hydrateCreatorLessonCards(lesson.cards),
-      }))
-    );
-    setLessons(hydrated);
+    setLessonTotal(Number(payload.total ?? 0));
+    setFilterCounts(payload.counts ?? { all: 0, favorites: 0, public: 0, private: 0, locked: 0, archive: 0 });
+  }, [user?.id, currentPage, pageSize, searchQuery, lessonFilter, lessonSort, dashboardFetch]);
+
+  const refreshWorksheets = useCallback(async () => {
+    if (!user?.id) { setWorksheets([]); setWorksheetTotal(0); return; }
+    const requestVersion = ++worksheetRequestVersion.current;
+    const params = new URLSearchParams({ page: String(worksheetPage), pageSize: String(worksheetPageSize), search: worksheetSearchQuery, filter: worksheetFilter, sort: worksheetSort });
+    const payload = await dashboardFetch(`/api/dashboard/worksheets?${params}`);
+    if (requestVersion !== worksheetRequestVersion.current) return;
+    setWorksheets(payload.items ?? []);
+    setWorksheetTotal(Number(payload.total ?? 0));
+    setWorksheetFilterCounts(payload.counts ?? { all: 0, favorites: 0, public: 0, private: 0, archive: 0 });
+  }, [user?.id, worksheetPage, worksheetPageSize, worksheetSearchQuery, worksheetFilter, worksheetSort, dashboardFetch]);
+
+  const getLessonDetails = useCallback(async (lesson: LessonRecord) => {
+    const cached = lessonDetails.current.get(lesson.id);
+    if (cached) return cached;
+    const detail = normalizeLesson(await dashboardFetch(`/api/dashboard/lessons/${encodeURIComponent(lesson.id)}`));
+    let cards = detail.cards;
+    try { cards = await hydrateCreatorLessonCards(detail.cards); }
+    catch (error) { console.warn("Could not refresh creator images for this lesson:", error); }
+    const hydrated = { ...detail, cards };
+    lessonDetails.current.set(lesson.id, hydrated);
+    setLessons((current) => current.map((item) => item.id === lesson.id ? { ...item, ...hydrated, cardCount: item.cardCount } : item));
+    return hydrated;
+  }, [dashboardFetch]);
+
+  const getWorksheetDetails = useCallback(async (worksheet: SavedWorksheetRecord) => {
+    const cached = worksheetDetails.current.get(worksheet.id);
+    if (cached) return cached;
+    const detail = normalizeWorksheet(await dashboardFetch(`/api/dashboard/worksheets/${encodeURIComponent(worksheet.id)}`));
+    let cards = detail.cards;
+    try { cards = await hydrateCreatorLessonCards(detail.cards); }
+    catch (error) { console.warn("Could not refresh creator images for this worksheet:", error); }
+    const hydrated = { ...detail, cards };
+    worksheetDetails.current.set(worksheet.id, hydrated);
+    setWorksheets((current) => current.map((item) => item.id === worksheet.id ? { ...item, ...hydrated, cardCount: item.cardCount } : item));
+    return hydrated;
+  }, [dashboardFetch]);
+
+  useEffect(() => {
+    lessonDetails.current.clear();
+    worksheetDetails.current.clear();
+    lessonRequestVersion.current++;
+    worksheetRequestVersion.current++;
+    setLessons([]);
+    setRecentLessons([]);
+    setWorksheets([]);
+    setLessonTotal(0);
+    setWorksheetTotal(0);
   }, [user?.id]);
 
   useEffect(() => {
     let mounted = true;
-
-    if (user?.id) {
-      refreshLessons()
-        .catch((error) => {
-          console.error("Unexpected error loading lessons from Supabase:", error);
-          if (mounted) setLessons([]);
-        });
-
-      loadWorksheetsForUser(supabase, user.id)
-        .then(async (data) => {
-          const hydrated = await Promise.all(data.map(async (worksheet) => ({
-            ...worksheet,
-            cards: await hydrateCreatorLessonCards(worksheet.cards),
-          })));
-          if (mounted) setWorksheets(hydrated);
-        })
-        .catch((error) => {
-          console.error("Unexpected error loading worksheets from Supabase:", error);
-          if (mounted) setWorksheets([]);
-        });
-    } else {
-      setLessons([]);
-      setWorksheets([]);
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [refreshLessons, user?.id]);
-
-  /* ----------------------------------
-     Derived views
-  -----------------------------------*/
-  const recentlyUsed = useMemo(() => {
-    return lessons
-      .filter((lesson) => !lesson.archivedAt)
-      .slice()
-      .sort((a, b) => (b.lastUsed ?? 0) - (a.lastUsed ?? 0))
-      .slice(0, RECENT_LIMIT);
-  }, [lessons]);
-
-  const filterCounts = useMemo(() => {
-    const activeLessons = lessons.filter((lesson) => !lesson.archivedAt);
-    return {
-      all: activeLessons.length,
-      favorites: activeLessons.filter((lesson) => lesson.isFavorite).length,
-      public: activeLessons.filter((lesson) => lesson.isPublic).length,
-      private: activeLessons.filter((lesson) => !lesson.isPublic).length,
-      locked: activeLessons.filter((lesson) => lesson.isLocked).length,
-      archive: lessons.filter((lesson) => lesson.archivedAt).length,
-    } satisfies Record<LessonFilter, number>;
-  }, [lessons]);
-
-  const filteredLessons = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
-    const matchesFilter = (lesson: LessonRecord) => {
-      if (lessonFilter === "archive") return Boolean(lesson.archivedAt);
-      if (lesson.archivedAt) return false;
-      if (lessonFilter === "favorites") return Boolean(lesson.isFavorite);
-      if (lessonFilter === "public") return Boolean(lesson.isPublic);
-      if (lessonFilter === "private") return !lesson.isPublic;
-      if (lessonFilter === "locked") return Boolean(lesson.isLocked);
-      return true;
-    };
-
-    return lessons
-      .filter(matchesFilter)
-      .filter((lesson) => {
-        if (!normalizedQuery) return true;
-        return lesson.name.toLocaleLowerCase().includes(normalizedQuery)
-          || lesson.cards.some((card) => card.word.toLocaleLowerCase().includes(normalizedQuery));
-      })
-      .sort((left, right) => {
-        if (lessonSort === "newest") return lessonTimestamp(right.createdAt) - lessonTimestamp(left.createdAt);
-        if (lessonSort === "oldest") return lessonTimestamp(left.createdAt) - lessonTimestamp(right.createdAt);
-        if (lessonSort === "name") return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
-        if (lessonSort === "popular") return (right.useCount ?? 0) - (left.useCount ?? 0);
-        if (lessonSort === "cards") return right.cards.length - left.cards.length;
-        return (right.lastUsed ?? 0) - (left.lastUsed ?? 0);
+    const timer = window.setTimeout(() => {
+      Promise.all([refreshLessons(), refreshWorksheets()]).catch((error) => {
+        console.error("Unexpected error loading dashboard library:", error);
+        if (mounted) { setLessons([]); setWorksheets([]); }
       });
-  }, [lessonFilter, lessonSort, lessons, searchQuery]);
+    }, searchQuery || worksheetSearchQuery ? 250 : 0);
+    if (!user?.id) { setLessons([]); setWorksheets([]); setRecentLessons([]); setLessonTotal(0); setWorksheetTotal(0); }
+    return () => { mounted = false; window.clearTimeout(timer); };
+  }, [refreshLessons, refreshWorksheets, user?.id, searchQuery, worksheetSearchQuery]);
+  const recentlyUsed = useMemo(() => recentLessons.filter((lesson) => !lesson.archivedAt).slice(0, RECENT_LIMIT), [recentLessons]);
+  const totalPages = Math.max(1, Math.ceil(lessonTotal / pageSize));
+  const pagedLessons = lessons;
+  const worksheetTotalPages = Math.max(1, Math.ceil(worksheetTotal / worksheetPageSize));
+  const pagedWorksheets = worksheets;
 
-  const totalPages = Math.max(1, Math.ceil(filteredLessons.length / pageSize));
-  const pagedLessons = useMemo(
-    () => filteredLessons.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [currentPage, filteredLessons, pageSize],
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [lessonFilter, lessonSort, pageSize, searchQuery]);
-
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [totalPages]);
-
-  const worksheetFilterCounts = useMemo(() => {
-    const active = worksheets.filter((worksheet) => !worksheet.archivedAt);
-    return {
-      all: active.length,
-      favorites: active.filter((worksheet) => worksheet.isFavorite).length,
-      public: active.filter((worksheet) => worksheet.isPublic).length,
-      private: active.filter((worksheet) => !worksheet.isPublic).length,
-      archive: worksheets.filter((worksheet) => worksheet.archivedAt).length,
-    } satisfies Record<WorksheetFilter, number>;
-  }, [worksheets]);
-
-  const filteredWorksheets = useMemo(() => {
-    const normalizedQuery = worksheetSearchQuery.trim().toLocaleLowerCase();
-    return worksheets
-      .filter((worksheet) => {
-        if (worksheetFilter === "archive") return Boolean(worksheet.archivedAt);
-        if (worksheet.archivedAt) return false;
-        if (worksheetFilter === "favorites") return Boolean(worksheet.isFavorite);
-        if (worksheetFilter === "public") return worksheet.isPublic;
-        if (worksheetFilter === "private") return !worksheet.isPublic;
-        return true;
-      })
-      .filter((worksheet) => {
-        if (!normalizedQuery) return true;
-        return worksheet.name.toLocaleLowerCase().includes(normalizedQuery)
-          || worksheet.worksheetType.toLocaleLowerCase().includes(normalizedQuery)
-          || worksheet.cards.some((card) => card.word.toLocaleLowerCase().includes(normalizedQuery));
-      })
-      .sort((left, right) => {
-        if (worksheetSort === "newest") return lessonTimestamp(right.createdAt) - lessonTimestamp(left.createdAt);
-        if (worksheetSort === "oldest") return lessonTimestamp(left.createdAt) - lessonTimestamp(right.createdAt);
-        if (worksheetSort === "name") return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
-        if (worksheetSort === "popular") return (right.useCount ?? 0) - (left.useCount ?? 0);
-        if (worksheetSort === "cards") return right.cards.length - left.cards.length;
-        return lessonTimestamp(right.lastUsed ?? right.updatedAt) - lessonTimestamp(left.lastUsed ?? left.updatedAt);
-      });
-  }, [worksheetFilter, worksheetSearchQuery, worksheetSort, worksheets]);
-
-  const worksheetTotalPages = Math.max(1, Math.ceil(filteredWorksheets.length / worksheetPageSize));
-  const pagedWorksheets = useMemo(
-    () => filteredWorksheets.slice((worksheetPage - 1) * worksheetPageSize, worksheetPage * worksheetPageSize),
-    [filteredWorksheets, worksheetPage, worksheetPageSize],
-  );
-
+  useEffect(() => setCurrentPage(1), [lessonFilter, lessonSort, pageSize, searchQuery]);
+  useEffect(() => setCurrentPage((page) => Math.min(page, totalPages)), [totalPages]);
   useEffect(() => setWorksheetPage(1), [worksheetFilter, worksheetPageSize, worksheetSearchQuery, worksheetSort]);
   useEffect(() => setWorksheetPage((page) => Math.min(page, worksheetTotalPages)), [worksheetTotalPages]);
 
@@ -269,8 +207,17 @@ export default function DashboardPage() {
     if (!lessonId) return;
 
     const lesson = lessons.find((item) => item.id === lessonId);
-    if (!lesson) return;
     openedLessonFromQueryRef.current = true;
+    if (!lesson) {
+      void getLessonDetails({ id: lessonId, name: "", cards: [] }).then((target) => {
+        setLessonFilter(target.archivedAt ? "archive" : "all");
+        setSearchQuery(target.name);
+        const notice = params.get("notice");
+        if (notice === "already_saved") setLibraryNotice(`“${target.name}” is already saved. We opened the existing set instead.`);
+        else if (notice === "owned") setLibraryNotice(`“${target.name}” is already yours. We opened it without making a copy.`);
+      }).catch(() => { openedLessonFromQueryRef.current = false; });
+      return;
+    }
     setLessonFilter(lesson.archivedAt ? "archive" : "all");
     setSearchQuery(lesson.name);
 
@@ -284,7 +231,7 @@ export default function DashboardPage() {
     window.requestAnimationFrame(() => {
       document.getElementById("saved-lessons")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [lessons]);
+  }, [lessons, getLessonDetails]);
 
   useEffect(() => {
     if (openedWorksheetFromQueryRef.current || worksheets.length === 0) return;
@@ -292,8 +239,17 @@ export default function DashboardPage() {
     const worksheetId = params.get("worksheet_id");
     if (!worksheetId) return;
     const worksheet = worksheets.find((item) => item.id === worksheetId);
-    if (!worksheet) return;
     openedWorksheetFromQueryRef.current = true;
+    if (!worksheet) {
+      void getWorksheetDetails({ id: worksheetId, name: "", userId: user?.id ?? "", worksheetType: "crossword", isPublic: false, cards: [], draft: DEFAULT_WORKSHEET_DRAFT }).then((target) => {
+        setWorksheetFilter(target.archivedAt ? "archive" : "all");
+        setWorksheetSearchQuery(target.name);
+        const notice = params.get("notice");
+        if (notice === "already_saved") setWorksheetLibraryMessage(`“${target.name}” is already saved. We opened the existing worksheet instead.`);
+        else if (notice === "owned") setWorksheetLibraryMessage(`“${target.name}” is already yours. We opened it without making a copy.`);
+      }).catch(() => { openedWorksheetFromQueryRef.current = false; });
+      return;
+    }
     setWorksheetFilter(worksheet.archivedAt ? "archive" : "all");
     setWorksheetSearchQuery(worksheet.name);
     const notice = params.get("notice");
@@ -305,16 +261,17 @@ export default function DashboardPage() {
     window.requestAnimationFrame(() => {
       document.getElementById("saved-worksheets")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [worksheets]);
+  }, [worksheets, getWorksheetDetails, user?.id]);
 
   /* ----------------------------------
      Actions (preserved behavior, hardened)
      Note: These continue to update local cache; Supabase updates are not introduced here
      to avoid changing backend write patterns beyond needed fix.
   -----------------------------------*/
-  const enterClassroom = (lesson: LessonRecord) => {
+  const enterClassroom = async (lesson: LessonRecord) => {
     if (lesson.isLocked) return;
-    const cardsToCopy = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cardsToCopy = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!Array.isArray(cardsToCopy) || cardsToCopy.length === 0) {
       console.warn("enterClassroom: lesson has no cards, skipping tray update and navigation.");
       return;
@@ -333,7 +290,7 @@ export default function DashboardPage() {
     );
 
     if (user?.id) {
-      recordLessonUsage(supabase, lesson).catch((error) => {
+      recordLessonUsage(supabase, full).catch((error) => {
         console.warn("Failed to update lesson last_used/use_count:", error);
       });
     }
@@ -343,9 +300,10 @@ export default function DashboardPage() {
     window.location.href = "/flashcards/classroom?from=dashboard";
   };
 
-  const editLesson = (lesson: LessonRecord) => {
+  const editLesson = async (lesson: LessonRecord) => {
     if (lesson.isLocked || (!access?.isPremium && lesson.containsPremiumImages)) return;
-    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cards = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("editLesson: lesson has no cards, aborting edit navigation.");
       return;
@@ -353,13 +311,14 @@ export default function DashboardPage() {
 
     writeLessonTray(cards);
     writeLastSavedTray(cards);
-    persistEditingLessonSetId(lesson.id);
-    window.location.href = `/teacher/editor?lesson_set_id=${lesson.id}`;
+    persistEditingLessonSetId(full.id);
+    window.location.href = `/teacher/editor?lesson_set_id=${full.id}`;
   };
 
-  const openGames = (lesson: LessonRecord) => {
+  const openGames = async (lesson: LessonRecord) => {
     if (lesson.isLocked) return;
-    const cardsToCopy = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cardsToCopy = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!cardsToCopy.length) {
       console.warn("Games: lesson has no cards, aborting navigation.");
       return;
@@ -379,7 +338,7 @@ export default function DashboardPage() {
     );
 
     if (user?.id) {
-      recordLessonUsage(supabase, lesson).catch((error) => {
+      recordLessonUsage(supabase, full).catch((error) => {
         console.warn("Failed to update lesson last_used/use_count (games):", error);
       });
     }
@@ -407,6 +366,8 @@ export default function DashboardPage() {
       setLessons((current) =>
         current.filter((lesson) => String(lesson.id) !== String(lessonSetPendingDelete))
       );
+      lessonDetails.current.delete(lessonSetPendingDelete);
+      await refreshLessons();
 
       // Close modal and clear pending id
       setIsDeleteModalOpen(false);
@@ -440,6 +401,7 @@ export default function DashboardPage() {
               : null,
         });
       }));
+      await refreshLessons();
     } catch (error) {
       setLibraryMessage(
         error instanceof Error ? error.message : "Could not update this lesson set.",
@@ -462,9 +424,10 @@ export default function DashboardPage() {
   };
 
   // Print lesson — writes to lesson tray and navigates to printables
-  const printLesson = (lesson: LessonRecord) => {
+  const printLesson = async (lesson: LessonRecord) => {
     if (lesson.isLocked) return;
-    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cards = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("printLesson: lesson has no cards, aborting print.");
       return;
@@ -474,9 +437,10 @@ export default function DashboardPage() {
     window.location.href = "/printables?from=dashboard";
   };
 
-  const openWorksheets = (lesson: LessonRecord) => {
+  const openWorksheets = async (lesson: LessonRecord) => {
     if (lesson.isLocked) return;
-    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cards = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("openWorksheets: lesson has no cards, aborting worksheets.");
       return;
@@ -486,9 +450,10 @@ export default function DashboardPage() {
     window.location.href = "/worksheets";
   };
 
-  const openInFlashcards = (lesson: LessonRecord) => {
+  const openInFlashcards = async (lesson: LessonRecord) => {
     if (lesson.isLocked) return;
-    const cards = Array.isArray(lesson.cards) ? lesson.cards.filter(Boolean) : [];
+    const full = await getLessonDetails(lesson);
+    const cards = Array.isArray(full.cards) ? full.cards.filter(Boolean) : [];
     if (!cards.length) {
       console.warn("openInFlashcards: lesson has no cards, aborting navigation.");
       return;
@@ -498,12 +463,13 @@ export default function DashboardPage() {
     window.location.href = "/flashcards";
   };
 
-  const openSavedWorksheet = (worksheet: SavedWorksheetRecord) => {
-    writeLessonTray(worksheet.cards);
+  const openSavedWorksheet = async (worksheet: SavedWorksheetRecord) => {
+    const full = await getWorksheetDetails(worksheet);
+    writeLessonTray(full.cards);
     setWorksheets((current) => current.map((item) => item.id === worksheet.id
       ? { ...item, useCount: (item.useCount ?? 0) + 1, lastUsed: new Date().toISOString() }
       : item));
-    recordWorksheetUsage(supabase, worksheet).catch((error) => {
+    recordWorksheetUsage(supabase, full).catch((error) => {
       console.warn("Failed to update worksheet usage:", error);
     });
     window.location.href = `/worksheets?worksheet_id=${worksheet.id}`;
@@ -513,6 +479,8 @@ export default function DashboardPage() {
     try {
       await deleteWorksheet(supabase, worksheetId);
       setWorksheets((current) => current.filter((item) => item.id !== worksheetId));
+      worksheetDetails.current.delete(worksheetId);
+      await refreshWorksheets();
     } catch (error) {
       console.error("Failed to delete worksheet:", error);
     }
@@ -528,6 +496,7 @@ export default function DashboardPage() {
     try {
       const updated = await updateWorksheetLibraryStateFromServer(worksheet.id, changes);
       setWorksheets((current) => current.map((item) => item.id === worksheet.id ? { ...item, ...updated } : item));
+      await refreshWorksheets();
     } catch (error) {
       setWorksheetLibraryMessage(error instanceof Error ? error.message : "Could not update this worksheet.");
     } finally {
@@ -687,7 +656,7 @@ export default function DashboardPage() {
                   <DashboardLessonCard
                     lesson={lesson}
                     enterButtonClassName="btn btn-primary flex-1 px-2.5 py-1.5 text-xs"
-                    onPreview={setPreviewLesson}
+                    onPreview={(item) => { void getLessonDetails(item).then(setPreviewLesson); }}
                     onOpenFlashcards={openInFlashcards}
                     onEdit={editLesson}
                     onOpenGames={openGames}
@@ -714,9 +683,9 @@ export default function DashboardPage() {
                 Search, filter, favourite, and archive your lesson library.
               </p>
             </div>
-            {filteredLessons.length > 0 ? (
+            {lessonTotal > 0 ? (
               <p className="text-xs text-[var(--color-text-muted)]">
-                Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredLessons.length)} of {filteredLessons.length}
+                Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, lessonTotal)} of {lessonTotal}
               </p>
             ) : null}
           </div>
@@ -732,7 +701,7 @@ export default function DashboardPage() {
             </div>
           ) : null}
 
-          {lessons.length === 0 ? (
+          {filterCounts.all + filterCounts.archive === 0 ? (
             <div className="text-center py-20 text-[var(--color-text-muted)]">
               <p className="text-lg mb-3">You haven’t saved any lessons yet.</p>
               <Link
@@ -805,7 +774,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {filteredLessons.length === 0 ? (
+              {lessonTotal === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">
                   No lesson sets match this search and filter.
                 </div>
@@ -815,7 +784,7 @@ export default function DashboardPage() {
                   <DashboardLessonCard
                     key={lesson.id}
                     lesson={lesson}
-                    onPreview={setPreviewLesson}
+                    onPreview={(item) => { void getLessonDetails(item).then(setPreviewLesson); }}
                     onOpenFlashcards={openInFlashcards}
                     onEdit={editLesson}
                     onOpenGames={openGames}
@@ -856,9 +825,9 @@ export default function DashboardPage() {
                 Search and organise worksheets separately from lesson sets.
               </p>
             </div>
-            {filteredWorksheets.length > 0 ? (
+            {worksheetTotal > 0 ? (
               <p className="text-xs text-[var(--color-text-muted)]">
-                Showing {(worksheetPage - 1) * worksheetPageSize + 1}–{Math.min(worksheetPage * worksheetPageSize, filteredWorksheets.length)} of {filteredWorksheets.length}
+                Showing {(worksheetPage - 1) * worksheetPageSize + 1}–{Math.min(worksheetPage * worksheetPageSize, worksheetTotal)} of {worksheetTotal}
               </p>
             ) : null}
           </div>
@@ -869,7 +838,7 @@ export default function DashboardPage() {
             </div>
           ) : null}
 
-          {worksheets.length === 0 ? (
+          {worksheetFilterCounts.all + worksheetFilterCounts.archive === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">
               No saved worksheets yet. Create one from the Worksheets page.
             </div>
@@ -919,7 +888,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {filteredWorksheets.length === 0 ? (
+              {worksheetTotal === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[#d7ddd1] py-14 text-center text-sm text-[var(--color-text-muted)]">No worksheets match this search and filter.</div>
               ) : (
                 <div className={worksheetView === "grid" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-3"}>
@@ -928,7 +897,7 @@ export default function DashboardPage() {
                       key={worksheet.id}
                       worksheet={worksheet}
                       onOpen={openSavedWorksheet}
-                      onPreview={setPreviewWorksheet}
+                      onPreview={(item) => { void getWorksheetDetails(item).then(setPreviewWorksheet); }}
                       onDelete={removeSavedWorksheet}
                       viewMode={worksheetView}
                       libraryStatePending={worksheetLibraryPendingIds.has(worksheet.id)}

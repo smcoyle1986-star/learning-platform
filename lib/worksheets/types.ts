@@ -64,6 +64,7 @@ export type SavedWorksheetRecord = {
   worksheetType: WorksheetType;
   isPublic: boolean;
   cards: LessonCard[];
+  cardCount?: number;
   draft: WorksheetDraft;
   createdAt?: string;
   updatedAt?: string;

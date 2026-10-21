@@ -16,6 +16,7 @@ export type LessonRecord = {
   id: string;
   name: string;
   cards: LessonCard[];
+  cardCount?: number;
   createdAt?: number | string;
   lastUsed?: number | null;
   useCount?: number;
