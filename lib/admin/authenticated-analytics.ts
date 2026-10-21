@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { resolveVerificationGrace, verificationDeadline } from "@/lib/auth/verification-grace";
 import { getAdminUserDetail, getAdminUsers } from "@/lib/admin/users";
 import { readAdminAnalyticsRows } from "@/lib/admin/analytics-rows";
 
@@ -16,6 +17,8 @@ export type AuthenticatedAnalyticsUser = {
   lastCountryObserved: string | null;
   createdAt: string;
   emailVerifiedAt: string | null;
+  verificationDeadline: string | null;
+  verificationStatus: string;
   trialStartedAt: string | null;
   trialEndsAt: string | null;
   trialStatus: string;
@@ -38,6 +41,8 @@ export type AnalyticsTimelineEvent = {
 export type AuthenticatedAnalyticsTimeline = {
   user: { id: string; label: string; email: string | null; createdAt: string; userType: string | null; countryRegion: string | null; signupCountryObserved: string | null; lastCountryObserved: string | null };
   emailVerifiedAt: string | null;
+  verificationDeadline: string | null;
+  verificationStatus: string;
   trialStartedAt: string | null;
   trialEndsAt: string | null;
   acquisition: Record<string, string | null>;
@@ -107,22 +112,24 @@ async function rowsForUsers(table: string, columns: string, userIds: string[]) {
 export async function getAuthenticatedAnalyticsUsers(params: { page?: number; query?: string } = {}) {
   const directory = await getAdminUsers({ query: params.query, page: params.page });
   const ids = directory.users.map((user) => user.id);
-  const [countries, subscriptions, attributionRows, activityResult, authFieldsResult] = await Promise.all([
+  const [countries, subscriptions, attributionRows, activityResult, verificationRows, policyResult] = await Promise.all([
     rowsForUsers("analytics_account_countries", "user_id,signup_country_observed,last_country_observed", ids),
     rowsForUsers("user_subscriptions", "user_id,premium_trial_started_at,premium_trial_ends_at", ids),
     rowsForUsers("signup_attributions", "user_id,utm_source,referrer_host", ids),
     ids.length ? getSupabaseAdmin().rpc("get_admin_user_activity", { p_user_ids: ids }) : Promise.resolve({ data: [], error: null }),
-    ids.length ? getSupabaseAdmin().rpc("get_admin_account_auth_fields", { p_user_ids: ids }) : Promise.resolve({ data: [], error: null }),
+    rowsForUsers("classendo_email_verifications", "user_id,normalized_email,verified_at", ids),
+    getSupabaseAdmin().from("classendo_verification_policy").select("activated_at").eq("id", true).single(),
   ]);
   if (activityResult.error) throw new Error(`Could not load user activity: ${activityResult.error.message}`);
-  if (authFieldsResult.error) throw new Error(`Could not load verification status: ${authFieldsResult.error.message}`);
+  if (policyResult.error) throw new Error(`Could not load verification policy: ${policyResult.error.message}`);
   const { data: profileData, error: profileError } = ids.length
     ? await getSupabaseAdmin().from("profiles").select("id,username,user_type,country_region").in("id", ids)
     : { data: [], error: null };
   if (profileError) throw new Error(`Could not load profile types: ${profileError.message}`);
   const profileRows = (profileData ?? []) as Array<Record<string, unknown>>;
   const activity = Array.isArray(activityResult.data) ? activityResult.data as Array<Record<string, unknown>> : [];
-  const authFields = Array.isArray(authFieldsResult.data) ? authFieldsResult.data as Array<Record<string, unknown>> : [];
+  const activatedAt = text(policyResult.data?.activated_at);
+  const serverNow = new Date().toISOString();
 
   return {
     total: directory.total,
@@ -131,7 +138,10 @@ export async function getAuthenticatedAnalyticsUsers(params: { page?: number; qu
       const profile = profileRows.find((item) => item.id === user.id);
       const country = countries.find((item) => item.user_id === user.id);
       const subscription = subscriptions.find((item) => item.user_id === user.id);
-      const verification = authFields.find((item) => item.user_id === user.id);
+      const verification = verificationRows.find((item) => item.user_id === user.id);
+      const verifiedAt = user.email && text(verification?.normalized_email) === user.email.trim().toLowerCase() ? text(verification?.verified_at) : null;
+      const deadline = verifiedAt ? null : verificationDeadline(user.createdAt, activatedAt);
+      const grace = resolveVerificationGrace({ verified: Boolean(verifiedAt), verifiedAt, deadline, serverNow, activatedAt });
       const attribution = attributionRows.find((item) => item.user_id === user.id);
       const usage = activity.find((item) => item.user_id === user.id);
       const trialStartedAt = text(subscription?.premium_trial_started_at);
@@ -145,7 +155,9 @@ export async function getAuthenticatedAnalyticsUsers(params: { page?: number; qu
         signupCountryObserved: text(country?.signup_country_observed),
         lastCountryObserved: text(country?.last_country_observed),
         createdAt: user.createdAt,
-        emailVerifiedAt: text(verification?.email_verified_at),
+        emailVerifiedAt: verifiedAt,
+        verificationDeadline: grace.deadline,
+        verificationStatus: grace.phase,
         trialStartedAt,
         trialEndsAt,
         trialStatus: !trialStartedAt ? "Not started" : trialEndsAt && new Date(trialEndsAt).getTime() > Date.now() ? "Active" : "Ended",
@@ -189,7 +201,7 @@ export async function getAuthenticatedAnalyticsTimeline(userId: string): Promise
     readAdminAnalyticsRows("analytics_lifecycle_events", "id,event_type,session_key,created_at", "user_id", [userId]),
     readAdminAnalyticsRows("analytics_session_account_links", "session_key,linked_at,link_reason", "user_id", [userId], { orderColumn: "linked_at" }),
     admin.from("signup_attributions").select("utm_source,utm_medium,utm_campaign,utm_content,utm_term,referrer_host,landing_path").eq("user_id", userId).maybeSingle(),
-    admin.rpc("get_admin_account_auth_fields", { p_user_ids: [userId] }),
+    admin.rpc("get_classendo_verification_grace", { p_user_id: userId }),
     admin.from("user_subscriptions").select("premium_trial_started_at,premium_trial_ends_at").eq("user_id", userId).maybeSingle(),
     readAdminAnalyticsRows("lesson_sets", "id,created_at", "user_id", [userId]),
     readAdminAnalyticsRows("worksheets", "id,created_at,worksheet_type", "user_id", [userId]),
@@ -281,9 +293,9 @@ export async function getAuthenticatedAnalyticsTimeline(userId: string): Promise
   if (!events.some((event) => event.title === "Account created")) {
     events.push({ id: `account:${userId}`, title: "Account created", detail: null, createdAt: detail.createdAt, source: "account", sessionKey: null });
   }
-  const verification = (Array.isArray(verificationResult.data) ? verificationResult.data[0] : null) as Record<string, unknown> | null;
-  if (text(verification?.email_verified_at) && !events.some((event) => event.title === "Email verified")) {
-    events.push({ id: `verification:${userId}`, title: "Email verified", detail: null, createdAt: String(verification?.email_verified_at), source: "lifecycle", sessionKey: null });
+  const verification = resolveVerificationGrace(verificationResult.data as { verified: boolean; email: string | null; verifiedAt: string | null; deadline: string | null; serverNow: string; activatedAt: string | null });
+  if (verification.verifiedAt && !events.some((event) => event.title === "Email verified")) {
+    events.push({ id: `verification:${userId}`, title: "Email verified", detail: null, createdAt: verification.verifiedAt, source: "lifecycle", sessionKey: null });
   }
   const subscription = subscriptionResult.data as Record<string, unknown> | null;
   const country = countryResult.data as Record<string, unknown> | null;
@@ -295,7 +307,9 @@ export async function getAuthenticatedAnalyticsTimeline(userId: string): Promise
   const attribution = (attributionResult.data ?? {}) as Record<string, unknown>;
   return {
     user: { id: detail.id, label: labelFor(detail), email: detail.email, createdAt: detail.createdAt, userType: detail.userType, countryRegion: detail.countryRegion, signupCountryObserved: text(country?.signup_country_observed), lastCountryObserved: text(country?.last_country_observed) },
-    emailVerifiedAt: text(verification?.email_verified_at),
+    emailVerifiedAt: verification.verifiedAt,
+    verificationDeadline: verification.deadline,
+    verificationStatus: verification.phase,
     trialStartedAt: text(subscription?.premium_trial_started_at),
     trialEndsAt: text(subscription?.premium_trial_ends_at),
     acquisition: {

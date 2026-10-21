@@ -1,5 +1,6 @@
 import { createHmac, createHash, randomBytes } from "node:crypto";
 
+import { resolveVerificationGrace } from "@/lib/auth/verification-grace";
 import { getOptionalEnv } from "@/lib/server/env";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
@@ -47,13 +48,9 @@ export async function claimAuthRateLimit(input: {
 }
 
 export async function getClassendoVerification(userId: string) {
-  const { data, error } = await getSupabaseAdmin()
-    .from("classendo_email_verifications")
-    .select("normalized_email,verified_at")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) throw error;
-  return { verified: Boolean(data?.verified_at), email: data?.normalized_email ?? null };
+  const { data, error } = await getSupabaseAdmin().rpc("get_classendo_verification_grace", { p_user_id: userId });
+  if (error || !data) throw error ?? new Error("Verification status is unavailable.");
+  return resolveVerificationGrace(data);
 }
 
 export async function requireVerifiedClassendoEmail(userId: string) {

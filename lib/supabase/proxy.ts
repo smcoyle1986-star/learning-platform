@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getClassendoVerification } from "@/lib/auth/server-verification";
+import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+
 const secureCookies = process.env.NODE_ENV === "production";
 
 function markAuthenticatedResponsePrivate(request: NextRequest, response: NextResponse) {
@@ -24,6 +27,19 @@ function redirectWithCookies(response: NextResponse, location: URL) {
 
   redirect.headers.set("Cache-Control", "private, no-store");
   return redirect;
+}
+
+const PUBLIC_PAGES = ["/", "/login", "/signup", "/verify-email", "/verification-required", "/check-email", "/auth", "/landing", "/faq", "/games", "/flashcards", "/printables", "/legal", "/privacy", "/terms"];
+const PUBLIC_APIS = ["/api/auth/", "/api/analytics/", "/api/games/popularity", "/api/games/free-analytics", "/api/stripe/pricing", "/api/stripe/webhook", "/api/landing-image", "/api/landing-images", "/api/ping", "/api/printables/export-pdf", "/api/cron/", "/api/internal/"];
+
+function matchesPath(path: string, prefix: string) {
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
+function isPublicPath(path: string) {
+  return path.startsWith("/api/")
+    ? PUBLIC_APIS.some((prefix) => prefix.endsWith("/") ? path.startsWith(prefix) : matchesPath(path, prefix))
+    : PUBLIC_PAGES.some((prefix) => matchesPath(path, prefix));
 }
 
 export async function refreshSupabaseSession(request: NextRequest) {
@@ -59,9 +75,31 @@ export async function refreshSupabaseSession(request: NextRequest) {
 
   // Always validate the token with Supabase Auth. Reading the session alone
   // would trust unverified cookie contents.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const bearer = request.headers.get("authorization");
+  const token = bearer?.startsWith("Bearer ") ? bearer.slice(7) : null;
+  const { data: { user } } = token
+    ? await getSupabaseAdmin().auth.getUser(token)
+    : await supabase.auth.getUser();
+
+  if (user && !isPublicPath(request.nextUrl.pathname)) {
+    try {
+      const verification = await getClassendoVerification(user.id);
+      if (verification.phase === "expired") {
+        if (request.nextUrl.pathname.startsWith("/api/")) {
+          const denied = NextResponse.json({ error: "Verify your email to continue.", verificationRequired: true }, { status: 403 });
+          denied.headers.set("Cache-Control", "private, no-store");
+          return denied;
+        }
+        const requiredUrl = request.nextUrl.clone();
+        requiredUrl.pathname = "/verification-required";
+        requiredUrl.search = "";
+        return redirectWithCookies(response, requiredUrl);
+      }
+    } catch (error) {
+      console.error("Could not check email verification access:", error);
+      return NextResponse.json({ error: "Verification access is temporarily unavailable." }, { status: 503 });
+    }
+  }
 
   if (request.nextUrl.pathname.startsWith("/admin")) {
     const isUnauthorizedPage =
