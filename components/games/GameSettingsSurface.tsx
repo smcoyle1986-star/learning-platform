@@ -21,6 +21,7 @@ export function GameSettingsModal({ children, className = "" }: GameSettingsSurf
     <div data-game-settings-modal className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
         className={`w-full max-w-2xl rounded-3xl border border-black/8 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)] ${className}`}
+        style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }}
       >
         {children}
       </div>

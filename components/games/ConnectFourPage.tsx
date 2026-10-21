@@ -926,7 +926,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
                     ) : null}
                     {modalDisplayMode === "text" && (
                       <div className="w-full h-full flex items-center justify-center px-6 py-8">
-                        <div className="text-5xl md:text-6xl font-extrabold text-center leading-tight">
+                        <div className="game-question-modal__text max-w-[90%] text-6xl sm:text-7xl md:text-8xl font-extrabold text-center leading-tight">
                           {learningCard.word}
                         </div>
                       </div>

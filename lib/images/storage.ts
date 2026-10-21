@@ -64,6 +64,9 @@ function getLandingProxyTransformUrl(source: string, width: number, quality: num
 }
 
 export function getResponsiveImageUrl(source: string, width: number, quality = 72) {
+  // Phonics masters do not consistently have generated responsive variants.
+  // Keep their stable public source URL for trays and game prompts.
+  if (/\/phonics\//i.test(source)) return null;
   return (
     getStaticVocabularyImageUrl(source, width) ??
     getLandingProxyTransformUrl(source, width, quality)

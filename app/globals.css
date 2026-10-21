@@ -81,6 +81,14 @@ body {
   line-height: 1.45;
 }
 
+body.classendo-game-page [role="dialog"],
+body.classendo-game-page dialog,
+body.classendo-game-page [data-game-settings-modal] > div,
+body.classendo-game-page [data-game-settings-surface],
+body.classendo-game-page .game-question-modal {
+  font-family: var(--font-comic-neue), "Comic Sans MS", "Comic Sans", cursive;
+}
+
 /* Fullscreen play should contain only the game and its own controls. The
    regular site navigation otherwise sits above the fixed game header. The
    :fullscreen fallback also covers any fullscreen route that does not use
@@ -615,6 +623,7 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   body.classendo-game-page .game-question-modal {
     align-items: center;
     padding: 0.5rem;
+    font-family: var(--font-comic-neue), "Comic Sans MS", "Comic Sans", cursive;
   }
 
   body.classendo-game-page .game-question-modal__panel {
@@ -656,7 +665,7 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   }
 
   body.classendo-game-page .game-question-modal__text {
-    font-size: clamp(1.5rem, 5vw, 2.4rem);
+    font-size: clamp(3rem, 8vw, 6rem);
   }
 
   body.classendo-game-page .game-question-modal__actions {
