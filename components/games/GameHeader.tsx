@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BrandButton from "@/components/BrandButton";
 import { Maximize2, Minimize2, Settings2, LogOut, Home, Menu, X, RotateCw } from "lucide-react";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useGameFlow } from "./GameFlowContext";
 import { topicsUrl } from "@/lib/games/topics";
+import { shouldInviteGuestOnExit } from "@/lib/games/guest-exit";
 import Button from "@/components/ui/Button";
 import { gameAudio, type GameAudioKey, type GameAudioMode } from "@/lib/games/audio/game-audio";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/lib/supabase/client";
+import { trackFreeGameEvent } from "@/lib/games/free-analytics";
+import { GameFlowDialog } from "./GameFlowDialog";
 
 type GameHeaderProps = {
   title: string;
   onExit: () => void;
+  onGuestExit?: (destination: "/signup?from=guest-exit" | "/games") => void;
   hidden?: boolean;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
@@ -31,9 +37,41 @@ type LockableScreenOrientation = ScreenOrientation & {
   lock?: (orientation: "landscape") => Promise<void>;
 };
 
+const GUEST_EXIT_INVITATIONS = [
+  {
+    heading: "Make it your own!",
+    message: "Create a free account to play games with vocabulary from your own lessons.",
+  },
+  {
+    heading: "Bring your lessons to the game!",
+    message: "Sign up for free and use your own vocabulary in classroom games.",
+  },
+  {
+    heading: "Ready to play with your words?",
+    message: "Create a free account and turn your lessons into classroom games.",
+  },
+  {
+    heading: "Your vocabulary, your games!",
+    message: "Sign up for free to make classroom games with words your students are learning.",
+  },
+  {
+    heading: "Keep the fun going!",
+    message: "Create a free account to use your own lesson vocabulary in classroom games.",
+  },
+  {
+    heading: "Your words want to play too!",
+    message: "Sign up for free and bring your lesson vocabulary into the game.",
+  },
+  {
+    heading: "The game was fun. Your vocabulary could be the star!",
+    message: "Create a free account and play with words from your own lessons.",
+  },
+] as const;
+
 export default function GameHeader({
   title,
   onExit,
+  onGuestExit,
   hidden = false,
   isFullscreen = false,
   onToggleFullscreen,
@@ -49,7 +87,15 @@ export default function GameHeader({
 }: GameHeaderProps) {
   const flow = useGameFlow();
   const router = useRouter();
+  const pathname = usePathname();
+  const { user, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [exitInvitationId, setExitInvitationId] = useState<string | null>(null);
+  const [exitInvitationMessageIndex, setExitInvitationMessageIndex] = useState<number | null>(null);
+  const exitInvitationOpen = useRef(false);
+  const exitInvitationNavigating = useRef(false);
+  const previousExitInvitationMessageIndex = useRef<number | null>(null);
+  const gameId = pathname.split("/")[2] ?? "";
 
   useEffect(() => {
     if (!trackGameKey) return;
@@ -147,16 +193,68 @@ export default function GameHeader({
 
   const exitGame = async () => {
     setMobileMenuOpen(false);
+    if (shouldInviteGuestOnExit(pathname, user?.id ?? null)) {
+      let isGuest = !user;
+      if (isGuest && loading) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          isGuest = !data.session?.user;
+        } catch {
+          // Keep the game open until authentication finishes; never guess that
+          // a still-loading signed-in user is a guest.
+          return;
+        }
+      }
+      if (isGuest) {
+        if (exitInvitationOpen.current) return;
+        exitInvitationOpen.current = true;
+        exitInvitationNavigating.current = false;
+        const previousIndex = previousExitInvitationMessageIndex.current;
+        const randomIndex = Math.floor(Math.random() * (GUEST_EXIT_INVITATIONS.length - (previousIndex === null ? 0 : 1)));
+        const messageIndex = previousIndex === null || randomIndex < previousIndex ? randomIndex : randomIndex + 1;
+        previousExitInvitationMessageIndex.current = messageIndex;
+        setExitInvitationMessageIndex(messageIndex);
+        const invitationId = crypto.randomUUID();
+        setExitInvitationId(invitationId);
+        void trackFreeGameEvent({ eventType: "guest_exit_signup_modal_viewed", gameKey: gameId, source: flow?.topic ? "public_topic" : "free_games", eventInstanceId: invitationId });
+        return;
+      }
+    }
     if (flow && !window.confirm("Leave this game? Your current scores and progress will reset.")) return;
     if (flow && document.fullscreenElement) await document.exitFullscreen().catch(() => {});
     if (flow?.topic) router.push(`/games?source=topics&topic=${flow.topic.id}`);
     else onExit();
   };
+  const closeExitInvitation = () => {
+    exitInvitationOpen.current = false;
+    exitInvitationNavigating.current = false;
+    setExitInvitationId(null);
+  };
+  const chooseExitDestination = async (destination: "/signup" | "/games") => {
+    if (!exitInvitationId || exitInvitationNavigating.current) return;
+    exitInvitationNavigating.current = true;
+    const tracked = trackFreeGameEvent({
+      eventType: destination === "/signup" ? "guest_exit_signup_clicked" : "guest_exit_free_games_clicked",
+      gameKey: gameId,
+      source: flow?.topic ? "public_topic" : "free_games",
+      eventInstanceId: exitInvitationId,
+    });
+    if (destination === "/signup") await Promise.race([
+      tracked,
+      new Promise((resolve) => window.setTimeout(resolve, 2500)),
+    ]);
+    setExitInvitationId(null);
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+    const path = destination === "/signup" ? "/signup?from=guest-exit" : destination;
+    if (onGuestExit) onGuestExit(path);
+    else if (destination === "/games") onExit();
+    else router.push(path);
+  };
   const ExitIcon = exitLabel === "Back to home" ? Home : LogOut;
 
   if (hidden) return null;
 
-  return (
+  return <>
     <header data-game-header data-game-fullscreen={isFullscreen ? "true" : undefined} className="fixed top-0 left-0 right-0 z-50 border-b border-black/5 bg-[var(--color-bg-main)]/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {hideBrand ? <div className="hidden w-36 sm:block" aria-hidden="true" /> : <BrandButton className="hidden text-3xl font-extrabold text-blue-700 sm:block" />}
@@ -281,5 +379,12 @@ export default function GameHeader({
         )}
       </div>
     </header>
-  );
+    {exitInvitationId && exitInvitationMessageIndex !== null && <GameFlowDialog title={GUEST_EXIT_INVITATIONS[exitInvitationMessageIndex].heading} onClose={closeExitInvitation}>
+      <p className="text-base leading-7 text-[#5c665c]">{GUEST_EXIT_INVITATIONS[exitInvitationMessageIndex].message}</p>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button type="button" onClick={() => void chooseExitDestination("/signup")} className="btn btn-primary min-h-12 w-full justify-center px-5 py-3 text-center sm:flex-1">Create Free Account</button>
+        <button type="button" onClick={() => void chooseExitDestination("/games")} className="btn btn-secondary min-h-12 w-full justify-center px-5 py-3 text-center sm:flex-1">Back to Free Games</button>
+      </div>
+    </GameFlowDialog>}
+  </>;
 }

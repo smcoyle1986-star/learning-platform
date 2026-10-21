@@ -17,6 +17,7 @@ import { GAME_NAMES, getGameTopic } from "@/lib/games/topics";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { linkAnalyticsAnonymousIdToAccount, linkAnalyticsSessionToAccount, observeAnalyticsSession, observedCountry, validAnalyticsSessionKey } from "@/lib/analytics/server";
 import { TurnstileVerificationError, verifyTurnstileToken } from "@/lib/auth/turnstile";
+import { attributeGuestExitSignup, clearGuestExitReceipt } from "@/lib/analytics/guest-exit-attribution";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ type SignupBody = {
   legalAccepted?: unknown;
   attribution?: unknown;
   freeGamesContext?: unknown;
+  guestExitContext?: unknown;
   turnstileToken?: unknown;
   analyticsSessionKey?: unknown;
   analyticsAnonymousId?: unknown;
@@ -218,6 +220,12 @@ export async function POST(request: NextRequest) {
         console.error("Could not link signup analytics session:", analyticsError);
       }
     }
+    let guestExitAttributed = false;
+    try {
+      if (body.guestExitContext === true) guestExitAttributed = await attributeGuestExitSignup(request, data.user.id, data.user.created_at, body.analyticsSessionKey, body.analyticsAnonymousId);
+    } catch (analyticsError) {
+      console.error("Guest exit signup attribution failed:", analyticsError);
+    }
     {
       try {
         const { error: conversionReceiptError } = await getSupabaseAdmin()
@@ -247,7 +255,9 @@ export async function POST(request: NextRequest) {
       }
     }
     if (!data.session) {
-      return NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
+      const response = NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
+      if (guestExitAttributed) clearGuestExitReceipt(response);
+      return response;
     }
 
     let verificationEmailSent = true;
@@ -257,7 +267,7 @@ export async function POST(request: NextRequest) {
       console.error("Verification email could not be sent after signup:", mailError);
       verificationEmailSent = false;
     }
-    return NextResponse.json({
+    const response = NextResponse.json({
       signupConversionId,
       session: {
         accessToken: data.session.access_token,
@@ -265,6 +275,8 @@ export async function POST(request: NextRequest) {
       },
       verificationEmailSent,
     });
+    if (guestExitAttributed) clearGuestExitReceipt(response);
+    return response;
   } catch (error: unknown) {
     console.error("Signup failed:", error);
     if (error instanceof TurnstileVerificationError) return await fail("turnstile", error.status, error.message);

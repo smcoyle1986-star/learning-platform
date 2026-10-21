@@ -6,10 +6,13 @@ import { getClassendoVerification } from "@/lib/auth/server-verification";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { observeAnalyticsSession, observedCountry, validAnalyticsAnonymousId } from "@/lib/analytics/server";
+import { issueGuestExitReceipt } from "@/lib/analytics/guest-exit-attribution";
 
 export const runtime = "nodejs";
 
-const EVENT_TYPES = new Set(["hub_viewed", "game_selected", "topic_previewed", "topic_selected", "game_started", "meaningful_interaction", "game_completed", "another_game_selected", "another_topic_selected", "use_own_vocabulary_clicked", "finish_action", "signup_started", "signup_completed"]);
+const EVENT_TYPES = new Set(["hub_viewed", "game_selected", "topic_previewed", "topic_selected", "game_started", "meaningful_interaction", "game_completed", "another_game_selected", "another_topic_selected", "use_own_vocabulary_clicked", "finish_action", "signup_started", "signup_completed", "guest_exit_signup_modal_viewed", "guest_exit_signup_clicked", "guest_exit_free_games_clicked"]);
+const GUEST_EXIT_EVENTS = new Set(["guest_exit_signup_modal_viewed", "guest_exit_signup_clicked", "guest_exit_free_games_clicked"]);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SOURCES = new Set(["public_topic", "lesson_tray", "custom_vocabulary", "free_games"]);
 const ACTIONS = new Set(["play_again", "change_topic", "change_game", "use_own_vocabulary", "create_account"]);
 const KEY = /^[a-z0-9-]{1,80}$/;
@@ -26,6 +29,7 @@ function eventKey({
   source,
   action,
   sessionKey,
+  eventInstanceId,
 }: {
   eventType: string;
   gameKey: string;
@@ -33,8 +37,10 @@ function eventKey({
   source: string;
   action: string;
   sessionKey: string;
+  eventInstanceId: string;
 }) {
   if (!sessionKey) return null;
+  if (GUEST_EXIT_EVENTS.has(eventType)) return `v1:exit:${sessionKey}:${eventType}:${eventInstanceId}`;
   const context = [eventType, gameKey, topicId, source, action].join(":");
   if (SINGLETON_EVENTS.has(eventType)) return `v1:once:${sessionKey}:${context}`;
 
@@ -63,17 +69,19 @@ export async function POST(request: NextRequest) {
     const source = text(body.source, 40);
     const action = text(body.action, 40);
     const sessionKey = text(body.sessionKey, 80);
+    const eventInstanceId = text(body.eventInstanceId, 80);
     const attribution = attributionValue(body.attribution);
     const countryCode = observedCountry(request);
     const userAgent = request.headers.get("user-agent") ?? "";
     const deviceType = /ipad|tablet|playbook|silk/i.test(userAgent) ? "tablet" : /mobile|iphone|ipod|android/i.test(userAgent) ? "mobile" : userAgent ? "desktop" : "unknown";
-    if (!EVENT_TYPES.has(eventType) || (gameKey && !Object.hasOwn(GAME_NAMES, gameKey)) || (topicId && !getGameTopic(topicId)) || (source && !SOURCES.has(source)) || (action && !ACTIONS.has(action)) || (sessionKey && !KEY.test(sessionKey))) {
+    if (!EVENT_TYPES.has(eventType) || (gameKey && !Object.hasOwn(GAME_NAMES, gameKey)) || (topicId && !getGameTopic(topicId)) || (source && !SOURCES.has(source)) || (action && !ACTIONS.has(action)) || (sessionKey && !KEY.test(sessionKey)) || (GUEST_EXIT_EVENTS.has(eventType) && (!gameKey || !sessionKey || !UUID.test(eventInstanceId)))) {
       return NextResponse.json({ error: "Invalid Free Games analytics event." }, { status: 400 });
     }
 
     let user;
     try { user = await getRequestUser(request); }
     catch { return NextResponse.json({ error: "Authentication could not be verified." }, { status: 401 }); }
+    if (user && GUEST_EXIT_EVENTS.has(eventType)) return NextResponse.json({ error: "Guest event requires a guest session." }, { status: 400 });
     const admin = getSupabaseAdmin();
     const [access, verification] = user?.id
       ? await Promise.all([
@@ -92,8 +100,8 @@ export async function POST(request: NextRequest) {
             : "free";
     const topic = getGameTopic(topicId);
     await observeAnalyticsSession({ sessionKey, anonymousId: user ? null : body.anonymousId, userId: user?.id, country: countryCode });
-    const dedupeKey = eventKey({ eventType, gameKey, topicId: topic?.id ?? "", source, action, sessionKey });
-    const { error } = await admin.from("free_game_events").insert({
+    const dedupeKey = eventKey({ eventType, gameKey, topicId: topic?.id ?? "", source, action, sessionKey, eventInstanceId });
+    const { data: inserted, error } = await admin.from("free_game_events").insert({
       event_type: eventType,
       user_id: user?.id ?? null,
       game_key: gameKey || null,
@@ -115,11 +123,21 @@ export async function POST(request: NextRequest) {
       landing_path: attributionText(attribution.landingPath),
       country_code: countryCode,
       device_type: deviceType,
-    });
+    }).select("id").maybeSingle();
     if (error?.code === "23505" && dedupeKey) return NextResponse.json({ ok: true, duplicate: true });
     if (error && /free_game_events|relation/i.test(error.message)) return NextResponse.json({ ok: true, skipped: true });
     if (error) throw error;
-    return NextResponse.json({ ok: true }, { status: 201 });
+    const response = NextResponse.json({ ok: true }, { status: 201 });
+    const anonymousId = validAnalyticsAnonymousId(body.anonymousId);
+    if (eventType === "guest_exit_signup_clicked" && inserted?.id && anonymousId) {
+      try {
+        await issueGuestExitReceipt({ response, clickEventId: inserted.id, gameKey, anonymousId, sessionKey });
+      } catch (receiptError) {
+        // The click remains a valid event; a missing receipt is unattributable.
+        console.error("Guest exit signup receipt failed:", receiptError);
+      }
+    }
+    return response;
   } catch (error) {
     console.error("Free Games analytics failed:", error);
     return NextResponse.json({ error: "Free Games analytics could not be recorded." }, { status: 500 });

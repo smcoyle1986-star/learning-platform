@@ -134,6 +134,7 @@ export default function SignupPage() {
   const turnstileWidgetId = useRef<string | null>(null);
   const [freeGamesSignupContext, setFreeGamesSignupContext] = useState<FreeGamesSignupContext | null>(null);
   const signupInteractionTracked = useRef(false);
+  const guestExitArrival = useRef<Promise<unknown> | null>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
@@ -182,7 +183,7 @@ export default function SignupPage() {
 
     const timeout = window.setTimeout(async () => {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("id")
         .eq("username", clean)
         .maybeSingle();
@@ -267,7 +268,13 @@ export default function SignupPage() {
   }, [turnstileSiteKey, turnstileState]);
 
   useEffect(() => {
-    setFreeGamesSignupContext(readFreeGamesSignupContext(new URLSearchParams(window.location.search)));
+    const params = new URLSearchParams(window.location.search);
+    setFreeGamesSignupContext(readFreeGamesSignupContext(params));
+    guestExitArrival.current = fetch("/api/analytics/guest-signup-arrival", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fromModal: params.get("from") === "guest-exit" && hasAnalyticsConsent() }),
+    }).catch(() => null);
   }, []);
 
   const applySuggestion = (value: string) => {
@@ -330,6 +337,7 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
+      await guestExitArrival.current;
       const requestedNext = safeNextPath(new URLSearchParams(window.location.search).get("next"));
       const welcomeDestination = requestedNext ?? "/flashcards?onboarding=1";
       const signupAttribution = readSignupAttribution();
@@ -355,6 +363,7 @@ export default function SignupPage() {
           legalAccepted,
           attribution: signupAttribution,
           freeGamesContext,
+          guestExitContext: new URLSearchParams(window.location.search).get("from") === "guest-exit" && hasAnalyticsConsent(),
           analyticsSessionKey: hasAnalyticsConsent() ? getAnalyticsSessionKey() : null,
           analyticsAnonymousId: hasAnalyticsConsent() ? getAnalyticsAnonymousId() : null,
           turnstileToken,

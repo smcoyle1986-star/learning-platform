@@ -18,7 +18,10 @@ export type FreeGameEventType =
   | "use_own_vocabulary_clicked"
   | "finish_action"
   | "signup_started"
-  | "signup_completed";
+  | "signup_completed"
+  | "guest_exit_signup_modal_viewed"
+  | "guest_exit_signup_clicked"
+  | "guest_exit_free_games_clicked";
 
 const SINGLETON_EVENTS = new Set<FreeGameEventType>([
   "hub_viewed",
@@ -37,6 +40,7 @@ const SESSION_DEDUPE_PREFIX = "classendo-free-game-event";
 
 type FreeGameEvent = {
   eventType: FreeGameEventType;
+  eventInstanceId?: string;
   gameKey?: string;
   topicId?: string;
   topicLabel?: string;
