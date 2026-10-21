@@ -255,7 +255,7 @@ export default function WhackAWordPage() {
         />
 
         {gameState === "playing" && settingsOpen && <div className="fixed right-4 top-[72px] z-[70]" aria-label="Game settings">
-          <GameSettingsDropdown className="w-[340px]">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[340px]">
           <div className="grid gap-4">
             <div className="grid gap-2 text-sm font-semibold text-slate-700">
               <span>Teams</span>

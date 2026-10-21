@@ -984,7 +984,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
         <AnimatePresence>
           {showSettings && !showNoCardsModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <GameSettingsModal className="max-w-3xl">
+              <GameSettingsModal onClose={() => setShowSettings(false)} className="max-w-3xl">
                 <h2 className="text-xl font-bold mb-3">Connect Four — Settings</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>

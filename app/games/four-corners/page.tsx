@@ -525,7 +525,7 @@ export default function FourCornersPage() {
       {/* Settings modal */}
       {settingsOpen && (
         <div className="fixed right-4 top-[72px] z-[70] w-[min(92vw,28rem)]">
-          <GameSettingsDropdown className="static w-full max-w-none">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="static w-full max-w-none">
             <h3 className="text-lg font-bold mb-2">Settings</h3>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">
               Adjust how often the bomb animation appears.

@@ -762,7 +762,7 @@ export default function CardRevealPage() {
 
       {settingsOpen && (
         <div className="fixed top-[84px] right-4 z-[70]">
-          <GameSettingsDropdown className="w-[340px]">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[340px]">
             <GameAudioSettings />
             <div className="mb-4">
               <div className="text-sm font-semibold mb-2">Difficulty</div>

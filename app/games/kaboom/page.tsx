@@ -878,7 +878,7 @@ export default function KaBoomPage() {
 
       {settingsOpen && (
         <div className="fixed top-[72px] right-4 z-[70]">
-          <GameSettingsDropdown className="w-[340px]">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[340px]">
             <GameAudioSettings />
             <div className="mb-4">
               <div className="mb-2 font-semibold">Teams</div>

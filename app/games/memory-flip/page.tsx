@@ -714,7 +714,7 @@ export default function MemoryFlipPage() {
         <AnimatePresence>
           {settingsOpen && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} style={{ position: "fixed", top: 76, right: 16, zIndex: 900 }}>
-              <GameSettingsDropdown className="w-[420px]">
+              <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[420px]">
                   <GameAudioSettings />
                   <div style={{ fontWeight: 700 }}>Game controls</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>

@@ -1134,7 +1134,7 @@ export default function YesOrNoPage() {
 
       {settingsOpen && (
         <div className="fixed top-[72px] right-4 z-[70]">
-          <GameSettingsDropdown className="w-[420px]">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[420px]">
             <GameAudioSettings />
             <div className="mb-5">
               <div className="mb-2 font-semibold">Game Modes</div>

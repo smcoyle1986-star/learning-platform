@@ -995,7 +995,7 @@ export default function ConquerPage() {
 
       {settingsOpen && (
         <div className="fixed right-4 top-[76px] z-[70]">
-          <GameSettingsDropdown className="w-[min(92vw,32rem)]">
+          <GameSettingsDropdown onClose={() => setSettingsOpen(false)} className="w-[min(92vw,32rem)]">
             <GameAudioSettings />
             <div className="space-y-4">
               <div>
@@ -1471,7 +1471,7 @@ export default function ConquerPage() {
       )}
 
       {rpsOpen && selectedIndex !== null && rpsTargetIndex !== null && rpsDefenderTeamId && (
-        <GameSettingsModal className="max-w-4xl">
+        <GameSettingsModal onClose={() => setRpsOpen(false)} className="max-w-4xl">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-4xl font-black tracking-tight text-red-600 animate-pulse">ATTACK!</h2>
