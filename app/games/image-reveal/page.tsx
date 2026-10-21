@@ -720,6 +720,7 @@ export default function CardRevealPage() {
           onExit={() => {
             void leaveGame("/games");
           }}
+          onGuestExit={(destination) => { void leaveGame(destination); }}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           trackGameKey="image-reveal"
@@ -750,6 +751,7 @@ export default function CardRevealPage() {
         onExit={() => {
           void leaveGame("/games");
         }}
+        onGuestExit={(destination) => { void leaveGame(destination); }}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         settingsOpen={settingsOpen}

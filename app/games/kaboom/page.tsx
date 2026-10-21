@@ -13,6 +13,7 @@ import GameAudioSettings from "@/components/games/GameAudioSettings";
 import { gameAudio } from "@/lib/games/audio/game-audio";
 import { GameWinnerModal } from "@/components/games/GameWinnerModal";
 import { trackGameStart } from "@/lib/games/track-game-start";
+import { ResponsiveStorageImage } from "@/components/images/ResponsiveStorageImage";
 
 type GameCard = {
   id: string;
@@ -166,7 +167,7 @@ export default function KaBoomPage() {
               word: String(c.word ?? c.text ?? ""),
               image: resolveLessonImageUrl(typeof c.image === "string" ? c.image
                 : typeof c.image_id === "string" ? c.image_id
-                  : typeof c.img === "string" ? c.img : null, 1024),
+                  : typeof c.img === "string" ? c.img : null),
             }))
           : [];
         setGameTray(shuffleArray(normalized));
@@ -636,7 +637,7 @@ export default function KaBoomPage() {
             word: String(c.word ?? c.text ?? ""),
             image: resolveLessonImageUrl(typeof c.image === "string" ? c.image
               : typeof c.image_id === "string" ? c.image_id
-                : typeof c.img === "string" ? c.img : null, 1024),
+              : typeof c.img === "string" ? c.img : null),
           }))
         : [];
       const shuffled = shuffleArray(normalized);
@@ -821,12 +822,21 @@ export default function KaBoomPage() {
     };
   });
 
+  const leaveKaboomGame = (destination: "/signup" | "/signup?from=guest-exit" | "/games") => {
+    try {
+      const toWrite = gameTrayRef.current;
+      if (Array.isArray(toWrite) && toWrite.length > 0) writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
+    } catch {}
+    router.push(destination);
+  };
+
   if (noTray) {
     return (
       <div className={`min-h-screen ${isFullscreen ? "bg-[hsl(140,40%,95%)] text-black" : "bg-[var(--color-bg-main)] text-[var(--color-text-main)]"}`} ref={containerRef}>
         <GameHeader
           title="KaBoom!"
-        onExit={() => router.push("/games")}
+        onExit={() => leaveKaboomGame("/games")}
+        onGuestExit={leaveKaboomGame}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         trackGameKey="kaboom"
@@ -858,15 +868,8 @@ export default function KaBoomPage() {
     >
       <GameHeader
         title="KaBoom!"
-        onExit={() => {
-          try {
-            const toWrite = gameTrayRef.current;
-            if (Array.isArray(toWrite) && toWrite.length > 0) {
-              writeGameTrayRaw(JSON.stringify(toWrite), flow?.topic?.id);
-            }
-          } catch {}
-          router.push("/games");
-        }}
+        onExit={() => leaveKaboomGame("/games")}
+        onGuestExit={leaveKaboomGame}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
         trackGameKey="kaboom"
@@ -1248,14 +1251,16 @@ export default function KaBoomPage() {
 
       {/* Modal */}
       {modalOpen && (modalImage || modalText) && (
-        <div className="game-question-modal fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+        <div className="game-question-modal fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-3 sm:p-4" style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }}>
           <div className="game-question-modal__panel flex h-[min(90dvh,44rem)] max-h-[calc(100dvh-1.5rem)] w-[min(92vw,64rem)] min-h-0 flex-col items-center gap-4 overflow-hidden rounded-[2rem] bg-white px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:gap-6 sm:px-8 sm:py-7">
             <div className="game-question-modal__content flex w-full min-h-0 flex-1 flex-col items-center justify-center gap-4 overflow-y-auto pb-1 sm:gap-6">
               {modalImage && (
-                <img
+                <ResponsiveStorageImage
                   src={modalImage}
                   alt={modalText ?? ""}
                   className="game-question-modal__image h-auto w-auto max-h-[min(56dvh,28rem)] max-w-full object-contain rounded-2xl"
+                  sizes="(max-width: 768px) 92vw, 64rem"
+                  widths={[480]}
                 />
               )}
               {modalText && (
