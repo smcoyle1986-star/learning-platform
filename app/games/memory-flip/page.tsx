@@ -979,16 +979,16 @@ export default function MemoryFlipPage() {
           {/* Matched pair modal */}
           <AnimatePresence>
             {matchedPair && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 150 }}>
-                <div style={{ width: "88%", maxWidth: 1180, background: "white", padding: 24, borderRadius: 12, boxShadow: "0 30px 80px rgba(2,6,23,0.2)" }}>
-                  <div style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center" }}>
-                    <motion.div layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+              <motion.div className="memory-flip-match-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 150 }}>
+                <div className="memory-flip-match-panel" style={{ width: "88%", maxWidth: 1180, background: "white", padding: 24, borderRadius: 12, boxShadow: "0 30px 80px rgba(2,6,23,0.2)" }}>
+                  <div className="memory-flip-match-content" style={{ display: "flex", gap: 20, alignItems: "center", justifyContent: "center" }}>
+                    <motion.div className="memory-flip-match-card" layoutId={`card-${cards[matchedPair.a].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.a])}
                     </motion.div>
-                    <motion.div layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                    <motion.div className="memory-flip-match-card" layoutId={`card-${cards[matchedPair.b].id}`} style={{ width: 340, height: 240, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
                       {renderFace(cards[matchedPair.b])}
                     </motion.div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div className="memory-flip-match-actions" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       <button onClick={onGreenO} style={{ padding: "14px 18px", borderRadius: 10, background: "#10b981", color: "white", fontWeight: 800 }}>
                         ✔ Get Points!
                       </button>

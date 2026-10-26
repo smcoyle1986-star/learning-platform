@@ -112,11 +112,167 @@ body.classendo-game-page [data-game-settings-modal] > div {
 }
 
 body.classendo-game-page .game-question-modal__text {
-  max-width: 94%;
+  max-width: min(94%, 56rem);
   overflow-wrap: anywhere;
   text-wrap: balance;
-  font-size: clamp(3.5rem, min(18vw, 30dvh), 14rem);
+  font-size: clamp(1.15rem, min(7.2vw, 9dvh), 5.5rem);
+  line-height: 1.05;
+}
+
+body.classendo-game-page .game-question-modal[data-display-mode="text"] .game-question-modal__text {
+  max-width: 96%;
+  font-size: clamp(3.5rem, min(16vw, 24dvh), 12rem);
   line-height: 0.95;
+}
+
+body.classendo-game-page .game-question-modal[data-display-mode="image"] .game-question-modal__image {
+  max-height: min(68dvh, 44rem);
+}
+
+body.classendo-game-page .game-question-modal__content {
+  overflow: hidden;
+}
+
+body.classendo-game-page .game-question-modal__image {
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(42dvh, 28rem);
+  object-fit: contain;
+}
+
+body.classendo-game-page .memory-flip-match-overlay {
+  box-sizing: border-box;
+  padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+}
+
+body.classendo-game-page .memory-flip-match-panel {
+  box-sizing: border-box;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+body.classendo-game-page .memory-flip-match-content {
+  flex-wrap: wrap;
+  max-height: 100%;
+}
+
+body.classendo-game-page .memory-flip-match-card {
+  box-sizing: border-box;
+  flex: 0 1 min(40vw, 21.25rem);
+  width: min(40vw, 21.25rem) !important;
+  height: min(28dvh, 15rem) !important;
+  min-width: 0;
+  overflow: hidden;
+}
+
+body.classendo-game-page .memory-flip-match-card img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+body.classendo-game-page .memory-flip-match-actions {
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+body.classendo-game-page .memory-flip-match-actions button {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem !important;
+  font-size: clamp(0.8rem, 2.2vw, 1rem);
+}
+
+body.classendo-game-page .four-corners-reveal {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  gap: clamp(0.35rem, 1.5dvh, 1rem);
+  padding-block: 0.35rem;
+}
+
+body.classendo-game-page .four-corners-reveal-card {
+  flex: 0 1 auto;
+  max-width: 100%;
+  max-height: min(42dvh, 20rem);
+}
+
+body.classendo-game-page .four-corners-reveal-word {
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: clamp(0.45rem, 1.5dvh, 0.75rem) clamp(0.6rem, 2vw, 1.5rem);
+}
+
+body.classendo-game-page .four-corners-reveal-word > div {
+  font-size: clamp(1rem, min(5.2vw, 5dvh), 2.25rem);
+  overflow-wrap: anywhere;
+}
+
+body.classendo-game-page .four-corners-reveal-next {
+  flex: 0 1 auto;
+  width: clamp(4.75rem, 18dvh, 11rem);
+  height: clamp(4.75rem, 18dvh, 11rem);
+  border-width: clamp(0.25rem, 1.1dvh, 0.65rem);
+  padding: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+body.classendo-game-page .four-corners-reveal-next > span {
+  font-size: clamp(0.9rem, 4dvh, 1.875rem);
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  body.classendo-game-page .four-corners-reveal {
+    gap: 0.25rem;
+    padding-block: 0.15rem;
+  }
+
+  body.classendo-game-page .four-corners-reveal-card {
+    flex: 0 1 auto;
+    height: min(30dvh, 12rem) !important;
+    max-height: min(30dvh, 12rem) !important;
+    border-radius: 1.25rem;
+  }
+
+  body.classendo-game-page .four-corners-reveal-word {
+    padding: 0.3rem 0.6rem;
+  }
+
+  body.classendo-game-page .four-corners-reveal-word > div {
+    font-size: clamp(0.9rem, 4.2dvh, 1.5rem);
+    line-height: 1.05;
+  }
+
+  body.classendo-game-page .four-corners-reveal-next,
+  body.classendo-game-page .four-corners-bomb-next {
+    width: clamp(3rem, 14dvh, 7rem);
+    height: clamp(3rem, 14dvh, 7rem);
+    border-width: 0.25rem;
+    padding: 0.35rem;
+  }
+
+  body.classendo-game-page .four-corners-reveal-next > span,
+  body.classendo-game-page .four-corners-bomb-next > span {
+    font-size: clamp(0.75rem, 3.5dvh, 1.25rem);
+  }
+
+  body.classendo-game-page .four-corners-bomb-reveal {
+    gap: 0.35rem;
+  }
+
+  body.classendo-game-page .four-corners-bomb-icon {
+    width: min(26dvh, 9rem);
+    height: min(26dvh, 9rem);
+    border-width: 0.3rem;
+    font-size: clamp(1.5rem, 9dvh, 3rem);
+  }
+
+  body.classendo-game-page .four-corners-bomb-caption {
+    margin-top: 0;
+    font-size: clamp(0.85rem, 4dvh, 1.25rem);
+  }
 }
 
 /* Fullscreen play should contain only the game and its own controls. The
@@ -667,6 +823,7 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
 
   body.classendo-game-page .game-question-modal__content {
     gap: 0.45rem;
+    overflow: hidden;
   }
 
   body.classendo-game-page .game-question-modal__heading {
@@ -691,11 +848,26 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
   body.classendo-game-page .game-question-modal__body img {
     max-height: min(38dvh, 14rem) !important;
     max-width: min(72vw, 32rem) !important;
+    width: auto;
+    height: auto;
     object-fit: contain;
   }
 
   body.classendo-game-page .game-question-modal__text {
-    font-size: clamp(3.5rem, min(18vw, 30dvh), 14rem);
+    max-width: 94%;
+    font-size: clamp(1.15rem, min(7.2vw, 9dvh), 5.5rem);
+    line-height: 1.05;
+  }
+
+  body.classendo-game-page .game-question-modal[data-display-mode="text"] .game-question-modal__text {
+    max-width: 96%;
+    font-size: clamp(3.5rem, min(16vw, 24dvh), 12rem);
+    line-height: 0.95;
+  }
+
+  body.classendo-game-page .game-question-modal[data-display-mode="image"] .game-question-modal__image {
+    max-height: min(54dvh, 28rem) !important;
+    max-width: 88vw !important;
   }
 
   body.classendo-game-page .game-question-modal__actions {
@@ -711,6 +883,15 @@ body.classendo-demo-immersive [aria-controls="site-information-drawer"] {
 }
 
 @media (max-width: 900px) {
+  body.classendo-game-page .memory-flip-match-content {
+    flex-direction: column;
+  }
+
+  body.classendo-game-page .memory-flip-match-card {
+    flex: 0 1 min(28dvh, 15rem);
+    width: min(72vw, 21.25rem) !important;
+  }
+
   body.classendo-game-page [data-game-settings-surface] {
     box-sizing: border-box;
     max-height: calc(100dvh - 6rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));

@@ -893,6 +893,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
           {selectedColForModal !== null && learningCard && (
             <KaboomStyleDecisionModal
               open
+              displayMode={modalDisplayMode}
               title="Identify the image"
               description="Click the image to reveal the word. ✅ lets you drop; ❌ misses your turn. Timer continues while modal is open."
               onCorrect={confirmLearningAndDrop}
@@ -918,7 +919,7 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
                         <img
                           src={learningCard.image}
                           alt={learningCard.word}
-                          className={`h-auto w-auto max-h-full max-w-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
+                          className={`game-question-modal__image h-auto w-auto max-h-full max-w-full object-contain ${modalDisplayMode === "image" ? "scale-100" : ""}`}
                         />
                       </div>
                     ) : modalDisplayMode !== "text" ? (
@@ -936,10 +937,10 @@ export default function ConnectFourPage({ demo = false }: { demo?: boolean }) {
 
                 <div className="min-h-[2rem]">
                   {modalDisplayMode === "image+text" && showLearningLabel && (
-                    <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                    <div className="game-question-modal__text text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
                   )}
                   {modalDisplayMode === "image" && showLearningLabel && (
-                    <div className="text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
+                    <div className="game-question-modal__text text-2xl md:text-3xl font-semibold text-center">{learningCard.word}</div>
                   )}
                 </div>
 

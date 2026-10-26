@@ -463,14 +463,14 @@ export default function FourCornersPage() {
                     )}
 
                     {phase === "bomb" && (
-                      <div className="pointer-events-auto flex flex-col items-center justify-center gap-6">
-                        <div className="w-56 h-56 md:w-64 md:h-64 rounded-full bg-[linear-gradient(180deg,#fb923c,#ef4444)] border-[10px] border-white shadow-2xl flex items-center justify-center text-white text-5xl md:text-6xl font-extrabold">
+                      <div className="four-corners-bomb-reveal pointer-events-auto flex flex-col items-center justify-center gap-6">
+                        <div className="four-corners-bomb-icon w-56 h-56 md:w-64 md:h-64 rounded-full bg-[linear-gradient(180deg,#fb923c,#ef4444)] border-[10px] border-white shadow-2xl flex items-center justify-center text-white text-5xl md:text-6xl font-extrabold">
                           BOOM!
                         </div>
-                        <div className="-mt-2 text-center text-xl font-extrabold text-red-600 md:text-2xl">Lose a life or sit down</div>
+                        <div className="four-corners-bomb-caption -mt-2 text-center text-xl font-extrabold text-red-600 md:text-2xl">Lose a life or sit down</div>
                         <button
                           onClick={handleNextClick}
-                          className="w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
+                          className="four-corners-bomb-next w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
                         >
                           <span className="text-3xl font-extrabold leading-tight">Next</span>
                         </button>
@@ -478,8 +478,8 @@ export default function FourCornersPage() {
                     )}
 
                     {phase === "showcard" && (
-                      <div className="pointer-events-auto flex flex-col items-center justify-center gap-4">
-                        <div className="w-[min(76vw,720px)] h-[min(42vh,330px)] rounded-[32px] border-2 border-slate-200 bg-white shadow-2xl flex items-center justify-center overflow-hidden">
+                      <div className="four-corners-reveal pointer-events-auto flex flex-col items-center justify-center gap-4">
+                        <div className="four-corners-reveal-card w-[min(76vw,720px)] h-[min(42dvh,330px)] rounded-[32px] border-2 border-slate-200 bg-white shadow-2xl flex items-center justify-center overflow-hidden">
                           {currentCard?.image ? (
                             <img
                               src={currentCard.image}
@@ -494,7 +494,7 @@ export default function FourCornersPage() {
                           )}
                         </div>
                         {currentCard?.word && (
-                          <div className="max-w-[min(90vw,760px)] rounded-[24px] border-2 border-slate-200 bg-white/96 px-6 py-3 shadow-xl">
+                          <div className="four-corners-reveal-word max-w-[min(90vw,760px)] rounded-[24px] border-2 border-slate-200 bg-white/96 px-6 py-3 shadow-xl">
                             <div style={{ fontFamily: "var(--font-comic-neue), 'Comic Sans MS', 'Comic Sans', cursive" }} className="text-2xl md:text-4xl font-bold text-slate-800 text-center leading-tight">
                               {currentCard.word}
                             </div>
@@ -502,7 +502,7 @@ export default function FourCornersPage() {
                         )}
                         <button
                           onClick={handleNextClick}
-                          className="w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
+                          className="four-corners-reveal-next w-44 h-44 rounded-full bg-[linear-gradient(180deg,#60a5fa,#2563eb)] text-white shadow-2xl border-[10px] border-white/85 flex items-center justify-center text-center px-6 hover:scale-105 transition-transform"
                         >
                           <span className="text-3xl font-extrabold leading-tight">Next</span>
                         </button>
