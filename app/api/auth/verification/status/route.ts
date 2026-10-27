@@ -7,6 +7,6 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user?.id) return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
-  const verification = await getClassendoVerification(user.id);
+  const verification = await getClassendoVerification(user.id, user);
   return NextResponse.json(verification);
 }

@@ -66,7 +66,7 @@ export async function sendClassendoVerificationEmail(input: {
       from,
       to: [email],
       subject: "Verify your Classendo email",
-      html: `<p>Welcome to Classendo.</p><p>Verify your email within 21 days to keep using your Classendo account. Your 14-day Premium trial begins only after verification.</p><p><a href="${verifyUrl}">Verify my email</a></p><p>This link expires in 24 hours. If you did not create a Classendo account, you can ignore this email.</p>`,
+      html: `<p>Welcome to Classendo.</p><p>Verify your email to help secure your account and support password recovery. Eligible 14-day Premium trials begin only after verification.</p><p><a href="${verifyUrl}">Verify my email</a></p><p>This link expires in 24 hours. If you did not create a Classendo account, you can ignore this email.</p>`,
     }),
   });
   if (!response.ok) throw new Error("We could not send the verification email. Please try again shortly.");

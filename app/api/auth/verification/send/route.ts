@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getRequestUser(request);
     if (!user?.id || !user.email) return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
-    if ((await getClassendoVerification(user.id)).verified) return NextResponse.json({ verified: true });
+    if ((await getClassendoVerification(user.id, user)).verified) return NextResponse.json({ verified: true });
     const body = await request.json().catch(() => null);
     await sendClassendoVerificationEmail({ userId: user.id, email: user.email, request, action: "resend", nextPath: typeof body?.nextPath === "string" ? body.nextPath : undefined });
     const impressionId = body?.analyticsImpressionId;

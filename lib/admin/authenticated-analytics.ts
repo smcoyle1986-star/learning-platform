@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
-import { resolveVerificationGrace, verificationDeadline } from "@/lib/auth/verification-grace";
+import { resolveVerificationGrace } from "@/lib/auth/verification-grace";
 import { getAdminUserDetail, getAdminUsers } from "@/lib/admin/users";
 import { readAdminAnalyticsRows } from "@/lib/admin/analytics-rows";
 
@@ -140,8 +140,7 @@ export async function getAuthenticatedAnalyticsUsers(params: { page?: number; qu
       const subscription = subscriptions.find((item) => item.user_id === user.id);
       const verification = verificationRows.find((item) => item.user_id === user.id);
       const verifiedAt = user.email && text(verification?.normalized_email) === user.email.trim().toLowerCase() ? text(verification?.verified_at) : null;
-      const deadline = verifiedAt ? null : verificationDeadline(user.createdAt, activatedAt);
-      const grace = resolveVerificationGrace({ verified: Boolean(verifiedAt), verifiedAt, deadline, serverNow, activatedAt });
+      const grace = resolveVerificationGrace({ verified: Boolean(verifiedAt), verifiedAt, deadline: null, serverNow, activatedAt });
       const attribution = attributionRows.find((item) => item.user_id === user.id);
       const usage = activity.find((item) => item.user_id === user.id);
       const trialStartedAt = text(subscription?.premium_trial_started_at);

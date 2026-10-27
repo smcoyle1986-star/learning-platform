@@ -254,12 +254,6 @@ export async function POST(request: NextRequest) {
         console.error("Free Games signup analytics failed:", analyticsError);
       }
     }
-    if (!data.session) {
-      const response = NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId }, { status: 202 });
-      if (guestExitAttributed) clearGuestExitReceipt(response);
-      return response;
-    }
-
     let verificationEmailSent = true;
     try {
       await sendClassendoVerificationEmail({ userId: data.user.id, email, request, action: "signup", nextPath: body.nextPath });
@@ -267,6 +261,13 @@ export async function POST(request: NextRequest) {
       console.error("Verification email could not be sent after signup:", mailError);
       verificationEmailSent = false;
     }
+
+    if (!data.session) {
+      const fallbackResponse = NextResponse.json({ requiresLegacyConfirmation: true, signupConversionId, verificationEmailSent }, { status: 202 });
+      if (guestExitAttributed) clearGuestExitReceipt(fallbackResponse);
+      return fallbackResponse;
+    }
+
     const response = NextResponse.json({
       signupConversionId,
       session: {

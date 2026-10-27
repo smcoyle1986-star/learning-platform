@@ -9,16 +9,6 @@ export type VerificationGrace = {
   daysRemaining: number | null;
 };
 
-const DAY = 86_400_000;
-
-export function verificationDeadline(createdAt: string, activatedAt: string | null): string | null {
-  if (!activatedAt) return null;
-  const start = Math.max(Date.parse(createdAt), Date.parse(activatedAt));
-  if (!Number.isFinite(start)) throw new Error("Invalid verification policy timestamp.");
-  return new Date(start + 21 * DAY).toISOString();
-}
-
-
 export function resolveVerificationGrace(raw: {
   verified: boolean;
   email?: string | null;
@@ -27,15 +17,11 @@ export function resolveVerificationGrace(raw: {
   serverNow: string;
   activatedAt?: string | null;
 }): VerificationGrace {
-  const deadline = raw.deadline ?? null;
-  const remaining = deadline ? Date.parse(deadline) - Date.parse(raw.serverNow) : null;
-  if (deadline && (remaining === null || !Number.isFinite(remaining))) throw new Error("Invalid verification deadline.");
-  const daysRemaining = remaining === null ? null : Math.max(0, Math.ceil(remaining / DAY));
-  const phase = raw.verified ? "verified"
-    : remaining === null ? "pending"
-    : remaining <= 0 ? "expired"
-    : remaining <= 7 * DAY ? "urgent"
-    : "reminder";
+  // Keep accepting the legacy RPC shape during rollout, but deadline data no
+  // longer restricts Free account access or drives countdown messaging.
+  const deadline = null;
+  const daysRemaining = null;
+  const phase = raw.verified ? "verified" : "pending";
   return { verified: raw.verified, email: raw.email ?? null, verifiedAt: raw.verifiedAt ?? null,
     deadline, serverNow: raw.serverNow, activatedAt: raw.activatedAt ?? null, phase, daysRemaining };
 }

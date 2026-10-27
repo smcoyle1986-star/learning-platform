@@ -4,7 +4,6 @@ import { canUsePrintableOptions, getBillingAccessForUser } from "@/lib/billing/a
 import { createPrintablePdfBuffer } from "@/lib/printables/pdf";
 import { PrintableBuildOptions } from "@/lib/printables/types";
 import { getRequestUser } from "@/lib/server/request-auth";
-import { getClassendoVerification } from "@/lib/auth/server-verification";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
@@ -35,9 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await getRequestUser(request);
-    // Expired accounts may still use the public guest printable format.
-    const accountAllowed = user?.id && (await getClassendoVerification(user.id)).phase !== "expired";
-    const access = accountAllowed
+    const access = user?.id
       ? await getBillingAccessForUser(getSupabaseAdmin(), user.id)
       : null;
     if (!access || !canUsePrintableOptions(access)) {

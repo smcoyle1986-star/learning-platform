@@ -78,7 +78,7 @@ export function useCommunityWorksheets(active: boolean) {
       const userIds = [...new Set(fetched.map((worksheet) => worksheet.userId).filter(Boolean))];
       if (userIds.length) {
         const { data: profiles, error: profileError } = await supabase
-          .from("profiles")
+          .from("public_profiles")
           .select("id,display_name,username")
           .in("id", userIds);
         if (!profileError && profiles) {

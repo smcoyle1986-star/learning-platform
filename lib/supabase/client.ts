@@ -65,6 +65,15 @@ function migrateLegacySessionToCookies() {
 
 const legacyStorageKey = migrateLegacySessionToCookies();
 
+// Capture the implicit-flow link before Supabase initializes and consumes its
+// fragment. Recovery pages use this to distinguish a recovery session from an
+// unrelated existing sign-in session.
+export const initialAuthLinkType =
+  typeof window === "undefined"
+    ? null
+    : new URLSearchParams(window.location.hash.slice(1)).get("type")
+      ?? new URLSearchParams(window.location.search).get("type");
+
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
   cookieOptions: {
     path: "/",

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const impressionId = body?.impressionId;
   const eventId = body?.eventId;
   if (!TYPES.has(eventType) || !UUID.test(impressionId) || !UUID.test(eventId)) return NextResponse.json({ error: "Invalid event." }, { status: 400 });
-  const status = await getClassendoVerification(user.id);
+  const status = await getClassendoVerification(user.id, user);
   if (status.verified || status.phase !== "urgent") return NextResponse.json({ error: "Reminder unavailable." }, { status: 400 });
   const admin = getSupabaseAdmin();
   if (eventType === "modal_viewed") {

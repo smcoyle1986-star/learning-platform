@@ -1,8 +1,10 @@
 import { createHmac, createHash, randomBytes } from "node:crypto";
 
 import { resolveVerificationGrace } from "@/lib/auth/verification-grace";
+import { isVerifiedGoogleAuthUser } from "@/lib/auth/google-auth-state";
 import { getOptionalEnv } from "@/lib/server/env";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import type { User } from "@supabase/supabase-js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,14 +49,31 @@ export async function claimAuthRateLimit(input: {
   return data === true;
 }
 
-export async function getClassendoVerification(userId: string) {
-  const { data, error } = await getSupabaseAdmin().rpc("get_classendo_verification_grace", { p_user_id: userId });
+export async function getClassendoVerification(userId: string, authenticatedUser?: User) {
+  const admin = getSupabaseAdmin();
+  const [{ data, error }, authResult] = await Promise.all([
+    admin.rpc("get_classendo_verification_grace", { p_user_id: userId }),
+    authenticatedUser
+      ? Promise.resolve({ data: { user: authenticatedUser }, error: null })
+      : admin.auth.admin.getUserById(userId),
+  ]);
   if (error || !data) throw error ?? new Error("Verification status is unavailable.");
-  return resolveVerificationGrace(data);
+  if (authResult.error) throw authResult.error;
+  const verification = resolveVerificationGrace(data);
+  if (!isVerifiedGoogleAuthUser(authResult.data.user)) return verification;
+
+  // Supabase's server-validated auth user is the source of provider trust. A
+  // Google-confirmed address must not be demoted by a missing Classendo row.
+  return resolveVerificationGrace({
+    ...data,
+    verified: true,
+    verifiedAt: verification.verifiedAt ?? authResult.data.user.email_confirmed_at,
+    deadline: null,
+  });
 }
 
-export async function requireVerifiedClassendoEmail(userId: string) {
-  const verification = await getClassendoVerification(userId);
+export async function requireVerifiedClassendoEmail(userId: string, authenticatedUser?: User) {
+  const verification = await getClassendoVerification(userId, authenticatedUser);
   if (!verification.verified) {
     throw new Error("Verify your email before using this feature.");
   }

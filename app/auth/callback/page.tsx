@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { supabase, supabaseReady } from "@/lib/supabase/client";
 import { trackConversion } from "@/lib/analytics/vercel";
+import { trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
@@ -33,6 +34,26 @@ export default function AuthCallbackPage() {
       }
 
       const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+      const isGoogle = data.session.user.app_metadata?.provider === "google"
+        || data.session.user.identities?.some((identity) => identity.provider === "google");
+      if (isGoogle) {
+        const response = await fetch("/api/auth/google/status", {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+          cache: "no-store",
+        });
+        const statusPayload = await response.json().catch(() => null) as { onboardingRequired?: boolean } | null;
+        if (!active) return;
+        if (!response.ok) { setStatus("failed"); return; }
+        if (statusPayload?.onboardingRequired) {
+          const onboarding = new URLSearchParams({ next });
+          if (new URLSearchParams(window.location.search).get("guest_exit") === "1") onboarding.set("from", "guest-exit");
+          router.replace(`/signup/complete-google?${onboarding}`);
+          return;
+        }
+        await trackAuthenticatedAnalyticsSession("sign_in");
+        router.replace(next);
+        return;
+      }
       trackConversion("welcome_trial_started", {
         destination: next === "/upgrade" ? "upgrade" : "flashcards",
       });

@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const [access, verification] = user?.id
       ? await Promise.all([
           getBillingAccessForUser(admin, user.id),
-          getClassendoVerification(user.id),
+          getClassendoVerification(user.id, user),
         ])
       : [null, null];
     const accountTier = !user

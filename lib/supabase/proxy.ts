@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getClassendoVerification } from "@/lib/auth/server-verification";
+import { hasCompletedGoogleOnboarding, isVerifiedGoogleAuthUser } from "@/lib/auth/google-auth-state";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 const secureCookies = process.env.NODE_ENV === "production";
@@ -27,19 +27,6 @@ function redirectWithCookies(response: NextResponse, location: URL) {
 
   redirect.headers.set("Cache-Control", "private, no-store");
   return redirect;
-}
-
-const PUBLIC_PAGES = ["/", "/login", "/signup", "/verify-email", "/verification-required", "/check-email", "/auth", "/landing", "/faq", "/games", "/flashcards", "/printables", "/legal", "/privacy", "/terms"];
-const PUBLIC_APIS = ["/api/auth/", "/api/analytics/", "/api/games/popularity", "/api/games/free-analytics", "/api/stripe/pricing", "/api/stripe/webhook", "/api/landing-image", "/api/landing-images", "/api/ping", "/api/printables/export-pdf", "/api/cron/", "/api/internal/"];
-
-function matchesPath(path: string, prefix: string) {
-  return path === prefix || path.startsWith(`${prefix}/`);
-}
-
-function isPublicPath(path: string) {
-  return path.startsWith("/api/")
-    ? PUBLIC_APIS.some((prefix) => prefix.endsWith("/") ? path.startsWith(prefix) : matchesPath(path, prefix))
-    : PUBLIC_PAGES.some((prefix) => matchesPath(path, prefix));
 }
 
 export async function refreshSupabaseSession(request: NextRequest) {
@@ -81,23 +68,28 @@ export async function refreshSupabaseSession(request: NextRequest) {
     ? await getSupabaseAdmin().auth.getUser(token)
     : await supabase.auth.getUser();
 
-  if (user && !isPublicPath(request.nextUrl.pathname)) {
-    try {
-      const verification = await getClassendoVerification(user.id);
-      if (verification.phase === "expired") {
-        if (request.nextUrl.pathname.startsWith("/api/")) {
-          const denied = NextResponse.json({ error: "Verify your email to continue.", verificationRequired: true }, { status: 403 });
-          denied.headers.set("Cache-Control", "private, no-store");
-          return denied;
-        }
-        const requiredUrl = request.nextUrl.clone();
-        requiredUrl.pathname = "/verification-required";
-        requiredUrl.search = "";
-        return redirectWithCookies(response, requiredUrl);
+  const googleSetupPath = request.nextUrl.pathname === "/signup/complete-google"
+    || request.nextUrl.pathname === "/auth/callback"
+    || request.nextUrl.pathname.startsWith("/api/auth/google/")
+    || request.nextUrl.pathname === "/api/auth/signout";
+  if (isVerifiedGoogleAuthUser(user) && !googleSetupPath) {
+    const { data: profile, error: profileError } = await getSupabaseAdmin()
+      .from("profiles")
+      .select("username,country_region,user_type")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) {
+      console.error("Could not check Google signup completion:", profileError);
+      return NextResponse.json({ error: "Account setup is temporarily unavailable." }, { status: 503 });
+    }
+    if (!hasCompletedGoogleOnboarding(profile, user.user_metadata)) {
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Complete your account setup to continue.", onboardingRequired: true }, { status: 403 });
       }
-    } catch (error) {
-      console.error("Could not check email verification access:", error);
-      return NextResponse.json({ error: "Verification access is temporarily unavailable." }, { status: 503 });
+      const onboardingUrl = request.nextUrl.clone();
+      onboardingUrl.pathname = "/signup/complete-google";
+      onboardingUrl.search = "";
+      return redirectWithCookies(response, onboardingUrl);
     }
   }
 

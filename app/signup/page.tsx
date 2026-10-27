@@ -19,6 +19,8 @@ import { GAME_NAMES, getGameTopic, type GameTopic } from "@/lib/games/topics";
 import { getAnalyticsAnonymousId, getAnalyticsSessionKey, trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
 import { trackFreeGameEvent } from "@/lib/games/free-analytics";
 import { hasAnalyticsConsent } from "@/lib/privacy/consent";
+import GoogleOAuthButton from "@/components/auth/GoogleOAuthButton";
+import { getCountryRegionOptions } from "@/lib/auth/countries";
 
 type UsernameState = "idle" | "checking" | "available" | "taken" | "invalid" | "error";
 type TurnstileState = "loading" | "ready" | "verified" | "expired" | "error";
@@ -50,69 +52,6 @@ function readFreeGamesSignupContext(params: URLSearchParams): FreeGamesSignupCon
   return { gameKey, topic: getGameTopic(params.get("topic")) ?? null };
 }
 
-const FALLBACK_COUNTRIES = [
-  "United States",
-  "United Kingdom",
-  "Canada",
-  "Australia",
-  "New Zealand",
-  "Ireland",
-  "Singapore",
-  "South Korea",
-  "Japan",
-  "China",
-  "Taiwan",
-  "Hong Kong",
-  "Thailand",
-  "Vietnam",
-  "Malaysia",
-  "Philippines",
-  "Indonesia",
-  "India",
-  "Pakistan",
-  "Bangladesh",
-  "Nepal",
-  "Sri Lanka",
-  "United Arab Emirates",
-  "Saudi Arabia",
-  "Qatar",
-  "Kuwait",
-  "Bahrain",
-  "Oman",
-  "Turkey",
-  "France",
-  "Germany",
-  "Spain",
-  "Italy",
-  "Portugal",
-  "Netherlands",
-  "Belgium",
-  "Sweden",
-  "Norway",
-  "Denmark",
-  "Finland",
-  "Poland",
-  "Czechia",
-  "Austria",
-  "Switzerland",
-  "Greece",
-  "Hungary",
-  "Romania",
-  "Bulgaria",
-  "Ukraine",
-  "Mexico",
-  "Brazil",
-  "Argentina",
-  "Chile",
-  "Colombia",
-  "Peru",
-  "South Africa",
-  "Egypt",
-  "Morocco",
-  "Nigeria",
-  "Kenya",
-];
-
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -138,23 +77,7 @@ export default function SignupPage() {
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const emailSuggestion = useMemo(() => suggestUsernameFromEmail(email), [email]);
-  const countryOptions = useMemo(() => {
-    const displayNames = typeof Intl.DisplayNames === "function"
-      ? new Intl.DisplayNames(["en"], { type: "region" })
-      : null;
-
-    const names = FALLBACK_COUNTRIES
-      .map((value: string) => {
-        if (displayNames && value.length === 2 && /^[A-Z]{2}$/.test(value)) {
-          return displayNames.of(value) || value;
-        }
-        return value;
-      })
-      .filter(Boolean)
-      .sort((a: string, b: string) => a.localeCompare(b));
-
-    return Array.from(new Set(names));
-  }, []);
+  const countryOptions = useMemo(() => getCountryRegionOptions(), []);
 
   useEffect(() => {
     if (usernameTouched) return;
@@ -280,6 +203,27 @@ export default function SignupPage() {
   const applySuggestion = (value: string) => {
     setUsernameTouched(true);
     setUsername(value);
+  };
+
+  const beginGoogleSignup = async () => {
+    setMessage("");
+    if (new URLSearchParams(window.location.search).get("from") === "guest-exit" && !guestExitArrival.current) {
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+    }
+    await guestExitArrival.current;
+    try {
+      try {
+        sessionStorage.setItem("classendo-google-onboarding-draft", JSON.stringify({
+          attribution: readSignupAttribution(),
+          freeGamesContext: freeGamesSignupContext && hasAnalyticsConsent() ? { gameKey: freeGamesSignupContext.gameKey, topicId: freeGamesSignupContext.topic?.id ?? null, sessionKey: getAnalyticsSessionKey() } : null,
+        }));
+      } catch { /* Attribution is optional if browser storage is unavailable. */ }
+      trackConversion("signup_submitted", { auth_method: "google", destination: "flashcards" });
+      return true;
+    } catch {
+      // Analytics or storage failures must not prevent Google sign-in.
+      return true;
+    }
   };
 
   const trackSignupInteraction = () => {
@@ -445,10 +389,12 @@ export default function SignupPage() {
               Set up your Classendo account
             </h2>
             <p className="mt-3 text-base leading-7 text-[#5c665c]">
-              Start teaching straight away. Verify your email afterwards to activate your 14-day Premium welcome trial.
+              Start teaching straight away. Email signups activate the 14-day Premium welcome trial after verification. Google signups activate it after profile setup.
             </p>
 
             <form onSubmit={handleSignup} onFocusCapture={trackSignupInteraction} className="mt-8 space-y-5">
+              <GoogleOAuthButton nextPath={safeNextPath(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search).get("next")) ?? "/flashcards?onboarding=1"} guestExitContext={new URLSearchParams(typeof window === "undefined" ? "" : window.location.search).get("from") === "guest-exit"} onStart={beginGoogleSignup} />
+              <div className="flex items-center gap-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[#8b9488]"><span className="h-px min-w-0 flex-1 bg-[#e8ece4]" />or sign up with email<span className="h-px min-w-0 flex-1 bg-[#e8ece4]" /></div>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#2f3a2f]" htmlFor="signup-email">
                   Email address
@@ -481,7 +427,7 @@ export default function SignupPage() {
                   onBlur={() => setUsernameTouched(true)}
                   required
                   maxLength={24}
-                  autoComplete="username"
+                  autoComplete="off"
                   className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]"
                 />
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
