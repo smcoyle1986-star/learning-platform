@@ -44,7 +44,7 @@ export async function requireCreatorUser(request: NextRequest | Request) {
 export async function requirePremiumCreator(request: NextRequest | Request) {
   const user = await requireCreatorUser(request);
   try {
-    await requireVerifiedClassendoEmail(user.id);
+    await requireVerifiedClassendoEmail(user.id, user);
   } catch {
     throw new CreatorApiError("Verify your email before uploading Creator content.", 403);
   }

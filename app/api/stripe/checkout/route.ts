@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You must be signed in to upgrade." }, { status: 401 });
     }
     try {
-      await requireVerifiedClassendoEmail(user.id);
+      await requireVerifiedClassendoEmail(user.id, user);
     } catch {
       return NextResponse.json({ error: "Verify your email before starting checkout." }, { status: 403 });
     }

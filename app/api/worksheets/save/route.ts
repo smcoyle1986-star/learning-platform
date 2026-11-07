@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (body.isPublic) {
       try {
-        await requireVerifiedClassendoEmail(user.id);
+        await requireVerifiedClassendoEmail(user.id, user);
       } catch {
         return NextResponse.json({ error: "Verify your email before publishing a worksheet." }, { status: 403 });
       }

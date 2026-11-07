@@ -12,6 +12,7 @@ import {
   saveLesson,
 } from "@/lib/lessons/repository";
 import { normalizeLessonCard } from "@/lib/lessons/tray";
+import { requireVerifiedClassendoEmail } from "@/lib/auth/server-verification";
 import { getRequestUser } from "@/lib/server/request-auth";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import type { LessonCard } from "@/lib/lessons/types";
@@ -43,6 +44,14 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as SaveLessonRequest;
     const supabase = getSupabaseAdmin();
+
+    if (body.isPublic) {
+      try {
+        await requireVerifiedClassendoEmail(user.id, user);
+      } catch {
+        return NextResponse.json({ error: "Verify your email before publishing a lesson." }, { status: 403 });
+      }
+    }
 
     const cards = (Array.isArray(body.cards) ? body.cards : []).map(normalizeLessonCard);
     await assertUserCanAccessCreatorImages(

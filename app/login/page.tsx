@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { savePendingEmailConfirmation } from "@/lib/auth/pending-confirmation";
 import { trackAuthenticatedAnalyticsSession } from "@/lib/analytics/client";
+import GoogleOAuthButton from "@/components/auth/GoogleOAuthButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,6 +77,8 @@ export default function LoginPage() {
             </p>
 
             <form onSubmit={handleLogin} className="mt-8 space-y-5">
+              <GoogleOAuthButton nextPath={new URLSearchParams(typeof window === "undefined" ? "" : window.location.search).get("next") ?? "/?signed_in=1"} />
+              <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#8b9488]"><span className="h-px flex-1 bg-[#e8ece4]" />or use email<span className="h-px flex-1 bg-[#e8ece4]" /></div>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#2f3a2f]" htmlFor="login-email">
                   Email address
@@ -104,6 +107,9 @@ export default function LoginPage() {
                   required
                   className="w-full rounded-2xl border border-[#dfe5d7] bg-[#fbfbf8] px-4 py-3 text-[#2f3a2f] outline-none transition focus:border-[#98b37d] focus:bg-white focus:shadow-[0_0_0_5px_rgba(134,169,106,0.12)]"
                 />
+                <Link href="/forgot-password" className="mt-2 inline-flex text-sm font-semibold text-[#6c8f58] underline underline-offset-4 hover:text-[#5f7f4b]">
+                  Forgot password?
+                </Link>
               </div>
 
               {message && (

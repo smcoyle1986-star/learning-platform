@@ -6,13 +6,15 @@ import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/components/AuthProvider";
 import { verificationSendOutcome } from "@/lib/auth/verification-notice";
+import type { VerificationGrace } from "@/lib/auth/verification-grace";
 
 const SIGNUP_EMAIL_SEND_FAILED_KEY = "classendo-verification-email-pending";
 
 export default function EmailVerificationNotice() {
   const { user, loading } = useAuth();
   const pathname = usePathname();
-  const [verified, setVerified] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<VerificationGrace | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -29,7 +31,7 @@ export default function EmailVerificationNotice() {
 
   useEffect(() => {
     if (!user?.id) {
-      setVerified(null);
+      setStatus(null);
       return;
     }
 
@@ -49,11 +51,11 @@ export default function EmailVerificationNotice() {
         if (!response.ok) throw new Error("Could not read verification status.");
         const result = await response.json();
         if (!active || requestId !== latestRequest) return;
-        const isVerified = result?.verified === true;
-        setVerified(isVerified);
-        if (isVerified) setNotice("");
+        const next = result as VerificationGrace;
+        setStatus(next);
+        if (next.verified) setNotice("");
       } catch {
-        if (active && requestId === latestRequest) setVerified(null);
+        if (active && requestId === latestRequest) setStatus(null);
       }
     };
 
@@ -73,17 +75,20 @@ export default function EmailVerificationNotice() {
     };
   }, [user?.id]);
 
-  if (loading || !user || verified !== false || pathname.startsWith("/games/")) return null;
+  if (loading || !user || !status || status.verified || pathname === "/verification-required") return null;
 
   async function resend() {
     setSending(true);
     setNotice("");
     try {
-      const response = await fetch("/api/auth/verification/send", { method: "POST" });
+      const response = await fetch("/api/auth/verification/send", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
       const result = await response.json().catch(() => null);
       const outcome = verificationSendOutcome(response.ok, result);
       setNotice(outcome.message);
-      if (outcome.verified) setVerified(true);
+      if (outcome.verified) setStatus((previous) => previous ? { ...previous, verified: true, phase: "verified" } : null);
     } catch {
       setNotice("We couldn't reach the server. Check your connection and try again.");
     } finally {
@@ -91,14 +96,13 @@ export default function EmailVerificationNotice() {
     }
   }
 
-  return (
-    <aside data-site-chrome className="border-b border-[#d5e2cf] bg-[#f3f8ef] px-4 py-2 text-center text-sm text-[#496143]">
-      <span>Verify your email to activate your 14-day Premium trial and unlock publishing, Creator uploads, and billing. </span>
-      <button onClick={() => void resend()} disabled={sending} className="font-semibold underline underline-offset-2 disabled:opacity-60">
-        {sending ? "Sending…" : "Send verification email"}
-      </button>
+  return <>
+    {!dismissed && <aside data-site-chrome className="border-b border-[#d5e2cf] bg-[#f3f8ef] px-4 py-2 text-center text-sm text-[#496143]">
+      <span>Verify your email to help secure your account and support password recovery. Eligible Premium trials begin after verification. </span>
+      <button onClick={() => void resend()} disabled={sending} className="font-semibold underline underline-offset-2 disabled:opacity-60">{sending ? "Sending…" : "Resend verification email"}</button>
+      <button onClick={() => setDismissed(true)} className="ml-3 font-semibold underline underline-offset-2" aria-label="Dismiss verification reminder">Dismiss</button>
       {notice && <span className="ml-2" role="status" aria-live="polite">{notice}</span>}
       <Link href="/verify-email" className="sr-only">Verify email</Link>
-    </aside>
-  );
+    </aside>}
+  </>;
 }

@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { hasCompletedGoogleOnboarding, isVerifiedGoogleAuthUser } from "@/lib/auth/google-auth-state";
+import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+
 const secureCookies = process.env.NODE_ENV === "production";
 
 function markAuthenticatedResponsePrivate(request: NextRequest, response: NextResponse) {
@@ -59,9 +62,36 @@ export async function refreshSupabaseSession(request: NextRequest) {
 
   // Always validate the token with Supabase Auth. Reading the session alone
   // would trust unverified cookie contents.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const bearer = request.headers.get("authorization");
+  const token = bearer?.startsWith("Bearer ") ? bearer.slice(7) : null;
+  const { data: { user } } = token
+    ? await getSupabaseAdmin().auth.getUser(token)
+    : await supabase.auth.getUser();
+
+  const googleSetupPath = request.nextUrl.pathname === "/signup/complete-google"
+    || request.nextUrl.pathname === "/auth/callback"
+    || request.nextUrl.pathname.startsWith("/api/auth/google/")
+    || request.nextUrl.pathname === "/api/auth/signout";
+  if (isVerifiedGoogleAuthUser(user) && !googleSetupPath) {
+    const { data: profile, error: profileError } = await getSupabaseAdmin()
+      .from("profiles")
+      .select("username,country_region,user_type")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profileError) {
+      console.error("Could not check Google signup completion:", profileError);
+      return NextResponse.json({ error: "Account setup is temporarily unavailable." }, { status: 503 });
+    }
+    if (!hasCompletedGoogleOnboarding(profile, user.user_metadata)) {
+      if (request.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Complete your account setup to continue.", onboardingRequired: true }, { status: 403 });
+      }
+      const onboardingUrl = request.nextUrl.clone();
+      onboardingUrl.pathname = "/signup/complete-google";
+      onboardingUrl.search = "";
+      return redirectWithCookies(response, onboardingUrl);
+    }
+  }
 
   if (request.nextUrl.pathname.startsWith("/admin")) {
     const isUnauthorizedPage =

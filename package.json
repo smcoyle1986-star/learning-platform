@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "node scripts/check-critical-features.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "playwright install chromium",
