@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminActivitySnapshot, type AdminActivityEvent } from "@/lib/admin/activity";
+import { formatKst } from "@/lib/admin/time";
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -15,13 +16,11 @@ function periodValue(value: string) {
 }
 
 function date(value: string) {
-  return new Date(value).toLocaleString("en", {
+  return formatKst(value, {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "Asia/Seoul",
-    timeZoneName: "short",
   });
 }
 

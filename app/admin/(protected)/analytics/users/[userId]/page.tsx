@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAuthenticatedAnalyticsTimeline } from "@/lib/admin/authenticated-analytics";
+import { formatKst } from "@/lib/admin/time";
 
 function date(value: string | null) {
   if (!value) return "Not available";
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? "Unknown" : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
+  return Number.isNaN(parsed.getTime()) ? "Unknown" : formatKst(parsed);
 }
 
 function sourceLabel(source: string) {

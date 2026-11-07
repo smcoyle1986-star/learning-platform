@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAuthenticatedAnalyticsUsers } from "@/lib/admin/authenticated-analytics";
+import { formatKst } from "@/lib/admin/time";
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -16,7 +17,7 @@ function pageNumber(value: string) {
 function date(value: string | null) {
   if (!value) return "Never";
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? "Unknown" : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
+  return Number.isNaN(parsed.getTime()) ? "Unknown" : formatKst(parsed);
 }
 
 export default async function AuthenticatedUsersAnalyticsPage({

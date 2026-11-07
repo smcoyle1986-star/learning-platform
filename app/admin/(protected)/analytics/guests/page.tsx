@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getAdminGuests } from "@/lib/admin/guest-analytics";
+import { formatKst } from "@/lib/admin/time";
 
-const date = (value: string) => new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+const date = (value: string) => formatKst(value);
 
 export default async function GuestsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requireAdmin();

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/auth";
 import { getGuestJourney } from "@/lib/admin/guest-analytics";
+import { formatKst } from "@/lib/admin/time";
 
-const date = (value: string) => new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+const date = (value: string) => formatKst(value);
 
 export default async function GuestJourneyPage({ params }: { params: Promise<{ anonymousId: string }> }) {
   await requireAdmin();
